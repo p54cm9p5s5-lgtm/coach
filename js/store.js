@@ -820,15 +820,39 @@ export async function giorniDaUltimaMisura(tipo) {
 export async function importaSalute(pacchetto) {
   const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0 };
 
+  /**
+   * Fonde solo i campi valorizzati: due righe per lo stesso giorno, una con le
+   * kcal e una con i passi, si sommano invece di cancellarsi. Serve a tenere
+   * semplice il comando rapido, che può produrre un blocco di righe per tipo
+   * senza doverli incrociare per data.
+   */
+  const fondi = (prec, nuovo) => {
+    const out = { ...(prec || {}), ...{ data: nuovo.data } };
+    for (const [k, v] of Object.entries(nuovo)) {
+      if (v !== null && v !== undefined) out[k] = v;
+    }
+    out.presente = Boolean(prec?.presente) || Boolean(nuovo.presente);
+    return out;
+  };
+
   for (const g of pacchetto.giorni) {
     const prec = await db.get("giorniSalute", g.data);
-    if (prec) conteggio.aggiornati++;
-    await db.put("giorniSalute", { ...g, fonte: "salute", importatoIl: new Date().toISOString() });
+    if (prec?.presente) conteggio.aggiornati++;
+    await db.put("giorniSalute", {
+      ...fondi(prec, g),
+      fonte: "salute",
+      importatoIl: new Date().toISOString(),
+    });
     conteggio.giorni++;
   }
 
   for (const n of pacchetto.notti) {
-    await db.put("notti", { ...n, fonte: "salute", importatoIl: new Date().toISOString() });
+    const prec = await db.get("notti", n.data);
+    await db.put("notti", {
+      ...fondi(prec, n),
+      fonte: "salute",
+      importatoIl: new Date().toISOString(),
+    });
     conteggio.notti++;
   }
 
