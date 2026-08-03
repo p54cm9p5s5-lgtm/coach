@@ -462,9 +462,30 @@ function cattura(posa, sagoma) {
         });
         video.srcObject = stream;
         video.style.transform = frontale ? "scaleX(-1)" : "";
-      } catch {
-        // niente accesso diretto alla fotocamera: si passa a quella di sistema
+      } catch (e) {
+        // Niente accesso diretto: si può comunque scattare con la fotocamera di
+        // sistema. Dirlo invece di cambiare strada in silenzio, altrimenti
+        // sembra che l'app sia rotta.
         chiudi();
+        const negato = e?.name === "NotAllowedError" || e?.name === "SecurityError";
+        const scelta = await chiedi({
+          titolo: negato ? "Fotocamera non consentita" : "Fotocamera non disponibile",
+          testo: negato
+            ? "Il permesso alla fotocamera è stato negato, quindi la vista guidata con la sagoma non si può aprire. Puoi scattare lo stesso con la fotocamera di sistema: la foto viene salvata allo stesso modo, manca solo l'allineamento sovrapposto."
+            : "Non riesco ad aprire la fotocamera guidata. Puoi scattare con quella di sistema.",
+          opzioni: [
+            { etichetta: "Scatta con la fotocamera di sistema", valore: "sistema" },
+            negato ? { etichetta: "Come riattivare il permesso", valore: "aiuto" } : null,
+          ].filter(Boolean),
+        });
+        if (scelta === "aiuto") {
+          await chiedi({
+            titolo: "Riattivare la fotocamera",
+            testo:
+              "Impostazioni dell'iPhone → Safari → Impostazioni per i siti web → Fotocamera: cerca l'indirizzo di Coach e mettilo su «Chiedi» o «Consenti».\n\nSe l'app compare da sola nell'elenco delle app di Impostazioni, il permesso è lì dentro.\n\nNon disinstallare l'app per rimediare: toglierla dalla schermata Home può cancellare tutti i dati. Prima fai un backup da Impostazioni → Esporta backup su file.",
+            opzioni: [{ etichetta: "Scatta intanto con la fotocamera di sistema", valore: "sistema" }],
+          });
+        }
         resolve(await catturaDaFile(posa));
       }
     }
@@ -477,7 +498,10 @@ function cattura(posa, sagoma) {
 /** Ripiego: fotocamera di sistema, senza reticolo e senza sagoma. */
 function catturaDaFile(posa) {
   return new Promise((resolve) => {
-    const input = h("input", { type: "file", accept: "image/*", capture: "user", style: "display:none" });
+    // Niente «capture»: così iOS offre anche la libreria, e puoi scattare con
+    // l'app Fotocamera usando l'autoscatto — che per la posa di schiena è
+    // l'unico modo sensato.
+    const input = h("input", { type: "file", accept: "image/*", style: "display:none" });
     input.addEventListener("change", async () => {
       const file = input.files?.[0];
       input.remove();
@@ -491,7 +515,7 @@ function catturaDaFile(posa) {
       resolve(c.toDataURL("image/jpeg", 0.82));
     });
     document.body.append(input);
-    toast(`Scatta la posa: ${posa.nome}`);
+    toast(`Posa: ${posa.nome} — scatta o scegli dalla libreria`);
     input.click();
   });
 }
