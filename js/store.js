@@ -1002,16 +1002,28 @@ export async function importaSalute(pacchetto) {
     // questi dati non valgono.
     const precedente = (await impostazione("agenda")) || {};
     const ora = new Date().toISOString();
+
+    // Nello stesso giorno possono esserci più eventi: l'allenamento e un
+    // promemoria («Misura la pressione», «Foto progressi»). Vince quello che
+    // corrisponde a un giorno del programma, indipendentemente dall'ordine in
+    // cui il comando rapido li ha messi in fila.
+    const perData = new Map();
     for (const e of pacchetto.agenda) {
-      precedente[e.data] = {
+      const giornoId = abbinaAlloSplit(e.titolo);
+      const scelto = perData.get(e.data);
+      if (scelto && scelto.giornoId && !giornoId) continue;
+      perData.set(e.data, {
         data: e.data,
         titolo: e.titolo,
         nota: e.nota ?? null,
-        giornoId: abbinaAlloSplit(e.titolo),
+        giornoId,
         importatoIl: ora,
-      };
+      });
       conteggio.agenda = (conteggio.agenda || 0) + 1;
     }
+    // Le date presenti nel pacchetto vengono riscritte per intero: se il coach
+    // ha tolto un allenamento, deve sparire anche qui.
+    for (const [data, voce] of perData) precedente[data] = voce;
     // Oltre le sei settimane non serve a niente e non deve crescere all'infinito.
     const limite = new Date(Date.now() - 42 * 86400000).toISOString().slice(0, 10);
     for (const d of Object.keys(precedente)) if (d < limite) delete precedente[d];
