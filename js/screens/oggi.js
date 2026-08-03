@@ -1,55 +1,12 @@
-import { h, isoDate, dataLunga, dataBreve, chiedi, num, aggiungi } from "../ui.js";
+import {
+  h, isoDate, dataLunga, dataBreve, chiedi, sheet, num, giorniTra, durataUmana, aggiungi,
+} from "../ui.js";
 import { intestazione } from "../app.js";
-import { nomeLivello } from "../segnali.js";
 import * as store from "../store.js";
+import { graficoAttivita, fascia, legenda } from "../grafico.js";
+import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 
-async function daFare() {
-  const voci = [];
-
-  const gPeso = await store.giorniDaUltimaMisura("peso");
-  if (gPeso === null) voci.push({ testo: "Peso mai registrato", stato: "warn", rotta: "corpo" });
-  else if (gPeso >= 7)
-    voci.push({ testo: `Peso: ${gPeso} giorni fa`, stato: "warn", rotta: "corpo" });
-
-  const gVita = await store.giorniDaUltimaMisura("vitaOmbelico");
-  if (gVita === null) voci.push({ testo: "Vita ombelico mai registrata", stato: "warn", rotta: "corpo" });
-  else if (gVita >= 7)
-    voci.push({ testo: `Vita ombelico: ${gVita} giorni fa`, stato: "warn", rotta: "corpo" });
-
-  const foto = await store.db.all("foto");
-  if (foto.length) {
-    const ultima = foto.map((f) => f.data).sort().at(-1);
-    const g = Math.round((new Date(isoDate()) - new Date(ultima)) / 86400000);
-    if (g >= 14) voci.push({ testo: `Foto: ${g} giorni fa`, stato: "warn", rotta: "corpo" });
-  } else {
-    voci.push({ testo: "Foto mai scattate", stato: "info", rotta: "corpo" });
-  }
-
-  const gExport = await store.giorniDaUltimoExport();
-  if (gExport === null)
-    voci.push({ testo: "Backup su file mai fatto", stato: "warn", rotta: "impostazioni" });
-  else if (gExport >= 7)
-    voci.push({ testo: `Backup su file: ${gExport} giorni fa`, stato: "warn", rotta: "impostazioni" });
-
-  const ultimoImport = await store.impostazione("ultimoImportSalute");
-  if (!ultimoImport) {
-    voci.push({ testo: "Dati Salute mai importati", stato: "info", rotta: "salute" });
-  } else {
-    const g = Math.round((Date.now() - new Date(ultimoImport)) / 86400000);
-    if (g >= 2) voci.push({ testo: `Dati Salute: ${g} giorni fa`, stato: "warn", rotta: "salute" });
-  }
-
-  return voci;
-}
-
-async function statoFinestre() {
-  const giorni = await store.db.all("giorniSalute");
-  const notti = await store.db.all("notti");
-  const gPresenti = giorni.filter((g) => g.presente).length;
-  const nPresenti = notti.filter((n) => n.presente).length;
-  if (!gPresenti && !nPresenti) return null;
-  return { movimento: gPresenti, sonno: nPresenti, richiesti: 21 };
-}
+let meseMostrato = null;
 
 export async function render({ vaiA, ridisegna }) {
   const oggi = isoDate();
@@ -58,240 +15,229 @@ export async function render({ vaiA, ridisegna }) {
   aggiungi(wrap, intestazione("Oggi", { etichetta: "Impostazioni", onclick: () => vaiA("impostazioni") }));
 
   if (!prog) {
-    aggiungi(wrap, 
+    aggiungi(wrap,
       h(
         "div.empty",
         h("h3", "Nessun programma caricato"),
         h("p", "Carica il master brief: l'app legge il blocco tecnico in coda al documento e imposta split, esercizi e regole."),
-        h(
-          "div.btn-wrap",
-          h("button.btn", { onclick: () => vaiA("impostazioni") }, "Carica master brief")
-        )
+        h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("impostazioni") }, "Carica master brief"))
       )
     );
     return wrap;
   }
 
-  // Il motore gira qui, a dati fermi: le sedute in corso non entrano nelle
-  // esposizioni, quindi nessuna proposta nasce da una seduta a metà.
-  await store.aggiornaMotore();
+  aggiungi(wrap, await bloccoGrafico());
+  aggiungi(wrap, await bloccoAllenamento(vaiA, ridisegna, oggi));
+  aggiungi(wrap, await bloccoProposte());
+  aggiungi(wrap, await bloccoCalendario(vaiA, ridisegna));
 
   aggiungi(wrap,
-    h("div.group", h("div.list", h("div.row", h("div.main", h("span.title", dataLunga(oggi))))))
+    h(
+      "div.group",
+      h(
+        "div.list",
+        h(
+          "a.row",
+          { href: "#/export" },
+          h(
+            "div.main",
+            h("span.title", "Prepara il pacchetto per la chat"),
+            h("span.sub", "log allenamento, dati salute e proposte, pronti da incollare")
+          ),
+          h("span.chevron", "›")
+        )
+      )
+    )
   );
 
-  // ---- seduta in corso ----
+  return wrap;
+}
+
+// ---------- grafico ----------
+
+async function bloccoGrafico() {
+  const oggi = isoDate();
+  const giorni = await store.giorniSalute();
+  const notti = await store.notti();
+  const tutti = await store.allenamenti();
+  const obiettivo = await store.impostazione("obiettivoMovimentoKcal");
+
+  const perData = new Map(giorni.map((g) => [g.data, g]));
+  const perNotte = new Map(notti.map((n) => [n.data, n]));
+  const allenati = new Set(tutti.filter((s) => s.stato === "completata").map((s) => s.data));
+
+  const serie = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(oggi + "T00:00:00");
+    d.setDate(d.getDate() - i);
+    const p = (n) => String(n).padStart(2, "0");
+    const data = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    const g = perData.get(data);
+    const n = perNotte.get(data);
+    serie.push({
+      data,
+      presente: Boolean(g?.presente),
+      kcal: g?.presente ? g.kcalAttive : null,
+      obiettivo: g?.obiettivoKcal || obiettivo,
+      allenamento: allenati.has(data),
+      sonnoMin: n?.presente ? n.durataMin : null,
+    });
+  }
+
+  // numeri della settimana in corso
+  const settimana = serie.slice(-7);
+  const kcalSettimana = settimana.filter((d) => d.kcal != null);
+  const sonnoSettimana = settimana.filter((d) => d.sonnoMin != null);
+  const allenamentiSettimana = settimana.filter((d) => d.allenamento).length;
+  const previstiSettimana = store.giorniSplit().length || 5;
+
+  const media = (arr, campo) =>
+    arr.length ? Math.round(arr.reduce((a, b) => a + b[campo], 0) / arr.length) : null;
+
+  const mediaKcal = media(kcalSettimana, "kcal");
+  const mediaSonno = media(sonnoSettimana, "sonnoMin");
+
+  return h(
+    "div.group",
+    h("h2", "Ultime 4 settimane"),
+    h(
+      "div",
+      { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
+      fascia([
+        {
+          etichetta: "Allenamenti",
+          valore: `${allenamentiSettimana}/${previstiSettimana}`,
+          nota: "questa settimana",
+        },
+        {
+          etichetta: "Movimento",
+          valore: mediaKcal != null ? String(mediaKcal) : "—",
+          unita: "kcal",
+          nota: kcalSettimana.length < 7 ? `${kcalSettimana.length} giorni su 7` : "media 7 giorni",
+        },
+        {
+          etichetta: "Sonno",
+          valore: mediaSonno != null ? durataUmana(mediaSonno * 60) : "—",
+          nota: sonnoSettimana.length < 7 ? `${sonnoSettimana.length} notti su 7` : "media 7 notti",
+        },
+      ]),
+      graficoAttivita(serie),
+      legenda()
+    ),
+    h(
+      "p.footnote",
+      "I giorni senza dati restano vuoti: non valgono zero e non entrano nelle medie."
+    )
+  );
+}
+
+// ---------- allenamento di oggi ----------
+
+async function bloccoAllenamento(vaiA, ridisegna, oggi) {
   const inCorso = await store.sedutaInCorso();
   if (inCorso) {
-    aggiungi(wrap, 
+    return h(
+      "div.group",
+      h("h2", "Allenamento aperto"),
       h(
-        "div.group",
-        h("h2", "Seduta aperta"),
+        "div.list",
         h(
-          "div.list",
-          h(
-            "button.row",
-            { onclick: () => vaiA("seduta") },
-            h(
-              "div.main",
-              h("span.title", inCorso.tipoNome),
-              h("span.sub", `Iniziata ${new Date(inCorso.oraInizio).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })} · ${inCorso.data === oggi ? "oggi" : inCorso.data}`)
-            ),
-            h("span.chevron", "›")
-          )
-        ),
-        h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("seduta") }, "Riprendi seduta"))
-      )
-    );
-    aggiungi(wrap, await bloccoProposte());
-    aggiungi(wrap, await bloccoDaFare(vaiA));
-    return wrap;
-  }
-
-  // ---- già fatto oggi ----
-  const fatteOggi = (await store.sedute()).filter((s) => s.data === oggi && s.stato === "completata");
-  if (fatteOggi.length) {
-    aggiungi(wrap, 
-      h(
-        "div.group",
-        h("h2", "Già fatto oggi"),
-        h(
-          "div.list",
-          ...fatteOggi.map((s) =>
-            h(
-              "a.row",
-              { href: `#/storico?seduta=${s.id}` },
-              h(
-                "div.main",
-                h("span.title", s.tipoNome),
-                h("span.sub", `chiusa alle ${new Date(s.oraFine).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`)
-              ),
-              h("span.pill.ok", "completata"),
-              h("span.chevron", "›")
-            )
-          )
-        )
-      )
-    );
-  }
-
-  // ---- seduta prevista ----
-  const previsto = store.giornoPrevisto(oggi);
-  const giaFatta = fatteOggi.some((s) => s.tipoId === previsto?.id);
-  const lista = h("div.list");
-
-  if (previsto) {
-    for (const v of previsto.esercizi || []) {
-      const def = store.esercizio(v.esercizioId);
-      aggiungi(lista, 
-        h(
-          "div.row",
+          "button.row",
+          { onclick: () => vaiA("seduta") },
           h(
             "div.main",
-            h("span.title", def?.nome || v.esercizioId),
-            h(
-              "span.sub",
-              v.aTempo
-                ? `${v.serie} × ${v.durataSec}s`
-                : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`
-            )
+            h("span.title", inCorso.tipoNome),
+            h("span.sub", `iniziato alle ${new Date(inCorso.oraInizio).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`)
           ),
-          v.carico != null ? h("span.value", `${num(v.carico)} kg`) : null
+          h("span.chevron", "›")
         )
-      );
-    }
-    if (previsto.cardio) {
-      const r = store.regole().cardio;
-      aggiungi(lista, 
-        h(
-          "div.row",
-          h(
-            "div.main",
-            h("span.title", "Cardio"),
-            h("span.sub", `${r.durataMin} min · ${num(r.kmhMin)}-${num(r.kmhMax)} km/h · FC ${r.fcMin}-${r.fcMax}`)
-          )
-        )
-      );
-    }
+      ),
+      h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("seduta") }, "Riprendi allenamento"))
+    );
+  }
 
-    aggiungi(wrap, 
+  const previsto = store.giornoPrevisto(oggi);
+  const fatteOggi = (await store.allenamenti()).filter((s) => s.data === oggi && s.stato === "completata");
+  const giaFatto = fatteOggi.some((s) => s.tipoId === previsto?.id);
+
+  const titolo = previsto ? previsto.nome : "Riposo";
+  const sotto = giaFatto
+    ? "completato oggi"
+    : previsto
+      ? `${previsto.esercizi?.length || 0} esercizi${previsto.cardio ? " + cardio" : ""}`
+      : "nessun allenamento previsto dallo split";
+
+  return h(
+    "div.group",
+    h("h2", "Oggi"),
+    h(
+      "div",
+      { style: "background:var(--bg-grouped);border-radius:14px;padding:20px 16px 16px;text-align:center" },
       h(
-        "div.group",
-        h("h2", giaFatta ? "Seduta di oggi — già completata" : "Seduta di oggi"),
-        h("div.list", h("div.row", h("div.main", h("span.title", previsto.nome)))),
-        h("div", { style: "height:10px" }),
-        lista,
-        h(
-          "div.btn-wrap",
-          h(
-            "button",
+        "p",
+        { style: "margin:0;font-size:26px;font-weight:700;letter-spacing:-0.5px" },
+        titolo
+      ),
+      h("p", { style: "margin:6px 0 16px;font-size:13px;color:var(--label-secondary)" }, sotto),
+      previsto
+        ? h(
+            "button.btn",
             {
-              class: giaFatta ? "btn secondary" : "btn",
+              class: giaFatto ? "btn secondary" : "btn",
               onclick: async () => {
                 await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
                 vaiA("seduta");
               },
             },
-            giaFatta ? "Rifai questa seduta" : "Inizia seduta"
-          ),
-          h("div", { style: "height:8px" }),
-          h(
-            "button.btn.secondary",
-            { onclick: () => cambiaSeduta(vaiA, ridisegna) },
-            "Fai un'altra seduta"
+            giaFatto ? "Rifai questo allenamento" : "Inizia allenamento"
           )
-        )
-      )
-    );
-  } else {
-    aggiungi(wrap, 
+        : null,
+      h("div", { style: "height:8px" }),
       h(
-        "div.group",
-        h("h2", "Seduta di oggi"),
-        h(
-          "div.list",
-          h(
-            "div.row",
-            h("div.main", h("span.title", "Riposo"), h("span.sub", "Nessuna seduta prevista dallo split"))
-          )
-        ),
-        h(
-          "div.btn-wrap",
-          h("button.btn.secondary", { onclick: () => cambiaSeduta(vaiA, ridisegna) }, "Allenati comunque")
-        )
+        "button.btn.secondary",
+        { onclick: () => altroAllenamento(vaiA, ridisegna) },
+        previsto ? "Fai un altro allenamento" : "Allenati comunque"
       )
-    );
-  }
-
-  aggiungi(wrap, await bloccoProposte());
-  aggiungi(wrap, await bloccoDaFare(vaiA));
-
-  const fin = await statoFinestre();
-  if (fin) {
-    aggiungi(wrap, 
-      h(
-        "div.group",
-        h("h2", "Finestre dati"),
-        h(
-          "div.list",
-          h(
-            "div.row",
-            h("div.main", h("span.title", "Movimento")),
-            h("span.value", `${fin.movimento}/${fin.richiesti} giorni`)
-          ),
-          h(
-            "div.row",
-            h("div.main", h("span.title", "Sonno")),
-            h("span.value", `${fin.sonno}/${fin.richiesti} notti`)
-          )
-        ),
-        h("p.footnote", "Finché la finestra non è completa i dati restano raccolta, non azione.")
-      )
-    );
-  }
-
-  return wrap;
+    )
+  );
 }
 
-/** Proposte in sospeso, verifiche scadute e segnali aperti, in un blocco solo. */
+async function altroAllenamento(vaiA, ridisegna) {
+  const giorni = store.giorniSplit();
+  const scelta = await chiedi({
+    titolo: "Quale allenamento?",
+    testo: "Viene registrato quello che fai davvero, non quello in programma.",
+    opzioni: giorni.map((g) => ({ etichetta: g.nome, valore: g.id })),
+  });
+  if (!scelta) return;
+  await store.iniziaSeduta({ data: isoDate(), giornoId: scelta });
+  vaiA("seduta");
+  await ridisegna();
+}
+
+// ---------- proposte ----------
+
 async function bloccoProposte() {
+  await store.aggiornaProposte();
+  await store.aggiornaSegnali();
   const sospese = await store.proposteInSospeso();
-  const verifiche = await store.verificheDovute();
   const avvisi = await store.segnali();
-  const attenzione = avvisi.filter((s) => s.gravita === "attenzione");
-  if (!sospese.length && !verifiche.length && !avvisi.length) return null;
+  if (!sospese.length && !avvisi.length) return null;
 
   const lista = h("div.list");
-  for (const p of verifiche) {
-    aggiungi(
-      lista,
+  for (const p of sospese.slice(0, 3)) {
+    aggiungi(lista,
       h(
         "a.row",
         { href: `#/proposte?proposta=${p.id}` },
-        h("div.main", h("span.title", p.titolo), h("span.sub", `Verifica prevista il ${dataBreve(p.dataVerifica)}`)),
-        h("span.pill.warn", "da verificare"),
-        h("span.chevron", "›")
-      )
-    );
-  }
-  for (const p of sospese) {
-    aggiungi(
-      lista,
-      h(
-        "a.row",
-        { href: `#/proposte?proposta=${p.id}` },
-        h(
-          "div.main",
-          h("span.title", p.titolo),
-          h("span.sub", `Livello ${p.livelloGerarchia} — ${nomeLivello(p.livelloGerarchia)}`)
-        ),
+        h("div.main", h("span.title", p.titolo), h("span.sub", `Livello ${p.livelloGerarchia}`)),
         h("span.chevron", "›")
       )
     );
   }
   if (avvisi.length) {
-    aggiungi(
-      lista,
+    const attenzione = avvisi.filter((s) => s.gravita === "attenzione");
+    aggiungi(lista,
       h(
         "a.row",
         { href: "#/proposte" },
@@ -306,55 +252,112 @@ async function bloccoProposte() {
     );
   }
 
-  aggiungi(
-    lista,
-    h(
-      "a.row",
-      { href: "#/export" },
-      h(
-        "div.main",
-        h("span.title", "Prepara il pacchetto per la chat"),
-        h("span.sub", "log seduta, dati salute e proposte, pronti da incollare")
-      ),
-      h("span.chevron", "›")
-    )
-  );
+  return h("div.group", h("h2", "Da decidere"), lista);
+}
+
+// ---------- calendario ----------
+
+async function bloccoCalendario(vaiA, ridisegna) {
+  const oggi = isoDate();
+  if (!meseMostrato) meseMostrato = new Date(oggi + "T00:00:00");
+
+  const tutte = await store.allenamenti();
+  const allenamenti = new Map();
+  for (const s of tutte) {
+    allenamenti.set(s.data, { id: s.id, nome: s.tipoNome, completato: s.stato === "completata" });
+  }
+
+  const imp = await store.impostazioni();
+  const fotoTutte = await store.foto();
+  const attese = calcolaAttese({
+    oggi,
+    ultimoPeso: (await store.ultimaMisura("peso"))?.data || null,
+    ultimaVita: (await store.ultimaMisura("vitaOmbelico"))?.data || null,
+    ultimaFoto: fotoTutte[0]?.data || null,
+    ultimoExport: imp.ultimoExport,
+    ultimoImportSalute: imp.ultimoImportSalute,
+  });
+
+  // il programma comincia dal primo allenamento registrato, o dal brief
+  const primaData = tutte.map((s) => s.data).sort()[0] || null;
+  const dalBrief = store.programma()?.aggiornatoIl || null;
+  const dal = [primaData, dalBrief].filter(Boolean).sort()[0] || null;
+
+  const cal = calendario({
+    dal,
+    mese: meseMostrato,
+    giornoPrevisto: (data) => store.giornoPrevisto(data),
+    allenamenti,
+    attese,
+    onMese: async (delta) => {
+      meseMostrato = new Date(meseMostrato.getFullYear(), meseMostrato.getMonth() + delta, 1);
+      await ridisegna();
+    },
+    onGiorno: async (data) => {
+      const r = riassuntoGiorno({
+        dal,
+        data,
+        previsto: store.giornoPrevisto(data),
+        allenamento: allenamenti.get(data),
+        attese: attese.get(data) || [],
+      });
+      const seduta = tutte.find((s) => s.data === data && s.stato === "completata");
+      await sheet((close) =>
+        h(
+          "div",
+          h("h2", r.titolo),
+          h(
+            "div.group",
+            { style: "margin-top:12px" },
+            h(
+              "div.list",
+              ...r.righe.map((riga) =>
+                h(
+                  "div.row",
+                  h("div.main", h("span.title", riga.testo)),
+                  riga.stato === "ok"
+                    ? h("span.pill.ok", "fatto")
+                    : riga.stato === "warn"
+                      ? h("span.pill.warn", "in ritardo")
+                      : null
+                )
+              )
+            )
+          ),
+          seduta
+            ? h(
+                "div.btn-wrap",
+                h(
+                  "button.btn.secondary",
+                  {
+                    onclick: () => {
+                      close();
+                      location.hash = `#/storico?seduta=${seduta.id}`;
+                    },
+                  },
+                  "Apri l'allenamento"
+                )
+              )
+            : null
+        )
+      );
+    },
+  });
+
+  const inRitardo = [...new Set(
+    [...attese.values()].flat().filter((a) => a.tipo === "scaduto").map((a) => a.testo)
+  )];
 
   return h(
     "div.group",
-    h("h2", "Proposte e segnali"),
-    lista,
-    h("p.footnote", "L'app propone, non applica: la decisione resta all'atleta.")
+    h("h2", "Calendario"),
+    cal,
+    inRitardo.length
+      ? h(
+          "p.footnote",
+          { style: "color:var(--orange)" },
+          `${inRitardo.length === 1 ? "Una cosa" : `${inRitardo.length} cose`} in ritardo: ${inRitardo.join(", ").toLowerCase()}.`
+        )
+      : h("p.footnote", "Nessun arretrato.")
   );
-}
-
-async function bloccoDaFare(vaiA) {
-  const voci = await daFare();
-  if (!voci.length) return h("div");
-  const lista = h("div.list");
-  for (const v of voci) {
-    aggiungi(lista, 
-      h(
-        "button.row",
-        { onclick: () => vaiA(v.rotta) },
-        h("div.main", h("span.title", v.testo)),
-        h("span.pill", { class: v.stato === "warn" ? "pill warn" : "pill" }, v.stato === "warn" ? "scaduto" : "manca"),
-        h("span.chevron", "›")
-      )
-    );
-  }
-  return h("div.group", h("h2", "Da registrare"), lista);
-}
-
-async function cambiaSeduta(vaiA, ridisegna) {
-  const giorni = store.giorniSplit();
-  const scelta = await chiedi({
-    titolo: "Quale seduta stai per fare?",
-    testo: "Viene registrata la seduta che fai davvero, non quella in programma.",
-    opzioni: giorni.map((g) => ({ etichetta: g.nome, valore: g.id })),
-  });
-  if (!scelta) return;
-  await store.iniziaSeduta({ data: isoDate(), giornoId: scelta });
-  vaiA("seduta");
-  if (location.hash.includes("seduta")) ridisegna();
 }

@@ -18,11 +18,11 @@ async function elenco(vaiA) {
   const wrap = h("div.screen");
   aggiungi(wrap, intestazione("Storico"));
 
-  const sedute = await store.sedute();
-  const completate = sedute.filter((s) => s.stato === "completata");
+  const allenamenti = await store.allenamenti();
+  const completate = allenamenti.filter((s) => s.stato === "completata");
 
   if (!completate.length) {
-    aggiungi(wrap, h("div.empty", h("h3", "Nessuna seduta registrata"), h("p", "Le sedute completate compaiono qui.")));
+    aggiungi(wrap, h("div.empty", h("h3", "Nessun allenamento registrato"), h("p", "Gli allenamenti completati compaiono qui.")));
   } else {
     const lista = h("div.list");
     for (const s of completate) {
@@ -43,7 +43,7 @@ async function elenco(vaiA) {
         )
       );
     }
-    aggiungi(wrap, h("div.group", h("h2", `Sedute (${completate.length})`), lista));
+    aggiungi(wrap, h("div.group", h("h2", `Allenamenti (${completate.length})`), lista));
   }
 
   // volumi
@@ -170,7 +170,7 @@ async function dettaglioSeduta(id) {
   const s = await store.seduta(id);
   aggiungi(wrap, intestazione(s ? s.tipoNome : "Seduta", { etichetta: "Indietro", onclick: () => (location.hash = "#/storico") }));
   if (!s) {
-    aggiungi(wrap, h("div.empty", h("h3", "Seduta non trovata")));
+    aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
     return wrap;
   }
 

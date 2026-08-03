@@ -14,12 +14,12 @@ export async function render({ vaiA }) {
   const sed = await store.sedutaInCorso();
   if (!sed) {
     const wrap = h("div.screen");
-    aggiungi(wrap, intestazione("Seduta"));
+    aggiungi(wrap, intestazione("Allenamento"));
     aggiungi(wrap, 
       h(
         "div.empty",
-        h("h3", "Nessuna seduta aperta"),
-        h("p", "Le sedute si avviano dalla schermata Oggi."),
+        h("h3", "Nessun allenamento aperto"),
+        h("p", "Gli allenamenti si avviano dalla schermata Oggi."),
         h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("oggi") }, "Vai a Oggi"))
       )
     );
@@ -151,11 +151,11 @@ async function esci() {
 
 async function menuSeduta() {
   const scelta = await chiedi({
-    titolo: "Seduta",
+    titolo: "Allenamento",
     opzioni: [
       { etichetta: "Salta al cardio", valore: "cardio" },
-      { etichetta: "Chiudi la seduta adesso", valore: "chiudi" },
-      { etichetta: "Annulla la seduta (elimina i dati)", valore: "annulla", stile: "destructive" },
+      { etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" },
+      { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
     ],
   });
   if (scelta === "cardio") {
@@ -166,8 +166,8 @@ async function menuSeduta() {
     await disegna();
   } else if (scelta === "annulla") {
     const conferma = await chiedi({
-      titolo: "Eliminare la seduta?",
-      testo: "Serie, questionari e note di questa seduta vengono cancellati. Non si può annullare.",
+      titolo: "Eliminare l'allenamento?",
+      testo: "Serie, questionari e note di questo allenamento vengono cancellati. Non si può annullare.",
       opzioni: [{ etichetta: "Elimina tutto", valore: "si", stile: "destructive" }],
     });
     if (conferma === "si") {
@@ -980,7 +980,7 @@ function bloccoStretching() {
 
   return h(
     "div.group",
-    h("h2", "Stretching di fine seduta"),
+    h("h2", "Stretching di fine allenamento"),
     h(
       "div.guida",
       { style: "margin:0" },
@@ -997,7 +997,7 @@ function bloccoStretching() {
         )
       )
     ),
-    h("p.footnote", "Adesso ha senso: a muscolo caldo e a lavoro finito, senza togliere forza alla seduta.")
+    h("p.footnote", "Adesso ha senso: a muscolo caldo e a lavoro finito, senza togliere forza all'allenamento.")
   );
 }
 
@@ -1066,7 +1066,7 @@ async function vistaFine(corpo, piede) {
     h("button.btn", {
       onclick: azione(async () => {
         await store.chiudiSeduta(S.sed.id, { notaGenerale: qs("#nota-seduta")?.value || null });
-        await store.snapshotAutomatico("fine seduta");
+        await store.snapshotAutomatico("fine allenamento");
         // I dati di oggi entrano nel motore solo adesso, a seduta chiusa.
         const { proposte } = await store.aggiornaMotore();
         fermaTimer();
@@ -1074,12 +1074,12 @@ async function vistaFine(corpo, piede) {
         toast(
           proposte.create
             ? `Seduta chiusa. ${proposte.create} ${proposte.create === 1 ? "nuova proposta" : "nuove proposte"} in Oggi.`
-            : "Seduta chiusa e salvata.",
+            : "Allenamento chiuso e salvato.",
           proposte.create ? 4000 : 2200
         );
         S.vaiA("storico");
       }),
-    }, "Chiudi seduta"),
+    }, "Chiudi allenamento"),
     h("button.btn.secondary", {
       onclick: async () => {
         await salvaProgresso({ fase: "esercizio", indice: 0 });

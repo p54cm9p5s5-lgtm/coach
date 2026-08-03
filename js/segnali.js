@@ -326,7 +326,7 @@ function scostamentoSostenuto(righe, campo, { minimoSettimana, soglia }) {
  */
 export function calcolaSegnali(ctx) {
   const {
-    sedute = [],
+    allenamenti = [],
     logsPerSeduta = new Map(),
     esercizi = new Map(),
     varianti = new Map(),
@@ -342,7 +342,7 @@ export function calcolaSegnali(ctx) {
   const out = [];
   const agg = (s) => out.push({ ...s, data: oggi });
   const nome = (id) => esercizi.get(id)?.nome || id;
-  const complete = sedute.filter((s) => s.stato === "completata");
+  const complete = allenamenti.filter((s) => s.stato === "completata");
   const ultime = complete.slice(0, 4);
 
   // --- cardio fuori protocollo -------------------------------------------
@@ -355,11 +355,11 @@ export function calcolaSegnali(ctx) {
       id: "seg_cardio_protocollo",
       tipo: "cardioFuoriProtocollo",
       gravita: "attenzione",
-      messaggio: `Cardio fuori protocollo in ${fuori.length} ${fuori.length === 1 ? "seduta" : "sedute"} su ${cardio.length}.`,
+      messaggio: `Cardio fuori protocollo in ${fuori.length} ${fuori.length === 1 ? "allenamento" : "allenamenti"} su ${cardio.length}.`,
       dettaglio:
         `Target ${num(regole.cardio.kmhMin)}-${num(regole.cardio.kmhMax)} km/h. ` +
         fuori.map((s) => `${dataBreve(s.data)}: ${num(s.cardio.kmh)} km/h`).join(" · ") +
-        ". Il cardio in coda alla seduta serve a restare in zona bassa, non a fare un secondo allenamento.",
+        ". Il cardio in coda all'allenamento serve a restare in zona bassa, non a fare un secondo allenamento.",
       riferimenti: fuori.map((s) => s.id),
     });
   }
@@ -394,7 +394,7 @@ export function calcolaSegnali(ctx) {
       id: "seg_polso",
       tipo: "patternPolso",
       gravita: "attenzione",
-      messaggio: `Polso destro dolente in ${conPolso.length} delle ultime ${ultime.length} sedute.`,
+      messaggio: `Polso destro dolente in ${conPolso.length} degli ultimi ${ultime.length} allenamenti.`,
       dettaglio: `Esercizi coinvolti: ${[...esercizi_].join(", ")}. Non è più un episodio isolato: prima di caricare oltre va cambiato qualcosa nella presa o nell'esercizio.`,
       riferimenti: conPolso.map((s) => s.id),
     });
@@ -481,7 +481,7 @@ export function calcolaSegnali(ctx) {
       id: "seg_buchi_dati",
       tipo: "buchiDati",
       gravita: "info",
-      messaggio: `Dati incompleti in ${buchi.length} delle ultime ${ultime.length} sedute.`,
+      messaggio: `Dati incompleti in ${buchi.length} degli ultimi ${ultime.length} allenamenti.`,
       dettaglio: `${buchi.join(" · ")}. Un'esposizione incompleta blocca ogni proposta su quell'esercizio: non è prudenza, è che la regola non è verificabile.`,
       riferimenti: [],
     });

@@ -17,7 +17,7 @@ const ETICHETTE_MISURE = {
 };
 
 const SCELTE = [
-  { id: "seduta", nome: "Log dell'ultima seduta", sub: "formato §12, con recuperi e densità reali" },
+  { id: "seduta", nome: "Log dell'ultimo allenamento", sub: "formato §12, con recuperi e densità reali" },
   { id: "salute", nome: "Dati salute e finestre", sub: "movimento, sonno, stato delle 3 settimane" },
   { id: "proposte", nome: "Proposte in sospeso", sub: "con le quattro domande già compilate" },
   { id: "corpo", nome: "Misure e indici", sub: "solo se registrate" },
@@ -118,7 +118,7 @@ async function componi(stato) {
   const contenuto = [];
 
   if (stato.seduta) {
-    const tutte = await store.sedute();
+    const tutte = await store.allenamenti();
     const ultima = tutte.find((s) => s.stato === "completata");
     if (ultima) {
       const serie = await store.serieDi(ultima.id);
@@ -132,7 +132,7 @@ async function componi(stato) {
           giornoSplit: store.giornoSplit,
         })
       );
-      contenuto.push(`seduta del ${dataBreve(ultima.data)}`);
+      contenuto.push(`allenamento del ${dataBreve(ultima.data)}`);
     }
   }
 
