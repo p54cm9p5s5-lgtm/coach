@@ -1,30 +1,33 @@
 import {
   h, qs, clear, toast, mmss, num, chiedi, sheet,
   avviaAllarme, fermaAllarme, allarmeAttivo, sbloccaAudio, tick,
-  tieniSchermoAcceso, rilasciaSchermo, durataUmana, aggiungi } from "../ui.js";
+  tieniSchermoAcceso, rilasciaSchermo, durataUmana, isoDate, dataLunga, aggiungi } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { descriviDischi, carichoPiuVicino } from "../plates.js";
 
-export const nascondiTabBar = true;
+export let nascondiTabBar = true;
 
 let S = null; // stato in memoria della sessione aperta
 
-export async function render({ vaiA }) {
+function parametri() {
+  const q = location.hash.split("?")[1] || "";
+  return Object.fromEntries(new URLSearchParams(q));
+}
+
+export async function render({ vaiA, ridisegna }) {
+  const p = parametri();
+  if (p.riepilogo) {
+    nascondiTabBar = false;
+    return vistaRisultato(p.riepilogo, vaiA);
+  }
+
   const sed = await store.sedutaInCorso();
   if (!sed) {
-    const wrap = h("div.screen");
-    aggiungi(wrap, intestazione("Allenamento"));
-    aggiungi(wrap, 
-      h(
-        "div.empty",
-        h("h3", "Nessun allenamento aperto"),
-        h("p", "Gli allenamenti si avviano dalla Home."),
-        h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("oggi") }, "Vai alla Home"))
-      )
-    );
-    return wrap;
+    nascondiTabBar = false;
+    return vistaProgramma(vaiA, ridisegna);
   }
+  nascondiTabBar = true;
 
   const giorno = store.giornoSplit(sed.tipoId);
   S = {
@@ -41,6 +44,303 @@ export async function render({ vaiA }) {
   tieniSchermoAcceso();
   await disegna();
   return S.contenitore;
+}
+
+
+// ---------- programma del giorno (nessun allenamento in corso) ----------
+
+async function vistaProgramma(vaiA, ridisegna) {
+  const oggi = isoDate();
+  const wrap = h("div.screen");
+  const previsto = store.giornoPrevisto(oggi);
+  const fatteOggi = (await store.allenamenti()).filter(
+    (s) => s.data === oggi && s.stato === "completata"
+  );
+
+  aggiungi(wrap, intestazione("Oggi"));
+
+  if (!store.programma()) {
+    aggiungi(wrap,
+      h("div.empty", h("h3", "Nessun programma caricato"), h("p", "Carica il master brief dalle impostazioni."))
+    );
+    return wrap;
+  }
+
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h("h2", dataLunga(oggi)),
+      h(
+        "div",
+        { style: "background:var(--bg-grouped);border-radius:14px;padding:18px 16px" },
+        h(
+          "p",
+          { style: "margin:0;font-size:24px;font-weight:700;letter-spacing:-0.5px;text-align:center" },
+          previsto ? previsto.nome : "Riposo"
+        ),
+        previsto
+          ? h(
+              "p",
+              { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);text-align:center" },
+              `${previsto.esercizi.length} esercizi${previsto.cardio ? " + cardio" : ""}` +
+                (fatteOggi.some((s) => s.tipoId === previsto.id) ? " · già completato oggi" : "")
+            )
+          : h(
+              "p",
+              { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);text-align:center" },
+              "Lo split non prevede allenamenti oggi"
+            )
+      )
+    )
+  );
+
+  if (previsto) {
+    const inv = await store.inventario();
+    const lista = h("div.list");
+    for (const v of previsto.esercizi) {
+      const def = store.esercizio(v.esercizioId);
+      const carico = v.carico != null ? v.carico : await store.ultimoCarico(v.esercizioId, null);
+      const dischi =
+        carico != null && def?.attrezzo === "bilanciere" ? descriviDischi(carico, inv) : null;
+      aggiungi(lista,
+        h(
+          "div.row",
+          h(
+            "div.main",
+            h("span.title", def?.nome || v.esercizioId),
+            h(
+              "span.sub",
+              [
+                v.aTempo ? `${v.serie} × ${v.durataSec}s` : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`,
+                dischi,
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            )
+          ),
+          h("span.value", carico != null ? `${num(carico)} kg` : "corpo libero")
+        )
+      );
+    }
+    if (previsto.cardio) {
+      const r = store.regole().cardio;
+      aggiungi(lista,
+        h(
+          "div.row",
+          h(
+            "div.main",
+            h("span.title", "Cardio"),
+            h("span.sub", `${r.durataMin} min · ${num(r.kmhMin)}-${num(r.kmhMax)} km/h · FC ${r.fcMin}-${r.fcMax}`)
+          )
+        )
+      );
+    }
+    aggiungi(wrap, h("div.group", h("h2", "In programma"), lista));
+  }
+
+  aggiungi(wrap,
+    h(
+      "div.btn-wrap",
+      previsto
+        ? h(
+            "button.btn",
+            {
+              onclick: async () => {
+                await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
+                await ridisegna();
+              },
+            },
+            "Inizia allenamento"
+          )
+        : null,
+      previsto ? h("div", { style: "height:8px" }) : null,
+      h(
+        "button.btn.secondary",
+        { onclick: () => cambiaAllenamento(ridisegna) },
+        previsto ? "Cambia allenamento" : "Allenati comunque"
+      )
+    )
+  );
+
+  return wrap;
+}
+
+async function cambiaAllenamento(ridisegna) {
+  const giorni = store.giorniSplit();
+  const scelta = await chiedi({
+    titolo: "Quale allenamento?",
+    testo: "Viene registrato quello che fai davvero, non quello in programma.",
+    opzioni: giorni.map((g) => ({ etichetta: g.nome, valore: g.id })),
+  });
+  if (!scelta) return;
+  await store.iniziaSeduta({ data: isoDate(), giornoId: scelta });
+  await ridisegna();
+}
+
+// ---------- risultato dell'allenamento appena chiuso ----------
+
+async function vistaRisultato(id, vaiA) {
+  const wrap = h("div.screen");
+  const sed = await store.seduta(id);
+  aggiungi(wrap, intestazione("Risultato", { etichetta: "Fine", onclick: () => (location.hash = "#/seduta") }));
+
+  if (!sed) {
+    aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
+    return wrap;
+  }
+
+  const serie = await store.serieDi(id);
+  const logs = await store.questionariDi(id);
+  const durataSec = sed.oraFine ? Math.round((sed.oraFine - sed.oraInizio) / 1000) : null;
+  const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
+  const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
+  const volume = serie.reduce((t, s) => t + (s.carico || 0) * (s.ripFatte || 0), 0);
+  const valutati = logs.filter((l) => !l.saltato && l.rpe != null);
+  const rpeMedio = valutati.length ? valutati.reduce((a, b) => a + b.rpe, 0) / valutati.length : null;
+  const tecMedia = valutati.length ? valutati.reduce((a, b) => a + (b.tecnica || 0), 0) / valutati.length : null;
+
+  aggiungi(wrap,
+    h(
+      "div.hero",
+      { style: "padding-top:8px" },
+      h("p.kicker", dataLunga(sed.data)),
+      h("h2", sed.tipoNome),
+      h("p.target", durataSec ? durataUmana(durataSec) : "durata non registrata")
+    )
+  );
+
+  const scheda = (etichetta, valore, nota) =>
+    h(
+      "div",
+      { style: "background:var(--bg-grouped);border-radius:12px;padding:13px" },
+      h("p", { style: "margin:0;font-size:11px;color:var(--label-secondary)" }, etichetta),
+      h(
+        "p",
+        { style: "margin:4px 0 0;font-size:20px;font-weight:700;letter-spacing:-0.4px;font-variant-numeric:tabular-nums" },
+        valore
+      ),
+      nota ? h("p", { style: "margin:2px 0 0;font-size:11px;color:var(--label-tertiary)" }, nota) : null
+    );
+
+  aggiungi(wrap,
+    h(
+      "div",
+      { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
+      scheda("Volume sollevato", volume ? `${Math.round(volume)} kg` : "—", "carico × ripetizioni"),
+      scheda("Serie", String(serie.length), durataSec ? `${(serie.length / (durataSec / 60)).toFixed(2).replace(".", ",")} al minuto` : null),
+      scheda("RPE medio", rpeMedio != null ? num(rpeMedio) : "—", tecMedia != null ? `tecnica ${num(tecMedia)}` : `zona ${store.regole().rpeTarget.min}-${store.regole().rpeTarget.max}`),
+      scheda("Recupero medio", recMedio != null ? mmss(recMedio) : "—", "cronometrato dall'app")
+    )
+  );
+
+  // confronto con l'esposizione precedente, esercizio per esercizio
+  const righe = h("div.list");
+  for (const l of logs) {
+    const def = store.esercizio(l.esercizioId);
+    if (l.saltato) {
+      aggiungi(righe,
+        h(
+          "div.row",
+          h("div.main", h("span.title", def?.nome || l.esercizioId), h("span.sub", `saltato — ${l.saltato.motivo}`)),
+          h("span.pill.warn", "non svolto")
+        )
+      );
+      continue;
+    }
+    const mie = serie.filter((s) => s.esercizioId === l.esercizioId);
+    const carico = mie.at(-1)?.carico ?? null;
+    const rip = mie.map((s) => s.ripFatte ?? "—").join("/");
+
+    const storiche = (await store.esposizioni(l.esercizioId)).filter((e) => e.sedutaId !== id);
+    const prima = storiche[0];
+    let confronto = null;
+    if (prima?.caricoLavoro != null && carico != null) {
+      const d = carico - prima.caricoLavoro;
+      confronto = d === 0 ? "stesso carico" : `${d > 0 ? "+" : ""}${num(d)} kg dalla volta prima`;
+    } else if (!prima) confronto = "prima volta";
+
+    aggiungi(righe,
+      h(
+        "div.row",
+        h(
+          "div.main",
+          h("span.title", def?.nome || l.esercizioId),
+          h("span.sub", [carico != null ? `${num(carico)} kg` : "corpo libero", `${mie.length}×${rip}`, confronto].filter(Boolean).join(" · "))
+        ),
+        h("span.value", `RPE ${l.rpe ?? "—"}`),
+        l.dolorePolso ? h("span.pill.bad", "polso") : null
+      )
+    );
+  }
+  aggiungi(wrap, h("div.group", h("h2", "Esercizio per esercizio"), righe));
+
+  if (sed.cardio?.previsto) {
+    const r = store.regole().cardio;
+    const fuori = sed.cardio.eseguito && sed.cardio.kmh > r.kmhMax;
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h("h2", "Cardio"),
+        h(
+          "div.list",
+          h(
+            "div.row",
+            h(
+              "div.main",
+              h("span.title", sed.cardio.eseguito ? `${num(sed.cardio.kmh)} km/h per ${sed.cardio.durataMin} min` : "Non eseguito"),
+              h("span.sub", `previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h`)
+            ),
+            fuori ? h("span.pill.warn", "sopra protocollo") : sed.cardio.eseguito ? h("span.pill.ok", "a protocollo") : null
+          )
+        )
+      )
+    );
+  }
+
+  const mancanti = logs.filter((l) => !l.saltato && (l.rpe == null || l.tecnica == null));
+  if (mancanti.length) {
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h("h2", "Dati mancanti"),
+        h("div.list", ...mancanti.map((l) => h("div.row", h("div.main", h("span.title", store.esercizio(l.esercizioId)?.nome || l.esercizioId)))))
+      )
+    );
+  }
+
+  aggiungi(wrap, bloccoStretchingPer(sed.tipoId));
+
+  aggiungi(wrap,
+    h(
+      "div.btn-wrap",
+      h("button.btn", { onclick: () => vaiA("export") }, "Claude"),
+      h("div", { style: "height:8px" }),
+      h("button.btn.secondary", { onclick: () => (location.hash = "#/oggi") }, "Torna alla Home")
+    )
+  );
+
+  return wrap;
+}
+
+function bloccoStretchingPer(tipoId) {
+  const prot = store.riscaldamento(tipoId);
+  const voci = prot?.stretchingFinale || [];
+  if (!voci.length) return null;
+  return h(
+    "div.group",
+    h("h2", "Stretching di fine allenamento"),
+    h(
+      "div.guida",
+      { style: "margin:0" },
+      ...voci.map((s, i) =>
+        h(
+          "div.passo",
+          h("div.n", String(i + 1)),
+          h("div.testo", h("span.nome", s.nome), h("span.dose", s.dose), h("span.come", s.come))
+        )
+      )
+    )
+  );
 }
 
 // ---------- utilità di stato ----------
@@ -1107,11 +1407,11 @@ async function vistaFine(corpo, piede) {
         rilasciaSchermo();
         toast(
           proposte.create
-            ? `Seduta chiusa. ${proposte.create} ${proposte.create === 1 ? "nuova proposta" : "nuove proposte"} in Oggi.`
+            ? `Allenamento chiuso. ${proposte.create} ${proposte.create === 1 ? "nuova proposta" : "nuove proposte"} in Home.`
             : "Allenamento chiuso e salvato.",
           proposte.create ? 4000 : 2200
         );
-        S.vaiA("storico");
+        location.hash = `#/seduta?riepilogo=${S.sed.id}`;
       }),
     }, "Chiudi allenamento"),
     h("button.btn.secondary", {
