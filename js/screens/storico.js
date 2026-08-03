@@ -101,22 +101,66 @@ async function elenco(vaiA) {
 
   const dec = await store.decisioni();
   if (dec.length) {
-    aggiungi(wrap, 
+    aggiungi(wrap,
       h(
         "div.group",
         h("h2", "Registro decisioni"),
         h(
           "div.list",
-          ...dec.slice(0, 12).map((d) =>
-            h(
-              "div.row",
-              h("div.main", h("span.title", d.oggetto), h("span.sub", `${dataBreve(d.data)} · ${d.testo}`))
-            )
-          )
+          ...dec.slice(0, 20).map((d) => {
+            const riga = d.propostaId
+              ? h("a.row", { href: `#/proposte?proposta=${d.propostaId}` })
+              : h("div.row");
+            aggiungi(
+              riga,
+              h(
+                "div.main",
+                h("span.title", d.oggetto),
+                h(
+                  "span.sub",
+                  `${dataBreve(d.data)}${d.livello ? ` · livello ${d.livello}` : ""} · ${d.testo}`
+                ),
+                d.dataVerifica
+                  ? h(
+                      "span.sub",
+                      d.esitoVerifica
+                        ? `Verificata il ${dataBreve(d.esitoVerifica.data)}: ${d.esitoVerifica.esito === "confermata" ? "confermata" : "non confermata"}`
+                        : `Verifica prevista il ${dataBreve(d.dataVerifica)}`
+                    )
+                  : null
+              ),
+              d.dataVerifica && !d.esitoVerifica ? h("span.pill.warn", "in verifica") : null,
+              d.propostaId ? h("span.chevron", "›") : null
+            );
+            return riga;
+          })
+        ),
+        h(
+          "p.footnote",
+          `${dec.length} ${dec.length === 1 ? "decisione registrata" : "decisioni registrate"}. Ogni modifica accettata porta una data di verifica: senza esito resta aperta.`
         )
       )
     );
   }
+
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h(
+        "div.list",
+        h(
+          "a.row",
+          { href: "#/proposte" },
+          h(
+            "div.main",
+            h("span.title", "Proposte e segnali"),
+            h("span.sub", "Progressioni proposte dal motore, segnali aperti e verifiche in scadenza")
+          ),
+          h("span.chevron", "›")
+        )
+      )
+    )
+  );
 
   return wrap;
 }

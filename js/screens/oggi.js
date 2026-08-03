@@ -1,5 +1,6 @@
-import { h, isoDate, dataLunga, chiedi, num, aggiungi } from "../ui.js";
+import { h, isoDate, dataLunga, dataBreve, chiedi, num, aggiungi } from "../ui.js";
 import { intestazione } from "../app.js";
+import { nomeLivello } from "../segnali.js";
 import * as store from "../store.js";
 
 async function daFare() {
@@ -71,7 +72,11 @@ export async function render({ vaiA, ridisegna }) {
     return wrap;
   }
 
-  aggiungi(wrap, 
+  // Il motore gira qui, a dati fermi: le sedute in corso non entrano nelle
+  // esposizioni, quindi nessuna proposta nasce da una seduta a metà.
+  await store.aggiornaMotore();
+
+  aggiungi(wrap,
     h("div.group", h("div.list", h("div.row", h("div.main", h("span.title", dataLunga(oggi))))))
   );
 
@@ -98,6 +103,7 @@ export async function render({ vaiA, ridisegna }) {
         h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("seduta") }, "Riprendi seduta"))
       )
     );
+    aggiungi(wrap, await bloccoProposte());
     aggiungi(wrap, await bloccoDaFare(vaiA));
     return wrap;
   }
@@ -217,6 +223,7 @@ export async function render({ vaiA, ridisegna }) {
     );
   }
 
+  aggiungi(wrap, await bloccoProposte());
   aggiungi(wrap, await bloccoDaFare(vaiA));
 
   const fin = await statoFinestre();
@@ -244,6 +251,67 @@ export async function render({ vaiA, ridisegna }) {
   }
 
   return wrap;
+}
+
+/** Proposte in sospeso, verifiche scadute e segnali aperti, in un blocco solo. */
+async function bloccoProposte() {
+  const sospese = await store.proposteInSospeso();
+  const verifiche = await store.verificheDovute();
+  const avvisi = await store.segnali();
+  const attenzione = avvisi.filter((s) => s.gravita === "attenzione");
+  if (!sospese.length && !verifiche.length && !avvisi.length) return null;
+
+  const lista = h("div.list");
+  for (const p of verifiche) {
+    aggiungi(
+      lista,
+      h(
+        "a.row",
+        { href: `#/proposte?proposta=${p.id}` },
+        h("div.main", h("span.title", p.titolo), h("span.sub", `Verifica prevista il ${dataBreve(p.dataVerifica)}`)),
+        h("span.pill.warn", "da verificare"),
+        h("span.chevron", "›")
+      )
+    );
+  }
+  for (const p of sospese) {
+    aggiungi(
+      lista,
+      h(
+        "a.row",
+        { href: `#/proposte?proposta=${p.id}` },
+        h(
+          "div.main",
+          h("span.title", p.titolo),
+          h("span.sub", `Livello ${p.livelloGerarchia} — ${nomeLivello(p.livelloGerarchia)}`)
+        ),
+        h("span.chevron", "›")
+      )
+    );
+  }
+  if (avvisi.length) {
+    aggiungi(
+      lista,
+      h(
+        "a.row",
+        { href: "#/proposte" },
+        h(
+          "div.main",
+          h("span.title", `${avvisi.length} ${avvisi.length === 1 ? "segnale aperto" : "segnali aperti"}`),
+          attenzione.length ? h("span.sub", attenzione[0].messaggio) : null
+        ),
+        attenzione.length ? h("span.pill.warn", "attenzione") : h("span.pill", "info"),
+        h("span.chevron", "›")
+      )
+    );
+  }
+
+  return h(
+    "div.group",
+    h("h2", "Proposte e segnali"),
+    lista,
+    h("p.footnote", "L'app propone, non applica: la decisione resta all'atleta.")
+  );
 }
 
 async function bloccoDaFare(vaiA) {

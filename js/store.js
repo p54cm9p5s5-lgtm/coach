@@ -3,6 +3,7 @@
 import * as db from "./db.js";
 import { isoDate, weekdayOf, giorniTra } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
+import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello } from "./segnali.js";
 
 let LIBRERIA = null;
 let PROGRAMMA = null;
@@ -176,8 +177,26 @@ export function regole() {
     rpeTarget: { min: 6, max: 8 },
     cardio: { kmhMin: 4.5, kmhMax: 5, fcMin: 105, fcMax: 115, fcLimite: 125, durataMin: 30 },
     progressione: { esposizioniMinime: 2, rpePerSalire: 7, tecnicaMinima: 8, tecnicaRiduzione: 5 },
+    finestra: { settimane: 3, minimoSettimana: 5, soglia: 0.2 },
     ...r,
   };
+}
+
+/** La riga dello split che riguarda un esercizio: serie, range, carico di partenza. */
+export function varianteDi(esercizioId) {
+  for (const g of giorniSplit()) {
+    const v = (g.esercizi || []).find((x) => x.esercizioId === esercizioId);
+    if (v) return v;
+  }
+  return null;
+}
+
+export function varianti() {
+  const m = new Map();
+  for (const g of giorniSplit()) {
+    for (const v of g.esercizi || []) if (!m.has(v.esercizioId)) m.set(v.esercizioId, v);
+  }
+  return m;
 }
 
 // ---------- sedute ----------
@@ -450,7 +469,14 @@ export const ETICHETTE_PATTERN = {
 
 // ---------- decisioni ----------
 
-export async function registraDecisione({ oggetto, livello, testo, fonte = "app", dataVerifica = null }) {
+export async function registraDecisione({
+  oggetto,
+  livello,
+  testo,
+  fonte = "app",
+  dataVerifica = null,
+  propostaId = null,
+}) {
   const rec = {
     id: db.nuovoId("dec"),
     data: isoDate(),
@@ -459,6 +485,8 @@ export async function registraDecisione({ oggetto, livello, testo, fonte = "app"
     testo,
     fonte,
     dataVerifica,
+    esitoVerifica: null,
+    propostaId,
     creatoIl: new Date().toISOString(),
   };
   await db.put("decisioni", rec);
@@ -468,6 +496,281 @@ export async function registraDecisione({ oggetto, livello, testo, fonte = "app"
 export async function decisioni() {
   const r = await db.all("decisioni");
   return r.sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1));
+}
+
+// ---------- proposte ----------
+
+export async function proposte(stato = null) {
+  const r = await db.all("proposte");
+  const f = stato ? r.filter((p) => p.stato === stato) : r;
+  return f.sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1));
+}
+
+export const proposteInSospeso = () => proposte("inSospeso");
+
+export async function proposta(id) {
+  return db.get("proposte", id);
+}
+
+/**
+ * Ricalcola le proposte di progressione per tutto lo split.
+ *
+ * Il motore è senza memoria: ogni giro riparte dai dati. Quello che la memoria
+ * serve a evitare è ripetere una proposta a cui l'atleta ha già risposto —
+ * accettata o rifiutata non si ripropone, rimandata torna dopo la prossima
+ * esposizione. Una proposta in sospeso che non regge più ai dati viene tolta:
+ * meglio niente che un consiglio scaduto.
+ */
+export async function aggiornaProposte(cache = null) {
+  if (!PROGRAMMA) return { create: 0, tolte: 0 };
+  const oggi = isoDate();
+  const reg = regole();
+  const inv = await inventario();
+  const esistenti = await db.all("proposte");
+  let create = 0;
+  let tolte = 0;
+
+  for (const [esercizioId, variante] of varianti()) {
+    const def = esercizio(esercizioId);
+    if (!def || def.archiviato) continue;
+
+    const esp = cache?.get(esercizioId) ?? (await esposizioni(esercizioId));
+    const { proposta: nuova } = valutaProgressione({
+      variante,
+      def,
+      esposizioni: esp,
+      regole: reg,
+      inventario: inv,
+      oggi,
+    });
+
+    const mie = esistenti.filter((p) => p.esercizioId === esercizioId);
+    const sospese = mie.filter((p) => p.stato === "inSospeso");
+
+    if (!nuova) {
+      for (const p of sospese) {
+        await db.del("proposte", p.id);
+        tolte++;
+      }
+      continue;
+    }
+
+    const firma = firmaProposta(nuova);
+    const rispostaPrec = mie
+      .filter((p) => p.firma === firma && p.stato !== "inSospeso")
+      .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))[0];
+
+    if (rispostaPrec) {
+      if (rispostaPrec.stato !== "rimandata") continue;
+      // rimandata: torna solo quando c'è un dato nuovo
+      if (esp.length <= (rispostaPrec.esposizioniAllaData ?? 0)) continue;
+    }
+
+    if (sospese.some((p) => p.firma === firma)) continue;
+
+    for (const p of sospese) {
+      await db.del("proposte", p.id);
+      tolte++;
+    }
+    await db.put("proposte", {
+      id: db.nuovoId("pro"),
+      data: oggi,
+      stato: "inSospeso",
+      firma,
+      esposizioniAllaData: esp.length,
+      esitoVerifica: null,
+      rispostoIl: null,
+      creatoIl: new Date().toISOString(),
+      fonte: "app",
+      ...nuova,
+    });
+    create++;
+  }
+
+  return { create, tolte };
+}
+
+/**
+ * Perché un esercizio non ha una proposta. Serve a rendere visibile il
+ * silenzio del motore: «nessuna proposta» senza motivo è indistinguibile da
+ * un motore rotto.
+ */
+export async function diagnosiProgressione() {
+  const reg = regole();
+  const inv = await inventario();
+  const out = [];
+  for (const [esercizioId, variante] of varianti()) {
+    const def = esercizio(esercizioId);
+    if (!def || def.archiviato) continue;
+    const esp = await esposizioni(esercizioId);
+    const { proposta, motivo } = valutaProgressione({
+      variante,
+      def,
+      esposizioni: esp,
+      regole: reg,
+      inventario: inv,
+      oggi: isoDate(),
+    });
+    out.push({ esercizioId, nome: def.nome, esposizioni: esp.length, proposta, motivo });
+  }
+  return out;
+}
+
+const ETICHETTA_ESITO = {
+  accettata: "accettata",
+  rifiutata: "rifiutata",
+  rimandata: "rimandata",
+};
+
+/** Accetto / Rifiuto / Rimando. L'esito finisce sempre nel registro decisioni. */
+export async function rispondiAProposta(id, stato, { nota = null } = {}) {
+  const p = await db.get("proposte", id);
+  if (!p) throw new Error("Questa proposta non esiste più.");
+  if (!ETICHETTA_ESITO[stato]) throw new Error(`Esito non previsto: ${stato}.`);
+
+  const agg = { ...p, stato, rispostoIl: new Date().toISOString(), notaRisposta: nota };
+  await db.put("proposte", agg);
+
+  await registraDecisione({
+    oggetto: p.titolo,
+    livello: p.livelloGerarchia,
+    testo:
+      `Proposta ${ETICHETTA_ESITO[stato]} (livello ${p.livelloGerarchia} — ${nomeLivello(p.livelloGerarchia)}).` +
+      (nota ? ` Nota: ${nota}` : ""),
+    fonte: "app",
+    dataVerifica: stato === "accettata" ? p.dataVerifica : null,
+    propostaId: p.id,
+  });
+
+  return agg;
+}
+
+/**
+ * L'obiettivo in vigore per un esercizio: viene da una proposta accettata e
+ * vale per la prossima esposizione, poi il motore rivaluta sui dati nuovi.
+ */
+export async function obiettivoCorrente(esercizioId) {
+  const mie = (await db.byIndex("proposte", "esercizioId", esercizioId))
+    .filter((p) => p.stato === "accettata")
+    .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1));
+  const p = mie[0];
+  if (!p) return null;
+  const esp = await esposizioni(esercizioId);
+  if (esp.length !== p.esposizioniAllaData) return null; // già consumato da una nuova esposizione
+  return { carico: p.a.carico, rip: p.a.rip, tipo: p.tipo, propostaId: p.id, titolo: p.titolo };
+}
+
+/** Proposte accettate arrivate alla data di verifica e ancora senza esito. */
+export async function verificheDovute() {
+  const oggi = isoDate();
+  const r = await db.all("proposte");
+  return r
+    .filter((p) => p.stato === "accettata" && !p.esitoVerifica && p.dataVerifica && p.dataVerifica <= oggi)
+    .sort((a, b) => (a.dataVerifica < b.dataVerifica ? -1 : 1));
+}
+
+export async function chiudiVerifica(id, esito, { nota = null } = {}) {
+  const p = await db.get("proposte", id);
+  if (!p) throw new Error("Questa proposta non esiste più.");
+  const agg = { ...p, esitoVerifica: { esito, nota, data: isoDate() } };
+  await db.put("proposte", agg);
+
+  const decs = await db.all("decisioni");
+  const legata = decs.filter((d) => d.propostaId === id).sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))[0];
+  if (legata) await db.put("decisioni", { ...legata, esitoVerifica: { esito, nota, data: isoDate() } });
+
+  await registraDecisione({
+    oggetto: `Verifica: ${p.titolo}`,
+    livello: p.livelloGerarchia,
+    testo: esito === "confermata" ? `Confermata.${nota ? ` ${nota}` : ""}` : `Non confermata.${nota ? ` ${nota}` : ""}`,
+    fonte: "app",
+    propostaId: id,
+  });
+
+  return agg;
+}
+
+// ---------- segnali ----------
+
+export async function segnali({ inclusiArchiviati = false } = {}) {
+  const r = await db.all("segnali");
+  const f = inclusiArchiviati ? r : r.filter((s) => !s.archiviato);
+  const peso = { attenzione: 0, info: 1 };
+  return f.sort((a, b) => (peso[a.gravita] ?? 2) - (peso[b.gravita] ?? 2));
+}
+
+/**
+ * Ricalcola i segnali. Gli id sono deterministici: un segnale che persiste
+ * viene riscritto, non duplicato, e quello che non regge più sparisce.
+ * L'archiviazione decisa dall'atleta sopravvive al ricalcolo, ma solo finché
+ * il messaggio resta identico: se il segnale cambia, torna a farsi vedere.
+ */
+export async function aggiornaSegnali(cache = null) {
+  const complete = (await sedute()).filter((s) => s.stato === "completata");
+  // I segnali guardano indietro di quattro sedute: leggere i questionari di
+  // tutto lo storico a ogni giro sarebbe lavoro buttato via.
+  const logsPerSeduta = new Map();
+  for (const s of complete.slice(0, 4)) logsPerSeduta.set(s.id, await questionariDi(s.id));
+
+  const mappaVarianti = varianti();
+  const esposizioniPerEsercizio = cache || (await mappaEsposizioni());
+
+  const giorni = await giorniSalute();
+  const nottiTutte = await notti();
+  const reg = regole();
+  const conf = { settimane: reg.finestra.settimane, minimoSettimana: reg.finestra.minimoSettimana };
+
+  const nuovi = calcolaSegnali({
+    sedute: complete,
+    logsPerSeduta,
+    esercizi: new Map(libreria().map((e) => [e.id, e])),
+    varianti: mappaVarianti,
+    esposizioniPerEsercizio,
+    giorniSalute: giorni,
+    notti: nottiTutte,
+    finestraMovimento: giorni.length ? statoFinestra(giorni, conf) : null,
+    finestraSonno: nottiTutte.length ? statoFinestra(nottiTutte, conf) : null,
+    regole: reg,
+    oggi: isoDate(),
+  });
+
+  const vecchi = new Map((await db.all("segnali")).map((s) => [s.id, s]));
+  const vivi = new Set(nuovi.map((s) => s.id));
+
+  for (const s of nuovi) {
+    const prec = vecchi.get(s.id);
+    const invariato = prec && prec.messaggio === s.messaggio && prec.dettaglio === s.dettaglio;
+    await db.put("segnali", {
+      ...s,
+      archiviato: invariato ? Boolean(prec.archiviato) : false,
+      creatoIl: prec?.creatoIl || new Date().toISOString(),
+    });
+  }
+  for (const id of vecchi.keys()) if (!vivi.has(id)) await db.del("segnali", id);
+
+  return nuovi.length;
+}
+
+export async function archiviaSegnale(id) {
+  const s = await db.get("segnali", id);
+  if (!s) return null;
+  const agg = { ...s, archiviato: true };
+  await db.put("segnali", agg);
+  return agg;
+}
+
+async function mappaEsposizioni() {
+  const m = new Map();
+  for (const id of varianti().keys()) m.set(id, await esposizioni(id));
+  return m;
+}
+
+/** Un solo giro: proposte e segnali si ricalcolano insieme, sugli stessi dati. */
+export async function aggiornaMotore() {
+  const cache = await mappaEsposizioni();
+  const p = await aggiornaProposte(cache);
+  const s = await aggiornaSegnali(cache);
+  return { proposte: p, segnali: s };
 }
 
 // ---------- misure ----------

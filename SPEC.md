@@ -269,6 +269,26 @@ Ogni proposta si presenta con **le 4 domande già compilate**, il livello della
 gerarchia dichiarato e una data di verifica. Tre tasti: Accetto / Rifiuto / Rimando.
 L'esito finisce nel registro decisioni.
 
+**Definizioni operative** (scelte in fase 4, servono a rendere le regole calcolabili):
+
+- *Ripetizioni di una esposizione* = la **serie peggiore**, non la media: se una
+  serie resta indietro l'esercizio non è stato completato.
+- *Ripetizioni mancate* = serie peggiore sotto `ripMin`, cioè sotto il fondo del
+  range. *Tetto del range* = serie peggiore a `ripMax`.
+- *Riduzione per tecnica* è **livello 1** (correzione della tecnica), non 4:
+  il carico è il mezzo, la tecnica è l'oggetto. Basta una sola osservazione,
+  come previsto dal §7 del master brief per i livelli 1-2. Lo scarico è del 10%,
+  arrotondato al carico componibile inferiore.
+- *Incremento di carico*: il più piccolo realizzabile con l'inventario per il
+  bilanciere, 1 kg per manubri e macchine (stesso passo del selettore in seduta).
+- *Corpo libero al tetto del range*: nessuna proposta automatica ma un segnale.
+  La variante più difficile è una scelta da fare in conversazione, non un calcolo.
+- Una proposta **accettata** vale come obiettivo per la **prossima esposizione**:
+  compare in Modalità Seduta e poi il motore rivaluta sui dati nuovi.
+  **Rifiutata** non torna finché i dati restano quelli; **rimandata** torna dopo
+  la prossima esposizione. Una proposta in sospeso che non regge più ai dati
+  viene tolta: meglio niente che un consiglio scaduto.
+
 ### 4.7 Impostazioni
 - **Carica master brief (.md)** → aggiorna **programma e regole**, mai i dati
   registrati. Mostra un riepilogo delle differenze prima di applicare.
@@ -313,15 +333,17 @@ impostazioni.
 
 ## 7. Ordine di costruzione
 
-| Fase | Contenuto | Utilizzabile da sola |
-|---|---|---|
-| 1 | Modalità Seduta completa + programma + storico + seed dal brief | sì, ci si allena |
-| 2 | Corpo: misure, pressione, foto con guida | sì |
-| 3 | Ponte Salute: sonda, import, tabelle, finestre | sì |
-| 4 | Segnali, proposte di progressione, registro decisioni | sì |
-| 5 | Export per la chat, caricamento .md, backup, rifinitura | completa |
+| Fase | Contenuto | Utilizzabile da sola | Stato |
+|---|---|---|---|
+| 1 | Modalità Seduta completa + programma + storico + seed dal brief | sì, ci si allena | fatta |
+| 2 | Corpo: misure, pressione, foto con guida | sì | fatta |
+| 3 | Ponte Salute: sonda, import, tabelle, finestre | sì | fatta |
+| 4 | Segnali, proposte di progressione, registro decisioni | sì | fatta |
+| 5 | Export per la chat, caricamento .md, backup, rifinitura | completa | da fare |
 
 Ogni fase si chiude solo quando è verificata sul dispositivo simulato e usabile.
+Il motore della fase 4 è deterministico e quindi verificabile fuori dal telefono:
+`tools/prova.sh`.
 
 ---
 
