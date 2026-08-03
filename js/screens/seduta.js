@@ -73,7 +73,12 @@ async function vistaProgramma(vaiA, ridisegna) {
       h("h2", dataLunga(oggi)),
       h(
         "div",
-        { style: "background:var(--bg-grouped);border-radius:14px;padding:18px 16px" },
+        {
+          // Nei giorni di riposo resta neutro: il lime segnala che c'è da fare.
+          style: previsto
+            ? "background:var(--accent);color:var(--su-accent);border-radius:14px;padding:18px 16px"
+            : "background:var(--bg-grouped);border-radius:14px;padding:18px 16px",
+        },
         h(
           "p",
           { style: "margin:0;font-size:24px;font-weight:700;letter-spacing:-0.5px;text-align:center" },
@@ -82,7 +87,7 @@ async function vistaProgramma(vaiA, ridisegna) {
         previsto
           ? h(
               "p",
-              { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);text-align:center" },
+              { style: "margin:6px 0 0;font-size:13px;opacity:.72;text-align:center" },
               `${previsto.esercizi.length} esercizi${previsto.cardio ? " + cardio" : ""}` +
                 (fatteOggi.some((s) => s.tipoId === previsto.id) ? " · già completato oggi" : "")
             )
