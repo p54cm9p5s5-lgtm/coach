@@ -12,7 +12,7 @@ export async function render({ vaiA, ridisegna }) {
   const oggi = isoDate();
   const prog = store.programma();
   const wrap = h("div.screen");
-  aggiungi(wrap, intestazione("Oggi", { etichetta: "Impostazioni", onclick: () => vaiA("impostazioni") }));
+  aggiungi(wrap, intestazione("Oggi", { icona: "ingranaggio", etichetta: "Impostazioni", onclick: () => vaiA("impostazioni") }));
 
   if (!prog) {
     aggiungi(wrap,
@@ -32,22 +32,7 @@ export async function render({ vaiA, ridisegna }) {
   aggiungi(wrap, await bloccoCalendario(vaiA, ridisegna));
 
   aggiungi(wrap,
-    h(
-      "div.group",
-      h(
-        "div.list",
-        h(
-          "a.row",
-          { href: "#/export" },
-          h(
-            "div.main",
-            h("span.title", "Prepara il pacchetto per la chat"),
-            h("span.sub", "log allenamento, dati salute e proposte, pronti da incollare")
-          ),
-          h("span.chevron", "›")
-        )
-      )
-    )
+    h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("export") }, "Claude"))
   );
 
   return wrap;
@@ -66,8 +51,22 @@ async function bloccoGrafico() {
   const perNotte = new Map(notti.map((n) => [n.data, n]));
   const allenati = new Set(tutti.filter((s) => s.stato === "completata").map((s) => s.data));
 
+  // Il grafico parte dal primo giorno per cui esiste un dato e arriva a oggi:
+  // il periodo prima dell'app non racconta niente. Oltre le otto settimane la
+  // finestra scorre, altrimenti le barre diventano illeggibili.
+  const MASSIMO_GIORNI = 56;
+  const primeDate = [
+    ...giorni.filter((g) => g.presente).map((g) => g.data),
+    ...notti.filter((n) => n.presente).map((n) => n.data),
+    ...[...allenati],
+  ].sort();
+  const inizio = primeDate[0] || oggi;
+  let quanti = giorniTra(inizio, oggi) + 1;
+  if (quanti < 7) quanti = 7;
+  if (quanti > MASSIMO_GIORNI) quanti = MASSIMO_GIORNI;
+
   const serie = [];
-  for (let i = 27; i >= 0; i--) {
+  for (let i = quanti - 1; i >= 0; i--) {
     const d = new Date(oggi + "T00:00:00");
     d.setDate(d.getDate() - i);
     const p = (n) => String(n).padStart(2, "0");
@@ -99,7 +98,7 @@ async function bloccoGrafico() {
 
   return h(
     "div.group",
-    h("h2", "Ultime 4 settimane"),
+    h("h2", quanti >= 28 ? `Ultime ${Math.round(quanti / 7)} settimane` : `Ultimi ${quanti} giorni`),
     h(
       "div",
       { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
@@ -123,10 +122,6 @@ async function bloccoGrafico() {
       ]),
       graficoAttivita(serie),
       legenda()
-    ),
-    h(
-      "p.footnote",
-      "I giorni senza dati restano vuoti: non valgono zero e non entrano nelle medie."
     )
   );
 }

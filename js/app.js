@@ -64,12 +64,31 @@ export async function ridisegna() {
 }
 
 /** Intestazione grande in stile iOS, con ombra allo scroll. */
+const INGRANAGGIO =
+  "M19.4 13a7.7 7.7 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3H11l-.3 2.6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.7 7.7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1L11 21h4l.3-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4z";
+
 export function intestazione(titolo, azione) {
-  const bar = h(
-    "header.topbar",
-    h("h1", titolo),
-    azione && h("button.bar-action", { onclick: azione.onclick }, azione.etichetta)
-  );
+  const bottone = azione
+    ? azione.icona === "ingranaggio"
+      ? h(
+          "button.bar-action",
+          { onclick: azione.onclick, "aria-label": azione.etichetta || "Impostazioni", style: "padding:6px 0 2px" },
+          h(
+            "svg",
+            {
+              viewBox: "0 0 24 24", width: 24, height: 24, fill: "none",
+              stroke: "currentColor", "stroke-width": 1.7,
+              "stroke-linecap": "round", "stroke-linejoin": "round",
+              "aria-hidden": "true", style: "display:block",
+            },
+            h("circle", { cx: 12, cy: 12, r: 3 }),
+            h("path", { d: INGRANAGGIO })
+          )
+        )
+      : h("button.bar-action", { onclick: azione.onclick }, azione.etichetta)
+    : null;
+
+  const bar = h("header.topbar", h("h1", titolo), bottone);
   const onScroll = () => bar.classList.toggle("scrolled", window.scrollY > 4);
   window.removeEventListener("scroll", window.__coachScroll || (() => {}));
   window.__coachScroll = onScroll;
