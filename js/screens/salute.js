@@ -173,7 +173,7 @@ export async function render({ ridisegna }) {
             )
           )
         ),
-        h("p.footnote", "Il collegamento con la seduta avviene per data, quando quel giorno ce n'è una sola.")
+        h("p.footnote", "Il collegamento con l'allenamento avviene per data, quando quel giorno ce n'è una sola.")
       )
     );
   }

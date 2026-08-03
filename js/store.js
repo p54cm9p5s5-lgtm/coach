@@ -1,4 +1,4 @@
-/* Logica di dominio: programma, sedute, serie, questionari, volumi. */
+/* Logica di dominio: programma, allenamenti, serie, questionari, volumi. */
 
 import * as db from "./db.js";
 import { isoDate, weekdayOf, giorniTra } from "./ui.js";
@@ -199,9 +199,9 @@ export function varianti() {
   return m;
 }
 
-// ---------- sedute ----------
+// ---------- allenamenti ----------
 
-export async function sedute() {
+export async function allenamenti() {
   const s = await db.all("sedute");
   return s.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
 }
@@ -706,8 +706,8 @@ export async function segnali({ inclusiArchiviati = false } = {}) {
  * il messaggio resta identico: se il segnale cambia, torna a farsi vedere.
  */
 export async function aggiornaSegnali(cache = null) {
-  const complete = (await sedute()).filter((s) => s.stato === "completata");
-  // I segnali guardano indietro di quattro sedute: leggere i questionari di
+  const complete = (await allenamenti()).filter((s) => s.stato === "completata");
+  // I segnali guardano indietro di quattro allenamenti: leggere i questionari di
   // tutto lo storico a ogni giro sarebbe lavoro buttato via.
   const logsPerSeduta = new Map();
   for (const s of complete.slice(0, 4)) logsPerSeduta.set(s.id, await questionariDi(s.id));
@@ -721,7 +721,7 @@ export async function aggiornaSegnali(cache = null) {
   const conf = { settimane: reg.finestra.settimane, minimoSettimana: reg.finestra.minimoSettimana };
 
   const nuovi = calcolaSegnali({
-    sedute: complete,
+    allenamenti: complete,
     logsPerSeduta,
     esercizi: new Map(libreria().map((e) => [e.id, e])),
     varianti: mappaVarianti,
@@ -891,7 +891,7 @@ export async function importaSalute(pacchetto) {
   return conteggio;
 }
 
-/** Associa ogni allenamento del Watch alla seduta dello stesso giorno. */
+/** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */
 export async function collegaAllenamentiASedute() {
   const allenamenti = await db.all("allenamentiWatch");
   const tutteSedute = await db.all("sedute");

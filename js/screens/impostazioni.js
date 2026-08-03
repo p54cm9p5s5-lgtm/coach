@@ -63,7 +63,7 @@ export async function render({ vaiA, ridisegna }) {
       ),
       h(
         "p.footnote",
-        "Aggiorna programma e regole leggendo il blocco tecnico in coda al documento. Non tocca mai sedute, misure e note già registrate."
+        "Aggiorna programma e regole leggendo il blocco tecnico in coda al documento. Non tocca mai allenamenti, misure e note già registrate."
       )
     )
   );
@@ -135,7 +135,7 @@ export async function render({ vaiA, ridisegna }) {
         ),
         h(
           "div.row",
-          h("div.main", h("span.title", "Copia interna"), h("span.sub", "automatica a fine seduta, resta nel telefono")),
+          h("div.main", h("span.title", "Copia interna"), h("span.sub", "automatica a fine allenamento, resta nel telefono")),
           h(
             "span.value",
             imp.ultimoSnapshot ? new Date(imp.ultimoSnapshot).toLocaleString("it-IT") : "mai"
@@ -236,7 +236,7 @@ async function caricaBrief(ridisegna) {
       h(
         "p.footnote",
         { style: "margin:10px 16px 0" },
-        "Sedute, misure, foto e note registrate non vengono toccate."
+        "Allenamenti, misure, foto e note registrate non vengono toccate."
       ),
       h(
         "div.btn-wrap",
@@ -321,7 +321,7 @@ async function importaBackup(ridisegna) {
 async function azzera(ridisegna) {
   const uno = await chiedi({
     titolo: "Eliminare tutti i dati?",
-    testo: "Sedute, misure, foto, programma. Non si può annullare.",
+    testo: "Allenamenti, misure, foto, programma. Non si può annullare.",
     opzioni: [{ etichetta: "Continua", valore: "si", stile: "destructive" }],
   });
   if (uno !== "si") return;

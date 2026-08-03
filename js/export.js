@@ -68,7 +68,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }
   const durata = seduta.oraFine ? Math.round((seduta.oraFine - seduta.oraInizio) / 1000) : null;
 
   return [
-    `SEDUTA — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
+    `ALLENAMENTO — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
     "",
     tabella(["Esercizio", "Carico", "Serie x Rip", "RPE", "Nota"], righe),
     "",
@@ -79,7 +79,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }
         : null
     ),
     riga("Velocità impostata sul tapis", seduta.cardio?.eseguito ? `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min` : seduta.cardio?.previsto ? "cardio non eseguito" : null),
-    riga("Durata seduta", durata ? durataUmana(durata) : null),
+    riga("Durata allenamento", durata ? durataUmana(durata) : null),
     riga("Densità", durata ? `${(serie.length / (durata / 60)).toFixed(2).replace(".", ",")} serie/min` : null),
     riga("Riscaldamento", seduta.riscaldamento?.fatto ? (seduta.riscaldamento.modalita === "senzaTapis" ? "fatto, senza tapis" : "fatto") : "non registrato"),
     riga("Nota generale", seduta.notaGenerale),
