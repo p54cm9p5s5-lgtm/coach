@@ -370,6 +370,11 @@ async function bloccoCalendario(vaiA, ridisegna) {
     "div.group",
     h("h2", "Calendario"),
     cal,
+    h(
+      "p.footnote",
+      { style: "margin-top:10px" },
+      "Vista dell'app: disegna lo split del master brief e le sue cadenze. Gli orari e i promemoria veri restano su Google Calendar."
+    ),
     inRitardo.length
       ? h(
           "p.footnote",
