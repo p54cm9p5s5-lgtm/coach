@@ -8,6 +8,15 @@ import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 
 let meseMostrato = null;
 
+async function versioneApp() {
+  try {
+    const r = await fetch("sw.js", { cache: "no-store" });
+    return (await r.text()).match(/const VERSION = "([^"]+)"/)?.[1] || "sconosciuta";
+  } catch {
+    return "non verificabile";
+  }
+}
+
 export async function render({ vaiA, ridisegna }) {
   const oggi = isoDate();
   const prog = store.programma();
@@ -32,7 +41,17 @@ export async function render({ vaiA, ridisegna }) {
   aggiungi(wrap, await bloccoCalendario(vaiA, ridisegna));
 
   aggiungi(wrap,
-    h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("export") }, "Claude"))
+    h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("export") }, "Claude")),
+    // versione a vista: quando qualcosa "non si aggiorna", questo numero dice
+    // in un colpo solo se il telefono ha ricevuto o no l'ultima pubblicazione
+    h(
+      "p",
+      {
+        style: "margin:18px 16px 0;text-align:center;font-size:11px;color:var(--label-tertiary)",
+        onclick: () => vaiA("impostazioni"),
+      },
+      `versione ${await versioneApp()}`
+    )
   );
 
   return wrap;
