@@ -108,23 +108,27 @@ async function bloccoGrafico() {
     });
   }
 
-  // numeri della settimana in corso
-  const passato = serie.filter((d) => !d.futuro);
-  const settimana = passato.slice(-7);
-  const kcalSettimana = settimana.filter((d) => d.kcal != null);
-  const sonnoSettimana = settimana.filter((d) => d.sonnoMin != null);
-  const passiSettimana = settimana.filter((d) => d.passi != null);
+  // Le medie sono su tutto quello che l'app ha, non sull'ultima settimana: si
+  // muovono a ogni import e diventano più solide man mano che i dati crescono.
+  const media = (arr, campo) => {
+    const v = arr.map((x) => x[campo]).filter((x) => x != null);
+    return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
+  };
 
-  const media = (arr, campo) =>
-    arr.length ? Math.round(arr.reduce((a, b) => a + b[campo], 0) / arr.length) : null;
-
-  const mediaKcal = media(kcalSettimana, "kcal");
-  const mediaSonno = media(sonnoSettimana, "sonnoMin");
-  const mediaPassi = media(passiSettimana, "passi");
+  const giorniConDati = giorni.filter((g) => g.presente);
+  const nottiConDati = notti.filter((n) => n.presente);
+  const mediaKcal = media(giorniConDati, "kcalAttive");
+  const mediaPassi = media(giorniConDati, "passi");
+  const mediaSonno = media(nottiConDati, "durataMin");
+  const quantiKcal = giorniConDati.filter((g) => g.kcalAttive != null).length;
+  const quantiPassi = giorniConDati.filter((g) => g.passi != null).length;
+  const quanteNotti = nottiConDati.filter((n) => n.durataMin != null).length;
 
   return h(
     "div.group",
-    h("h2", quanti >= 28 ? `Ultime ${Math.round(quanti / 7)} settimane` : `Ultimi ${quanti} giorni`),
+    // Il titolo non promette una finestra: le medie sono su tutto, il grafico
+    // mostra il periodo che ci sta.
+    h("h2", "Andamento"),
     h(
       "div",
       { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
@@ -132,18 +136,18 @@ async function bloccoGrafico() {
         {
           etichetta: "Passi",
           valore: mediaPassi != null ? mediaPassi.toLocaleString("it-IT") : "—",
-          nota: passiSettimana.length < 7 ? `media su ${passiSettimana.length} giorni` : "media 7 giorni",
+          nota: `media su ${quantiPassi} ${quantiPassi === 1 ? "giorno" : "giorni"}`,
         },
         {
           etichetta: "Movimento",
           valore: mediaKcal != null ? String(mediaKcal) : "—",
           unita: "kcal",
-          nota: kcalSettimana.length < 7 ? `${kcalSettimana.length} giorni su 7` : "media 7 giorni",
+          nota: `media su ${quantiKcal} ${quantiKcal === 1 ? "giorno" : "giorni"}`,
         },
         {
           etichetta: "Sonno",
           valore: mediaSonno != null ? durataUmana(mediaSonno * 60) : "—",
-          nota: sonnoSettimana.length < 7 ? `${sonnoSettimana.length} notti su 7` : "media 7 notti",
+          nota: `media su ${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"}`,
         },
       ]),
       graficoAttivita(serie),
