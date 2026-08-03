@@ -1,0 +1,182 @@
+/* Genera il pacchetto di testo da incollare nella chat con il coach.
+   Formato §12 del master brief per il log seduta, più il contorno che serve
+   a leggerlo: dati salute del giorno, stato delle finestre, proposte aperte. */
+
+import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate } from "./ui.js";
+
+const riga = (etichetta, valore) => (valore == null || valore === "" ? null : `${etichetta}: ${valore}`);
+
+function tabella(intestazioni, righe) {
+  if (!righe.length) return "";
+  const ultima = intestazioni.length - 1;
+  // L'ultima colonna (le note) non viene allineata: è lunga e variabile, e
+  // riempirla di spazi renderebbe la tabella illeggibile in chat.
+  const larghezze = intestazioni.map((h, i) =>
+    i === ultima ? h.length : Math.max(h.length, ...righe.map((r) => String(r[i] ?? "").length))
+  );
+  const linea = (celle) =>
+    "| " +
+    celle.map((c, i) => (i === ultima ? String(c ?? "") : String(c ?? "").padEnd(larghezze[i]))).join(" | ") +
+    " |";
+  return [
+    linea(intestazioni),
+    "|" + larghezze.map((l) => "-".repeat(l + 2)).join("|") + "|",
+    ...righe.map(linea),
+  ].join("\n");
+}
+
+/** Log di una seduta nel formato fisso del §12. */
+export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }) {
+  const perEsercizio = new Map();
+  for (const s of serie) {
+    if (!perEsercizio.has(s.esercizioId)) perEsercizio.set(s.esercizioId, []);
+    perEsercizio.get(s.esercizioId).push(s);
+  }
+  for (const q of questionari) if (!perEsercizio.has(q.esercizioId)) perEsercizio.set(q.esercizioId, []);
+
+  const righe = [];
+  for (const [esId, righeSerie] of perEsercizio) {
+    const def = esercizio(esId);
+    const log = questionari.find((q) => q.esercizioId === esId);
+    const nome = def?.nome || esId;
+
+    if (log?.saltato) {
+      righe.push([nome, "—", "—", "—", `NON ESEGUITO (${log.saltato.motivo})${log.saltato.nota ? `: ${log.saltato.nota}` : ""}`]);
+      continue;
+    }
+
+    const carichi = [...new Set(righeSerie.map((s) => s.carico).filter((c) => c != null))];
+    const carico = carichi.length === 0 ? "corpo libero" : carichi.map((c) => `${num(c)} kg`).join(" / ");
+    const rip = righeSerie.map((s) => s.ripFatte ?? "—").join("/");
+    const aTempo = righeSerie.some((s) => s.aTempo);
+
+    const note = [];
+    if (log?.dolorePolso) note.push(`DOLORE POLSO ${log.dolorePolsoIntensita} ${log.dolorePolsoQuando}`);
+    if (log?.tecnica != null) note.push(`tecnica ${num(log.tecnica)}/10`);
+    if (log?.nota) note.push(log.nota);
+
+    righe.push([
+      nome,
+      carico,
+      `${righeSerie.length}x${rip}${aTempo ? "s" : ""}`,
+      log?.rpe != null ? String(log.rpe) : "non registrato",
+      note.join(" · ") || "—",
+    ]);
+  }
+
+  const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
+  const durata = seduta.oraFine ? Math.round((seduta.oraFine - seduta.oraInizio) / 1000) : null;
+
+  return [
+    `SEDUTA — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
+    "",
+    tabella(["Esercizio", "Carico", "Serie x Rip", "RPE", "Nota"], righe),
+    "",
+    riga(
+      "Recuperi reali (cronometrati dall'app)",
+      recuperi.length
+        ? `media ${mmss(recuperi.reduce((a, b) => a + b, 0) / recuperi.length)}, da ${mmss(Math.min(...recuperi))} a ${mmss(Math.max(...recuperi))}`
+        : null
+    ),
+    riga("Velocità impostata sul tapis", seduta.cardio?.eseguito ? `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min` : seduta.cardio?.previsto ? "cardio non eseguito" : null),
+    riga("Durata seduta", durata ? durataUmana(durata) : null),
+    riga("Densità", durata ? `${(serie.length / (durata / 60)).toFixed(2).replace(".", ",")} serie/min` : null),
+    riga("Riscaldamento", seduta.riscaldamento?.fatto ? (seduta.riscaldamento.modalita === "senzaTapis" ? "fatto, senza tapis" : "fatto") : "non registrato"),
+    riga("Nota generale", seduta.notaGenerale),
+    giornoSplit && seduta.tipoProgrammatoId && seduta.tipoProgrammatoId !== seduta.tipoId
+      ? `Nota: in programma era ${giornoSplit(seduta.tipoProgrammatoId)?.nome || seduta.tipoProgrammatoId}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Dati di salute recenti e stato delle finestre. */
+export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, obiettivo }) {
+  const righeG = giorni.slice(0, 7).map((g) =>
+    g.presente
+      ? [
+          dataBreve(g.data),
+          `${Math.round(g.kcalAttive ?? 0)}/${g.obiettivoKcal || obiettivo}`,
+          g.kcalAttive != null ? `${num((g.kcalAttive / (g.obiettivoKcal || obiettivo)) * 100)}%` : "—",
+          g.passi != null ? g.passi.toLocaleString("it-IT") : "—",
+        ]
+      : [dataBreve(g.data), "non registrato", "—", "—"]
+  );
+
+  const righeN = notti.slice(0, 7).map((n) =>
+    n.presente
+      ? [
+          dataBreve(n.data),
+          n.durataMin != null ? durataUmana(n.durataMin * 60) : "—",
+          n.profondoMin != null ? `${n.profondoMin}m` : "—",
+          n.remMin != null ? `${n.remMin}m` : "—",
+        ]
+      : [dataBreve(n.data), "non registrata", "—", "—"]
+  );
+
+  const stato = (f, unita) =>
+    `${f.registratiTotali}/${f.richiesti} ${unita}${f.completa ? " — completa" : " — incompleta"}` +
+    ` (${f.perSettimana.map((s, i) => `sett.${i + 1}: ${s.registrati}${s.sufficiente ? "" : " sotto minimo"}`).join(", ")})`;
+
+  return [
+    "DATI SALUTE",
+    "",
+    `Finestra movimento: ${stato(finestraMovimento, "giorni")}`,
+    `Finestra sonno: ${stato(finestraSonno, "notti")}`,
+    "",
+    righeG.length ? tabella(["Data", "Movimento", "% obiettivo", "Passi"], righeG) : "Nessun dato di movimento.",
+    "",
+    righeN.length ? tabella(["Notte del", "Durata", "Profondo", "REM"], righeN) : "Nessun dato di sonno.",
+    "",
+    "Nota: un giorno «non registrato» non vale zero, resta fuori dalle medie.",
+  ].join("\n");
+}
+
+/** Proposte che aspettano una decisione, con le quattro domande. */
+export function bloccoProposte(proposte, nomeLivello) {
+  if (!proposte.length) return "PROPOSTE IN SOSPESO\n\nNessuna.";
+  return [
+    "PROPOSTE IN SOSPESO",
+    "",
+    ...proposte.map((p, i) =>
+      [
+        `${i + 1}. ${p.titolo}`,
+        `   Livello ${p.livelloGerarchia} — ${nomeLivello(p.livelloGerarchia)}`,
+        `   Perché: ${p.quattroDomande.perche}`,
+        `   Dati: ${p.quattroDomande.quali}`,
+        `   Alternative: ${p.quattroDomande.alternative}`,
+        `   Atteso: ${p.quattroDomande.atteso}`,
+        `   Verifica il ${dataBreve(p.dataVerifica)}`,
+      ].join("\n")
+    ),
+    "",
+    "L'app propone e non applica: nessuna di queste è stata eseguita.",
+  ].join("\n");
+}
+
+/** Misure e indici, solo se aggiornati di recente. */
+export function bloccoCorpo({ misure, indici, etichette }) {
+  if (!misure.length) return null;
+  const righe = misure.map((m) => [
+    etichette[m.tipo] || m.tipo,
+    `${num(m.valore)} ${m.tipo === "peso" ? "kg" : "cm"}`,
+    dataBreve(m.data),
+    m.condizioniStandard === false ? "fuori protocollo" : "",
+  ]);
+  return [
+    "CORPO",
+    "",
+    tabella(["Misura", "Valore", "Data", "Nota"], righe),
+    "",
+    ...indici.map((i) => `${i.nome}: ${num(i.valore, i.decimali)} (soglia ${num(i.soglia, i.decimali)})`),
+  ].join("\n");
+}
+
+export function intestazionePacchetto(cosa) {
+  return [
+    `COACH — pacchetto del ${dataLunga(isoDate())}`,
+    `Contenuto: ${cosa.join(", ")}.`,
+    "Generato dall'app: i numeri non sono trascritti a mano.",
+  ].join("\n");
+}

@@ -306,6 +306,20 @@ async function bloccoProposte() {
     );
   }
 
+  aggiungi(
+    lista,
+    h(
+      "a.row",
+      { href: "#/export" },
+      h(
+        "div.main",
+        h("span.title", "Prepara il pacchetto per la chat"),
+        h("span.sub", "log seduta, dati salute e proposte, pronti da incollare")
+      ),
+      h("span.chevron", "›")
+    )
+  );
+
   return h(
     "div.group",
     h("h2", "Proposte e segnali"),
