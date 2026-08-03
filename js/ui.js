@@ -327,8 +327,17 @@ function elemento() {
   return elementoAllarme;
 }
 
-/** Va chiamata da un gesto dell'utente, altrimenti iOS blocca l'audio. */
+let audioSbloccato = false;
+
+/**
+ * Va chiamata da un gesto dell'utente, ma NON all'apertura dell'app: iOS
+ * lascia scappare un frammento della traccia e si sente un tic ogni volta.
+ * La si chiama quando comincia un allenamento, cioè molto prima che serva
+ * suonare davvero, e una volta sola.
+ */
 export function sbloccaAudio() {
+  if (audioSbloccato) return Promise.resolve();
+  audioSbloccato = true;
   // Nessuna dichiarazione di sessione qui: l'app non deve occupare l'audio
   // finché non c'è davvero qualcosa da suonare.
   const a = elemento();

@@ -1,6 +1,6 @@
 /* Avvio, routing, aggiornamenti. */
 
-import { h, qs, qsa, clear, toast, sbloccaAudio, chiudiFogli } from "./ui.js";
+import { h, qs, qsa, clear, toast, chiudiFogli } from "./ui.js";
 import * as store from "./store.js";
 
 const ROTTE = {
@@ -197,7 +197,8 @@ async function avvia() {
   }
 
   window.addEventListener("hashchange", ridisegna);
-  document.addEventListener("pointerdown", sbloccaAudio, { once: true });
+  // Niente sblocco audio qui: all'apertura l'app deve restare muta. Lo fa la
+  // schermata dell'allenamento, al primo tocco dentro la seduta.
 
   await ridisegna();
   registraServiceWorker();

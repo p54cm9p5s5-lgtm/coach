@@ -195,6 +195,7 @@ async function vistaProgramma(vaiA, ridisegna) {
             "button.btn",
             {
               onclick: async () => {
+                sbloccaAudio();
                 await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
                 await ridisegna();
               },
@@ -503,6 +504,9 @@ async function serieFatte(esercizioId) {
  */
 function azione(fn) {
   return async (e) => {
+    // Ogni tocco dentro l'allenamento è un gesto valido per autorizzare
+    // l'audio: quando il recupero finirà, il suono potrà partire.
+    sbloccaAudio();
     if (S.occupato) return;
     S.occupato = true;
     const bottone = e?.currentTarget;
