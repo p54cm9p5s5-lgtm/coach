@@ -265,16 +265,23 @@ function sessioneAudio(tipo) {
   }
 }
 
-/** Genera un WAV con tre bip, così non serve nessun file audio esterno. */
+/**
+ * Genera un WAV con tre bip, così non serve nessun file audio esterno.
+ * I primi 0,35 secondi sono muti di proposito: lo sblocco dell'audio deve
+ * far partire e fermare questa traccia, e senza il silenzio iniziale se ne
+ * sentirebbe un frammento a ogni apertura dell'app.
+ */
+const SILENZIO_INIZIALE = 0.35;
+
 function wavAllarme() {
   const hz = 22050;
-  const durata = 1.6;
+  const durata = SILENZIO_INIZIALE + 1.6;
   const campioni = Math.floor(hz * durata);
   const dati = new Int16Array(campioni);
   const bip = [
-    { da: 0.0, a: 0.16, f: 880 },
-    { da: 0.22, a: 0.38, f: 880 },
-    { da: 0.44, a: 0.68, f: 1175 },
+    { da: SILENZIO_INIZIALE + 0.0, a: SILENZIO_INIZIALE + 0.16, f: 880 },
+    { da: SILENZIO_INIZIALE + 0.22, a: SILENZIO_INIZIALE + 0.38, f: 880 },
+    { da: SILENZIO_INIZIALE + 0.44, a: SILENZIO_INIZIALE + 0.68, f: 1175 },
   ];
   for (const b of bip) {
     const i0 = Math.floor(b.da * hz);
@@ -325,18 +332,23 @@ export function sbloccaAudio() {
   // Nessuna dichiarazione di sessione qui: l'app non deve occupare l'audio
   // finché non c'è davvero qualcosa da suonare.
   const a = elemento();
-  // riproduzione muta e immediata: sblocca l'elemento per gli usi successivi
+  // Muto, volume a zero e senza ripetizione: tre precauzioni perché lo sblocco
+  // non si senta. Su iOS «muted» da solo non basta sempre, e il frammento che
+  // scappa diventa un tic a ogni apertura.
+  const volumePrec = a.volume;
   a.muted = true;
-  a.play()
-    .then(() => {
-      a.pause();
-      a.currentTime = 0;
-      a.muted = false;
-    })
-    .catch(() => {
-      a.muted = false;
-    });
-
+  a.volume = 0;
+  a.loop = false;
+  const ripristina = () => {
+    a.pause();
+    a.currentTime = 0;
+    a.muted = false;
+    a.volume = volumePrec;
+    a.loop = true;
+  };
+  const p = a.play();
+  if (p && typeof p.then === "function") p.then(ripristina).catch(ripristina);
+  else ripristina();
 }
 
 function beep(freq = 880, dur = 0.16, gain = 0.22) {
