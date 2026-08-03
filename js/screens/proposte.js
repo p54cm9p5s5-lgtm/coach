@@ -20,7 +20,7 @@ export async function render({ vaiA, ridisegna }) {
 
 async function elenco(vaiA, ridisegna) {
   const wrap = h("div.screen");
-  aggiungi(wrap, intestazione("Proposte", { etichetta: "Oggi", onclick: () => vaiA("oggi") }));
+  aggiungi(wrap, intestazione("Proposte", { etichetta: "Home", onclick: () => vaiA("oggi") }));
 
   await store.aggiornaMotore();
 
