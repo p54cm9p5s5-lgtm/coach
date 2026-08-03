@@ -635,6 +635,11 @@ a.row:active {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
 }
 
+.btn.danger {
+  background: var(--red);
+  color: #fff;
+}
+
 .segmented.danger button[aria-pressed="true"] {
   background: var(--red);
   color: #fff;

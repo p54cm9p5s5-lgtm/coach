@@ -2,7 +2,7 @@ import {
   h, qs, clear, toast, mmss, num, chiedi, sheet,
   avviaAllarme, fermaAllarme, allarmeAttivo, sbloccaAudio, tick,
   tieniSchermoAcceso, rilasciaSchermo, durataUmana, isoDate, dataLunga, aggiungi } from "../ui.js";
-import { intestazione } from "../app.js";
+import { intestazione, ridisegna } from "../app.js";
 import * as store from "../store.js";
 import { descriviDischi, carichoPiuVicino } from "../plates.js";
 import { punteggioEsercizio, anello, scomposizione, legenda as legendaPunteggio, commento, giudizio } from "../punteggio.js";
@@ -26,6 +26,17 @@ export async function render({ vaiA, ridisegna }) {
   const sed = await store.sedutaInCorso();
   if (!sed) {
     nascondiTabBar = false;
+    // Se oggi un allenamento è già stato chiuso, la schermata di partenza è il
+    // suo risultato: il programma di un lavoro già fatto non serve a niente.
+    // Non dipende dal passaggio di schermata appena finito l'allenamento — se
+    // il telefono ricarica l'app, il risultato è ancora qui.
+    if (!p.programma) {
+      const oggi = isoDate();
+      const fatte = (await store.allenamenti())
+        .filter((s) => s.data === oggi && s.oraFine)
+        .sort((a, b) => a.oraFine - b.oraFine);
+      if (fatte.length) return vistaRisultato(fatte.at(-1).id, vaiA);
+    }
     return vistaProgramma(vaiA, ridisegna);
   }
   nascondiTabBar = true;
@@ -58,7 +69,15 @@ async function vistaProgramma(vaiA, ridisegna) {
     (s) => s.data === oggi && s.stato === "completata"
   );
 
-  aggiungi(wrap, intestazione("Oggi"));
+  const ultimaOggi = fatteOggi.filter((s) => s.oraFine).sort((a, b) => a.oraFine - b.oraFine).at(-1);
+  aggiungi(wrap,
+    intestazione(
+      "Oggi",
+      ultimaOggi
+        ? { etichetta: "Risultato", onclick: () => (location.hash = `#/seduta?riepilogo=${ultimaOggi.id}`) }
+        : null
+    )
+  );
 
   if (!store.programma()) {
     aggiungi(wrap,
@@ -188,7 +207,7 @@ async function cambiaAllenamento(ridisegna) {
 async function vistaRisultato(id, vaiA) {
   const wrap = h("div.screen");
   const sed = await store.seduta(id);
-  aggiungi(wrap, intestazione("Risultato", { etichetta: "Fine", onclick: () => (location.hash = "#/seduta") }));
+  aggiungi(wrap, intestazione("Risultato", { etichetta: "Programma", onclick: () => vaiAlProgramma() }));
 
   if (!sed) {
     aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
@@ -347,11 +366,49 @@ async function vistaRisultato(id, vaiA) {
       "div.btn-wrap",
       h("button.btn", { onclick: () => vaiA("export") }, "Claude"),
       h("div", { style: "height:8px" }),
+      h("button.btn.secondary", { onclick: () => vaiAlProgramma() }, "Programma del giorno"),
+      h("div", { style: "height:8px" }),
       h("button.btn.secondary", { onclick: () => (location.hash = "#/oggi") }, "Torna alla Home")
+    ),
+    h(
+      "div.btn-wrap",
+      { style: "margin-top:26px" },
+      h(
+        "button.btn.secondary",
+        { style: "color:var(--red)", onclick: () => eliminaAllenamento(sed) },
+        "Elimina questo allenamento"
+      ),
+      h(
+        "p.footnote",
+        { style: "margin:8px 0 0" },
+        "Cancella serie, questionari e punteggi di questo allenamento. Non si recupera."
+      )
     )
   );
 
   return wrap;
+}
+
+/** Il programma del giorno resta raggiungibile anche quando l'allenamento è chiuso. */
+function vaiAlProgramma() {
+  location.hash = "#/seduta?programma=1";
+}
+
+/** Serve per le prove: toglie un allenamento finto senza lasciare tracce nei numeri. */
+async function eliminaAllenamento(sed) {
+  const conferma = await chiedi({
+    titolo: "Eliminare l'allenamento?",
+    testo: `${sed.tipoNome} del ${dataLunga(sed.data)}. Spariscono anche le serie e i questionari, e le proposte vengono ricalcolate senza di esso.`,
+    opzioni: [{ etichetta: "Elimina", valore: "si", stile: "danger" }],
+  });
+  if (conferma !== "si") return;
+  await store.annullaSeduta(sed.id);
+  await store.aggiornaMotore();
+  toast("Allenamento eliminato.");
+  // L'hash può essere già «#/seduta»: in quel caso il router non riparte da
+  // solo e va richiamato a mano.
+  if (location.hash === "#/seduta") await ridisegna();
+  else location.hash = "#/seduta";
 }
 
 function bloccoStretchingPer(tipoId) {

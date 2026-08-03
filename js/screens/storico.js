@@ -1,4 +1,4 @@
-import { h, dataBreve, dataLunga, durataUmana, mmss, num, oraDi, aggiungi } from "../ui.js";
+import { h, dataBreve, dataLunga, durataUmana, mmss, num, oraDi, aggiungi, chiedi, toast } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 
@@ -235,6 +235,33 @@ async function dettaglioSeduta(id) {
   if (s.notaGenerale) {
     aggiungi(wrap, h("div.group", h("h2", "Nota generale"), h("div.list", h("div.row", h("div.main", h("span.title", s.notaGenerale))))));
   }
+
+  aggiungi(wrap,
+    h(
+      "div.btn-wrap",
+      { style: "margin-top:26px" },
+      h(
+        "button.btn.secondary",
+        {
+          style: "color:var(--red)",
+          onclick: async () => {
+            const conferma = await chiedi({
+              titolo: "Eliminare l'allenamento?",
+              testo: `${s.tipoNome} del ${dataLunga(s.data)}. Spariscono anche serie e questionari, e le proposte vengono ricalcolate senza di esso.`,
+              opzioni: [{ etichetta: "Elimina", valore: "si", stile: "danger" }],
+            });
+            if (conferma !== "si") return;
+            await store.annullaSeduta(s.id);
+            await store.aggiornaMotore();
+            toast("Allenamento eliminato.");
+            location.hash = "#/storico";
+          },
+        },
+        "Elimina questo allenamento"
+      ),
+      h("p.footnote", { style: "margin:8px 0 0" }, "Non si recupera.")
+    )
+  );
 
   return wrap;
 }
