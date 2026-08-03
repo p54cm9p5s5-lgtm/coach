@@ -65,8 +65,9 @@ async function bloccoGrafico() {
   if (quanti < 7) quanti = 7;
   if (quanti > MASSIMO_GIORNI) quanti = MASSIMO_GIORNI;
 
+  const GIORNI_FUTURI = 7;
   const serie = [];
-  for (let i = quanti - 1; i >= 0; i--) {
+  for (let i = quanti - 1; i >= -GIORNI_FUTURI; i--) {
     const d = new Date(oggi + "T00:00:00");
     d.setDate(d.getDate() - i);
     const p = (n) => String(n).padStart(2, "0");
@@ -75,6 +76,8 @@ async function bloccoGrafico() {
     const n = perNotte.get(data);
     serie.push({
       data,
+      futuro: data > oggi,
+      previsto: Boolean(store.giornoPrevisto(data)),
       presente: Boolean(g?.presente),
       kcal: g?.presente ? g.kcalAttive : null,
       obiettivo: g?.obiettivoKcal || obiettivo,
@@ -84,7 +87,8 @@ async function bloccoGrafico() {
   }
 
   // numeri della settimana in corso
-  const settimana = serie.slice(-7);
+  const passato = serie.filter((d) => !d.futuro);
+  const settimana = passato.slice(-7);
   const kcalSettimana = settimana.filter((d) => d.kcal != null);
   const sonnoSettimana = settimana.filter((d) => d.sonnoMin != null);
   const allenamentiSettimana = settimana.filter((d) => d.allenamento).length;
