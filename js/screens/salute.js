@@ -271,18 +271,26 @@ async function incolla(ridisegna) {
   const conteggio = await store.importaSalute(pacchetto);
   await store.snapshotAutomatico("import salute");
 
+  // Nel riepilogo compare solo quello che il pacchetto conteneva davvero: una
+  // fila di zeri fa sembrare fallito un import riuscito.
+  const righe = [];
+  if (conteggio.giorni) {
+    righe.push(
+      `${conteggio.giorni} ${conteggio.giorni === 1 ? "giorno" : "giorni"} di movimento` +
+        (conteggio.aggiornati ? ` (${conteggio.aggiornati} aggiornati)` : "")
+    );
+  }
+  if (conteggio.notti) righe.push(`${conteggio.notti} ${conteggio.notti === 1 ? "notte" : "notti"} di sonno`);
+  if (conteggio.allenamenti) righe.push(`${conteggio.allenamenti} allenamenti dal Watch`);
+  if (conteggio.agenda) {
+    righe.push(`${conteggio.agenda} ${conteggio.agenda === 1 ? "giorno" : "giorni"} dal calendario`);
+  }
+  if (conteggio.vuoti) righe.push(`${conteggio.vuoti} giorni senza dati, segnati come non registrati`);
+  if (pacchetto.avvisi.length) righe.push(`Avvisi: ${pacchetto.avvisi.slice(0, 3).join(" · ")}`);
+
   await chiedi({
-    titolo: "Importato",
-    testo: [
-      `${conteggio.giorni} giorni con dati${conteggio.aggiornati ? ` (${conteggio.aggiornati} aggiornati)` : ""}`,
-      `${conteggio.notti} notti`,
-      `${conteggio.allenamenti} allenamenti`,
-      conteggio.agenda ? `${conteggio.agenda} giorni letti dal calendario` : null,
-      conteggio.vuoti ? `${conteggio.vuoti} giorni segnati come non registrati` : null,
-      pacchetto.avvisi.length ? `Avvisi: ${pacchetto.avvisi.slice(0, 3).join(" · ")}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n"),
+    titolo: righe.length ? "Importato" : "Niente da importare",
+    testo: righe.length ? righe.join("\n") : "Il pacchetto era vuoto.",
     opzioni: [{ etichetta: "Bene", valore: "ok" }],
   });
 
