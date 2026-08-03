@@ -91,7 +91,10 @@ async function elenco(vaiA, ridisegna) {
         "div.group",
         h("h2", `In sospeso (${sospese.length})`),
         lista,
-        h("p.footnote", "L'app propone e non applica mai. Ogni proposta porta le quattro domande già compilate.")
+        h(
+          "p.footnote",
+          "L'app propone, non decide: il programma scritto non lo tocca. Se accetti, usa quel valore come obiettivo alla prossima esposizione e lo scrive nel pacchetto per Claude, che resta l'unico a cambiare la scheda."
+        )
       )
     );
   }

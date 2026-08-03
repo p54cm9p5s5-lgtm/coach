@@ -4,9 +4,22 @@
 
 export const VERSIONE = 1;
 
+/**
+ * Numeri come li scrive un iPhone italiano: «10.700» sono diecimilasettecento,
+ * non dieci virgola sette, e «886,5» ha la virgola decimale. Senza questa
+ * distinzione i passi finirebbero divisi per mille senza dare nessun segnale.
+ */
 const NUMERO = (v) => {
   if (v === undefined || v === null || v === "") return null;
-  const n = Number(String(v).replace(",", "."));
+  let t = String(v).trim().replace(/\s|'| /g, "");
+  if (t.includes(",")) {
+    // virgola decimale: i punti che restano sono separatori di migliaia
+    t = t.replace(/\./g, "").replace(",", ".");
+  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) {
+    // solo punti, e a gruppi di tre: sono migliaia
+    t = t.replace(/\./g, "");
+  }
+  const n = Number(t);
   return Number.isFinite(n) ? n : null;
 };
 

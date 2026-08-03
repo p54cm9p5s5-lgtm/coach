@@ -17,6 +17,9 @@ function parametri() {
 }
 
 export async function render({ vaiA, ridisegna }) {
+  // Prima di ricostruire lo stato: se resta un timer del disegno precedente,
+  // da qui in poi nessuno saprebbe più fermarlo.
+  pulisci();
   const p = parametri();
   if (p.riepilogo) {
     nascondiTabBar = false;
@@ -245,7 +248,7 @@ async function vistaRisultato(id, vaiA) {
       { style: "padding-top:8px;padding-bottom:6px" },
       h("p.kicker", dataLunga(sed.data)),
       h("h2", sed.tipoNome),
-      h("p.target", durataSec ? durataUmana(durataSec) : "durata non registrata")
+      h("p.target", durataSec != null ? durataUmana(durataSec) : "durata non registrata")
     )
   );
 
@@ -288,7 +291,7 @@ async function vistaRisultato(id, vaiA) {
       "div",
       { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
       scheda("Esercizi", `${svolti}/${previsti}`, `${serie.length} serie in tutto`),
-      scheda("Durata", durataSec ? durataUmana(durataSec) : "—", "dall'inizio alla chiusura"),
+      scheda("Durata", durataSec != null ? durataUmana(durataSec) : "—", "dall'inizio alla chiusura"),
       scheda("RPE medio", rpeMedio != null ? num(rpeMedio) : "—", tecMedia != null ? `tecnica ${num(tecMedia)}` : `zona ${store.regole().rpeTarget.min}-${store.regole().rpeTarget.max}`),
       scheda(
         "Recupero medio",
@@ -510,6 +513,14 @@ function azione(fn) {
       S.occupato = false;
     }
   };
+}
+
+/** Chiamata dal router quando si lascia questa schermata. */
+export function pulisci() {
+  if (S?.timerHandle) clearInterval(S.timerHandle);
+  if (S) S.timerHandle = null;
+  fermaAllarme();
+  rilasciaSchermo();
 }
 
 function fermaTimer() {

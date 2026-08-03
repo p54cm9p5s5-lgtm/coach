@@ -142,16 +142,30 @@ export function toast(msg, ms = 2200) {
 
 // ---------- fogli modali ----------
 
+/** Pannelli aperti in questo momento: servono a poterli chiudere dall'esterno. */
+const FOGLI_APERTI = new Set();
+
+/**
+ * Chiude tutti i pannelli aperti. La chiama il router quando si cambia
+ * schermata: un pannello rimasto sopra a una schermata nuova sembra un'app
+ * bloccata, perché copre tutto e non appartiene più a niente.
+ */
+export function chiudiFogli() {
+  for (const chiudi of [...FOGLI_APERTI]) chiudi(undefined);
+}
+
 export function sheet(build) {
   return new Promise((resolve) => {
     let chiuso = false;
     const close = (val) => {
       if (chiuso) return;
       chiuso = true;
+      FOGLI_APERTI.delete(close);
       backdrop.remove();
       document.removeEventListener("keydown", onKey);
       resolve(val);
     };
+    FOGLI_APERTI.add(close);
     const onKey = (e) => {
       if (e.key === "Escape") close(undefined);
     };

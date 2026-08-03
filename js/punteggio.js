@@ -53,7 +53,9 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
   if (rapportoRip < 0.75) tetti.push({ tetto: 60, perche: "meno di tre quarti del lavoro" });
 
   // --- carico: raggiungere il previsto vale pieno, superarlo non è un merito
-  const previsto = variante.carico;
+  // Un carico previsto pari a zero è un esercizio a corpo libero scritto in un
+  // altro modo: trattarlo come numero farebbe una divisione per zero.
+  const previsto = variante.carico > 0 ? variante.carico : null;
   const usato = serie.filter((s) => s.carico != null).at(-1)?.carico ?? null;
   if (previsto == null) {
     voci.push({ nome: "Carico", quota: serie.length ? 1 : 0, peso: 20, dettaglio: "corpo libero" });
