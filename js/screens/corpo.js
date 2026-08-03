@@ -277,7 +277,7 @@ async function bloccoFoto(ridisegna) {
           )
         );
       }
-      const fuoriProtocollo = s.scatti.some((x) => x.checklist?.daLibreria);
+      const daLibreria = s.scatti.some((x) => x.checklist?.daLibreria);
       aggiungi(gruppo,
         h(
           "div",
@@ -285,7 +285,7 @@ async function bloccoFoto(ridisegna) {
           h(
             "p",
             { style: "margin:0;font-size:13px;color:var(--label-secondary)" },
-            `${dataLunga(s.data)}${fuoriProtocollo ? " · riferimento, fuori protocollo" : ""}`
+            `${dataLunga(s.data)}${daLibreria ? " · set di riferimento" : ""}`
           ),
           h(
             "button",
@@ -342,7 +342,7 @@ async function mostraFoto(scatto, posa) {
         ? h(
             "p",
             { style: "margin:6px 16px 0;font-size:13px;color:var(--label-secondary)" },
-            "Presa dalla libreria, fuori protocollo: serve ad allineare gli scatti successivi, non a misurare una differenza."
+            "Fa parte del set di riferimento: le prossime foto vanno fatte con questa stessa posa, stessa distanza, stessa luce."
           )
         : null,
       h("img", {
@@ -399,7 +399,7 @@ async function nuovoSet(ridisegna) {
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        "Il set del 29/07 non è utilizzabile perché fatto di sera, dopo l'allenamento, con pose diverse. Devono essere tutte spuntate."
+        "Ripeti le stesse pose del set di riferimento. Devono essere tutte spuntate."
       ),
       h("div.group", { style: "margin-top:12px" }, lista),
       h("div.btn-wrap", avanti)
@@ -486,7 +486,7 @@ async function importaSet(ridisegna) {
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        "Le quattro pose sono quelle del protocollo del master brief. Carica solo quelle che hai: le altre restano vuote e le farai col prossimo set."
+        "Queste diventano il set di riferimento: dal prossimo set la fotocamera guidata te le sovrappone per ripetere posa e distanza. Carica solo quelle che hai."
       ),
       h("div.group", { style: "margin-top:12px" }, lista),
       h(
@@ -499,7 +499,7 @@ async function importaSet(ridisegna) {
       h(
         "p.footnote",
         { style: "margin-top:12px" },
-        "Salvate come «fuori protocollo»: servono ad allineare gli scatti futuri, non come metro di paragone."
+        "Sono il riferimento del confronto: le prossime foto vanno ripetute con le stesse pose."
       ),
       h("div.btn-wrap", salva)
     );
@@ -512,7 +512,8 @@ async function importaSet(ridisegna) {
       data: esito,
       posa: posaId,
       immagine,
-      checklist: { protocollo: false, daLibreria: true },
+      // È il set di riferimento: vale come metro di paragone, non è un ripiego.
+      checklist: { protocollo: true, riferimento: true, daLibreria: true },
     });
   }
   await store.snapshotAutomatico("foto importate");
