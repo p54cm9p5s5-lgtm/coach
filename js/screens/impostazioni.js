@@ -1,4 +1,4 @@
-import { h, toast, sheet, chiedi, num, dataLunga, aggiungi } from "../ui.js";
+import { h, toast, sheet, chiedi, num, dataLunga, aggiungi, provaSuono } from "../ui.js";
 import { intestazione, applicaTema, temaCorrente } from "../app.js";
 import * as store from "../store.js";
 import { estraiBlocco, valida, confronta } from "../brief.js";
@@ -77,6 +77,12 @@ export async function render({ vaiA, ridisegna }) {
       h(
         "div.list",
         h("div.row", h("div.main", h("span.title", "Versione installata")), h("span.value", versione || "—")),
+        h(
+          "button.row.accent",
+          { onclick: () => { provaSuono(); toast("Se non senti nulla, alza il volume con i tasti laterali."); } },
+          h("div.main", h("span.title", "Prova il suono del timer"), h("span.sub", "deve suonare anche col telefono in silenzioso")),
+          h("span.chevron", "›")
+        ),
         h(
           "button.row.accent",
           { onclick: forzaAggiornamento },

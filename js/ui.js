@@ -198,21 +198,97 @@ export function chiedi({ titolo, testo, opzioni }) {
 
 let audioCtx = null;
 let alarmTimer = null;
+let elementoAllarme = null;
+
+/**
+ * iOS zittisce l'audio "ambientale" quando l'interruttore laterale è su
+ * silenzioso. Dichiarare la sessione come riproduzione fa suonare l'allarme
+ * anche in quel caso: un timer di recupero che non suona è inutile.
+ */
+function dichiaraSessioneAudio() {
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
+  } catch {
+    /* API non disponibile: si resta sul comportamento predefinito */
+  }
+}
+
+/** Genera un WAV con tre bip, così non serve nessun file audio esterno. */
+function wavAllarme() {
+  const hz = 22050;
+  const durata = 1.6;
+  const campioni = Math.floor(hz * durata);
+  const dati = new Int16Array(campioni);
+  const bip = [
+    { da: 0.0, a: 0.16, f: 880 },
+    { da: 0.22, a: 0.38, f: 880 },
+    { da: 0.44, a: 0.68, f: 1175 },
+  ];
+  for (const b of bip) {
+    const i0 = Math.floor(b.da * hz);
+    const i1 = Math.floor(b.a * hz);
+    for (let i = i0; i < i1; i++) {
+      const t = (i - i0) / (i1 - i0);
+      const inviluppo = Math.min(1, t * 12) * Math.min(1, (1 - t) * 6);
+      dati[i] = Math.round(Math.sin((2 * Math.PI * b.f * i) / hz) * 26000 * inviluppo);
+    }
+  }
+
+  const buffer = new ArrayBuffer(44 + dati.length * 2);
+  const v = new DataView(buffer);
+  const testo = (off, str) => [...str].forEach((c, i) => v.setUint8(off + i, c.charCodeAt(0)));
+  testo(0, "RIFF");
+  v.setUint32(4, 36 + dati.length * 2, true);
+  testo(8, "WAVEfmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, hz, true);
+  v.setUint32(28, hz * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  testo(36, "data");
+  v.setUint32(40, dati.length * 2, true);
+  new Int16Array(buffer, 44).set(dati);
+  return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+}
+
+function elemento() {
+  if (!elementoAllarme) {
+    elementoAllarme = new Audio(wavAllarme());
+    elementoAllarme.loop = true;
+    elementoAllarme.preload = "auto";
+    elementoAllarme.volume = 1;
+    // Su iOS un elemento agganciato al documento è più affidabile di uno
+    // creato solo in memoria: resta valido anche dopo un cambio di schermata.
+    elementoAllarme.setAttribute("playsinline", "");
+    elementoAllarme.style.display = "none";
+    document.body.append(elementoAllarme);
+  }
+  return elementoAllarme;
+}
 
 /** Va chiamata da un gesto dell'utente, altrimenti iOS blocca l'audio. */
 export function sbloccaAudio() {
-  if (audioCtx) {
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    return;
+  dichiaraSessioneAudio();
+  const a = elemento();
+  // riproduzione muta e immediata: sblocca l'elemento per gli usi successivi
+  a.muted = true;
+  a.play()
+    .then(() => {
+      a.pause();
+      a.currentTime = 0;
+      a.muted = false;
+    })
+    .catch(() => {
+      a.muted = false;
+    });
+
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
   }
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  audioCtx = new AC();
-  const b = audioCtx.createBuffer(1, 1, 22050);
-  const s = audioCtx.createBufferSource();
-  s.buffer = b;
-  s.connect(audioCtx.destination);
-  s.start(0);
+  if (audioCtx?.state === "suspended") audioCtx.resume();
 }
 
 function beep(freq = 880, dur = 0.16, gain = 0.22) {
@@ -229,23 +305,25 @@ function beep(freq = 880, dur = 0.16, gain = 0.22) {
   osc.stop(audioCtx.currentTime + dur + 0.02);
 }
 
-function tripletta() {
-  beep(880, 0.14);
-  setTimeout(() => beep(880, 0.14), 200);
-  setTimeout(() => beep(1175, 0.22), 400);
-  navigator.vibrate?.([120, 80, 120]);
-}
-
 /** Suona finché non si chiama fermaAllarme(). */
 export function avviaAllarme() {
   fermaAllarme();
-  tripletta();
-  alarmTimer = setInterval(tripletta, 1600);
+  dichiaraSessioneAudio();
+  const a = elemento();
+  a.currentTime = 0;
+  a.play().catch(() => {
+    /* se l'elemento è bloccato resta l'oscillatore come ripiego */
+  });
+  alarmTimer = setInterval(() => {}, 1000);
 }
 
 export function fermaAllarme() {
   if (alarmTimer) clearInterval(alarmTimer);
   alarmTimer = null;
+  if (elementoAllarme) {
+    elementoAllarme.pause();
+    elementoAllarme.currentTime = 0;
+  }
 }
 
 export function allarmeAttivo() {
@@ -254,6 +332,21 @@ export function allarmeAttivo() {
 
 export function tick() {
   beep(660, 0.05, 0.12);
+}
+
+/** Prova del suono, per verificarlo senza allenarsi. */
+export function provaSuono() {
+  sbloccaAudio();
+  setTimeout(() => {
+    const a = elemento();
+    a.loop = false;
+    a.currentTime = 0;
+    a.play().finally(() => {
+      setTimeout(() => {
+        a.loop = true;
+      }, 2000);
+    });
+  }, 120);
 }
 
 // ---------- wake lock ----------
