@@ -1,6 +1,6 @@
 /* Grafici in SVG, senza librerie.
-   Un solo grafico in Home: quattro settimane di movimento, allenamenti e sonno
-   nello stesso spazio. Sono le tre cose che le regole del brief guardano. */
+   Un solo grafico in Home: il movimento giornaliero con i giorni di allenamento
+   in evidenza, e i giorni già in programma sulla destra. */
 
 import { h, num, dataBreve } from "./ui.js";
 
@@ -16,21 +16,20 @@ const el = (tag, attrs = {}) => {
 const GIORNI_CORTI = ["D", "L", "M", "M", "G", "V", "S"];
 
 /**
- * @param dati [{ data, kcal|null, obiettivo, allenamento: bool, sonnoMin|null, presente }]
+ * @param dati [{ data, kcal|null, obiettivo, allenamento: bool, presente, futuro, previsto }]
  */
-export function graficoAttivita(dati, { altezza = 150 } = {}) {
+export function graficoAttivita(dati, { altezza = 128 } = {}) {
   const L = 320;
   const A = altezza;
-  const margineBasso = 26;
-  const altezzaSonno = 22;
-  const areaBarre = A - margineBasso - altezzaSonno - 6;
+  const margineBasso = 22;
+  const areaBarre = A - margineBasso;
 
   const svg = el("svg", {
     viewBox: `0 0 ${L} ${A}`,
     width: "100%",
     height: A,
     role: "img",
-    "aria-label": "Movimento, allenamenti e sonno delle ultime quattro settimane",
+    "aria-label": "Movimento giornaliero e allenamenti",
     style: "display:block",
   });
 
@@ -48,8 +47,6 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
     t.textContent = testo.toUpperCase();
     return t;
   };
-  svg.append(etichettaFascia("movimento", 8));
-
   // linea dell'obiettivo
   const yObiettivo = areaBarre - (obiettivo / massimo) * areaBarre;
   svg.append(
@@ -75,14 +72,6 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
     );
   }
 
-  const ySonnoBase = areaBarre + 8;
-  svg.append(
-    el("line", {
-      x1: 0, x2: L, y1: ySonnoBase - 3, y2: ySonnoBase - 3,
-      stroke: "currentColor", "stroke-width": 0.5, opacity: 0.18,
-    }),
-    etichettaFascia("sonno", ySonnoBase + 6)
-  );
 
   dati.forEach((d, i) => {
     const x = i * passo + (passo - larghezza) / 2;
@@ -115,26 +104,6 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
       );
     }
 
-    // fascia sonno
-    const ySonno = ySonnoBase;
-    if (d.sonnoMin != null) {
-      const quota = Math.min(1, d.sonnoMin / (9 * 60));
-      svg.append(
-        el("rect", {
-          x, y: ySonno + (altezzaSonno - quota * altezzaSonno), width: larghezza,
-          height: Math.max(2, quota * altezzaSonno), rx: 1,
-          fill: d.sonnoMin < 6 * 60 ? "var(--orange)" : "currentColor",
-          opacity: d.sonnoMin < 6 * 60 ? 0.8 : 0.45,
-        })
-      );
-    } else {
-      svg.append(
-        el("line", {
-          x1: x, x2: x + larghezza, y1: ySonno + altezzaSonno, y2: ySonno + altezzaSonno,
-          stroke: "currentColor", "stroke-width": 1.5, opacity: 0.15, "stroke-linecap": "round",
-        })
-      );
-    }
 
     // etichette solo i lunedì e l'ultimo giorno
     const wd = new Date(d.data + "T00:00:00").getDay();
@@ -189,7 +158,6 @@ export function legenda() {
     { style: "display:flex;flex-wrap:wrap;gap:12px;margin-top:8px" },
     punto("background:var(--accent)", "giorno di allenamento"),
     punto("background:currentColor;opacity:.3", "giorno di riposo"),
-    punto("background:var(--orange);opacity:.8", "notte sotto le 6 ore"),
     punto("background:currentColor;opacity:.3;width:5px;height:5px;border-radius:50%", "nessun dato"),
     punto("background:none;box-shadow:inset 0 0 0 1px var(--accent);opacity:.5", "in programma")
   );
