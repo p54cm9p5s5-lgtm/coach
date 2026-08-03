@@ -26,7 +26,7 @@ const CONDIZIONI_FOTO = [
   ["digiuno", "A digiuno, dopo il bagno"],
   ["stessaLuce", "Tapparella chiusa, stessa lampada"],
   ["stessoPunto", "Stesso punto segnato sul pavimento"],
-  ["bracciaLungoFianchi", "Braccia lungo i fianchi, respiro normale"],
+  ["pose", "Le quattro pose come le fai tu, respiro normale"],
 ];
 
 export async function render({ ridisegna }) {
