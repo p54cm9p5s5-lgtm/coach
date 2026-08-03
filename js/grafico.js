@@ -239,4 +239,165 @@ export function legenda() {
   );
 }
 
+/**
+ * Grafico a barre riutilizzabile, con lettura al tocco.
+ * @param punti [{ data, valore|null, evidenza?: bool, futuro?: bool }]
+ * @param obiettivo linea tratteggiata, opzionale
+ * @param formatta (valore) => stringa mostrata nella lettura
+ * @param suffisso etichetta breve dell'unità nella lettura
+ */
+export function graficoBarre({
+  punti,
+  obiettivo = null,
+  formatta = (v) => String(Math.round(v)),
+  etichettaObiettivo = null,
+  altezza = 96,
+  invito = "Tocca una colonna per vedere il giorno",
+}) {
+  const L = 320;
+  const A = altezza;
+  const margineBasso = 18;
+  const areaBarre = A - margineBasso;
+
+  const svg = el("svg", {
+    viewBox: `0 0 ${L} ${A}`,
+    width: "100%",
+    height: A,
+    role: "img",
+    style: "display:block",
+  });
+
+  const valori = punti.map((p) => p.valore).filter((v) => v != null);
+  const massimo = Math.max(obiettivo ? obiettivo * 1.15 : 0, ...valori, 1);
+  const passo = L / Math.max(punti.length, 1);
+  const larghezza = Math.max(1.5, Math.min(11, passo * 0.5));
+
+  if (obiettivo) {
+    const y = areaBarre - (obiettivo / massimo) * areaBarre;
+    svg.append(
+      el("line", {
+        x1: 0, x2: L, y1: y, y2: y,
+        stroke: "currentColor", "stroke-width": 1, "stroke-dasharray": "3 4", opacity: 0.3,
+      })
+    );
+    if (etichettaObiettivo) {
+      const t = el("text", {
+        x: L - 1, y: y - 3, "font-size": 7.5, "text-anchor": "end", fill: "currentColor", opacity: 0.45,
+      });
+      t.textContent = etichettaObiettivo;
+      svg.append(t);
+    }
+  }
+
+  punti.forEach((p, i) => {
+    const x = i * passo + (passo - larghezza) / 2;
+    if (p.valore == null) {
+      svg.append(
+        el("circle", { cx: x + larghezza / 2, cy: areaBarre - 2, r: 1.5, fill: "currentColor", opacity: 0.28 })
+      );
+      return;
+    }
+    const alt = Math.max(2, (p.valore / massimo) * areaBarre);
+    svg.append(
+      el("rect", {
+        x, y: areaBarre - alt, width: larghezza, height: alt, rx: Math.min(2.5, larghezza / 2),
+        fill: p.evidenza ? "var(--accent)" : "currentColor",
+        opacity: p.evidenza ? 0.95 : 0.32,
+      })
+    );
+  });
+
+  // estremi sull'asse: prima e ultima data
+  if (punti.length) {
+    const primo = el("text", { x: 0, y: A - 5, "font-size": 8, fill: "currentColor", opacity: 0.4 });
+    primo.textContent = dataBreve(punti[0].data);
+    const ultimo = el("text", {
+      x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
+    });
+    ultimo.textContent = dataBreve(punti[punti.length - 1].data);
+    svg.append(primo, ultimo);
+  }
+
+  const lettura = h("p", {
+    style:
+      "margin:0 0 6px;min-height:17px;font-size:12px;line-height:17px;color:var(--label-secondary);" +
+      "font-variant-numeric:tabular-nums",
+  });
+  lettura.textContent = invito;
+
+  const evidenza = el("line", { y1: 0, y2: areaBarre, stroke: "currentColor", "stroke-width": 1, opacity: 0 });
+  const pallino = el("circle", { r: 2.4, fill: "var(--accent)", opacity: 0 });
+  svg.append(evidenza, pallino);
+
+  let selezionato = null;
+  const mostra = (i) => {
+    const p = punti[i];
+    if (!p || i === selezionato) return;
+    selezionato = i;
+    const cx = i * passo + passo / 2;
+    evidenza.setAttribute("x1", cx);
+    evidenza.setAttribute("x2", cx);
+    evidenza.setAttribute("opacity", "0.22");
+    const alt = p.valore != null ? Math.max(2, (p.valore / massimo) * areaBarre) : 2;
+    pallino.setAttribute("cx", cx);
+    pallino.setAttribute("cy", areaBarre - alt);
+    pallino.setAttribute("opacity", p.valore != null ? "1" : "0");
+    const giorno = GIORNI_ABBR[weekdayOf(p.data)];
+    lettura.textContent =
+      p.valore == null
+        ? `${giorno} ${dataBreve(p.data)} · nessun dato`
+        : `${giorno} ${dataBreve(p.data)} · ${formatta(p.valore)}${p.nota ? ` · ${p.nota}` : ""}`;
+  };
+
+  let premuto = false;
+  const aggiorna = (e) => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    const x = ((e.clientX - r.left) / r.width) * L;
+    mostra(Math.max(0, Math.min(punti.length - 1, Math.floor(x / passo))));
+  };
+  svg.addEventListener("pointerdown", (e) => {
+    premuto = true;
+    aggiorna(e);
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (premuto) aggiorna(e);
+  });
+  const rilascia = () => {
+    premuto = false;
+  };
+  svg.addEventListener("pointerup", rilascia);
+  svg.addEventListener("pointercancel", rilascia);
+  svg.addEventListener("pointerleave", rilascia);
+  svg.style.touchAction = "pan-y";
+  svg.style.cursor = "pointer";
+
+  return h("div", lettura, svg);
+}
+
+/** Scheda con titolo, numero grande e grafico. */
+export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede }) {
+  return h(
+    "div.group",
+    h("h2", titolo),
+    h(
+      "div",
+      { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
+      h(
+        "div",
+        { style: "display:flex;align-items:baseline;gap:8px;margin-bottom:12px" },
+        h(
+          "p",
+          { style: "margin:0;font-size:26px;font-weight:700;letter-spacing:-0.6px;font-variant-numeric:tabular-nums" },
+          valore,
+          unita ? h("span", { style: "font-size:13px;font-weight:400;color:var(--label-secondary)" }, ` ${unita}`) : null
+        ),
+        nota ? h("p", { style: "margin:0;font-size:12px;color:var(--label-tertiary)" }, nota) : null
+      ),
+      grafico
+    ),
+    piede ? h("p.footnote", piede) : null
+  );
+}
+
 export { GIORNI_CORTI };

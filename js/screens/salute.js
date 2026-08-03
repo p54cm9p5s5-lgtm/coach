@@ -2,6 +2,7 @@ import { h, sheet, chiedi, num, dataBreve, isoDate, durataUmana, aggiungi } from
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
+import { graficoBarre, schedaGrafico } from "../grafico.js";
 
 const NOME_SHORTCUT = "Coach Salute";
 
@@ -76,75 +77,132 @@ export async function render({ ridisegna }) {
   );
 
   const obiettivo = imp.obiettivoMovimentoKcal;
-  const righeMov = giorni.slice(0, 14).map((g) =>
-    g.presente
-      ? h(
-          "tr",
-          h("td", dataBreve(g.data)),
-          h("td.num", g.kcalAttive != null ? `${Math.round(g.kcalAttive)}/${g.obiettivoKcal || obiettivo}` : "—"),
-          h(
-            "td.num",
-            g.kcalAttive != null && (g.obiettivoKcal || obiettivo)
-              ? `${num((g.kcalAttive / (g.obiettivoKcal || obiettivo)) * 100)}%`
-              : "—"
-          ),
-          h("td.num", g.passi != null ? g.passi.toLocaleString("it-IT") : "—")
-        )
-      : h(
-          "tr",
-          h("td", dataBreve(g.data)),
-          h("td", { colspan: "3", style: "color:var(--label-tertiary)" }, "non registrato")
-        )
+
+  // I giorni arrivano dal più recente: per il grafico servono in ordine di
+  // calendario, e senza la coda di giorni vuoti che non racconta niente.
+  const perGrafico = (righe) => [...righe].sort((a, b) => (a.data < b.data ? -1 : 1));
+  const giorniOrd = perGrafico(giorni);
+  const nottiOrd = perGrafico(notti);
+
+  const media = (righe, campo) => {
+    const v = righe.filter((r) => r.presente).map((r) => r[campo]).filter((x) => x != null);
+    return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
+  };
+
+  const mKcal = media(giorni, "kcalAttive");
+  const mPassi = media(giorni, "passi");
+  const mSonno = media(notti, "durataMin");
+
+  const allenati = new Set(
+    (await store.allenamenti()).filter((x) => x.stato === "completata").map((x) => x.data)
   );
 
-  aggiungi(wrap,
-    h(
-      "div.group",
-      h("h2", "Movimento"),
-      h(
-        "div.table-wrap",
-        h(
-          "table",
-          h("thead", h("tr", h("th", "Data"), h("th.num", "Movimento"), h("th.num", "% obiettivo"), h("th.num", "Passi"))),
-          h("tbody", ...righeMov)
-        )
-      ),
-      h("p.footnote", `Obiettivo Movimento impostato a ${obiettivo} kcal.`)
-    )
-  );
+  // ---- movimento ----
+  if (giorniOrd.length) {
+    aggiungi(wrap,
+      schedaGrafico({
+        titolo: "Movimento",
+        valore: mKcal ? String(mKcal.valore) : "—",
+        unita: "kcal",
+        nota: mKcal ? `media su ${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
+        grafico: graficoBarre({
+          punti: giorniOrd.map((g) => ({
+            data: g.data,
+            valore: g.presente ? g.kcalAttive : null,
+            evidenza: allenati.has(g.data),
+            nota: g.presente && g.kcalAttive != null && obiettivo
+              ? `${num((g.kcalAttive / (g.obiettivoKcal || obiettivo)) * 100)}% dell'obiettivo`
+              : null,
+          })),
+          obiettivo,
+          etichettaObiettivo: `obiettivo ${obiettivo}`,
+          formatta: (v) => `${Math.round(v)} kcal`,
+        }),
+        piede: `Obiettivo Movimento ${obiettivo} kcal. In lime i giorni con allenamento registrato.`,
+      })
+    );
+  }
 
-  const righeSonno = notti.slice(0, 14).map((n) =>
-    n.presente
-      ? h(
-          "tr",
-          h("td", dataBreve(n.data)),
-          h("td.num", n.durataMin != null ? durataUmana(n.durataMin * 60) : "—"),
-          h("td.num", n.profondoMin != null ? `${n.profondoMin}m` : "—"),
-          h("td.num", n.remMin != null ? `${n.remMin}m` : "—"),
-          h("td.num", n.vegliaMin != null ? `${n.vegliaMin}m` : "—")
-        )
-      : h(
-          "tr",
-          h("td", dataBreve(n.data)),
-          h("td", { colspan: "4", style: "color:var(--label-tertiary)" }, "non registrata")
-        )
-  );
+  // ---- passi ----
+  if (giorniOrd.some((g) => g.passi != null)) {
+    aggiungi(wrap,
+      schedaGrafico({
+        titolo: "Passi",
+        valore: mPassi ? mPassi.valore.toLocaleString("it-IT") : "—",
+        nota: mPassi ? `media su ${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
+        grafico: graficoBarre({
+          punti: giorniOrd.map((g) => ({
+            data: g.data,
+            valore: g.presente ? g.passi : null,
+            evidenza: allenati.has(g.data),
+          })),
+          formatta: (v) => `${Math.round(v).toLocaleString("it-IT")} passi`,
+        }),
+        piede: "I passi non hanno un obiettivo nel programma: servono a leggere quanto ti muovi nei giorni senza allenamento.",
+      })
+    );
+  }
 
-  aggiungi(wrap,
-    h(
-      "div.group",
-      h("h2", "Sonno"),
-      h(
-        "div.table-wrap",
-        h(
-          "table",
-          h("thead", h("tr", h("th", "Notte del"), h("th.num", "Durata"), h("th.num", "Profondo"), h("th.num", "REM"), h("th.num", "Veglia"))),
-          h("tbody", ...righeSonno)
-        )
-      ),
-      h("p.footnote", "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali.")
-    )
-  );
+  // ---- sonno ----
+  if (nottiOrd.length) {
+    aggiungi(wrap,
+      schedaGrafico({
+        titolo: "Sonno",
+        valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
+        nota: mSonno ? `media su ${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"}` : "nessun dato",
+        grafico: graficoBarre({
+          punti: nottiOrd.map((n) => ({
+            data: n.data,
+            valore: n.presente ? n.durataMin : null,
+            nota: n.presente
+              ? [
+                  n.profondoMin != null ? `profondo ${n.profondoMin}m` : null,
+                  n.remMin != null ? `REM ${n.remMin}m` : null,
+                  n.vegliaMin != null ? `veglia ${n.vegliaMin}m` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : null,
+          })),
+          formatta: (v) => durataUmana(v * 60),
+          invito: "Tocca una notte per vedere durata e fasi",
+        }),
+        piede: "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali.",
+      })
+    );
+  }
+
+  // ---- completezza degli allenamenti ----
+  const chiuse = (await store.allenamenti())
+    .filter((x) => x.stato === "completata")
+    .sort((a, b) => (a.data < b.data ? -1 : 1));
+  if (chiuse.length) {
+    const punti = [];
+    for (const sed of chiuse) {
+      const comp = await store.completezzaSeduta(sed.id);
+      punti.push({ data: sed.data, valore: comp?.totale ?? null, evidenza: true, nota: sed.tipoNome });
+    }
+    const validi = punti.map((p) => p.valore).filter((v) => v != null);
+    const mediaComp = validi.length
+      ? Math.round(validi.reduce((a, b) => a + b, 0) / validi.length)
+      : null;
+    aggiungi(wrap,
+      schedaGrafico({
+        titolo: "Completezza degli allenamenti",
+        valore: mediaComp != null ? String(mediaComp) : "—",
+        unita: "su 100",
+        nota: `media su ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"}`,
+        grafico: graficoBarre({
+          punti,
+          obiettivo: 100,
+          etichettaObiettivo: "100",
+          formatta: (v) => `${Math.round(v)} su 100`,
+          invito: "Tocca un allenamento per vedere il punteggio",
+        }),
+        piede: "Quanto ogni allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching.",
+      })
+    );
+  }
 
   const allenamenti = (await store.db.all("allenamentiWatch")).sort((a, b) => (a.data < b.data ? 1 : -1));
   if (allenamenti.length) {
