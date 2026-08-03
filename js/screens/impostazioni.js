@@ -68,6 +68,26 @@ export async function render({ vaiA, ridisegna }) {
     )
   );
 
+  // ---- versione e aggiornamento ----
+  const versione = await versioneInstallata();
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h("h2", "App"),
+      h(
+        "div.list",
+        h("div.row", h("div.main", h("span.title", "Versione installata")), h("span.value", versione || "—")),
+        h(
+          "button.row.accent",
+          { onclick: forzaAggiornamento },
+          h("div.main", h("span.title", "Scarica l'ultima versione"), h("span.sub", "svuota la copia locale e ricarica")),
+          h("span.chevron", "›")
+        )
+      ),
+      h("p.footnote", "Normalmente l'app si aggiorna da sola alla riapertura. Questo serve solo se resta indietro.")
+    )
+  );
+
   // ---- aspetto ----
   const tema = temaCorrente();
   aggiungi(wrap,
@@ -334,4 +354,32 @@ async function azzera(ridisegna) {
 
   for (const s of Object.keys(store.db.SCHEMA)) await store.db.clearStore(s);
   location.reload();
+}
+
+
+/** Versione del service worker attivo: dice quale copia sta girando davvero. */
+async function versioneInstallata() {
+  try {
+    const r = await fetch("sw.js", { cache: "no-store" });
+    const t = await r.text();
+    return t.match(/const VERSION = "([^"]+)"/)?.[1] || null;
+  } catch {
+    return null;
+  }
+}
+
+async function forzaAggiornamento() {
+  const scelta = await chiedi({
+    titolo: "Scaricare l'ultima versione?",
+    testo: "Vengono svuotate le copie locali dei file dell'app. I tuoi dati non si toccano: restano nell'archivio del telefono.",
+    opzioni: [{ etichetta: "Aggiorna adesso", valore: "si" }],
+  });
+  if (scelta !== "si") return;
+  try {
+    for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+  } catch {
+    /* niente service worker: si ricarica e basta */
+  }
+  location.reload(true);
 }
