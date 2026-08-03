@@ -237,13 +237,15 @@ let alarmTimer = null;
 let elementoAllarme = null;
 
 /**
- * iOS zittisce l'audio "ambientale" quando l'interruttore laterale è su
- * silenzioso. Dichiarare la sessione come riproduzione fa suonare l'allarme
- * anche in quel caso: un timer di recupero che non suona è inutile.
+ * "transient" serve per un suono breve: si fa sentire anche con l'interruttore
+ * su silenzioso, abbassa per un attimo quello che stai ascoltando e poi lo
+ * lascia riprendere. Dichiararla come "playback" — come facevo prima —
+ * equivale a dire a iOS che l'app è un lettore musicale, e ferma la musica
+ * per tutta la durata dell'allenamento.
  */
-function dichiaraSessioneAudio() {
+function sessioneAudio(tipo) {
   try {
-    if (navigator.audioSession) navigator.audioSession.type = "playback";
+    if (navigator.audioSession) navigator.audioSession.type = tipo;
   } catch {
     /* API non disponibile: si resta sul comportamento predefinito */
   }
@@ -306,7 +308,8 @@ function elemento() {
 
 /** Va chiamata da un gesto dell'utente, altrimenti iOS blocca l'audio. */
 export function sbloccaAudio() {
-  dichiaraSessioneAudio();
+  // Nessuna dichiarazione di sessione qui: l'app non deve occupare l'audio
+  // finché non c'è davvero qualcosa da suonare.
   const a = elemento();
   // riproduzione muta e immediata: sblocca l'elemento per gli usi successivi
   a.muted = true;
@@ -320,15 +323,16 @@ export function sbloccaAudio() {
       a.muted = false;
     });
 
-  if (!audioCtx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (AC) audioCtx = new AC();
-  }
-  if (audioCtx?.state === "suspended") audioCtx.resume();
 }
 
 function beep(freq = 880, dur = 0.16, gain = 0.22) {
-  if (!audioCtx || audioCtx.state !== "running") return;
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = new AC();
+  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  if (audioCtx.state !== "running") return;
   const osc = audioCtx.createOscillator();
   const g = audioCtx.createGain();
   osc.type = "sine";
@@ -344,7 +348,7 @@ function beep(freq = 880, dur = 0.16, gain = 0.22) {
 /** Suona finché non si chiama fermaAllarme(). */
 export function avviaAllarme() {
   fermaAllarme();
-  dichiaraSessioneAudio();
+  sessioneAudio("transient");
   const a = elemento();
   a.currentTime = 0;
   a.play().catch(() => {
@@ -360,6 +364,8 @@ export function fermaAllarme() {
     elementoAllarme.pause();
     elementoAllarme.currentTime = 0;
   }
+  // restituisce l'audio a chi lo stava usando
+  sessioneAudio("auto");
 }
 
 export function allarmeAttivo() {
@@ -373,6 +379,7 @@ export function tick() {
 /** Prova del suono, per verificarlo senza allenarsi. */
 export function provaSuono() {
   sbloccaAudio();
+  sessioneAudio("transient");
   setTimeout(() => {
     const a = elemento();
     a.loop = false;
@@ -380,6 +387,7 @@ export function provaSuono() {
     a.play().finally(() => {
       setTimeout(() => {
         a.loop = true;
+        sessioneAudio("auto");
       }, 2000);
     });
   }, 120);
