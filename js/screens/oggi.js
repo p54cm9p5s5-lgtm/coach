@@ -204,11 +204,14 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
   }
 
   const titolo = previsto ? previsto.nome : "Riposo";
+  const origine = store.origineGiorno(oggi);
   const sotto = giaFatto
     ? "completato oggi"
     : previsto
       ? `${previsto.esercizi?.length || 0} esercizi${previsto.cardio ? " + cardio" : ""}`
-      : "nessun allenamento previsto dallo split";
+      : origine.fonte === "calendario"
+        ? "niente sul calendario per oggi"
+        : "nessun allenamento previsto dallo split";
 
   return h(
     "div.group",
@@ -222,15 +225,13 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         titolo
       ),
       h("p", { style: "margin:6px 0 16px;font-size:13px;color:var(--label-secondary)" }, sotto),
-      (() => {
-        const o = store.origineGiorno(oggi);
-        if (o.fonte !== "calendario") return null;
-        return h(
-          "p",
-          { style: "margin:-8px 0 14px;font-size:11px;color:var(--label-tertiary)" },
-          o.diverso ? `dal calendario, al posto dello split` : "dal calendario"
-        );
-      })(),
+      origine.fonte === "calendario" && previsto
+        ? h(
+            "p",
+            { style: "margin:-8px 0 14px;font-size:11px;color:var(--label-tertiary)" },
+            "dal calendario"
+          )
+        : null,
       previsto
         ? h(
             "button.btn",
@@ -251,7 +252,9 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         : h(
             "p",
             { style: "margin:10px 0 0;font-size:12px;color:var(--label-tertiary)" },
-            "Il giorno di riposo fa parte del programma."
+            origine.fonte === "calendario"
+              ? "Sul calendario oggi non c'è niente."
+              : "Il giorno di riposo fa parte del programma."
           )
     )
   );

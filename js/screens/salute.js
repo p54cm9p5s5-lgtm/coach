@@ -202,18 +202,30 @@ export async function render({ ridisegna }) {
 // ---------- import ----------
 
 async function aggiorna(ridisegna) {
-  const scelta = await chiedi({
+  return apriImport(ridisegna, {
     titolo: "Aggiorna dati salute",
     testo: "Il comando rapido legge gli ultimi 30 giorni e copia il risultato negli appunti. Poi torni qui e incolli.",
+    shortcut: NOME_SHORTCUT,
+  });
+}
+
+/**
+ * Stesso flusso per qualunque pacchetto: il formato è uno solo e il testo
+ * incollato può contenere salute, calendario o tutti e due insieme.
+ */
+export async function apriImport(ridisegna, { titolo, testo, shortcut }) {
+  const scelta = await chiedi({
+    titolo,
+    testo,
     opzioni: [
-      { etichetta: `Apri «${NOME_SHORTCUT}»`, valore: "apri" },
+      { etichetta: `Apri «${shortcut}»`, valore: "apri" },
       { etichetta: "Ho già copiato: incolla adesso", valore: "incolla" },
     ],
   });
   if (!scelta) return;
 
   if (scelta === "apri") {
-    location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(NOME_SHORTCUT)}`;
+    location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcut)}`;
     return;
   }
   await incolla(ridisegna);

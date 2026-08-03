@@ -44,10 +44,13 @@ export function analizza(testo) {
 
   if (!righe.length) throw new Error("Non ho trovato niente da leggere: gli appunti sono vuoti.");
 
-  const intestazione = righe[0].match(/^COACH-SALUTE\s+v(\d+)/i);
+  // «COACH-DATI» è il nome giusto da quando il pacchetto porta anche gli
+  // eventi del calendario; «COACH-SALUTE» resta valido per non rompere un
+  // comando rapido già configurato.
+  const intestazione = righe[0].match(/^COACH-(?:SALUTE|DATI)\s+v(\d+)/i);
   if (!intestazione) {
     throw new Error(
-      "Questo non è un pacchetto dati di Coach. La prima riga deve essere «COACH-SALUTE v1»."
+      "Questo non è un pacchetto dati di Coach. La prima riga deve essere «COACH-DATI v1»."
     );
   }
   if (Number(intestazione[1]) !== VERSIONE) {

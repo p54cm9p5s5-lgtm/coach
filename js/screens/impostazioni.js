@@ -2,6 +2,9 @@ import { h, toast, sheet, chiedi, num, dataLunga, aggiungi, provaSuono } from ".
 import { intestazione, applicaTema, temaCorrente } from "../app.js";
 import * as store from "../store.js";
 import { estraiBlocco, valida, confronta } from "../brief.js";
+import { apriImport } from "./salute.js";
+
+const NOME_SHORTCUT_CALENDARIO = "Coach Calendario";
 
 function scegliFile(accept) {
   return new Promise((resolve) => {
@@ -140,6 +143,70 @@ export async function render({ vaiA, ridisegna }) {
           )
       ),
       h("p.footnote", "L'inventario arriva dal master brief e serve a calcolare i dischi da montare.")
+    )
+  );
+
+  // ---- calendario ----
+  const eventi = await store.agenda();
+  const oggiIso = new Date().toISOString().slice(0, 10);
+  const futuri = eventi.filter((e) => e.data >= oggiIso);
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h("h2", "Calendario"),
+      h(
+        "div.list",
+        h(
+          "div.row",
+          h("div.main", h("span.title", "Eventi letti"), h("span.sub", futuri.length ? `${futuri.length} da oggi in avanti` : "nessuno in programma")),
+          h("span.value", String(eventi.length))
+        ),
+        h(
+          "div.row",
+          h("div.main", h("span.title", "Ultima lettura")),
+          h("span.value", imp.ultimoImportAgenda ? new Date(imp.ultimoImportAgenda).toLocaleString("it-IT") : "mai")
+        ),
+        h(
+          "button.row.accent",
+          {
+            onclick: () =>
+              apriImport(ridisegna, {
+                titolo: "Leggi il calendario",
+                testo: `Il comando rapido «${NOME_SHORTCUT_CALENDARIO}» legge gli eventi delle prossime settimane e li copia negli appunti. Poi torni qui e incolli.`,
+                shortcut: NOME_SHORTCUT_CALENDARIO,
+              }),
+          },
+          h("div.main", h("span.title", "Leggi il calendario adesso")),
+          h("span.chevron", "›")
+        ),
+        eventi.length
+          ? h(
+              "button.row.accent",
+              {
+                style: "color:var(--red)",
+                onclick: async () => {
+                  const ok = await chiedi({
+                    titolo: "Dimenticare gli eventi letti?",
+                    testo: "L'app torna a disegnare i giorni dallo split del master brief finché non rileggi il calendario. Sul calendario dell'iPhone non cambia niente.",
+                    opzioni: [{ etichetta: "Dimentica", valore: "si", stile: "danger" }],
+                  });
+                  if (ok !== "si") return;
+                  await store.svuotaAgenda();
+                  toast("Eventi dimenticati.");
+                  await ridisegna();
+                },
+              },
+              h("div.main", h("span.title", "Dimentica gli eventi letti")),
+              h("span.chevron", "›")
+            )
+          : null
+      ),
+      h(
+        "p.footnote",
+        eventi.length
+          ? "Gli allenamenti li decide il coach e li scrive su Google Calendar, che si sincronizza col Calendario dell'iPhone. L'app legge e basta: nei giorni senza evento non mette niente di suo."
+          : "Finché non leggi il calendario, l'app disegna i giorni dallo split scritto nel master brief."
+      )
     )
   );
 

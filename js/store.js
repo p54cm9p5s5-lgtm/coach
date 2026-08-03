@@ -170,15 +170,24 @@ export async function applicaBrief(dati) {
  * giorno c'è un evento, comanda quello. Lo split del brief resta la regola di
  * base, usata finché il calendario non dice altro.
  */
+export function agendaAttiva() {
+  return Boolean(AGENDA && AGENDA.size);
+}
+
 export function giornoPrevisto(iso = isoDate()) {
   if (!PROGRAMMA) return null;
   const ev = AGENDA?.get(iso);
   if (ev) {
     if (ev.giornoId === "riposo") return null;
     if (ev.giornoId) return giornoSplit(ev.giornoId);
-    // evento che non corrisponde a nessun giorno del brief: non si inventa
-    // niente, si torna allo split e lo si segnala altrove
+    // evento che non corrisponde a nessun giorno del brief: l'app non inventa
+    // il contenuto, lo segnala e basta
+    return null;
   }
+  // Calendario collegato: comanda lui anche sui giorni che non nomina. Un
+  // giorno senza evento è un giorno senza allenamento, non un giorno da
+  // riempire con lo split.
+  if (agendaAttiva()) return null;
   const wd = weekdayOf(iso);
   return (PROGRAMMA.split || []).find((g) => g.giorno === wd) || null;
 }
@@ -186,16 +195,12 @@ export function giornoPrevisto(iso = isoDate()) {
 /** Da dove viene quello che l'app mostra per un giorno: serve a dirlo a schermo. */
 export function origineGiorno(iso = isoDate()) {
   const ev = AGENDA?.get(iso);
-  if (!ev) return { fonte: "split" };
+  if (!ev) return agendaAttiva() ? { fonte: "calendario", vuoto: true } : { fonte: "split" };
   if (ev.giornoId === "riposo") return { fonte: "calendario", titolo: ev.titolo, riposo: true };
   if (ev.giornoId) {
     const wd = weekdayOf(iso);
     const daSplit = (PROGRAMMA?.split || []).find((g) => g.giorno === wd) || null;
-    return {
-      fonte: "calendario",
-      titolo: ev.titolo,
-      diverso: (daSplit?.id ?? null) !== ev.giornoId,
-    };
+    return { fonte: "calendario", titolo: ev.titolo, diverso: (daSplit?.id ?? null) !== ev.giornoId };
   }
   return { fonte: "calendario", titolo: ev.titolo, sconosciuto: true };
 }

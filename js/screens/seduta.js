@@ -117,17 +117,19 @@ async function vistaProgramma(vaiA, ridisegna) {
           : h(
               "p",
               { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);text-align:center" },
-              origine.riposo ? "Riposo, dal calendario" : "Lo split non prevede allenamenti oggi"
+              origine.riposo
+                ? "Riposo, dal calendario"
+                : origine.vuoto
+                  ? "Niente sul calendario per oggi"
+                  : "Lo split non prevede allenamenti oggi"
             ),
         // Da dove arriva questo giorno: il calendario del coach o lo split del
         // brief. Se i due dicono cose diverse, comanda il calendario e si vede.
-        origine.fonte === "calendario"
+        origine.fonte === "calendario" && origine.titolo
           ? h(
               "p",
               { style: "margin:10px 0 0;font-size:11px;opacity:.66;text-align:center" },
-              origine.diverso
-                ? `Dal calendario: «${origine.titolo}», al posto dello split`
-                : `Dal calendario: «${origine.titolo}»`
+              `Dal calendario: «${origine.titolo}»`
             )
           : null,
         origine.sconosciuto
@@ -204,7 +206,9 @@ async function vistaProgramma(vaiA, ridisegna) {
             // l'app lo esegue, non lo mette in discussione.
             "p.footnote",
             { style: "text-align:center;margin:0" },
-            "Il riposo fa parte del programma. Se serve un allenamento diverso, lo decide il coach e arriva con il brief aggiornato."
+            origine.fonte === "calendario"
+              ? "Gli allenamenti li mette il coach sul calendario. Se oggi non c'è niente, non c'è niente da fare."
+              : "Il riposo fa parte del programma. Se serve un allenamento diverso, lo decide il coach e arriva con il brief aggiornato."
           )
     )
   );
