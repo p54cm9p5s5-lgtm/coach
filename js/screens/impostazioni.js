@@ -144,7 +144,32 @@ export async function render({ vaiA, ridisegna }) {
   );
 
   // ---- dati ----
-  aggiungi(wrap, 
+  // Conteggi a vista: quando ci si chiede «è rimasto dentro qualcosa di una
+  // prova?», questa riga risponde senza aprire un backup.
+  const conta = await store.conteggioArchivio();
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h("h2", "Cosa c'è in archivio"),
+      h(
+        "div.list",
+        h("div.row", h("div.main", h("span.title", "Allenamenti registrati"), h("span.sub", `${conta.serie} serie · ${conta.questionari} questionari`)), h("span.value", String(conta.allenamenti))),
+        h("div.row", h("div.main", h("span.title", "Misure del corpo"), h("span.sub", `${conta.foto} foto`)), h("span.value", String(conta.misure))),
+        h("div.row", h("div.main", h("span.title", "Giorni di salute"), h("span.sub", `${conta.notti} notti di sonno`)), h("span.value", String(conta.giorniSalute))),
+        conta.aperti
+          ? h("div.row", h("div.main", h("span.title", "Allenamenti aperti e mai chiusi")), h("span.pill.warn", String(conta.aperti)))
+          : null
+      ),
+      h(
+        "p.footnote",
+        conta.primo
+          ? `Dal ${conta.primo} a oggi. Gli allenamenti si eliminano uno per uno dallo Storico.`
+          : "Nessun allenamento registrato."
+      )
+    )
+  );
+
+  aggiungi(wrap,
     h(
       "div.group",
       h("h2", "Dati"),
