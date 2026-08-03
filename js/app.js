@@ -64,8 +64,9 @@ export async function ridisegna() {
 }
 
 /** Intestazione grande in stile iOS, con ombra allo scroll. */
+// Profilo calcolato: 8 denti simmetrici, non disegnato a mano.
 const INGRANAGGIO =
-  "M19.4 13a7.7 7.7 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3H11l-.3 2.6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.7 7.7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1L11 21h4l.3-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4z";
+  "M9.84 4.92 L9.88 2.02 L14.12 2.02 L14.16 4.92 L15.47 5.47 L17.56 3.45 L20.55 6.44 L18.53 8.53 L19.08 9.84 L21.98 9.88 L21.98 14.12 L19.08 14.16 L18.53 15.47 L20.55 17.56 L17.56 20.55 L15.47 18.53 L14.16 19.08 L14.12 21.98 L9.88 21.98 L9.84 19.08 L8.53 18.53 L6.44 20.55 L3.45 17.56 L5.47 15.47 L4.92 14.16 L2.02 14.12 L2.02 9.88 L4.92 9.84 L5.47 8.53 L3.45 6.44 L6.44 3.45 L8.53 5.47 Z";
 
 export function intestazione(titolo, azione) {
   const bottone = azione

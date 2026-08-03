@@ -38,7 +38,7 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
   const obiettivo = dati.find((d) => d.obiettivo)?.obiettivo || 600;
   const massimo = Math.max(obiettivo * 1.2, ...valori, 1);
   const passo = L / Math.max(dati.length, 1);
-  const larghezza = Math.max(2, passo * 0.62);
+  const larghezza = Math.max(1.5, Math.min(9, passo * 0.42));
 
   const etichettaFascia = (testo, y) => {
     const t = el("text", {
@@ -58,10 +58,22 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
       stroke: "currentColor", "stroke-width": 1, "stroke-dasharray": "3 4", opacity: 0.35,
     }),
     el("text", {
-      x: 2, y: yObiettivo - 4, "font-size": 8, fill: "currentColor", opacity: 0.5,
+      x: L - 1, y: yObiettivo - 4, "font-size": 8, "text-anchor": "end",
+      fill: "currentColor", opacity: 0.5,
     })
   );
   svg.lastChild.textContent = `obiettivo ${obiettivo}`;
+
+  const primoFuturo = dati.findIndex((d) => d.futuro);
+  if (primoFuturo > 0) {
+    const xTaglio = primoFuturo * passo;
+    svg.append(
+      el("line", {
+        x1: xTaglio, x2: xTaglio, y1: 12, y2: A - margineBasso + 12,
+        stroke: "currentColor", "stroke-width": 0.5, opacity: 0.2, "stroke-dasharray": "2 3",
+      })
+    );
+  }
 
   const ySonnoBase = areaBarre + 8;
   svg.append(
@@ -75,7 +87,16 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
   dati.forEach((d, i) => {
     const x = i * passo + (passo - larghezza) / 2;
 
-    if (!d.presente || d.kcal == null) {
+    if (d.futuro) {
+      if (d.previsto) {
+        svg.append(
+          el("rect", {
+            x, y: areaBarre - 7, width: larghezza, height: 7, rx: 1,
+            fill: "none", stroke: "var(--accent)", "stroke-width": 1, opacity: 0.45,
+          })
+        );
+      }
+    } else if (!d.presente || d.kcal == null) {
       // giorno senza dati: un trattino, non una barra a zero
       svg.append(
         el("circle", {
@@ -125,6 +146,7 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
         fill: "currentColor", opacity: 0.45,
       });
       t.textContent = dataBreve(d.data).slice(0, 5);
+      if (d.futuro) t.setAttribute("opacity", "0.3");
       svg.append(t);
     }
   });
@@ -168,7 +190,8 @@ export function legenda() {
     punto("background:var(--accent)", "giorno di allenamento"),
     punto("background:currentColor;opacity:.3", "giorno di riposo"),
     punto("background:var(--orange);opacity:.8", "notte sotto le 6 ore"),
-    punto("background:currentColor;opacity:.3;width:5px;height:5px;border-radius:50%", "nessun dato")
+    punto("background:currentColor;opacity:.3;width:5px;height:5px;border-radius:50%", "nessun dato"),
+    punto("background:none;box-shadow:inset 0 0 0 1px var(--accent);opacity:.5", "in programma")
   );
 }
 
