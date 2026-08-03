@@ -19,8 +19,8 @@ export async function render({ vaiA }) {
       h(
         "div.empty",
         h("h3", "Nessun allenamento aperto"),
-        h("p", "Gli allenamenti si avviano dalla schermata Oggi."),
-        h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("oggi") }, "Vai a Oggi"))
+        h("p", "Gli allenamenti si avviano dalla Home."),
+        h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("oggi") }, "Vai alla Home"))
       )
     );
     return wrap;

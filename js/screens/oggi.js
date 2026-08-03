@@ -12,7 +12,7 @@ export async function render({ vaiA, ridisegna }) {
   const oggi = isoDate();
   const prog = store.programma();
   const wrap = h("div.screen");
-  aggiungi(wrap, intestazione("Oggi", { icona: "ingranaggio", etichetta: "Impostazioni", onclick: () => vaiA("impostazioni") }));
+  aggiungi(wrap, intestazione("Home", { icona: "ingranaggio", etichetta: "Impostazioni", onclick: () => vaiA("impostazioni") }));
 
   if (!prog) {
     aggiungi(wrap,

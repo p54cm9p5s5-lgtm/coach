@@ -25,7 +25,7 @@ const SCELTE = [
 
 export async function render({ vaiA }) {
   const wrap = h("div.screen");
-  aggiungi(wrap, intestazione("Pacchetto", { etichetta: "Oggi", onclick: () => vaiA("oggi") }));
+  aggiungi(wrap, intestazione("Pacchetto", { etichetta: "Home", onclick: () => vaiA("oggi") }));
 
   const stato = { seduta: true, salute: true, proposte: true, corpo: false };
   const anteprima = h("pre", {
