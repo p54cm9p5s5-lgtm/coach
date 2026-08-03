@@ -1210,13 +1210,14 @@ export function statoFinestra(righe, { settimane = 3, minimoSettimana = 5 } = {}
 
 // ---------- foto ----------
 
-/* Le quattro pose sono quelle del protocollo §15 del master brief, non una
-   scelta dell'app: braccia lungo i fianchi, rilassate, respiro normale. */
+/* Le quattro pose sono quelle che l'atleta esegue davvero. Gli identificatori
+   restano quelli di prima perché le foto già salvate continuino a trovarsi al
+   loro posto: cambiano solo i nomi e le descrizioni. */
 export const POSE = [
-  { id: "fronte", nome: "Fronte", come: "Braccia lungo i fianchi, rilassate" },
-  { id: "profiloDx", nome: "Profilo destro", come: "Spalla destra verso la fotocamera, braccia lungo i fianchi" },
+  { id: "fronte", nome: "Fronte", come: "Di fronte, braccia lungo i fianchi" },
+  { id: "profiloDx", nome: "Profilo", come: "Di lato, braccia distese in avanti" },
   { id: "schiena", nome: "Schiena", come: "Di spalle, braccia lungo i fianchi" },
-  { id: "profiloSx", nome: "Profilo sinistro", come: "Spalla sinistra verso la fotocamera, braccia lungo i fianchi" },
+  { id: "profiloSx", nome: "Fronte a braccia aperte", come: "Di fronte, braccia aperte ai lati" },
 ];
 
 /**
