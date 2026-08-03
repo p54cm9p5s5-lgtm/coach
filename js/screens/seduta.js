@@ -5,7 +5,7 @@ import {
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { descriviDischi, carichoPiuVicino } from "../plates.js";
-import { punteggioEsercizio, anello, scomposizione, legenda as legendaPunteggio, commento } from "../punteggio.js";
+import { punteggioEsercizio, anello, scomposizione, legenda as legendaPunteggio, commento, giudizio } from "../punteggio.js";
 
 export let nascondiTabBar = true;
 
@@ -200,7 +200,15 @@ async function vistaRisultato(id, vaiA) {
   const durataSec = sed.oraFine ? Math.round((sed.oraFine - sed.oraInizio) / 1000) : null;
   const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
   const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
-  const volume = serie.reduce((t, s) => t + (s.carico || 0) * (s.ripFatte || 0), 0);
+  // Media dei punteggi per esercizio: dice quanto l'allenamento è aderito al
+  // programma, che è la domanda vera. Il volume totale in kg non guida nessuna
+  // decisione: cambia con il numero di esercizi, non con la qualità.
+  const conPunteggio = logs.filter((l) => !l.saltato && l.punteggio != null);
+  const completezza = conPunteggio.length
+    ? Math.round(conPunteggio.reduce((a, b) => a + b.punteggio, 0) / conPunteggio.length)
+    : null;
+  const previsti = store.giornoSplit(sed.tipoId)?.esercizi?.length ?? logs.length;
+  const svolti = logs.filter((l) => !l.saltato).length;
   const valutati = logs.filter((l) => !l.saltato && l.rpe != null);
   const rpeMedio = valutati.length ? valutati.reduce((a, b) => a + b.rpe, 0) / valutati.length : null;
   const tecMedia = valutati.length ? valutati.reduce((a, b) => a + (b.tecnica || 0), 0) / valutati.length : null;
@@ -232,8 +240,12 @@ async function vistaRisultato(id, vaiA) {
     h(
       "div",
       { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
-      scheda("Volume sollevato", volume ? `${Math.round(volume)} kg` : "—", "carico × ripetizioni"),
-      scheda("Serie", String(serie.length), durataSec ? `${(serie.length / (durataSec / 60)).toFixed(2).replace(".", ",")} al minuto` : null),
+      scheda(
+        "Completezza",
+        completezza != null ? `${completezza}` : "—",
+        completezza != null ? giudizio(completezza).testo : "punteggi non registrati"
+      ),
+      scheda("Esercizi", `${svolti}/${previsti}`, `${serie.length} serie in tutto`),
       scheda("RPE medio", rpeMedio != null ? num(rpeMedio) : "—", tecMedia != null ? `tecnica ${num(tecMedia)}` : `zona ${store.regole().rpeTarget.min}-${store.regole().rpeTarget.max}`),
       scheda("Recupero medio", recMedio != null ? mmss(recMedio) : "—", "cronometrato dall'app")
     )
@@ -314,7 +326,21 @@ async function vistaRisultato(id, vaiA) {
     );
   }
 
-  aggiungi(wrap, bloccoStretchingPer(sed.tipoId));
+  if (sed.stretching) {
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h(
+          "div.list",
+          h(
+            "div.row",
+            h("div.main", h("span.title", "Stretching di fine allenamento")),
+            sed.stretching.fatto ? h("span.pill.ok", "fatto") : h("span.pill.warn", "saltato")
+          )
+        )
+      )
+    );
+  }
 
   aggiungi(wrap,
     h(
@@ -413,6 +439,7 @@ async function disegna() {
   else if (fase === "recupero") await vistaRecupero(corpo, piede);
   else if (fase === "questionario") await vistaQuestionario(corpo, piede);
   else if (fase === "cardio") await vistaCardio(corpo, piede);
+  else if (fase === "stretching") await vistaStretching(corpo, piede);
   else await vistaFine(corpo, piede);
 }
 
@@ -425,7 +452,10 @@ function testata() {
   let avanzamento = 0;
   if (fase === "cardio") {
     passo = "Cardio";
-    avanzamento = 94;
+    avanzamento = 90;
+  } else if (fase === "stretching") {
+    passo = "Stretching";
+    avanzamento = 96;
   } else if (fase === "fine") {
     passo = "Riepilogo";
     avanzamento = 100;
@@ -459,12 +489,16 @@ async function menuSeduta() {
     titolo: "Allenamento",
     opzioni: [
       { etichetta: "Salta al cardio", valore: "cardio" },
+      { etichetta: "Vai allo stretching", valore: "stretching" },
       { etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" },
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
     ],
   });
   if (scelta === "cardio") {
     await salvaProgresso({ fase: "cardio" });
+    await disegna();
+  } else if (scelta === "stretching") {
+    await salvaProgresso({ fase: "stretching" });
     await disegna();
   } else if (scelta === "chiudi") {
     await salvaProgresso({ fase: "fine" });
@@ -585,7 +619,7 @@ async function vistaRiscaldamento(corpo, piede) {
 async function vistaEsercizio(corpo, piede) {
   const v = vocePrevista();
   if (!v) {
-    await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "fine" });
+    await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "stretching" });
     return disegna();
   }
   const def = store.esercizio(v.esercizioId);
@@ -951,7 +985,7 @@ async function avanzaEsercizio() {
   S.tsInizioSerie = null;
   S.obiettivo = null;
   if (prossimo >= S.esercizi.length) {
-    await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "fine", indice: prossimo });
+    await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "stretching", indice: prossimo });
   } else {
     await salvaProgresso({ fase: "esercizio", indice: prossimo, recuperoFine: null });
   }
@@ -1361,7 +1395,7 @@ async function vistaCardio(corpo, piede) {
           S.sed = await store.aggiornaSeduta(S.sed.id, {
             cardio: { ...S.sed.cardio, eseguito: false, saltatoMotivo: motivo },
           });
-          await salvaProgresso({ fase: "fine" });
+          await salvaProgresso({ fase: "stretching" });
           await disegna();
         },
       },
@@ -1416,7 +1450,7 @@ async function vistaCardioInCorso(corpo, piede, r) {
       cardio: { ...S.sed.cardio, eseguito: true, durataMin: trascorsi },
     });
     S.cardioFine = null;
-    await salvaProgresso({ fase: "fine", cardioInizio: null, cardioFine: null });
+    await salvaProgresso({ fase: "stretching", cardioInizio: null, cardioFine: null });
     await disegna();
   };
 
@@ -1455,6 +1489,76 @@ function spostaCardio(min) {
   S.cardioFine = Math.max(Date.now(), (S.cardioFine || Date.now()) + min * 60000);
   if (S.cardioFine > Date.now()) fermaAllarme();
   salvaProgresso({ cardioFine: S.cardioFine });
+}
+
+
+// ---------- stretching, come passo dell'allenamento ----------
+
+async function vistaStretching(corpo, piede) {
+  const prot = store.riscaldamento(S.sed.tipoId);
+  const voci = prot?.stretchingFinale || [];
+
+  const passo = (n, nome, dose, come) =>
+    h(
+      "div.passo",
+      h("div.n", String(n)),
+      h(
+        "div.testo",
+        h("span.nome", nome),
+        dose ? h("span.dose", dose) : null,
+        come ? h("span.come", come) : null
+      )
+    );
+
+  aggiungi(corpo,
+    h(
+      "div.hero",
+      h("p.kicker", "Ultimo passo"),
+      h("h2", "Stretching"),
+      h("p.target", `${S.sed.tipoNome} · ${voci.length} allungamenti, circa 3 minuti`)
+    ),
+    voci.length
+      ? h("div.guida", { style: "margin-top:12px" }, ...voci.map((v, i) => passo(i + 1, v.nome, v.dose, v.come)))
+      : h("div.group", h("div.list", h("div.row", h("div.main", h("span.title", "Nessun allungamento previsto per questo giorno"))))),
+    h(
+      "div.guida",
+      h(
+        "section",
+        h("h3", "Perché adesso"),
+        h(
+          "p",
+          "A muscolo caldo e a lavoro finito. Prima dell'allenamento allungare a freddo un muscolo che deve spingere riduce la forza espressa: per quello all'inizio c'è la mobilità, non questo."
+        )
+      )
+    )
+  );
+
+  aggiungi(piede,
+    h(
+      "button.btn",
+      {
+        onclick: azione(async () => {
+          S.sed = await store.aggiornaSeduta(S.sed.id, {
+            stretching: { fatto: true, quando: Date.now() },
+          });
+          await salvaProgresso({ fase: "fine" });
+          await disegna();
+        }),
+      },
+      "Stretching fatto"
+    ),
+    h(
+      "button.btn.secondary",
+      {
+        onclick: azione(async () => {
+          S.sed = await store.aggiornaSeduta(S.sed.id, { stretching: { fatto: false } });
+          await salvaProgresso({ fase: "fine" });
+          await disegna();
+        }),
+      },
+      "Salta"
+    )
+  );
 }
 
 // ---------- stretching di fine seduta ----------
@@ -1543,7 +1647,6 @@ async function vistaFine(corpo, piede) {
     mancanti.length
       ? h("div.group", h("h2", "Dati mancanti"), h("div.list", ...mancanti.map((m) => h("div.row", h("div.main", h("span.title", m))))))
       : null,
-    bloccoStretching(),
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota generale (dolori, sensazioni — solo se presenti)"),
     h("textarea.note", { id: "nota-seduta", value: S.sed.notaGenerale || "" })
   );
