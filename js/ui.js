@@ -347,8 +347,11 @@ export function sbloccaAudio() {
     a.loop = true;
   };
   const p = a.play();
-  if (p && typeof p.then === "function") p.then(ripristina).catch(ripristina);
-  else ripristina();
+  // Restituisce una promessa: chi vuole suonare subito dopo deve aspettare che
+  // lo sblocco abbia finito, altrimenti si mettono in mezzo a vicenda.
+  if (p && typeof p.then === "function") return p.then(ripristina).catch(ripristina);
+  ripristina();
+  return Promise.resolve();
 }
 
 function beep(freq = 880, dur = 0.16, gain = 0.22) {
@@ -403,20 +406,21 @@ export function tick() {
 }
 
 /** Prova del suono, per verificarlo senza allenarsi. */
-export function provaSuono() {
-  sbloccaAudio();
+export async function provaSuono() {
+  await sbloccaAudio();
   sessioneAudio("transient");
+  const a = elemento();
+  a.loop = false;
+  a.currentTime = 0;
+  try {
+    await a.play();
+  } catch {
+    /* se l'elemento resta bloccato non c'è altro da fare qui */
+  }
   setTimeout(() => {
-    const a = elemento();
-    a.loop = false;
-    a.currentTime = 0;
-    a.play().finally(() => {
-      setTimeout(() => {
-        a.loop = true;
-        sessioneAudio("auto");
-      }, 2000);
-    });
-  }, 120);
+    a.loop = true;
+    sessioneAudio("auto");
+  }, 2500);
 }
 
 // ---------- wake lock ----------
