@@ -1019,8 +1019,10 @@ export async function importaSalute(pacchetto) {
         giornoId,
         importatoIl: ora,
       });
-      conteggio.agenda = (conteggio.agenda || 0) + 1;
     }
+    // Contano i giorni, non gli eventi: due eventi lo stesso giorno restano
+    // un giorno solo.
+    conteggio.agenda = perData.size;
     // Il pacchetto copre un intervallo continuo: dentro quell'intervallo è la
     // verità completa. Le date che il calendario non nomina più vanno svuotate,
     // altrimenti un allenamento cancellato dal coach resterebbe qui per sempre.
