@@ -1,0 +1,624 @@
+{
+  "versione": 1,
+  "nota": "Contenuto generico, nessun dato personale. I video sono riferimenti esterni a YouTube, verificati esistenti il 3/08/2026. Lingua inglese ammessa. Sostituibili dall'app.",
+  "esercizi": [
+    {
+      "id": "panca-piana",
+      "nome": "Panca piana bilanciere",
+      "pattern": "spinta",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 120,
+      "video": {
+        "id": "rT7DgCr-3pg",
+        "titolo": "How To: Barbell Bench Press",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "Sdraiati sulla panca con occhi sotto il bilanciere.",
+        "Cinque punti di appoggio: testa, spalle alte, glutei sulla panca, due piedi a terra.",
+        "Scapole retratte e depresse: petto in fuori, spalle indietro e in basso, mantenute così per tutta la serie.",
+        "Presa poco più larga delle spalle, polso dritto in linea con l'avambraccio (non piegato indietro)."
+      ],
+      "esecuzione": [
+        "Stacca il bilanciere e portalo sopra le spalle a braccia tese.",
+        "Scendi controllato in 2 secondi verso la parte bassa del petto, gomiti a circa 45° dal busto.",
+        "Sfiora il petto senza rimbalzare, poi spingi verso l'alto.",
+        "Espira nella spinta, inspira nella discesa."
+      ],
+      "erroriComuni": [
+        "Gomiti aperti a 90°: sovraccarico della spalla.",
+        "Polso piegato all'indietro con il bilanciere sul palmo: dolore al polso.",
+        "Rimbalzo sul petto o glutei sollevati dalla panca.",
+        "Scapole che si srotolano durante la spinta."
+      ],
+      "cue": "Polso dritto sopra il gomito, scapole strette per tutta la serie.",
+      "sicurezza": "Senza spotter e senza rack di sicurezza, ferma la serie con un margine: non arrivare al cedimento."
+    },
+    {
+      "id": "panca-inclinata-manubri",
+      "nome": "Panca inclinata manubri",
+      "pattern": "spinta",
+      "attrezzo": "manubri",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 120,
+      "video": {
+        "id": "8iPEnn-ltC8",
+        "titolo": "How To: Dumbbell Incline Chest Press",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "Panca inclinata a 30-45°: più alta di così e diventa un esercizio di spalle.",
+        "Siediti con i manubri appoggiati sulle cosce, poi accompagnali in posizione spingendo con le gambe.",
+        "Scapole retratte contro lo schienale, piedi a terra."
+      ],
+      "esecuzione": [
+        "Parti a braccia tese sopra la parte alta del petto, palmi in avanti.",
+        "Scendi controllato fino a quando i gomiti sono poco sotto la linea delle spalle.",
+        "Spingi verso l'alto avvicinando leggermente i manubri, senza farli sbattere.",
+        "Alla fine della serie appoggia i manubri sulle cosce prima di alzarti."
+      ],
+      "erroriComuni": [
+        "Scendere troppo: la spalla va in stiramento eccessivo.",
+        "Inarcare la schiena per aiutarsi.",
+        "Far collidere i manubri in alto perdendo tensione."
+      ],
+      "cue": "Gomiti sotto i polsi, discesa lenta, nessun rimbalzo in alto."
+    },
+    {
+      "id": "croci-inclinata",
+      "nome": "Croci su panca inclinata",
+      "pattern": "spinta",
+      "attrezzo": "manubri",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "bDaIL_zKbGs",
+        "titolo": "How To: Incline Dumbbell Fly",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "Stessa inclinazione della panca inclinata, 30-45°.",
+        "Manubri sopra il petto, palmi uno di fronte all'altro.",
+        "Gomiti con flessione leggera e costante: si aprono, non si piegano."
+      ],
+      "esecuzione": [
+        "Apri le braccia lungo un arco ampio, scendendo fino al punto in cui mantieni il controllo.",
+        "Non cercare la massima apertura: fermati prima che la spalla vada in tensione.",
+        "Richiudi lungo lo stesso arco, come se abbracciassi un tronco."
+      ],
+      "erroriComuni": [
+        "Trasformare le croci in una distensione piegando i gomiti.",
+        "Scendere troppo in basso cercando allungamento.",
+        "Carico eccessivo: è un esercizio di isolamento, non di forza."
+      ],
+      "cue": "Polso neutro in linea con l'avambraccio, gomiti fissi, riduci il ROM in basso fino al punto di controllo."
+    },
+    {
+      "id": "estensioni-tricipiti",
+      "nome": "Estensione tricipiti sopra la testa",
+      "pattern": "tricipiti",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "IJ6J7EKprsc",
+        "titolo": "Two-Arm Overhead Triceps Extension with Dumbbells",
+        "canale": "Dr. Allan Bacon"
+      },
+      "setup": [
+        "In piedi o seduto con schiena appoggiata, un manubrio tenuto a due mani.",
+        "Manubrio sopra la testa a braccia tese, gomiti vicini alle orecchie.",
+        "Addome contratto per evitare di inarcare la zona lombare."
+      ],
+      "esecuzione": [
+        "Piega solo i gomiti facendo scendere il manubrio dietro la testa.",
+        "Scendi finché senti l'allungamento del tricipite, senza dolore al gomito.",
+        "Estendi tornando in alto senza allargare i gomiti."
+      ],
+      "erroriComuni": [
+        "Gomiti che si aprono verso l'esterno.",
+        "Schiena inarcata per compensare il carico.",
+        "Movimento troppo veloce nella discesa."
+      ],
+      "cue": "Gomiti fermi e stretti, si muove solo l'avambraccio."
+    },
+    {
+      "id": "squat",
+      "nome": "Squat con bilanciere",
+      "pattern": "quadricipiti",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 120,
+      "video": {
+        "id": "8PMjqgR8Wa8",
+        "titolo": "How to Barbell Back Squat | A Tutorial for Beginners",
+        "canale": "Barbell Rehab"
+      },
+      "setup": [
+        "Bilanciere appoggiato sui trapezi, non sul collo.",
+        "Piedi larghezza spalle, punte leggermente aperte verso l'esterno.",
+        "Addome contratto, sguardo avanti, petto alto."
+      ],
+      "esecuzione": [
+        "Scendi spingendo indietro i fianchi e piegando le ginocchia insieme.",
+        "Ginocchia in linea con la direzione delle punte dei piedi, mai verso l'interno.",
+        "Scendi fino a dove mantieni la schiena neutra: la profondità la decide il controllo, non l'orgoglio.",
+        "Risali spingendo con tutto il piede, senza far partire prima il sedere."
+      ],
+      "erroriComuni": [
+        "Ginocchia che collassano verso l'interno.",
+        "Talloni che si staccano da terra.",
+        "Schiena che si arrotonda in basso.",
+        "Carico oltre la capacità di controllo: la tecnica cede prima dei muscoli."
+      ],
+      "cue": "Se la tecnica peggiora, il carico è già troppo alto: scendi di peso, non di ripetizioni.",
+      "sicurezza": "Senza rack di sicurezza tieni un margine ampio e impara a scaricare il bilanciere in avanti."
+    },
+    {
+      "id": "affondi",
+      "nome": "Affondi",
+      "pattern": "quadricipiti",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "ALsbyH1JnRY",
+        "titolo": "How To Do Lunges | Bodyweight Exercises",
+        "canale": "Anthony Mayatt"
+      },
+      "setup": [
+        "In piedi, busto eretto, addome contratto.",
+        "Passo avanti sufficientemente lungo: il ginocchio davanti resta sopra la caviglia."
+      ],
+      "esecuzione": [
+        "Scendi verticalmente finché il ginocchio dietro sfiora il pavimento.",
+        "Il ginocchio davanti resta in linea con la punta del piede.",
+        "Spingi con il tallone della gamba davanti per tornare su.",
+        "Completa tutte le ripetizioni su una gamba, poi cambia (o alterna, ma senza cambiare metodo tra le serie)."
+      ],
+      "erroriComuni": [
+        "Passo troppo corto: il ginocchio supera la punta e si carica l'articolazione.",
+        "Busto che cade in avanti.",
+        "Perdita di equilibrio: rallenta invece di accorciare il movimento."
+      ],
+      "cue": "Discesa verticale, non in avanti. Ginocchio in linea con la punta del piede."
+    },
+    {
+      "id": "rdl",
+      "nome": "Stacco rumeno (RDL)",
+      "pattern": "femorali",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 120,
+      "video": {
+        "id": "JCXUYuzwNrM",
+        "titolo": "How To: Romanian Deadlift (Barbell)",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "In piedi, bilanciere davanti alle cosce, presa poco più larga dei fianchi.",
+        "Ginocchia morbide, non bloccate e non piegate.",
+        "Scapole leggermente retratte, schiena neutra."
+      ],
+      "esecuzione": [
+        "Spingi i fianchi indietro facendo scorrere il bilanciere lungo le cosce.",
+        "Scendi finché senti l'allungamento dei femorali, senza arrotondare la schiena: di solito poco sotto il ginocchio.",
+        "Risali spingendo il bacino in avanti, contraendo i glutei alla fine.",
+        "Il movimento è dell'anca, non della schiena."
+      ],
+      "erroriComuni": [
+        "Piegare le ginocchia come in uno squat.",
+        "Allontanare il bilanciere dal corpo.",
+        "Arrotondare la zona lombare per scendere più in basso.",
+        "Iperestendere la schiena in cima."
+      ],
+      "cue": "Bilanciere incollato alle gambe, il petto scende perché i fianchi vanno indietro."
+    },
+    {
+      "id": "calf",
+      "nome": "Calf raise (polpacci)",
+      "pattern": "polpacci",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "video": {
+        "id": "SorIB5_zO9A",
+        "titolo": "Standing Calf Raise Tutorial",
+        "canale": "The Gym In The North"
+      },
+      "setup": [
+        "In piedi, eventualmente con l'avampiede su un rialzo per aumentare l'escursione.",
+        "Una mano appoggiata al muro solo per l'equilibrio, non per spingere."
+      ],
+      "esecuzione": [
+        "Sali sulle punte il più in alto possibile.",
+        "Pausa breve in cima, un secondo.",
+        "Scendi lentamente fino al massimo allungamento."
+      ],
+      "erroriComuni": [
+        "Rimbalzare senza controllo.",
+        "Escursione ridotta: mezzo movimento.",
+        "Caricarsi sul braccio d'appoggio."
+      ],
+      "cue": "Pausa di un secondo in cima, discesa lenta."
+    },
+    {
+      "id": "crunch",
+      "nome": "Crunch",
+      "pattern": "core",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "video": {
+        "id": "GWIEON0VSaY",
+        "titolo": "How To Do A Crunch Properly | Beginners Tutorial",
+        "canale": "Glamrs"
+      },
+      "setup": [
+        "Supino, ginocchia piegate, piedi a terra.",
+        "Mani incrociate sul petto o dita appoggiate alle tempie, mai dietro la nuca a tirare."
+      ],
+      "esecuzione": [
+        "Solleva le scapole da terra arrotondando la parte alta della schiena.",
+        "La zona lombare resta a contatto con il pavimento.",
+        "Scendi controllato senza appoggiare completamente tra una ripetizione e l'altra."
+      ],
+      "erroriComuni": [
+        "Tirare la testa con le mani.",
+        "Sollevare tutto il busto: diventa un lavoro di flessori dell'anca.",
+        "Trattenere il respiro."
+      ],
+      "cue": "Mento distante dal petto quanto un pugno, nessuna tensione al collo."
+    },
+    {
+      "id": "plank",
+      "nome": "Plank",
+      "pattern": "core",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "aTempo": true,
+      "video": {
+        "id": "rzHRA7S96_E",
+        "titolo": "How to Do a Perfect Plank (Fix These Common Mistakes)",
+        "canale": "Upgraded Fitness"
+      },
+      "setup": [
+        "Avambracci a terra, gomiti sotto le spalle.",
+        "Piedi a larghezza anche, corpo in linea da testa a talloni."
+      ],
+      "esecuzione": [
+        "Contrai addome e glutei: il bacino non deve cedere né alzarsi.",
+        "Respira normalmente, non trattenere il fiato.",
+        "Interrompi appena la linea si rompe: un plank fatto male non allena il core."
+      ],
+      "erroriComuni": [
+        "Bacino troppo alto (posizione di riposo) o troppo basso (carico lombare).",
+        "Spalle che collassano tra le scapole.",
+        "Testa che cade in avanti."
+      ],
+      "cue": "La serie finisce quando cede la linea, non quando finisce il tempo."
+    },
+    {
+      "id": "leg-raise",
+      "nome": "Leg raise",
+      "pattern": "core",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "video": {
+        "id": "sY2ZgV2Sj_s",
+        "titolo": "Lying Leg Raise Exercise | Form, Tips & Common Mistakes",
+        "canale": "FIT.nl"
+      },
+      "setup": [
+        "Supino, mani sotto i glutei o lungo i fianchi.",
+        "Zona lombare premuta contro il pavimento prima di iniziare."
+      ],
+      "esecuzione": [
+        "Solleva le gambe tese o leggermente piegate fino a circa 90°.",
+        "Scendi lentamente mantenendo la schiena bassa a contatto col pavimento.",
+        "Fermati prima che la lombare si stacchi: quello è il tuo fondo corsa."
+      ],
+      "erroriComuni": [
+        "Schiena che si inarca nella discesa: il carico passa alla lombare.",
+        "Slancio con le gambe.",
+        "Discesa troppo veloce."
+      ],
+      "cue": "Se la lombare si stacca, hai superato il tuo punto di controllo: risali."
+    },
+    {
+      "id": "military-press",
+      "nome": "Military press",
+      "pattern": "spinta",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 120,
+      "video": {
+        "id": "KP1sYz2VICk",
+        "titolo": "Barbell Overhead «Military» Press | 2 Minute Tutorial",
+        "canale": "Max Euceda"
+      },
+      "setup": [
+        "In piedi, piedi a larghezza anche, bilanciere all'altezza delle clavicole.",
+        "Presa poco più larga delle spalle, polsi dritti sotto il bilanciere.",
+        "Glutei e addome contratti: sono loro a impedire l'inarcamento lombare."
+      ],
+      "esecuzione": [
+        "Spingi il bilanciere verso l'alto in linea retta, arretrando leggermente la testa per farlo passare.",
+        "In cima il bilanciere è sopra la testa, non davanti al viso.",
+        "Scendi controllato fino alle clavicole."
+      ],
+      "erroriComuni": [
+        "Inarcare la schiena per trasformarlo in una spinta inclinata.",
+        "Polsi piegati all'indietro.",
+        "Bilanciere che resta davanti al viso in cima."
+      ],
+      "cue": "Retrazione scapolare all'inizio, nessun compenso in lordosi lombare."
+    },
+    {
+      "id": "alzate-laterali",
+      "nome": "Alzate laterali",
+      "pattern": "deltoideLaterale",
+      "attrezzo": "manubri",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "3VcKaXpzqRo",
+        "titolo": "How To: Dumbbell Side Lateral Raise",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "In piedi, manubri lungo i fianchi, busto leggermente inclinato in avanti.",
+        "Gomiti con flessione minima e costante."
+      ],
+      "esecuzione": [
+        "Solleva lateralmente fino all'altezza delle spalle, non oltre.",
+        "Guida il movimento con i gomiti, non con le mani.",
+        "Scendi in 2 secondi controllando il ritorno."
+      ],
+      "erroriComuni": [
+        "Slancio del busto per aiutarsi: significa carico troppo alto.",
+        "Salire sopra la linea delle spalle coinvolgendo i trapezi.",
+        "Ruotare i polsi come per versare l'acqua."
+      ],
+      "cue": "Sali con i gomiti, fermati all'altezza delle spalle."
+    },
+    {
+      "id": "alzate-posteriori",
+      "nome": "Alzate posteriori",
+      "pattern": "deltoidePosteriore",
+      "attrezzo": "manubri",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "73WpaOMnhSU",
+        "titolo": "Exercise Index - Bent Over Dumbbell Rear Delt Raise",
+        "canale": "mountaindog1"
+      },
+      "setup": [
+        "Busto inclinato in avanti a circa 45° o appoggiato allo schienale di una panca inclinata.",
+        "Manubri sotto il petto, palmi uno di fronte all'altro.",
+        "Schiena neutra, sguardo a terra davanti a te."
+      ],
+      "esecuzione": [
+        "Apri le braccia lateralmente conducendo con i gomiti.",
+        "Fermati quando le braccia sono in linea con le spalle.",
+        "Ritorno lento e controllato."
+      ],
+      "erroriComuni": [
+        "Sollevare il busto durante la salita.",
+        "Usare carichi che trasformano il movimento in un rematore.",
+        "Stringere le scapole invece di aprire le braccia."
+      ],
+      "cue": "Carico leggero: qui conta la posizione, non il peso."
+    },
+    {
+      "id": "scrollate",
+      "nome": "Scrollate (shrug)",
+      "pattern": "trapezi",
+      "attrezzo": "manubri",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "qvvJUKq7_sU",
+        "titolo": "How To Perform Dumbbell Shrugs",
+        "canale": "Buff Dudes Workouts"
+      },
+      "setup": [
+        "In piedi, manubri lungo i fianchi, braccia tese e rilassate.",
+        "Testa in posizione neutra."
+      ],
+      "esecuzione": [
+        "Alza le spalle verso le orecchie, dritte verso l'alto.",
+        "Pausa breve in cima.",
+        "Scendi lentamente fino al massimo allungamento."
+      ],
+      "erroriComuni": [
+        "Ruotare le spalle: nessun beneficio, rischio articolare.",
+        "Piegare le braccia trasformandolo in una tirata.",
+        "Movimento minimo con carico eccessivo."
+      ],
+      "cue": "Solo su e giù, nessuna rotazione."
+    },
+    {
+      "id": "rematore-bilanciere",
+      "nome": "Rematore con bilanciere",
+      "pattern": "tirataOrizzontale",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 120,
+      "video": {
+        "id": "FWJR5Ve8bnQ",
+        "titolo": "Bent-Over Barbell Row | 2 Minute Tutorial",
+        "canale": "Max Euceda"
+      },
+      "setup": [
+        "Piedi a larghezza anche, bilanciere sopra la metà del piede.",
+        "Hip hinge: fianchi indietro, busto inclinato tra 45° e quasi parallelo al pavimento.",
+        "Schiena neutra e bloccata: è la posizione che rende sicuro l'esercizio.",
+        "Presa poco più larga delle spalle."
+      ],
+      "esecuzione": [
+        "Tira il bilanciere verso l'ombelico, non verso il petto.",
+        "I gomiti scorrono vicini al corpo e vanno indietro, non in fuori.",
+        "Stringi le scapole alla fine della tirata.",
+        "Scendi controllato senza far cadere il peso."
+      ],
+      "erroriComuni": [
+        "Busto che si solleva a ogni ripetizione: si sta usando lo slancio.",
+        "Schiena arrotondata.",
+        "Tirare con le braccia invece che con la schiena.",
+        "Carico troppo alto per la coordinazione richiesta."
+      ],
+      "cue": "Prima l'hip hinge, poi la tirata verso l'ombelico. Il busto non si muove.",
+      "sicurezza": "È l'esercizio a coordinazione più complessa del programma: se la tecnica non regge, scarica il bilanciere e lavora a vuoto."
+    },
+    {
+      "id": "rematore-manubrio",
+      "nome": "Rematore con manubrio",
+      "pattern": "tirataOrizzontale",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "pYcpY20QaE8",
+        "titolo": "How To: Dumbbell Bent-Over Row (Single-Arm)",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "Un ginocchio e una mano appoggiati sulla panca, schiena parallela al pavimento.",
+        "Manubrio nella mano libera, braccio disteso.",
+        "Schiena neutra, spalle allo stesso livello."
+      ],
+      "esecuzione": [
+        "Tira il manubrio verso il fianco, gomito vicino al corpo.",
+        "Ferma un istante in alto stringendo la scapola.",
+        "Scendi lentamente fino alla completa estensione.",
+        "Completa tutte le ripetizioni da un lato, poi cambia."
+      ],
+      "erroriComuni": [
+        "Ruotare il busto per sollevare più peso.",
+        "Tirare verso la spalla invece che verso il fianco.",
+        "Perdere la neutralità della schiena."
+      ],
+      "cue": "Meno variabili del rematore con bilanciere: qui puoi concentrarti solo sulla tirata."
+    },
+    {
+      "id": "pullover",
+      "nome": "Pullover con manubrio",
+      "pattern": "dorsaliAltro",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "Qc4L9I3pHnw",
+        "titolo": "How to Perform Dumbbell Pullovers",
+        "canale": "Buff Dudes Workouts"
+      },
+      "setup": [
+        "Sdraiato sulla panca, un manubrio tenuto a due mani sopra il petto.",
+        "Gomiti leggermente piegati e mantenuti così.",
+        "Piedi a terra, addome contratto."
+      ],
+      "esecuzione": [
+        "Porta il manubrio indietro oltre la testa, in arco.",
+        "Scendi fino all'allungamento del gran dorsale, senza forzare la spalla.",
+        "Riporta il manubrio sopra il petto lungo lo stesso arco."
+      ],
+      "erroriComuni": [
+        "Scendere troppo cercando allungamento a costo della spalla.",
+        "Inarcare la schiena staccando i lombi dalla panca.",
+        "Piegare i gomiti trasformandolo in un'estensione."
+      ],
+      "cue": "Non sostituisce una trazione verticale: qui lavori l'allungamento, non la tirata.",
+      "nota": "Nel calcolo dei volumi non conta come tirata verticale."
+    },
+    {
+      "id": "curl-bilanciere",
+      "nome": "Curl con bilanciere",
+      "pattern": "bicipiti",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "JJB8XgKltA8",
+        "titolo": "Barbell Curls | How-To Exercise Tutorial",
+        "canale": "Buff Dudes Workouts"
+      },
+      "setup": [
+        "In piedi, presa sotto il bilanciere alla larghezza delle spalle.",
+        "Gomiti vicini ai fianchi, spalle basse.",
+        "Con un bilanciere diritto il polso è in supinazione forzata: se dà fastidio, segnalalo nel questionario."
+      ],
+      "esecuzione": [
+        "Solleva piegando i gomiti, senza muovere le spalle.",
+        "Ferma prima che i gomiti si spostino in avanti.",
+        "Scendi in 2 secondi fino quasi alla completa estensione."
+      ],
+      "erroriComuni": [
+        "Slancio del busto.",
+        "Gomiti che avanzano trasformandolo in una tirata frontale.",
+        "Estensione incompleta in basso."
+      ],
+      "cue": "Gomiti incollati ai fianchi. Se il polso protesta, riferiscilo: è l'esercizio che lo sollecita di più."
+    },
+    {
+      "id": "curl-alternato",
+      "nome": "Curl alternato con manubri",
+      "pattern": "bicipiti",
+      "attrezzo": "manubri",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "sAq_ocpRh_I",
+        "titolo": "How To: Alternating Dumbbell Curl",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "In piedi, manubri lungo i fianchi, palmi verso il corpo.",
+        "Gomiti vicini ai fianchi."
+      ],
+      "esecuzione": [
+        "Solleva un manubrio ruotando il palmo verso l'alto durante la salita.",
+        "Ferma in alto senza spostare il gomito.",
+        "Scendi controllato e ripeti con l'altro braccio."
+      ],
+      "erroriComuni": [
+        "Aiutarsi con le spalle o con il busto.",
+        "Iniziare il braccio successivo prima di aver completato il ritorno.",
+        "Rotazione del polso assente."
+      ],
+      "cue": "Un braccio alla volta, il resto del corpo fermo."
+    },
+    {
+      "id": "hammer",
+      "nome": "Hammer curl",
+      "pattern": "bicipiti",
+      "attrezzo": "manubri",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "zC3nLlEvin4",
+        "titolo": "How To: Dumbbell Hammer Curl",
+        "canale": "ScottHermanFitness"
+      },
+      "setup": [
+        "In piedi, manubri lungo i fianchi, palmi rivolti verso il corpo (presa neutra).",
+        "Gomiti vicini ai fianchi, spalle rilassate."
+      ],
+      "esecuzione": [
+        "Solleva mantenendo la presa neutra per tutto il movimento, come impugnando un martello.",
+        "Ferma appena sotto la spalla.",
+        "Scendi controllato."
+      ],
+      "erroriComuni": [
+        "Ruotare il polso: diventa un curl normale.",
+        "Slancio del corpo.",
+        "Gomiti che si allontanano dai fianchi."
+      ],
+      "cue": "Presa neutra dall'inizio alla fine. È la variante più gentile con il polso."
+    }
+  ]
+}

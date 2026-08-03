@@ -1,0 +1,90 @@
+{
+  "versione": 1,
+  "nota": "Prima della seduta si fa mobilità dinamica, non stretching statico: allungare a freddo un muscolo che poi deve spingere riduce la forza espressa. Lo stretching statico sta a fine seduta, dove serve davvero.",
+  "cardio": {
+    "conTapis": {
+      "titolo": "Camminata 5 minuti",
+      "dettaglio": "Tapis a 5 km/h, respiro sempre facile. Serve ad alzare la temperatura, non ad affaticare."
+    },
+    "senzaTapis": {
+      "titolo": "Camminata 5 minuti",
+      "dettaglio": "Camminata veloce in casa o marcia sul posto con ginocchia alte, stesso passo di 5 km/h. Nessun affanno."
+    }
+  },
+  "serieDiAvvicinamento": {
+    "titolo": "Serie di avvicinamento",
+    "dettaglio": "Sul primo esercizio della seduta: una serie da 8-10 ripetizioni con bilanciere scarico o metà carico. Non va registrata."
+  },
+  "giorni": {
+    "petto-tricipiti": {
+      "mobilita": [
+        { "nome": "Circonduzioni delle braccia", "dose": "10 avanti + 10 indietro", "come": "Braccia tese, cerchi ampi e lenti. Spalle lontane dalle orecchie." },
+        { "nome": "Rotazioni di polsi e gomiti", "dose": "10 per verso", "come": "Il polso destro è sollecitato oggi: scaldalo prima, non dopo." },
+        { "nome": "Apertura del petto sullo stipite", "dose": "3 × 15 s per lato", "come": "Avambraccio sullo stipite, gomito all'altezza della spalla, ruota il busto verso l'esterno fino a sentire tensione leggera. Non spingere." },
+        { "nome": "Retrazione e protrazione scapolare", "dose": "15 ripetizioni", "come": "Braccia tese avanti, avvicina e allontana le scapole senza piegare i gomiti. Prepara la posizione che dovrai tenere in panca." },
+        { "nome": "Rotazioni esterne di spalla", "dose": "12 per lato", "come": "Gomito al fianco a 90°, manubrio leggerissimo (1-2 kg), ruota l'avambraccio verso l'esterno. Scalda la cuffia dei rotatori." }
+      ],
+      "stretchingFinale": [
+        { "nome": "Pettorale al muro", "dose": "30 s per lato", "come": "Mano appoggiata al muro all'altezza della spalla, ruota il busto in direzione opposta." },
+        { "nome": "Tricipite sopra la testa", "dose": "30 s per lato", "come": "Gomito piegato dietro la nuca, l'altra mano accompagna senza forzare." }
+      ]
+    },
+    "gambe-core": {
+      "mobilita": [
+        { "nome": "Rotazioni delle anche", "dose": "10 per verso", "come": "In piedi, mani sui fianchi, cerchi ampi con il bacino." },
+        { "nome": "Mobilità di caviglia al muro", "dose": "10 per lato", "come": "Piede a un palmo dal muro, porta il ginocchio verso il muro senza staccare il tallone. Se non ci arrivi, avvicina il piede." },
+        { "nome": "Slanci della gamba avanti e indietro", "dose": "10 per lato", "come": "Appoggiati a un muro, gamba tesa che oscilla in modo controllato. Prepara l'anca all'hip hinge dell'RDL." },
+        { "nome": "Ponte per i glutei", "dose": "12 ripetizioni", "come": "Supino, piedi a terra, spingi il bacino in alto stringendo i glutei. Attiva quello che nello squat spesso resta spento." },
+        { "nome": "Squat a corpo libero", "dose": "10 lenti e completi", "come": "Tre secondi a scendere. È già la prova tecnica della seduta: se qui la posizione non regge, non regge nemmeno con il bilanciere." }
+      ],
+      "stretchingFinale": [
+        { "nome": "Femorali da seduto", "dose": "30 s per lato", "come": "Gamba tesa, l'altra piegata, scendi con il petto verso il ginocchio tenendo la schiena dritta." },
+        { "nome": "Quadricipite in piedi", "dose": "30 s per lato", "come": "Tallone verso il gluteo, ginocchia vicine, bacino leggermente in avanti." },
+        { "nome": "Flessori dell'anca in affondo basso", "dose": "30 s per lato", "come": "Ginocchio dietro a terra, spingi il bacino avanti stringendo il gluteo della gamba dietro." },
+        { "nome": "Polpaccio al muro", "dose": "30 s per lato", "come": "Gamba dietro tesa, tallone a terra, spingi il bacino verso il muro." }
+      ]
+    },
+    "spalle": {
+      "mobilita": [
+        { "nome": "Circonduzioni delle braccia", "dose": "10 avanti + 10 indietro", "come": "Cerchi ampi, lenti, spalle basse." },
+        { "nome": "Rotazioni di polsi e gomiti", "dose": "10 per verso", "come": "Il polso lavora sotto il bilanciere nel Military: scaldalo." },
+        { "nome": "Wall slide", "dose": "10 ripetizioni", "come": "Schiena e avambracci contro il muro, fai scorrere le braccia in alto senza staccare i polsi né inarcare la schiena. Se non ci riesci, quello è il tuo limite di mobilità: non forzarlo con il carico." },
+        { "nome": "Rotazioni esterne di spalla", "dose": "12 per lato", "come": "Gomito al fianco, carico minimo. Cuffia dei rotatori." },
+        { "nome": "Scrollate lente a vuoto", "dose": "12 ripetizioni", "come": "Solo su e giù, senza peso, per svegliare i trapezi." }
+      ],
+      "stretchingFinale": [
+        { "nome": "Deltoide posteriore", "dose": "30 s per lato", "come": "Braccio teso incrociato davanti al petto, l'altro braccio lo accompagna." },
+        { "nome": "Trapezio superiore", "dose": "30 s per lato", "come": "Orecchio verso la spalla, spalla opposta bassa. Nessuna rotazione della testa." }
+      ]
+    },
+    "schiena-bicipiti": {
+      "mobilita": [
+        { "nome": "Cat-camel", "dose": "10 ripetizioni", "come": "A quattro zampe, inarca e arrotonda la schiena lentamente. Sveglia la colonna prima del rematore." },
+        { "nome": "Hip hinge a vuoto con un bastone", "dose": "10 ripetizioni", "come": "Bastone (o manico di scopa) a contatto con nuca, dorso e sacro: se si stacca, la schiena non è neutra. È la posizione esatta del rematore." },
+        { "nome": "Rotazioni di polsi e avambracci", "dose": "10 per verso", "come": "Il Curl con bilanciere diritto forza la supinazione: qui il polso va scaldato bene." },
+        { "nome": "Retrazione scapolare", "dose": "15 ripetizioni", "come": "Braccia tese avanti, avvicina le scapole senza alzare le spalle. È il finale di ogni tirata." },
+        { "nome": "Dead bug", "dose": "8 per lato", "come": "Supino, lombare a contatto col pavimento, allunga braccio e gamba opposti. Stabilizza il tronco che dovrà reggere il rematore." }
+      ],
+      "stretchingFinale": [
+        { "nome": "Gran dorsale", "dose": "30 s per lato", "come": "Mano su un appoggio all'altezza dei fianchi, siediti indietro allungando il fianco." },
+        { "nome": "Bicipite al muro", "dose": "30 s per lato", "come": "Braccio teso dietro con il palmo sul muro, ruota il busto in direzione opposta." },
+        { "nome": "Flessori dell'avambraccio", "dose": "30 s per lato", "come": "Braccio teso, palmo in su, l'altra mano tira le dita verso il basso. Utile dopo i curl." }
+      ]
+    },
+    "full-body": {
+      "mobilita": [
+        { "nome": "Circonduzioni delle braccia", "dose": "10 avanti + 10 indietro", "come": "Oggi si spinge e si tira: servono entrambe le direzioni." },
+        { "nome": "Rotazioni di polsi e gomiti", "dose": "10 per verso", "come": "Panca, Military e Curl nello stesso giorno: il polso è il punto più sollecitato della settimana." },
+        { "nome": "Hip hinge a vuoto con un bastone", "dose": "10 ripetizioni", "come": "Prepara rematore e squat insieme." },
+        { "nome": "Squat a corpo libero", "dose": "10 lenti", "come": "Tre secondi a scendere." },
+        { "nome": "Retrazione scapolare", "dose": "15 ripetizioni", "come": "Vale per la panca e per il rematore." }
+      ],
+      "stretchingFinale": [
+        { "nome": "Pettorale al muro", "dose": "30 s per lato", "come": "Mano al muro all'altezza della spalla, ruota il busto." },
+        { "nome": "Gran dorsale", "dose": "30 s per lato", "come": "Mano su un appoggio, siediti indietro allungando il fianco." },
+        { "nome": "Quadricipite in piedi", "dose": "30 s per lato", "come": "Tallone al gluteo, ginocchia vicine." },
+        { "nome": "Femorali da seduto", "dose": "30 s per lato", "come": "Schiena dritta, petto verso il ginocchio." }
+      ]
+    }
+  }
+}

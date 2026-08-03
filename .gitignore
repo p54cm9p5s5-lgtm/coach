@@ -1,0 +1,6 @@
+# Dati personali: non entrano mai nel repository pubblico.
+_privato/
+*.backup.json
+coach-backup-*.json
+
+.DS_Store

@@ -1,0 +1,1062 @@
+import {
+  h, qs, clear, toast, mmss, num, chiedi, sheet,
+  avviaAllarme, fermaAllarme, allarmeAttivo, sbloccaAudio, tick,
+  tieniSchermoAcceso, rilasciaSchermo, durataUmana, aggiungi } from "../ui.js";
+import { intestazione } from "../app.js";
+import * as store from "../store.js";
+import { descriviDischi, carichoPiuVicino } from "../plates.js";
+
+export const nascondiTabBar = true;
+
+let S = null; // stato in memoria della sessione aperta
+
+export async function render({ vaiA }) {
+  const sed = await store.sedutaInCorso();
+  if (!sed) {
+    const wrap = h("div.screen");
+    aggiungi(wrap, intestazione("Seduta"));
+    aggiungi(wrap, 
+      h(
+        "div.empty",
+        h("h3", "Nessuna seduta aperta"),
+        h("p", "Le sedute si avviano dalla schermata Oggi."),
+        h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("oggi") }, "Vai a Oggi"))
+      )
+    );
+    return wrap;
+  }
+
+  const giorno = store.giornoSplit(sed.tipoId);
+  S = {
+    sed,
+    giorno,
+    esercizi: giorno?.esercizi || [],
+    vaiA,
+    contenitore: h("div.session"),
+    recuperoFine: sed.progresso?.recuperoFine || null,
+    tsInizioSerie: sed.progresso?.tsInizioSerie || null,
+    timerHandle: null,
+  };
+
+  tieniSchermoAcceso();
+  await disegna();
+  return S.contenitore;
+}
+
+// ---------- utilità di stato ----------
+
+async function salvaProgresso(patch) {
+  S.sed = await store.aggiornaSeduta(S.sed.id, {
+    progresso: { ...S.sed.progresso, ...patch },
+  });
+}
+
+function vocePrevista(i = S.sed.progresso.indice) {
+  return S.esercizi[i] || null;
+}
+
+async function serieFatte(esercizioId) {
+  const tutte = await store.serieDi(S.sed.id);
+  return tutte.filter((s) => s.esercizioId === esercizioId);
+}
+
+/**
+ * Protegge dal doppio tocco: finché la transizione precedente non è finita,
+ * ogni altro tocco viene ignorato. Senza questo, due tap ravvicinati su
+ * "Serie completata" registrano due serie.
+ */
+function azione(fn) {
+  return async (e) => {
+    if (S.occupato) return;
+    S.occupato = true;
+    const bottone = e?.currentTarget;
+    if (bottone) bottone.disabled = true;
+    try {
+      await fn(e);
+    } catch (err) {
+      console.error(err);
+      toast("Qualcosa non ha funzionato: " + err.message, 5000);
+      if (bottone) bottone.disabled = false;
+    } finally {
+      S.occupato = false;
+    }
+  };
+}
+
+function fermaTimer() {
+  if (S.timerHandle) clearInterval(S.timerHandle);
+  S.timerHandle = null;
+  fermaAllarme();
+  S.contenitore.classList.remove("alarm");
+}
+
+// ---------- disegno ----------
+
+async function disegna() {
+  fermaTimer();
+  S.occupato = false;
+  const fase = S.sed.progresso?.fase || "riscaldamento";
+  clear(S.contenitore);
+  S.contenitore.append(testata());
+
+  const corpo = h("div.session-body");
+  const piede = h("div.session-foot");
+  S.contenitore.append(corpo, piede);
+
+  if (fase === "riscaldamento") await vistaRiscaldamento(corpo, piede);
+  else if (fase === "esercizio") await vistaEsercizio(corpo, piede);
+  else if (fase === "recupero") await vistaRecupero(corpo, piede);
+  else if (fase === "questionario") await vistaQuestionario(corpo, piede);
+  else if (fase === "cardio") await vistaCardio(corpo, piede);
+  else await vistaFine(corpo, piede);
+}
+
+function testata() {
+  const fase = S.sed.progresso?.fase;
+  const i = S.sed.progresso?.indice ?? 0;
+  const n = S.esercizi.length;
+
+  let passo = "Riscaldamento";
+  let avanzamento = 0;
+  if (fase === "cardio") {
+    passo = "Cardio";
+    avanzamento = 94;
+  } else if (fase === "fine") {
+    passo = "Riepilogo";
+    avanzamento = 100;
+  } else if (fase !== "riscaldamento") {
+    passo = `Esercizio ${Math.min(i + 1, n)} di ${n}`;
+    avanzamento = n ? 6 + (i / n) * 88 : 6;
+  } else {
+    avanzamento = 3;
+  }
+
+  return h(
+    "div",
+    h(
+      "div.session-head",
+      h("button", { onclick: esci }, "Esci"),
+      h("span.step", `${S.sed.tipoNome} · ${passo}`),
+      h("button", { onclick: menuSeduta }, "•••")
+    ),
+    h("div.progressline", h("i", { style: `width:${avanzamento}%` }))
+  );
+}
+
+async function esci() {
+  fermaTimer();
+  rilasciaSchermo();
+  S.vaiA("oggi");
+}
+
+async function menuSeduta() {
+  const scelta = await chiedi({
+    titolo: "Seduta",
+    opzioni: [
+      { etichetta: "Salta al cardio", valore: "cardio" },
+      { etichetta: "Chiudi la seduta adesso", valore: "chiudi" },
+      { etichetta: "Annulla la seduta (elimina i dati)", valore: "annulla", stile: "destructive" },
+    ],
+  });
+  if (scelta === "cardio") {
+    await salvaProgresso({ fase: "cardio" });
+    await disegna();
+  } else if (scelta === "chiudi") {
+    await salvaProgresso({ fase: "fine" });
+    await disegna();
+  } else if (scelta === "annulla") {
+    const conferma = await chiedi({
+      titolo: "Eliminare la seduta?",
+      testo: "Serie, questionari e note di questa seduta vengono cancellati. Non si può annullare.",
+      opzioni: [{ etichetta: "Elimina tutto", valore: "si", stile: "destructive" }],
+    });
+    if (conferma === "si") {
+      await store.annullaSeduta(S.sed.id);
+      fermaTimer();
+      rilasciaSchermo();
+      S.vaiA("oggi");
+    }
+  }
+}
+
+// ---------- riscaldamento ----------
+
+async function vistaRiscaldamento(corpo, piede) {
+  const conTapis = S.sed.riscaldamento?.modalita !== "senzaTapis";
+  const prot = store.riscaldamento(S.sed.tipoId);
+  const camminata = conTapis ? prot?.cardio?.conTapis : prot?.cardio?.senzaTapis;
+
+  const passo = (n, nome, dose, come) =>
+    h(
+      "div.passo",
+      h("div.n", String(n)),
+      h(
+        "div.testo",
+        h("span.nome", nome),
+        dose ? h("span.dose", dose) : null,
+        come ? h("span.come", come) : null
+      )
+    );
+
+  const passi = [];
+  let n = 1;
+  if (camminata) passi.push(passo(n++, camminata.titolo, "5 min", camminata.dettaglio));
+  for (const m of prot?.mobilita || []) passi.push(passo(n++, m.nome, m.dose, m.come));
+  if (prot?.serieDiAvvicinamento) {
+    passi.push(passo(n++, prot.serieDiAvvicinamento.titolo, "1 serie", prot.serieDiAvvicinamento.dettaglio));
+  }
+
+  aggiungi(corpo, 
+    h(
+      "div.hero",
+      h("p.kicker", "Prima di iniziare"),
+      h("h2", "Riscaldamento"),
+      h("p.target", `${S.sed.tipoNome} · ${passi.length} passaggi, circa 10 minuti`)
+    ),
+    h(
+      "div.segmented",
+      h(
+        "button",
+        {
+          "aria-pressed": conTapis,
+          onclick: async () => {
+            S.sed = await store.aggiornaSeduta(S.sed.id, {
+              riscaldamento: { ...S.sed.riscaldamento, modalita: "tapis" },
+            });
+            await disegna();
+          },
+        },
+        "Con tapis"
+      ),
+      h(
+        "button",
+        {
+          "aria-pressed": !conTapis,
+          onclick: async () => {
+            S.sed = await store.aggiornaSeduta(S.sed.id, {
+              riscaldamento: { ...S.sed.riscaldamento, modalita: "senzaTapis" },
+            });
+            await disegna();
+          },
+        },
+        "Senza tapis"
+      )
+    ),
+    h("div.guida", { style: "margin-top:12px" }, ...passi),
+    h(
+      "div.guida",
+      h(
+        "section",
+        h("h3", "Sul Watch"),
+        h(
+          "p",
+          "Avvia una sola sessione «Rafforzamento funzionale» che comprenda riscaldamento e pesi. Non tracciare il riscaldamento come camminata separata."
+        )
+      ),
+      prot?.nota ? h("section", h("h3", "Perché niente stretching adesso"), h("p", prot.nota)) : null
+    )
+  );
+
+  aggiungi(piede, 
+    h(
+      "button.btn",
+      {
+        onclick: azione(async () => {
+          sbloccaAudio();
+          S.sed = await store.aggiornaSeduta(S.sed.id, {
+            riscaldamento: { ...S.sed.riscaldamento, fatto: true },
+          });
+          await salvaProgresso({ fase: "esercizio", indice: 0 });
+          await disegna();
+        }),
+      },
+      "Riscaldamento fatto"
+    )
+  );
+}
+
+// ---------- esercizio ----------
+
+async function vistaEsercizio(corpo, piede) {
+  const v = vocePrevista();
+  if (!v) {
+    await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "fine" });
+    return disegna();
+  }
+  const def = store.esercizio(v.esercizioId);
+  const fatte = await serieFatte(v.esercizioId);
+
+  // Rete di sicurezza: se le serie registrate hanno già raggiunto il previsto,
+  // si passa al questionario invece di proporne un'altra.
+  if (fatte.length >= v.serie) {
+    await salvaProgresso({ fase: "questionario" });
+    return disegna();
+  }
+
+  const n = fatte.length + 1;
+  const inv = await store.inventario();
+
+  const caricoPrec = fatte.at(-1)?.carico ?? (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
+  S.caricoCorrente = S.caricoCorrente ?? caricoPrec;
+
+  const bersaglio = v.aTempo
+    ? `${v.serie} × ${v.durataSec}s`
+    : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
+
+  aggiungi(corpo, 
+    h(
+      "div.hero",
+      h("p.kicker", `Serie ${n} di ${v.serie}`),
+      h("h2", def?.nome || v.esercizioId),
+      S.caricoCorrente != null
+        ? h("p.load", `${num(S.caricoCorrente)} kg`)
+        : h("p.load", "corpo libero"),
+      h("p.target", `Obiettivo ${bersaglio}`)
+    )
+  );
+
+  if (S.caricoCorrente != null && def?.attrezzo === "bilanciere") {
+    const d = descriviDischi(S.caricoCorrente, inv);
+    aggiungi(corpo, 
+      h(
+        "div.plates",
+        h("span.etichetta", "Da montare"),
+        d ? h("b", d) : h("span", "carico non componibile con i dischi disponibili")
+      )
+    );
+  }
+
+  if (fatte.length) {
+    aggiungi(corpo, 
+      h(
+        "div.group",
+        h("h2", "Serie fatte"),
+        h(
+          "div.list",
+          ...fatte.map((s) =>
+            h(
+              "div.row",
+              h("div.main", h("span.title", `Serie ${s.numero}`), s.recuperoRealeSec != null ? h("span.sub", `recupero ${mmss(s.recuperoRealeSec)}`) : null),
+              h("span.value", `${s.carico != null ? num(s.carico) + " kg · " : ""}${s.ripFatte ?? "—"}${v.aTempo ? "s" : " rip"}`)
+            )
+          )
+        )
+      )
+    );
+  }
+
+  aggiungi(corpo, 
+    h(
+      "div.guida",
+      def?.video ? riquadroVideo(def) : null,
+      def?.esecuzione ? sezione("Esecuzione", def.esecuzione, "ol") : null,
+      def?.setup ? sezione("Setup", def.setup) : null,
+      def?.erroriComuni ? sezione("Errori da evitare", def.erroriComuni) : null,
+      def?.cue ? h("section.cue", h("h3", "Cue"), h("p", def.cue)) : null,
+      def?.sicurezza ? h("section.sicurezza", h("h3", "Sicurezza"), h("p", def.sicurezza)) : null
+    )
+  );
+
+  aggiungi(piede, 
+    h(
+      "button.btn",
+      {
+        onclick: azione(async () => {
+          sbloccaAudio();
+          await completaSerie(v, def, n);
+        }),
+      },
+      "Serie completata"
+    ),
+    h(
+      "div",
+      { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
+      h("button.btn.secondary", { onclick: () => modificaCarico(def, inv) }, "Cambia carico"),
+      h("button.btn.secondary", { onclick: () => saltaEsercizio(v, def) }, "Salta esercizio")
+    )
+  );
+}
+
+function sezione(titolo, voci, tag = "ul") {
+  return h("section", h("h3", titolo), h(tag, ...voci.map((x) => h("li", x))));
+}
+
+/** Anteprima cliccabile: il player si carica solo se lo chiedi. */
+function riquadroVideo(def) {
+  const { id, titolo, canale } = def.video;
+  const box = h("div");
+
+  const apri = () => {
+    clear(riquadro).append(
+      h("iframe", {
+        src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1`,
+        title: titolo || def.nome,
+        allow: "accelerometer; autoplay; encrypted-media; picture-in-picture",
+        allowfullscreen: true,
+        loading: "lazy",
+      })
+    );
+  };
+
+  const copertina = h("img", {
+    src: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    alt: "",
+    loading: "lazy",
+    onerror: (e) => {
+      e.target.remove();
+    },
+  });
+
+  const riquadro = h(
+    "button.video",
+    { onclick: apri, "aria-label": `Riproduci: ${titolo || def.nome}` },
+    copertina,
+    h("span.play", h("span", "▶"))
+  );
+
+  box.append(
+    riquadro,
+    h(
+      "div.video-meta",
+      h("span", `${titolo || "Video"} · ${canale || "YouTube"}`),
+      h(
+        "button",
+        {
+          onclick: (e) => {
+            e.stopPropagation();
+            cambiaVideo(def);
+          },
+        },
+        "Cambia"
+      )
+    )
+  );
+  return box;
+}
+
+/** Sostituzione del video di un esercizio, salvata sul dispositivo. */
+async function cambiaVideo(def) {
+  await sheet((close) => {
+    const campo = h("textarea.note", {
+      placeholder: "Incolla qui il link YouTube del video che preferisci",
+      style: "min-height:60px",
+    });
+    return h(
+      "div",
+      h("h2", "Cambia video"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+        `${def.nome} — attuale: ${def.video?.titolo || "nessuno"}.`
+      ),
+      campo,
+      h(
+        "div.btn-wrap",
+        h(
+          "button.btn",
+          {
+            onclick: async () => {
+              const m = campo.value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+              if (!m) {
+                toast("Link non riconosciuto: serve un indirizzo YouTube.");
+                return;
+              }
+              await store.db.put("esercizi", {
+                ...def,
+                video: { id: m[1], titolo: "Video scelto da te", canale: "YouTube" },
+                videoPersonalizzato: true,
+              });
+              await store.ricaricaLibreria();
+              close();
+              await disegna();
+              toast("Video sostituito.");
+            },
+          },
+          "Salva"
+        )
+      )
+    );
+  });
+}
+
+async function modificaCarico(def, inv) {
+  const bilanciere = def?.attrezzo === "bilanciere";
+  let valore = S.caricoCorrente ?? 0;
+  await sheet((close) => {
+    const etichetta = h("div.hero", h("p.load", `${num(valore)} kg`), h("p.target", bilanciere ? descriviDischi(valore, inv) || "combinazione non disponibile" : "manubri"));
+    const aggiorna = (nuovo) => {
+      valore = Math.max(0, nuovo);
+      clear(etichetta).append(
+        h("p.load", `${num(valore)} kg`),
+        h("p.target", bilanciere ? descriviDischi(valore, inv) || "combinazione non disponibile" : "manubri")
+      );
+    };
+    return h(
+      "div",
+      h("h2", "Carico"),
+      etichetta,
+      h(
+        "div.field",
+        { style: "justify-content:center" },
+        h(
+          "div.stepper",
+          h("button", { onclick: () => aggiorna(bilanciere ? carichoPiuVicino(valore, -1, inv) : valore - 1) }, "−"),
+          h("span.val", `${num(valore)} kg`),
+          h("button", { onclick: () => aggiorna(bilanciere ? carichoPiuVicino(valore, 1, inv) : valore + 1) }, "+")
+        )
+      ),
+      h(
+        "div.btn-wrap",
+        h(
+          "button.btn",
+          {
+            onclick: async () => {
+              S.caricoCorrente = valore;
+              close();
+              await disegna();
+            },
+          },
+          "Usa questo carico"
+        )
+      )
+    );
+  });
+}
+
+async function completaSerie(v, def, numero) {
+  const target = v.aTempo ? v.durataSec : v.ripMax ?? v.ripMin;
+  const rec = await store.registraSerie({
+    sedutaId: S.sed.id,
+    esercizioId: v.esercizioId,
+    numero,
+    carico: S.caricoCorrente ?? null,
+    ripFatte: target,
+    ripTarget: target,
+    aTempo: Boolean(v.aTempo),
+    tsInizioSerie: S.tsInizioSerie,
+    recuperoTargetSec: def?.recuperoDefaultSec ?? 120,
+  });
+
+  const ultima = numero >= v.serie;
+  const durata = (S.recuperoTarget ?? def?.recuperoDefaultSec ?? 120) * 1000;
+  S.serieCorrenteId = rec.id;
+  S.recuperoFine = ultima ? null : Date.now() + durata;
+  S.tsInizioSerie = null;
+
+  await salvaProgresso({
+    fase: ultima ? "questionario" : "recupero",
+    recuperoFine: S.recuperoFine,
+    tsInizioSerie: null,
+  });
+  await disegna();
+}
+
+async function saltaEsercizio(v, def) {
+  const motivo = await chiedi({
+    titolo: `Saltare ${def?.nome || v.esercizioId}?`,
+    testo: "Il motivo distingue una scelta da un buco di dati.",
+    opzioni: [
+      { etichetta: "Tempo", valore: "tempo" },
+      { etichetta: "Dolore", valore: "dolore" },
+      { etichetta: "Attrezzo non disponibile", valore: "attrezzo" },
+      { etichetta: "Altro", valore: "altro" },
+    ],
+  });
+  if (!motivo) return;
+
+  let nota = null;
+  await sheet((close) => {
+    const ta = h("textarea.note", { placeholder: "Nota (facoltativa)" });
+    return h(
+      "div",
+      h("h2", "Nota"),
+      ta,
+      h("div.btn-wrap", h("button.btn", { onclick: () => { nota = ta.value; close(); } }, "Salta esercizio"))
+    );
+  });
+
+  await store.registraSalto({
+    sedutaId: S.sed.id,
+    esercizioId: v.esercizioId,
+    ordine: S.sed.progresso.indice,
+    motivo,
+    nota,
+  });
+  await avanzaEsercizio();
+}
+
+async function avanzaEsercizio() {
+  const prossimo = S.sed.progresso.indice + 1;
+  S.caricoCorrente = null;
+  S.recuperoFine = null;
+  S.tsInizioSerie = null;
+  if (prossimo >= S.esercizi.length) {
+    await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "fine", indice: prossimo });
+  } else {
+    await salvaProgresso({ fase: "esercizio", indice: prossimo, recuperoFine: null });
+  }
+  await disegna();
+}
+
+// ---------- recupero ----------
+
+async function vistaRecupero(corpo, piede) {
+  const v = vocePrevista();
+  const def = store.esercizio(v.esercizioId);
+  const fatte = await serieFatte(v.esercizioId);
+  const ultima = fatte.at(-1);
+  const bersaglio = v.aTempo ? v.durataSec : v.ripMax ?? v.ripMin;
+
+  const testoTimer = h("p.timer", "--:--");
+  const CIRC = 2 * Math.PI * 100;
+  const anello = h("circle.prog", {
+    cx: 108, cy: 108, r: 100,
+    style: `stroke-dasharray:${CIRC};stroke-dashoffset:0`,
+  });
+  const quadrante = h(
+    "div.timer-wrap",
+    h(
+      "svg.timer-ring",
+      { viewBox: "0 0 216 216" },
+      h("circle.track", { cx: 108, cy: 108, r: 100 }),
+      anello
+    ),
+    testoTimer
+  );
+  const sottotitolo = h(
+    "p.target",
+    `Prossima: serie ${Math.min(fatte.length + 1, v.serie)} di ${v.serie}`
+  );
+  aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo));
+
+  // campi della serie appena chiusa
+  let rip = ultima?.ripFatte ?? bersaglio;
+  let carico = ultima?.carico ?? null;
+  const inv = await store.inventario();
+  const bilanciere = def?.attrezzo === "bilanciere";
+
+  const salva = async (patch) => {
+    if (!ultima) return;
+    await store.db.put("serie", { ...ultima, ...patch });
+  };
+
+  const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
+  const valCar = h("span.val", carico != null ? `${num(carico)} kg` : "—");
+
+  aggiungi(corpo, 
+    h(
+      "div.group",
+      h("h2", `Serie ${ultima?.numero ?? fatte.length} appena chiusa`),
+      h(
+        "div.list",
+        h(
+          "div.field",
+          h("label", v.aTempo ? "Secondi tenuti" : "Ripetizioni fatte"),
+          h(
+            "div.stepper",
+            h("button", { onclick: async () => { rip = Math.max(0, rip - (v.aTempo ? 5 : 1)); valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "−"),
+            valRip,
+            h("button", { onclick: async () => { rip += v.aTempo ? 5 : 1; valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "+")
+          )
+        ),
+        carico != null
+          ? h(
+              "div.field",
+              h("label", "Carico usato"),
+              h(
+                "div.stepper",
+                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, -1, inv) : Math.max(0, carico - 1); valCar.textContent = `${num(carico)} kg`; S.caricoCorrente = carico; await salva({ carico }); } }, "−"),
+                valCar,
+                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, 1, inv) : carico + 1; valCar.textContent = `${num(carico)} kg`; S.caricoCorrente = carico; await salva({ carico }); } }, "+")
+              )
+            )
+          : null
+      ),
+      h("p.footnote", "I valori sono precompilati con l'obiettivo: correggili solo se hai fatto altro.")
+    )
+  );
+
+  const pulsante = h("button.btn", { onclick: azione(chiudiRecupero) }, "Pronto");
+  aggiungi(piede, 
+    h(
+      "div",
+      { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
+      h("button.btn.secondary", { onclick: () => spostaTimer(-15) }, "−15 s"),
+      h("button.btn.secondary", { onclick: () => spostaTimer(15) }, "+15 s")
+    ),
+    pulsante
+  );
+
+  const totale = (ultima?.recuperoTargetSec || def?.recuperoDefaultSec || 120) * 1000;
+
+  const aggiorna = () => {
+    if (!S.recuperoFine) return;
+    const restanti = (S.recuperoFine - Date.now()) / 1000;
+    const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
+    anello.style.strokeDashoffset = String(CIRC * (1 - quota));
+
+    if (restanti > 0) {
+      testoTimer.textContent = mmss(restanti);
+      quadrante.classList.remove("done");
+      testoTimer.classList.remove("done");
+      if (restanti <= 3.05 && restanti > 2.95) tick();
+      pulsante.textContent = "Pronto";
+    } else {
+      testoTimer.textContent = "00:00";
+      quadrante.classList.add("done");
+      testoTimer.classList.add("done");
+      if (!allarmeAttivo()) {
+        avviaAllarme();
+        S.contenitore.classList.add("alarm");
+      }
+      pulsante.textContent = "Pronto · ferma il suono";
+    }
+  };
+  aggiorna();
+  S.timerHandle = setInterval(aggiorna, 250);
+}
+
+function spostaTimer(sec) {
+  if (!S.recuperoFine) return;
+  S.recuperoFine = Math.max(Date.now(), S.recuperoFine + sec * 1000);
+  if (S.recuperoFine > Date.now()) {
+    fermaAllarme();
+    S.contenitore.classList.remove("alarm");
+  }
+  salvaProgresso({ recuperoFine: S.recuperoFine });
+}
+
+async function chiudiRecupero() {
+  fermaTimer();
+  S.tsInizioSerie = Date.now();
+  S.recuperoFine = null;
+  await salvaProgresso({ fase: "esercizio", recuperoFine: null, tsInizioSerie: S.tsInizioSerie });
+  await disegna();
+}
+
+// ---------- questionario ----------
+
+async function vistaQuestionario(corpo, piede) {
+  const v = vocePrevista();
+  const def = store.esercizio(v.esercizioId);
+
+  const stato = { rpe: null, tecnica: null, polso: null, quando: null, intensita: null };
+
+  const RIR = {
+    10: "non ne avevo più nessuna",
+    9: "ne avevo ancora 1",
+    8: "ne avevo ancora 2",
+    7: "ne avevo ancora 3",
+    6: "ne avevo ancora 4",
+    5: "ne avevo ancora 5 o più",
+  };
+
+  const hintRpe = h("p.scale-hint", "");
+  const hintTec = h("p.scale-hint", "");
+  const dettaglioPolso = h("div");
+  const avanti = h("button.btn", { disabled: true, onclick: azione(conferma) }, "Avanti");
+
+  const verifica = () => {
+    const ok =
+      stato.rpe != null &&
+      stato.tecnica != null &&
+      stato.polso != null &&
+      (stato.polso === false || (stato.quando && stato.intensita));
+    avanti.disabled = !ok;
+  };
+
+  const righello = (onPick, zona) => {
+    const box = h("div.scale");
+    for (let i = 1; i <= 10; i++) {
+      const b = h(
+        "button",
+        {
+          "aria-pressed": "false",
+          class: zona && i >= zona[0] && i <= zona[1] ? "target-zone" : "",
+          onclick: () => {
+            for (const x of box.children) x.setAttribute("aria-pressed", "false");
+            b.setAttribute("aria-pressed", "true");
+            onPick(i);
+            verifica();
+          },
+        },
+        String(i)
+      );
+      box.append(b);
+    }
+    return box;
+  };
+
+  const zona = store.regole().rpeTarget;
+
+  aggiungi(corpo, 
+    h("div.hero", h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
+
+    h("p.footnote", { style: "margin:14px 16px 0" }, "Quanto è stata dura l'ultima serie?"),
+    righello((i) => {
+      stato.rpe = i;
+      hintRpe.textContent = RIR[i] || "molto lontano dal limite";
+    }, [zona.min, zona.max]),
+    hintRpe,
+    h("p.footnote", { style: "margin:6px 16px 0;text-align:center" }, `Zona prevista dal programma: ${zona.min}-${zona.max}`),
+
+    h("p.footnote", { style: "margin:22px 16px 0" }, "Com'è andata la tecnica?"),
+    righello((i) => {
+      stato.tecnica = i;
+      hintTec.textContent =
+        i >= 8 ? "pulita" : i >= 5 ? "qualche cedimento" : "tecnica insufficiente";
+    }),
+    hintTec,
+
+    h("p.footnote", { style: "margin:22px 16px 0" }, `Dolore al polso destro?${def?.sollecitaPolso ? " (esercizio che lo sollecita)" : ""}`),
+    h(
+      "div.segmented.danger",
+      h("button", { "aria-pressed": "false", onclick: (e) => setPolso(e, false) }, "NO"),
+      h("button", { "aria-pressed": "false", onclick: (e) => setPolso(e, true) }, "SÌ")
+    ),
+    dettaglioPolso,
+
+    h("p.footnote", { style: "margin:22px 16px 0" }, "Nota (facoltativa — vuota significa nessun segnale)"),
+    h("textarea.note", { id: "nota-es", placeholder: "Solo se c'è qualcosa da segnalare" })
+  );
+
+  aggiungi(piede, avanti);
+
+  function setPolso(e, valore) {
+    const gruppo = e.target.parentElement;
+    for (const b of gruppo.children) b.setAttribute("aria-pressed", "false");
+    e.target.setAttribute("aria-pressed", "true");
+    stato.polso = valore;
+    clear(dettaglioPolso);
+    if (valore) {
+      stato.quando = null;
+      stato.intensita = null;
+      dettaglioPolso.append(
+        h(
+          "div.segmented",
+          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "quando", "durante") }, "Durante"),
+          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "quando", "dopo") }, "Dopo")
+        ),
+        h(
+          "div.segmented",
+          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "intensita", "lieve") }, "Lieve"),
+          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "intensita", "medio") }, "Medio"),
+          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "intensita", "forte") }, "Forte")
+        )
+      );
+    }
+    verifica();
+  }
+
+  function pick(ev, campo, valore) {
+    const gruppo = ev.target.parentElement;
+    for (const b of gruppo.children) b.setAttribute("aria-pressed", "false");
+    ev.target.setAttribute("aria-pressed", "true");
+    stato[campo] = valore;
+    verifica();
+  }
+
+  async function conferma() {
+    await store.registraQuestionario({
+      sedutaId: S.sed.id,
+      esercizioId: v.esercizioId,
+      ordine: S.sed.progresso.indice,
+      rpe: stato.rpe,
+      tecnica: stato.tecnica,
+      dolorePolso: stato.polso,
+      dolorePolsoQuando: stato.quando,
+      dolorePolsoIntensita: stato.intensita,
+      nota: qs("#nota-es")?.value,
+    });
+    await avanzaEsercizio();
+  }
+}
+
+// ---------- cardio ----------
+
+async function vistaCardio(corpo, piede) {
+  const r = store.regole().cardio;
+  let kmh = S.sed.cardio?.kmh ?? r.kmhMin;
+  let durata = S.sed.cardio?.durataMin ?? r.durataMin;
+
+  const valK = h("span.val", `${num(kmh)} km/h`);
+  const valD = h("span.val", `${durata} min`);
+  const avviso = h("p.footnote", { style: "margin:10px 16px 0" }, "");
+
+  const controlla = () => {
+    if (kmh > r.kmhMax) {
+      avviso.textContent = `Sopra protocollo: previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h. Il cardio non deve essere il lavoro più duro della giornata.`;
+      avviso.style.color = "var(--orange)";
+    } else {
+      avviso.textContent = `A protocollo. Riferimento FC ${r.fcMin}-${r.fcMax}, mai sopra ${r.fcLimite}.`;
+      avviso.style.color = "var(--label-secondary)";
+    }
+  };
+
+  aggiungi(corpo, 
+    h("div.hero", h("p.kicker", "Dopo i pesi"), h("h2", "Cardio"), h("p.target", `${r.durataMin} min · ${num(r.kmhMin)}-${num(r.kmhMax)} km/h · FC ${r.fcMin}-${r.fcMax}`)),
+    h(
+      "div.group",
+      h("div.list",
+        h("div.field", h("label", "Velocità impostata sul tapis"),
+          h("div.stepper",
+            h("button", { onclick: () => { kmh = Math.max(0, Math.round((kmh - 0.1) * 10) / 10); valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "−"),
+            valK,
+            h("button", { onclick: () => { kmh = Math.round((kmh + 0.1) * 10) / 10; valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "+")
+          )
+        ),
+        h("div.field", h("label", "Durata"),
+          h("div.stepper",
+            h("button", { onclick: () => { durata = Math.max(0, durata - 5); valD.textContent = `${durata} min`; } }, "−"),
+            valD,
+            h("button", { onclick: () => { durata += 5; valD.textContent = `${durata} min`; } }, "+")
+          )
+        )
+      ),
+      avviso
+    ),
+    h("textarea.note", { id: "nota-cardio", placeholder: "Nota sul cardio (facoltativa)" })
+  );
+  controlla();
+
+  aggiungi(piede, 
+    h("button.btn", {
+      onclick: azione(async () => {
+        S.sed = await store.aggiornaSeduta(S.sed.id, {
+          cardio: { ...S.sed.cardio, eseguito: true, kmh, durataMin: durata, note: qs("#nota-cardio")?.value || null },
+        });
+        await salvaProgresso({ fase: "fine" });
+        await disegna();
+      }),
+    }, "Cardio fatto"),
+    h("button.btn.secondary", {
+      onclick: async () => {
+        const motivo = await chiedi({
+          titolo: "Cardio non eseguito",
+          opzioni: [
+            { etichetta: "Tempo", valore: "tempo" },
+            { etichetta: "Tapis non disponibile", valore: "attrezzo" },
+            { etichetta: "Altro", valore: "altro" },
+          ],
+        });
+        if (!motivo) return;
+        S.sed = await store.aggiornaSeduta(S.sed.id, {
+          cardio: { ...S.sed.cardio, eseguito: false, saltatoMotivo: motivo },
+        });
+        await salvaProgresso({ fase: "fine" });
+        await disegna();
+      },
+    }, "Non eseguito"),
+  );
+}
+
+// ---------- stretching di fine seduta ----------
+
+function bloccoStretching() {
+  const prot = store.riscaldamento(S.sed.tipoId);
+  const voci = prot?.stretchingFinale || [];
+  if (!voci.length) return null;
+
+  return h(
+    "div.group",
+    h("h2", "Stretching di fine seduta"),
+    h(
+      "div.guida",
+      { style: "margin:0" },
+      ...voci.map((s, i) =>
+        h(
+          "div.passo",
+          h("div.n", String(i + 1)),
+          h(
+            "div.testo",
+            h("span.nome", s.nome),
+            h("span.dose", s.dose),
+            h("span.come", s.come)
+          )
+        )
+      )
+    ),
+    h("p.footnote", "Adesso ha senso: a muscolo caldo e a lavoro finito, senza togliere forza alla seduta.")
+  );
+}
+
+// ---------- riepilogo ----------
+
+async function vistaFine(corpo, piede) {
+  const serie = await store.serieDi(S.sed.id);
+  const logs = await store.questionariDi(S.sed.id);
+  const durataSec = Math.round(((S.sed.oraFine || Date.now()) - S.sed.oraInizio) / 1000);
+  const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
+  const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
+  const densita = durataSec > 0 ? (serie.length / (durataSec / 60)).toFixed(2).replace(".", ",") : "—";
+
+  const mancanti = [];
+  for (const v of S.esercizi) {
+    const log = logs.find((l) => l.esercizioId === v.esercizioId);
+    const def = store.esercizio(v.esercizioId);
+    if (!log) mancanti.push(`${def?.nome || v.esercizioId}: nessun dato`);
+    else if (log.saltato) mancanti.push(`${def?.nome || v.esercizioId}: saltato (${log.saltato.motivo})`);
+  }
+
+  const polso = logs.filter((l) => l.dolorePolso);
+
+  aggiungi(corpo, 
+    h("div.hero", h("p.kicker", "Riepilogo"), h("h2", S.sed.tipoNome)),
+    h(
+      "div.group",
+      h("div.list",
+        h("div.row", h("div.main", h("span.title", "Durata")), h("span.value", durataUmana(durataSec))),
+        h("div.row", h("div.main", h("span.title", "Serie registrate")), h("span.value", String(serie.length))),
+        h("div.row", h("div.main", h("span.title", "Densità")), h("span.value", `${densita} serie/min`)),
+        h("div.row", h("div.main", h("span.title", "Recupero medio reale")), h("span.value", recMedio != null ? mmss(recMedio) : "—")),
+        S.sed.cardio?.previsto
+          ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", S.sed.cardio.eseguito ? `${num(S.sed.cardio.kmh)} km/h · ${S.sed.cardio.durataMin} min` : "non eseguito"))
+          : null
+      )
+    ),
+    logs.length
+      ? h("div.group", h("h2", "RPE e tecnica"),
+          h("div.list", ...logs.filter((l) => !l.saltato).map((l) => {
+            const def = store.esercizio(l.esercizioId);
+            return h("div.row",
+              h("div.main", h("span.title", def?.nome || l.esercizioId), l.nota ? h("span.sub", l.nota) : null),
+              h("span.value", `RPE ${l.rpe ?? "—"} · tec ${l.tecnica ?? "—"}`)
+            );
+          }))
+        )
+      : null,
+    polso.length
+      ? h("div.group", h("h2", "Polso destro"),
+          h("div.list", ...polso.map((l) => {
+            const def = store.esercizio(l.esercizioId);
+            return h("div.row", h("div.main", h("span.title", def?.nome || l.esercizioId)), h("span.pill.bad", `${l.dolorePolsoIntensita} · ${l.dolorePolsoQuando}`));
+          }))
+        )
+      : null,
+    mancanti.length
+      ? h("div.group", h("h2", "Dati mancanti"), h("div.list", ...mancanti.map((m) => h("div.row", h("div.main", h("span.title", m))))))
+      : null,
+    bloccoStretching(),
+    h("p.footnote", { style: "margin:22px 16px 0" }, "Nota generale (dolori, sensazioni — solo se presenti)"),
+    h("textarea.note", { id: "nota-seduta", value: S.sed.notaGenerale || "" })
+  );
+
+  aggiungi(piede, 
+    h("button.btn", {
+      onclick: azione(async () => {
+        await store.chiudiSeduta(S.sed.id, { notaGenerale: qs("#nota-seduta")?.value || null });
+        await store.snapshotAutomatico("fine seduta");
+        fermaTimer();
+        rilasciaSchermo();
+        toast("Seduta chiusa e salvata.");
+        S.vaiA("storico");
+      }),
+    }, "Chiudi seduta"),
+    h("button.btn.secondary", {
+      onclick: async () => {
+        await salvaProgresso({ fase: "esercizio", indice: 0 });
+        await disegna();
+      },
+    }, "Torna agli esercizi")
+  );
+}
