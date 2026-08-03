@@ -1273,6 +1273,8 @@ async function vistaQuestionario(corpo, piede) {
 
 async function vistaCardio(corpo, piede) {
   const r = store.regole().cardio;
+  if (S.sed.progresso?.cardioFine) return vistaCardioInCorso(corpo, piede, r);
+
   let kmh = S.sed.cardio?.kmh ?? r.kmhMin;
   let durata = S.sed.cardio?.durataMin ?? r.durataMin;
 
@@ -1290,21 +1292,33 @@ async function vistaCardio(corpo, piede) {
     }
   };
 
-  aggiungi(corpo, 
-    h("div.hero", h("p.kicker", "Dopo i pesi"), h("h2", "Cardio"), h("p.target", `${r.durataMin} min · ${num(r.kmhMin)}-${num(r.kmhMax)} km/h · FC ${r.fcMin}-${r.fcMax}`)),
+  aggiungi(corpo,
+    h(
+      "div.hero",
+      h("p.kicker", "Dopo i pesi"),
+      h("h2", "Cardio"),
+      h("p.target", `${r.durataMin} min · ${num(r.kmhMin)}-${num(r.kmhMax)} km/h · FC ${r.fcMin}-${r.fcMax}`)
+    ),
     h(
       "div.group",
-      h("div.list",
-        h("div.field", h("label", "Velocità impostata sul tapis"),
-          h("div.stepper",
+      h(
+        "div.list",
+        h(
+          "div.field",
+          h("label", "Velocità impostata sul tapis"),
+          h(
+            "div.stepper",
             h("button", { onclick: () => { kmh = Math.max(0, Math.round((kmh - 0.1) * 10) / 10); valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "−"),
             valK,
             h("button", { onclick: () => { kmh = Math.round((kmh + 0.1) * 10) / 10; valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "+")
           )
         ),
-        h("div.field", h("label", "Durata"),
-          h("div.stepper",
-            h("button", { onclick: () => { durata = Math.max(0, durata - 5); valD.textContent = `${durata} min`; } }, "−"),
+        h(
+          "div.field",
+          h("label", "Durata"),
+          h(
+            "div.stepper",
+            h("button", { onclick: () => { durata = Math.max(5, durata - 5); valD.textContent = `${durata} min`; } }, "−"),
             valD,
             h("button", { onclick: () => { durata += 5; valD.textContent = `${durata} min`; } }, "+")
           )
@@ -1316,35 +1330,131 @@ async function vistaCardio(corpo, piede) {
   );
   controlla();
 
-  aggiungi(piede, 
-    h("button.btn", {
-      onclick: azione(async () => {
-        S.sed = await store.aggiornaSeduta(S.sed.id, {
-          cardio: { ...S.sed.cardio, eseguito: true, kmh, durataMin: durata, note: qs("#nota-cardio")?.value || null },
-        });
-        await salvaProgresso({ fase: "fine" });
-        await disegna();
-      }),
-    }, "Cardio fatto"),
-    h("button.btn.secondary", {
-      onclick: async () => {
-        const motivo = await chiedi({
-          titolo: "Cardio non eseguito",
-          opzioni: [
-            { etichetta: "Tempo", valore: "tempo" },
-            { etichetta: "Tapis non disponibile", valore: "attrezzo" },
-            { etichetta: "Altro", valore: "altro" },
-          ],
-        });
-        if (!motivo) return;
-        S.sed = await store.aggiornaSeduta(S.sed.id, {
-          cardio: { ...S.sed.cardio, eseguito: false, saltatoMotivo: motivo },
-        });
-        await salvaProgresso({ fase: "fine" });
-        await disegna();
+  aggiungi(piede,
+    h(
+      "button.btn",
+      {
+        onclick: azione(async () => {
+          sbloccaAudio();
+          S.sed = await store.aggiornaSeduta(S.sed.id, {
+            cardio: { ...S.sed.cardio, kmh, durataMin: durata, note: qs("#nota-cardio")?.value || null },
+          });
+          await salvaProgresso({ cardioInizio: Date.now(), cardioFine: Date.now() + durata * 60000 });
+          await disegna();
+        }),
       },
-    }, "Non eseguito"),
+      "Parti con il cardio"
+    ),
+    h(
+      "button.btn.secondary",
+      {
+        onclick: async () => {
+          const motivo = await chiedi({
+            titolo: "Cardio non eseguito",
+            opzioni: [
+              { etichetta: "Tempo", valore: "tempo" },
+              { etichetta: "Tapis non disponibile", valore: "attrezzo" },
+              { etichetta: "Altro", valore: "altro" },
+            ],
+          });
+          if (!motivo) return;
+          S.sed = await store.aggiornaSeduta(S.sed.id, {
+            cardio: { ...S.sed.cardio, eseguito: false, saltatoMotivo: motivo },
+          });
+          await salvaProgresso({ fase: "fine" });
+          await disegna();
+        },
+      },
+      "Non eseguito"
+    )
   );
+}
+
+/** Cardio in corso: conto alla rovescia sulla durata impostata. */
+async function vistaCardioInCorso(corpo, piede, r) {
+  const inizio = S.sed.progresso.cardioInizio;
+  // La fine vive in memoria e viene salvata in sottofondo: leggere ogni volta
+  // il valore salvato farebbe perdere i tocchi rapidi su +5 e −5.
+  S.cardioFine = S.sed.progresso.cardioFine;
+  const totale = Math.max(1, S.cardioFine - inizio);
+
+  const testoTimer = h("p.timer", "--:--");
+  const CIRC = 2 * Math.PI * 100;
+  const anelloCardio = h("circle.prog", {
+    cx: 108,
+    cy: 108,
+    r: 100,
+    style: `stroke-dasharray:${CIRC};stroke-dashoffset:0`,
+  });
+  const quadrante = h(
+    "div.timer-wrap",
+    h("svg.timer-ring", { viewBox: "0 0 216 216" }, h("circle.track", { cx: 108, cy: 108, r: 100 }), anelloCardio),
+    testoTimer
+  );
+
+  aggiungi(corpo,
+    h(
+      "div.hero",
+      h("p.kicker", "Cardio in corso"),
+      quadrante,
+      h("p.target", `${num(S.sed.cardio.kmh)} km/h · FC ${r.fcMin}-${r.fcMax}, mai sopra ${r.fcLimite}`)
+    ),
+    h(
+      "div.group",
+      h(
+        "p.footnote",
+        { style: "text-align:center" },
+        "Il tempo si conta sull'orologio: puoi bloccare lo schermo, al ritorno il conto è giusto."
+      )
+    )
+  );
+
+  const chiudiCardio = async () => {
+    fermaTimer();
+    const trascorsi = Math.max(1, Math.round((Date.now() - inizio) / 60000));
+    S.sed = await store.aggiornaSeduta(S.sed.id, {
+      cardio: { ...S.sed.cardio, eseguito: true, durataMin: trascorsi },
+    });
+    S.cardioFine = null;
+    await salvaProgresso({ fase: "fine", cardioInizio: null, cardioFine: null });
+    await disegna();
+  };
+
+  const pulsante = h("button.btn", { onclick: azione(chiudiCardio) }, "Ho finito");
+
+  aggiungi(piede,
+    h(
+      "div",
+      { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
+      h("button.btn.secondary", { onclick: () => spostaCardio(-5) }, "−5 min"),
+      h("button.btn.secondary", { onclick: () => spostaCardio(5) }, "+5 min")
+    ),
+    pulsante
+  );
+
+  const aggiorna = () => {
+    const restanti = (S.cardioFine - Date.now()) / 1000;
+    const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
+    anelloCardio.style.strokeDashoffset = String(CIRC * (1 - quota));
+    if (restanti > 0) {
+      testoTimer.textContent = mmss(restanti);
+      quadrante.classList.remove("done");
+      pulsante.textContent = "Ho finito";
+    } else {
+      testoTimer.textContent = "00:00";
+      quadrante.classList.add("done");
+      if (!allarmeAttivo()) avviaAllarme();
+      pulsante.textContent = "Ho finito · ferma il suono";
+    }
+  };
+  aggiorna();
+  S.timerHandle = setInterval(aggiorna, 250);
+}
+
+function spostaCardio(min) {
+  S.cardioFine = Math.max(Date.now(), (S.cardioFine || Date.now()) + min * 60000);
+  if (S.cardioFine > Date.now()) fermaAllarme();
+  salvaProgresso({ cardioFine: S.cardioFine });
 }
 
 // ---------- stretching di fine seduta ----------
