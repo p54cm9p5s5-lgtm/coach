@@ -20,7 +20,8 @@ js/plates.js          calcolo dei dischi da montare
 js/salute.js          formato e lettura del pacchetto dati Salute
 js/screens/*.js       una schermata per file
 data/esercizi.json    libreria esercizi (contenuto generico)
-tools/make_icons.py   genera le icone PNG
+tools/icona.py        ritaglia e riquadra l'icona sorgente
+tools/icona-da-immagine.sh  genera le tre misure delle icone
 tools/serve.py        server di sviluppo senza cache
 ```
 
@@ -36,7 +37,7 @@ il service worker, altrimenti le modifiche restano nascoste dalla cache.
 Rigenerare icone e file personali:
 
 ```bash
-python3 tools/make_icons.py
+tools/icona-da-immagine.sh ~/Downloads/icona-coach-originale.png
 python3 _privato/seed.py   # solo in locale: genera i file personali
 ```
 
