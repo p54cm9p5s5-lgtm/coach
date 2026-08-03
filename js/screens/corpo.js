@@ -291,7 +291,9 @@ async function bloccoFoto(ridisegna) {
     h(
       "div.btn-wrap",
       { style: "margin-left:0;margin-right:0" },
-      h("button.btn", { onclick: () => nuovoSet(ridisegna) }, ultimo ? "Nuovo set di foto" : "Primo set di foto")
+      h("button.btn", { onclick: () => nuovoSet(ridisegna) }, ultimo ? "Nuovo set di foto" : "Primo set di foto"),
+      h("div", { style: "height:8px" }),
+      h("button.btn.secondary", { onclick: () => importaSet(ridisegna) }, "Usa foto che hai già")
     ),
     h(
       "p.footnote",
@@ -309,6 +311,13 @@ async function mostraFoto(scatto, posa) {
     h(
       "div",
       h("h2", `${posa.nome} · ${dataBreve(scatto.data)}`),
+      scatto.checklist?.daLibreria
+        ? h(
+            "p",
+            { style: "margin:6px 16px 0;font-size:13px;color:var(--label-secondary)" },
+            "Presa dalla libreria, fuori protocollo: serve ad allineare gli scatti successivi, non a misurare una differenza."
+          )
+        : null,
       h("img", {
         src: scatto.immagine,
         alt: posa.nome,
@@ -383,6 +392,65 @@ async function nuovoSet(ridisegna) {
   if (fatte) {
     await store.snapshotAutomatico("foto");
     toast(fatte === store.POSE.length ? "Set completo." : `Set parziale: ${fatte} pose su ${store.POSE.length}.`);
+  }
+  await ridisegna();
+}
+
+/**
+ * Foto già scattate, prese dalla libreria. Servono soprattutto come
+ * riferimento: una volta dentro, la vista guidata le sovrappone in trasparenza
+ * agli scatti successivi. Non passano dal protocollo, e restano marcate come
+ * tali: confrontare una foto qualunque con una fatta a regola d'arte darebbe
+ * una differenza che non è la tua.
+ */
+async function importaSet(ridisegna) {
+  const campoData = h("input", {
+    type: "date",
+    value: isoDate(),
+    max: isoDate(),
+    style: "width:100%;padding:12px;border-radius:10px;border:0;background:var(--fill-tertiary);color:var(--label);font:inherit",
+  });
+
+  const scelta = await sheet((close) =>
+    h(
+      "div",
+      h("h2", "Usa foto che hai già"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+        "Scegli una foto per ogni posa dalla libreria. Diventano il riferimento: dal prossimo set la fotocamera guidata te le sovrappone per allineare posa e distanza."
+      ),
+      h("div.group", { style: "margin-top:12px" }, h("div", { style: "padding:0 16px" }, h("p", { style: "margin:0 0 6px;font-size:13px;color:var(--label-secondary)" }, "Quando sono state scattate"), campoData)),
+      h(
+        "p.footnote",
+        { style: "margin-top:12px" },
+        "Vengono salvate come «fuori protocollo»: valgono per allineare gli scatti futuri, non come metro di paragone."
+      ),
+      h("div.btn-wrap", h("button.btn", { onclick: () => close(campoData.value || isoDate()) }, "Scegli le foto"))
+    )
+  );
+  if (!scelta) return;
+
+  let fatte = 0;
+  for (const posa of store.POSE) {
+    const immagine = await catturaDaFile(posa);
+    if (!immagine) break;
+    await store.registraFoto({
+      data: scelta,
+      posa: posa.id,
+      immagine,
+      checklist: { protocollo: false, daLibreria: true },
+    });
+    fatte++;
+  }
+
+  if (fatte) {
+    await store.snapshotAutomatico("foto importate");
+    toast(
+      fatte === store.POSE.length
+        ? "Set di riferimento salvato."
+        : `Salvate ${fatte} pose su ${store.POSE.length}.`
+    );
   }
   await ridisegna();
 }
