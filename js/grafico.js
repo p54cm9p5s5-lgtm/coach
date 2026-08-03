@@ -289,6 +289,13 @@ export function selettorePeriodo(periodo, onCambia) {
   );
 }
 
+/** Come si chiama la finestra scelta, per scriverlo accanto ai numeri. */
+export function etichettaPeriodo(periodo) {
+  if (periodo.id === "7") return "ultimi 7 giorni";
+  if (periodo.id === "30") return "ultimo mese";
+  return "tutto lo storico";
+}
+
 /** Prima data compresa nella finestra, o null se la finestra e «sempre». */
 export function inizioPeriodo(periodo, oggi) {
   if (!periodo.giorni) return null;
