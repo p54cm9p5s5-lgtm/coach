@@ -2,7 +2,7 @@
    Cache-first per lo shell. Un cambio di VERSION pubblica un aggiornamento:
    l'app mostra un avviso e applica solo su conferma dell'utente. */
 
-const VERSION = "20260803-160156";
+const VERSION = "20260803-160916";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -23,8 +23,10 @@ const ASSETS = [
   "./js/plates.js",
   "./js/salute.js",
   "./js/segnali.js",
+  "./js/export.js",
   "./js/screens/oggi.js",
   "./js/screens/proposte.js",
+  "./js/screens/export.js",
   "./js/screens/seduta.js",
   "./js/screens/corpo.js",
   "./js/screens/salute.js",
