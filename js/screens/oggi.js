@@ -3,7 +3,7 @@ import {
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
-import { graficoAttivita, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo } from "../grafico.js";
+import { graficoAttivita, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 import { anello, giudizio } from "../punteggio.js";
 import { sbloccaAudio } from "../ui.js";
@@ -142,18 +142,18 @@ async function bloccoGrafico(ridisegna) {
         {
           etichetta: "Passi",
           valore: mediaPassi != null ? mediaPassi.toLocaleString("it-IT") : "—",
-          nota: `media su ${quantiPassi} ${quantiPassi === 1 ? "giorno" : "giorni"}`,
+          nota: `${quantiPassi} ${quantiPassi === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`,
         },
         {
           etichetta: "Movimento",
           valore: mediaKcal != null ? String(mediaKcal) : "—",
           unita: "kcal",
-          nota: `media su ${quantiKcal} ${quantiKcal === 1 ? "giorno" : "giorni"}`,
+          nota: `${quantiKcal} ${quantiKcal === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`,
         },
         {
           etichetta: "Sonno",
           valore: mediaSonno != null ? durataUmana(mediaSonno * 60) : "—",
-          nota: `media su ${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"}`,
+          nota: `${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"} · ${etichettaPeriodo(periodo)}`,
         },
       ]),
       graficoAttivita(serie),

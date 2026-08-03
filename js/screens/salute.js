@@ -2,7 +2,7 @@ import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, aggi
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
-import { graficoLinea, schedaGrafico, periodoSalvato, selettorePeriodo, inizioPeriodo } from "../grafico.js";
+import { graficoLinea, schedaGrafico, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
 import { anello, giudizio } from "../punteggio.js";
 
 const NOME_SHORTCUT = "Coach Salute";
@@ -81,6 +81,7 @@ export async function render({ ridisegna }) {
       periodo,
       selettore: selettorePeriodo(periodo, ridisegna),
       dentro: (r) => !da || (r.data >= da && r.data <= oggiIso),
+      etichetta: etichettaPeriodo(periodo),
     };
   };
 
@@ -135,7 +136,7 @@ export async function render({ ridisegna }) {
             ? h(
                 "p",
                 { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
-                `${giudizio(mediaComp).testo} · media su ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"}`
+                `${giudizio(mediaComp).testo} · ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"} · ${fComp.etichetta}`
               )
             : h("p", { style: "margin:0;text-align:center;color:var(--label-secondary)" }, "Nessun punteggio registrato"),
           h(
@@ -171,7 +172,7 @@ export async function render({ ridisegna }) {
         titolo: "Movimento",
         valore: mKcal ? String(mKcal.valore) : "—",
         unita: "kcal",
-        nota: mKcal ? `media su ${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
+        nota: mKcal ? `${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"} con dati · ${fMov2.etichetta}` : `nessun dato · ${fMov2.etichetta}`,
         grafico: graficoLinea({
           punti: giorniMov.map((g) => ({
             data: g.data,
@@ -200,7 +201,7 @@ export async function render({ ridisegna }) {
         selettore: fPassi.selettore,
         titolo: "Passi",
         valore: mPassi ? mPassi.valore.toLocaleString("it-IT") : "—",
-        nota: mPassi ? `media su ${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
+        nota: mPassi ? `${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"} con dati · ${fPassi.etichetta}` : `nessun dato · ${fPassi.etichetta}`,
         grafico: graficoLinea({
           punti: giorniPassi.map((g) => ({
             data: g.data,
@@ -224,7 +225,7 @@ export async function render({ ridisegna }) {
         selettore: fSonno2.selettore,
         titolo: "Sonno",
         valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
-        nota: mSonno ? `media su ${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"}` : "nessun dato",
+        nota: mSonno ? `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${fSonno2.etichetta}` : `nessun dato · ${fSonno2.etichetta}`,
         grafico: graficoLinea({
           punti: nottiOrd.map((n) => ({
             data: n.data,
