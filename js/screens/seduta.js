@@ -945,8 +945,9 @@ async function completaSerie(v, def, numero) {
 }
 
 async function saltaEsercizio(v, def) {
+  const nome = def?.nome || v.esercizioId;
   const motivo = await chiedi({
-    titolo: `Saltare ${def?.nome || v.esercizioId}?`,
+    titolo: `Saltare ${nome}?`,
     testo: "Il motivo distingue una scelta da un buco di dati.",
     opzioni: [
       { etichetta: "Tempo", valore: "tempo" },
@@ -957,16 +958,41 @@ async function saltaEsercizio(v, def) {
   });
   if (!motivo) return;
 
-  let nota = null;
-  await sheet((close) => {
-    const ta = h("textarea.note", { placeholder: "Nota (facoltativa)" });
+  const SUGGERIMENTI = {
+    tempo: "Es. «finito il tempo prima del quarto esercizio»",
+    dolore: "Es. «fitta al polso destro alla seconda serie, sparita a riposo»",
+    attrezzo: "Es. «panca occupata, non ho aspettato»",
+    altro: "Cos'è successo?",
+  };
+
+  // La nota è obbligatoria: fra tre settimane «saltato» senza spiegazione non
+  // dice niente, e un esercizio saltato senza motivo è indistinguibile da un
+  // dato perso.
+  const nota = await sheet((close) => {
+    const ta = h("textarea.note", { placeholder: SUGGERIMENTI[motivo], style: "min-height:96px" });
+    const conferma = h(
+      "button.btn",
+      { disabled: true, onclick: () => close(ta.value.trim()) },
+      "Salta esercizio"
+    );
+    ta.addEventListener("input", () => {
+      conferma.disabled = ta.value.trim().length < 3;
+    });
     return h(
       "div",
-      h("h2", "Nota"),
+      h("h2", "Perché lo salti"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+        "Scrivi cos'è successo: senza, fra tre settimane «saltato» non vorrà dire niente."
+      ),
       ta,
-      h("div.btn-wrap", h("button.btn", { onclick: () => { nota = ta.value; close(); } }, "Salta esercizio"))
+      h("div.btn-wrap", conferma)
     );
   });
+
+  // chiuso senza scrivere: l'esercizio non viene saltato
+  if (!nota) return;
 
   await store.registraSalto({
     sedutaId: S.sed.id,
@@ -975,6 +1001,7 @@ async function saltaEsercizio(v, def) {
     motivo,
     nota,
   });
+  toast(`${nome} segnato come non eseguito.`);
   await avanzaEsercizio();
 }
 
