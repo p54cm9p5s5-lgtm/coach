@@ -51,6 +51,21 @@ let modCorrente = null;
 
 let hashDisegnato = null;
 
+/**
+ * Riporta la pagina in cima. Prova con l'animazione e poi si assicura del
+ * risultato: dove lo scorrimento animato non è disponibile resterebbe a metà.
+ */
+export function inCima() {
+  try {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch {
+    window.scrollTo(0, 0);
+  }
+  setTimeout(() => {
+    if (window.scrollY > 0) window.scrollTo(0, 0);
+  }, 400);
+}
+
 export async function ridisegna() {
   const nome = nomeRotta();
   // Cambio di schermata: un pannello aperto non deve sopravvivere alla pagina
@@ -197,6 +212,16 @@ async function avvia() {
   }
 
   window.addEventListener("hashchange", ridisegna);
+
+  // Toccare la scheda in cui sei già riporta in cima, come nelle app di
+  // sistema. Se invece sei dentro un dettaglio, il tocco torna all'elenco:
+  // in quel caso è il cambio di indirizzo a fare il lavoro.
+  qs("#tabbar").addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-tab]");
+    if (!a || a.getAttribute("href") !== location.hash) return;
+    e.preventDefault();
+    inCima();
+  });
   // Niente sblocco audio qui: all'apertura l'app deve restare muta. Lo fa la
   // schermata dell'allenamento, al primo tocco dentro la seduta.
 
