@@ -112,7 +112,17 @@ async function bloccoGrafico() {
   const kcalSettimana = settimana.filter((d) => d.kcal != null);
   const sonnoSettimana = settimana.filter((d) => d.sonnoMin != null);
   const allenamentiSettimana = settimana.filter((d) => d.allenamento).length;
-  const previstiSettimana = store.giorniSplit().length || 5;
+  // Quanti allenamenti prevedeva questa settimana. Col calendario collegato
+  // il conto è suo, ma solo per i giorni che la lettura copre davvero: fuori da
+  // quell'intervallo l'app non sa cosa era previsto, e non lo inventa.
+  const intervallo = store.intervalloAgenda();
+  const copertaDalCalendario =
+    intervallo && settimana.some((d) => d.data >= intervallo.da && d.data <= intervallo.a);
+  const previstiSettimana = store.agendaAttiva()
+    ? copertaDalCalendario
+      ? settimana.filter((d) => d.previsto).length
+      : null
+    : store.giorniSplit().length || 5;
 
   const media = (arr, campo) =>
     arr.length ? Math.round(arr.reduce((a, b) => a + b[campo], 0) / arr.length) : null;
@@ -129,8 +139,8 @@ async function bloccoGrafico() {
       fascia([
         {
           etichetta: "Allenamenti",
-          valore: `${allenamentiSettimana}/${previstiSettimana}`,
-          nota: "questa settimana",
+          valore: previstiSettimana != null ? `${allenamentiSettimana}/${previstiSettimana}` : String(allenamentiSettimana),
+          nota: previstiSettimana != null ? "questa settimana" : "questa settimana · calendario non letto",
         },
         {
           etichetta: "Movimento",
@@ -321,6 +331,8 @@ async function bloccoCalendario(vaiA, ridisegna) {
     ultimaFoto: fotoTutte[0]?.data || null,
     ultimoExport: imp.ultimoExport,
     ultimoImportSalute: imp.ultimoImportSalute,
+    // Col calendario collegato le scadenze sono quelle scritte dal coach.
+    eventi: store.agendaAttiva() ? await store.agenda() : null,
   });
 
   // il programma comincia dal primo allenamento registrato, o dal brief
@@ -345,6 +357,7 @@ async function bloccoCalendario(vaiA, ridisegna) {
         previsto: store.giornoPrevisto(data),
         allenamento: allenamenti.get(data),
         attese: attese.get(data) || [],
+        origine: store.origineGiorno(data),
       });
       const seduta = tutte.find((s) => s.data === data && s.stato === "completata");
       await sheet((close) =>

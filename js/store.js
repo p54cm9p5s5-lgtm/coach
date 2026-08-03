@@ -1010,15 +1010,31 @@ export async function importaSalute(pacchetto) {
     const perData = new Map();
     for (const e of pacchetto.agenda) {
       const giornoId = abbinaAlloSplit(e.titolo);
-      const scelto = perData.get(e.data);
-      if (scelto && scelto.giornoId && !giornoId) continue;
-      perData.set(e.data, {
+      const scelto = perData.get(e.data) || {
         data: e.data,
-        titolo: e.titolo,
-        nota: e.nota ?? null,
-        giornoId,
+        titolo: null,
+        nota: null,
+        giornoId: null,
+        // Tutti gli eventi del giorno restano: quello che non è un allenamento
+        // è un promemoria del coach e va mostrato lo stesso.
+        altri: [],
         importatoIl: ora,
-      });
+      };
+      if (giornoId && !scelto.giornoId) {
+        // l'allenamento prende il posto principale, l'eventuale titolo che
+        // c'era prima scala fra i promemoria
+        if (scelto.titolo) scelto.altri.push(scelto.titolo);
+        scelto.titolo = e.titolo;
+        scelto.giornoId = giornoId;
+        scelto.nota = e.nota ?? null;
+      } else if (!scelto.titolo) {
+        scelto.titolo = e.titolo;
+        scelto.giornoId = giornoId;
+        scelto.nota = e.nota ?? null;
+      } else {
+        scelto.altri.push(e.titolo);
+      }
+      perData.set(e.data, scelto);
     }
     // Contano i giorni, non gli eventi: due eventi lo stesso giorno restano
     // un giorno solo.
@@ -1086,6 +1102,13 @@ async function caricaAgenda() {
 
 export function agendaDi(iso) {
   return AGENDA?.get(iso) || null;
+}
+
+/** Da quando a quando arriva l'ultima lettura del calendario. */
+export function intervalloAgenda() {
+  if (!agendaAttiva()) return null;
+  const date = [...AGENDA.keys()].sort();
+  return { da: date[0], a: date[date.length - 1] };
 }
 
 export async function agenda() {

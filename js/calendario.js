@@ -79,46 +79,75 @@ export function calendario(ctx) {
 }
 
 /** Cose attese in un giorno, calcolate dalle cadenze del brief. */
-export function calcolaAttese({ oggi, ultimoPeso, ultimaVita, ultimaFoto, ultimoExport, ultimoImportSalute }) {
+export function calcolaAttese({
+  oggi,
+  ultimoPeso,
+  ultimaVita,
+  ultimaFoto,
+  ultimoExport,
+  ultimoImportSalute,
+  eventi = null,
+}) {
   const attese = new Map();
   const aggiungiA = (data, tipo, testo) => {
     if (!attese.has(data)) attese.set(data, []);
     attese.get(data).push({ tipo, testo });
   };
 
-  // peso e vita: ogni giovedì
-  const d = parseIso(oggi);
-  for (let i = -21; i <= 21; i++) {
-    const g = new Date(d);
-    g.setDate(g.getDate() + i);
-    if (g.getDay() === 4) {
-      const data = iso(g);
-      const scaduto = data <= oggi && (!ultimoPeso || giorniTra(ultimoPeso, data) >= 7);
-      aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita");
+  if (eventi) {
+    // Calendario collegato: le cose da fare sono quelle che ci ha scritto il
+    // coach, con le sue parole. L'app non aggiunge scadenze di sua invenzione.
+    for (const e of eventi) {
+      // Il titolo principale conta solo se non è l'allenamento (quello ha già
+      // il suo segno sul calendario); gli altri eventi del giorno sempre.
+      const titoli = [...(e.giornoId ? [] : [e.titolo]), ...(e.altri || [])].filter(Boolean);
+      for (const titolo of titoli) {
+        const t = titolo.toLowerCase();
+        // Solo quello che l'app registra davvero può essere «in ritardo»: la
+        // pressione, per esempio, non la tiene e resta un promemoria e basta.
+        const tipo = /foto/.test(t) ? "foto" : /peso|vita|circonferenz/.test(t) ? "misura" : "info";
+        const fattoDa = tipo === "foto" ? ultimaFoto : tipo === "misura" ? ultimoPeso : null;
+        const scaduto =
+          e.data <= oggi && tipo !== "info" && (!fattoDa || giorniTra(fattoDa, e.data) >= 1);
+        aggiungiA(e.data, scaduto ? "scaduto" : tipo, titolo);
+      }
     }
-    // foto: mercoledì ogni 2 settimane, ancorate al 12/08/2026
-    if (g.getDay() === 3) {
-      const settimane = Math.round(giorniTra("2026-08-12", iso(g)) / 7);
-      if (settimane % 2 === 0) {
+  } else {
+    // peso e vita: ogni giovedì
+    const d = parseIso(oggi);
+    for (let i = -21; i <= 21; i++) {
+      const g = new Date(d);
+      g.setDate(g.getDate() + i);
+      if (g.getDay() === 4) {
         const data = iso(g);
-        const scaduto = data <= oggi && (!ultimaFoto || giorniTra(ultimaFoto, data) >= 14);
-        aggiungiA(data, scaduto ? "scaduto" : "foto", "Set di foto");
+        const scaduto = data <= oggi && (!ultimoPeso || giorniTra(ultimoPeso, data) >= 7);
+        aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita");
+      }
+      // foto: mercoledì ogni 2 settimane, ancorate al 12/08/2026
+      if (g.getDay() === 3) {
+        const settimane = Math.round(giorniTra("2026-08-12", iso(g)) / 7);
+        if (settimane % 2 === 0) {
+          const data = iso(g);
+          const scaduto = data <= oggi && (!ultimaFoto || giorniTra(ultimaFoto, data) >= 14);
+          aggiungiA(data, scaduto ? "scaduto" : "foto", "Set di foto");
+        }
       }
     }
   }
 
   // cose in ritardo, ancorate a oggi
   if (!ultimoExport || giorniTra(ultimoExport.slice(0, 10), oggi) >= 7) {
-    aggiungiA(oggi, "scaduto", "Backup su file");
+    aggiungiA(oggi, "scaduto", "Backup su file (solo app)");
   }
   if (!ultimoImportSalute || giorniTra(ultimoImportSalute.slice(0, 10), oggi) >= 2) {
-    aggiungiA(oggi, "scaduto", "Dati salute da importare");
+    aggiungiA(oggi, "scaduto", "Dati salute da importare (solo app)");
   }
 
   return attese;
 }
 
-export function riassuntoGiorno({ data, previsto, allenamento, attese, dal }) {
+export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn, dal, origine = null }) {
+  let attese = atteseIn || [];
   if (dal && data < dal) {
     return { titolo: dataLunga(data), righe: [{ testo: "Prima dell'inizio del programma", stato: "info" }] };
   }
@@ -129,7 +158,21 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese, dal }) {
       testo: data < isoDate() ? `${previsto.nome} — non registrato` : previsto.nome,
       stato: data < isoDate() ? "warn" : "info",
     });
-  } else if (!attese.length) righe.push({ testo: "Riposo", stato: "info" });
+  } else if (!attese.length) {
+    // Col calendario collegato «niente» non è riposo per scelta dell'app: è
+    // quello che c'è scritto, o l'assenza di qualunque cosa.
+    righe.push({
+      testo: origine?.fonte === "calendario" ? "Niente sul calendario" : "Riposo",
+      stato: "info",
+    });
+  }
+  // Evita di ripetere lo stesso titolo due volte: se è già fra le cose attese
+  // del giorno, basta segnalarne la natura una volta sola.
+  if (origine?.sconosciuto && origine.titolo) {
+    const gia = attese.findIndex((a) => a.testo === origine.titolo);
+    if (gia >= 0) attese = attese.filter((_, i) => i !== gia);
+    righe.push({ testo: `«${origine.titolo}» non è un allenamento del programma`, stato: "info" });
+  }
 
   for (const a of attese) righe.push({ testo: a.testo, stato: a.tipo === "scaduto" ? "warn" : "info" });
   return { titolo: dataLunga(data), righe };
