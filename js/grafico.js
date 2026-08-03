@@ -375,6 +375,172 @@ export function graficoBarre({
   return h("div", lettura, svg);
 }
 
+/**
+ * Grafico a linea con un punto per giorno, e lettura al tocco.
+ * I giorni senza dato spezzano la linea invece di essere disegnati a zero.
+ */
+export function graficoLinea({
+  punti,
+  obiettivo = null,
+  formatta = (v) => String(Math.round(v)),
+  etichettaObiettivo = null,
+  altezza = 104,
+  invito = "Tocca un punto per vedere il giorno",
+}) {
+  const L = 320;
+  const A = altezza;
+  const margineBasso = 18;
+  const margineAlto = 8;
+  const area = A - margineBasso - margineAlto;
+
+  const svg = el("svg", {
+    viewBox: `0 0 ${L} ${A}`,
+    width: "100%",
+    height: A,
+    role: "img",
+    style: "display:block",
+  });
+
+  const valori = punti.map((p) => p.valore).filter((v) => v != null);
+  const massimo = Math.max(obiettivo ? obiettivo * 1.08 : 0, ...valori, 1);
+  const minimo = 0;
+  const passo = L / Math.max(punti.length, 1);
+  const x = (i) => i * passo + passo / 2;
+  const y = (v) => margineAlto + area - ((v - minimo) / (massimo - minimo)) * area;
+
+  if (obiettivo) {
+    const yo = y(obiettivo);
+    svg.append(
+      el("line", {
+        x1: 0, x2: L, y1: yo, y2: yo,
+        stroke: "currentColor", "stroke-width": 1, "stroke-dasharray": "3 4", opacity: 0.28,
+      })
+    );
+    if (etichettaObiettivo) {
+      const t = el("text", {
+        x: L - 1, y: yo - 3, "font-size": 7.5, "text-anchor": "end", fill: "currentColor", opacity: 0.45,
+      });
+      t.textContent = etichettaObiettivo;
+      svg.append(t);
+    }
+  }
+
+  // tratti continui: ogni interruzione di dati spezza la linea
+  let tratto = [];
+  const chiudiTratto = () => {
+    if (tratto.length >= 2) {
+      svg.append(
+        el("polyline", {
+          points: tratto.map((p) => `${p[0]},${p[1]}`).join(" "),
+          fill: "none",
+          stroke: "var(--accent)",
+          "stroke-width": 1.8,
+          "stroke-linejoin": "round",
+          "stroke-linecap": "round",
+        })
+      );
+    }
+    tratto = [];
+  };
+  punti.forEach((p, i) => {
+    if (p.valore == null) {
+      chiudiTratto();
+      svg.append(
+        el("circle", { cx: x(i), cy: margineAlto + area - 1, r: 1.2, fill: "currentColor", opacity: 0.25 })
+      );
+      return;
+    }
+    tratto.push([x(i), y(p.valore)]);
+  });
+  chiudiTratto();
+
+  // Un punto per ogni giorno con dato. I giorni con allenamento hanno il punto
+  // più grande: la linea è tutta dello stesso colore, e senza questo si
+  // perderebbe l'informazione che nel grafico a barre stava nel lime.
+  const raggio = punti.length > 40 ? 1.4 : 2.2;
+  punti.forEach((p, i) => {
+    if (p.valore == null) return;
+    svg.append(
+      el("circle", {
+        cx: x(i), cy: y(p.valore), r: p.evidenza ? raggio + 1.4 : raggio,
+        fill: "var(--accent)", opacity: p.evidenza ? 1 : 0.85,
+      })
+    );
+  });
+
+  if (punti.length) {
+    const primo = el("text", { x: 0, y: A - 5, "font-size": 8, fill: "currentColor", opacity: 0.4 });
+    primo.textContent = dataBreve(punti[0].data);
+    const ultimo = el("text", {
+      x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
+    });
+    ultimo.textContent = dataBreve(punti[punti.length - 1].data);
+    svg.append(primo, ultimo);
+  }
+
+  const lettura = h("p", {
+    style:
+      "margin:0 0 6px;min-height:17px;font-size:12px;line-height:17px;color:var(--label-secondary);" +
+      "font-variant-numeric:tabular-nums",
+  });
+  lettura.textContent = invito;
+
+  const guida = el("line", {
+    y1: margineAlto, y2: margineAlto + area, stroke: "currentColor", "stroke-width": 1, opacity: 0,
+  });
+  const scelto = el("circle", {
+    r: 4, fill: "var(--accent)", stroke: "var(--bg-grouped)", "stroke-width": 1.6, opacity: 0,
+  });
+  svg.append(guida, scelto);
+
+  let selezionato = null;
+  const mostra = (i) => {
+    const p = punti[i];
+    if (!p || i === selezionato) return;
+    selezionato = i;
+    guida.setAttribute("x1", x(i));
+    guida.setAttribute("x2", x(i));
+    guida.setAttribute("opacity", "0.2");
+    if (p.valore != null) {
+      scelto.setAttribute("cx", x(i));
+      scelto.setAttribute("cy", y(p.valore));
+      scelto.setAttribute("opacity", "1");
+    } else {
+      scelto.setAttribute("opacity", "0");
+    }
+    const giorno = GIORNI_ABBR[weekdayOf(p.data)];
+    lettura.textContent =
+      p.valore == null
+        ? `${giorno} ${dataBreve(p.data)} · nessun dato`
+        : `${giorno} ${dataBreve(p.data)} · ${formatta(p.valore)}${p.nota ? ` · ${p.nota}` : ""}`;
+  };
+
+  let premuto = false;
+  const aggiorna = (e) => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    const px = ((e.clientX - r.left) / r.width) * L;
+    mostra(Math.max(0, Math.min(punti.length - 1, Math.floor(px / passo))));
+  };
+  svg.addEventListener("pointerdown", (e) => {
+    premuto = true;
+    aggiorna(e);
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (premuto) aggiorna(e);
+  });
+  const rilascia = () => {
+    premuto = false;
+  };
+  svg.addEventListener("pointerup", rilascia);
+  svg.addEventListener("pointercancel", rilascia);
+  svg.addEventListener("pointerleave", rilascia);
+  svg.style.touchAction = "pan-y";
+  svg.style.cursor = "pointer";
+
+  return h("div", lettura, svg);
+}
+
 /** Scheda con titolo, numero grande e grafico. */
 export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede }) {
   return h(

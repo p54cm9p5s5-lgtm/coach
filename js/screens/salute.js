@@ -2,7 +2,7 @@ import { h, sheet, chiedi, num, dataBreve, isoDate, durataUmana, aggiungi } from
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
-import { graficoBarre, schedaGrafico } from "../grafico.js";
+import { graficoLinea, schedaGrafico } from "../grafico.js";
 
 const NOME_SHORTCUT = "Coach Salute";
 
@@ -62,20 +62,6 @@ export async function render({ ridisegna }) {
       )
     );
 
-  aggiungi(wrap,
-    h(
-      "div.group",
-      h("h2", "Finestre dati"),
-      finestra("Movimento", fMov, "giorni"),
-      h("div", { style: "height:10px" }),
-      finestra("Sonno", fSonno, "notti"),
-      h(
-        "p.footnote",
-        "Un giorno senza dati non vale zero: resta fuori dalle medie e dal conteggio. Finché la finestra non è completa questi numeri sono raccolta, non azione."
-      )
-    )
-  );
-
   const obiettivo = imp.obiettivoMovimentoKcal;
 
   // I giorni arrivano dal più recente: per il grafico servono in ordine di
@@ -97,6 +83,38 @@ export async function render({ ridisegna }) {
     (await store.allenamenti()).filter((x) => x.stato === "completata").map((x) => x.data)
   );
 
+  // ---- completezza degli allenamenti ----
+  const chiuse = (await store.allenamenti())
+    .filter((x) => x.stato === "completata")
+    .sort((a, b) => (a.data < b.data ? -1 : 1));
+  if (chiuse.length) {
+    const punti = [];
+    for (const sed of chiuse) {
+      const comp = await store.completezzaSeduta(sed.id);
+      punti.push({ data: sed.data, valore: comp?.totale ?? null, evidenza: true, nota: sed.tipoNome });
+    }
+    const validi = punti.map((p) => p.valore).filter((v) => v != null);
+    const mediaComp = validi.length
+      ? Math.round(validi.reduce((a, b) => a + b, 0) / validi.length)
+      : null;
+    aggiungi(wrap,
+      schedaGrafico({
+        titolo: "Completezza degli allenamenti",
+        valore: mediaComp != null ? String(mediaComp) : "—",
+        unita: "su 100",
+        nota: `media su ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"}`,
+        grafico: graficoLinea({
+          punti,
+          obiettivo: 100,
+          etichettaObiettivo: "100",
+          formatta: (v) => `${Math.round(v)} su 100`,
+          invito: "Tocca un allenamento per vedere il punteggio",
+        }),
+        piede: "Quanto ogni allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching.",
+      })
+    );
+  }
+
   // ---- movimento ----
   if (giorniOrd.length) {
     aggiungi(wrap,
@@ -105,7 +123,7 @@ export async function render({ ridisegna }) {
         valore: mKcal ? String(mKcal.valore) : "—",
         unita: "kcal",
         nota: mKcal ? `media su ${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
-        grafico: graficoBarre({
+        grafico: graficoLinea({
           punti: giorniOrd.map((g) => ({
             data: g.data,
             valore: g.presente ? g.kcalAttive : null,
@@ -118,7 +136,7 @@ export async function render({ ridisegna }) {
           etichettaObiettivo: `obiettivo ${obiettivo}`,
           formatta: (v) => `${Math.round(v)} kcal`,
         }),
-        piede: `Obiettivo Movimento ${obiettivo} kcal. In lime i giorni con allenamento registrato.`,
+        piede: `Obiettivo Movimento ${obiettivo} kcal. I punti più grandi sono i giorni con allenamento registrato.`,
       })
     );
   }
@@ -130,7 +148,7 @@ export async function render({ ridisegna }) {
         titolo: "Passi",
         valore: mPassi ? mPassi.valore.toLocaleString("it-IT") : "—",
         nota: mPassi ? `media su ${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
-        grafico: graficoBarre({
+        grafico: graficoLinea({
           punti: giorniOrd.map((g) => ({
             data: g.data,
             valore: g.presente ? g.passi : null,
@@ -150,7 +168,7 @@ export async function render({ ridisegna }) {
         titolo: "Sonno",
         valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
         nota: mSonno ? `media su ${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"}` : "nessun dato",
-        grafico: graficoBarre({
+        grafico: graficoLinea({
           punti: nottiOrd.map((n) => ({
             data: n.data,
             valore: n.presente ? n.durataMin : null,
@@ -172,37 +190,19 @@ export async function render({ ridisegna }) {
     );
   }
 
-  // ---- completezza degli allenamenti ----
-  const chiuse = (await store.allenamenti())
-    .filter((x) => x.stato === "completata")
-    .sort((a, b) => (a.data < b.data ? -1 : 1));
-  if (chiuse.length) {
-    const punti = [];
-    for (const sed of chiuse) {
-      const comp = await store.completezzaSeduta(sed.id);
-      punti.push({ data: sed.data, valore: comp?.totale ?? null, evidenza: true, nota: sed.tipoNome });
-    }
-    const validi = punti.map((p) => p.valore).filter((v) => v != null);
-    const mediaComp = validi.length
-      ? Math.round(validi.reduce((a, b) => a + b, 0) / validi.length)
-      : null;
-    aggiungi(wrap,
-      schedaGrafico({
-        titolo: "Completezza degli allenamenti",
-        valore: mediaComp != null ? String(mediaComp) : "—",
-        unita: "su 100",
-        nota: `media su ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"}`,
-        grafico: graficoBarre({
-          punti,
-          obiettivo: 100,
-          etichettaObiettivo: "100",
-          formatta: (v) => `${Math.round(v)} su 100`,
-          invito: "Tocca un allenamento per vedere il punteggio",
-        }),
-        piede: "Quanto ogni allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching.",
-      })
-    );
-  }
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h("h2", "Finestre dati"),
+      finestra("Movimento", fMov, "giorni"),
+      h("div", { style: "height:10px" }),
+      finestra("Sonno", fSonno, "notti"),
+      h(
+        "p.footnote",
+        "Un giorno senza dati non vale zero: resta fuori dalle medie e dal conteggio. Finché la finestra non è completa questi numeri sono raccolta, non azione."
+      )
+    )
+  );
 
   const allenamenti = (await store.db.all("allenamentiWatch")).sort((a, b) => (a.data < b.data ? 1 : -1));
   if (allenamenti.length) {
