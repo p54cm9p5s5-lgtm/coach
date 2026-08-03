@@ -177,29 +177,17 @@ async function vistaProgramma(vaiA, ridisegna) {
             },
             "Inizia allenamento"
           )
-        : null,
-      previsto ? h("div", { style: "height:8px" }) : null,
-      h(
-        "button.btn.secondary",
-        { onclick: () => cambiaAllenamento(ridisegna) },
-        previsto ? "Cambia allenamento" : "Allenati comunque"
-      )
+        : h(
+            // Quale allenamento tocca oggi lo dice lo split del master brief:
+            // l'app lo esegue, non lo mette in discussione.
+            "p.footnote",
+            { style: "text-align:center;margin:0" },
+            "Il riposo fa parte del programma. Se serve un allenamento diverso, lo decide il coach e arriva con il brief aggiornato."
+          )
     )
   );
 
   return wrap;
-}
-
-async function cambiaAllenamento(ridisegna) {
-  const giorni = store.giorniSplit();
-  const scelta = await chiedi({
-    titolo: "Quale allenamento?",
-    testo: "Viene registrato quello che fai davvero, non quello in programma.",
-    opzioni: giorni.map((g) => ({ etichetta: g.nome, valore: g.id })),
-  });
-  if (!scelta) return;
-  await store.iniziaSeduta({ data: isoDate(), giornoId: scelta });
-  await ridisegna();
 }
 
 // ---------- risultato dell'allenamento appena chiuso ----------
