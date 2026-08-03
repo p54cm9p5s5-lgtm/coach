@@ -434,6 +434,23 @@ export async function completezzaSeduta(id) {
   return { ...totale, perEsercizio };
 }
 
+/** Quante righe ci sono davvero in archivio, per categoria. */
+export async function conteggioArchivio() {
+  const sedute = await db.all("sedute");
+  const date = sedute.map((s) => s.data).sort();
+  return {
+    allenamenti: sedute.filter((s) => s.stato === "completata").length,
+    aperti: sedute.filter((s) => s.stato !== "completata").length,
+    serie: await db.count("serie"),
+    questionari: await db.count("esercizioLog"),
+    misure: await db.count("misure"),
+    foto: await db.count("foto"),
+    giorniSalute: (await db.all("giorniSalute")).filter((g) => g.presente !== false).length,
+    notti: (await db.all("notti")).filter((n) => n.presente !== false).length,
+    primo: date[0] ? date[0].split("-").reverse().join("/") : null,
+  };
+}
+
 // ---------- storico per esercizio ----------
 
 /** Esposizioni passate di un esercizio, dalla più recente. */
