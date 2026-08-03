@@ -2,7 +2,7 @@
    Un solo grafico in Home: il movimento giornaliero con i giorni di allenamento
    in evidenza, e i giorni già in programma sulla destra. */
 
-import { h, num, dataBreve } from "./ui.js";
+import { h, num, dataBreve, weekdayOf } from "./ui.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const el = (tag, attrs = {}) => {
@@ -14,6 +14,7 @@ const el = (tag, attrs = {}) => {
 };
 
 const GIORNI_CORTI = ["D", "L", "M", "M", "G", "V", "S"];
+const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
 /**
  * @param dati [{ data, kcal|null, obiettivo, allenamento: bool, presente, futuro, previsto }]
@@ -120,7 +121,82 @@ export function graficoAttivita(dati, { altezza = 128 } = {}) {
     }
   });
 
-  return svg;
+  // ---- lettura del giorno toccato ----
+
+  // Riga sopra il grafico: altezza fissa, così toccando una colonna il grafico
+  // non salta su e giù.
+  const lettura = h("p", {
+    style:
+      "margin:0 0 6px;min-height:17px;font-size:12px;line-height:17px;color:var(--label-secondary);" +
+      "font-variant-numeric:tabular-nums",
+  });
+  const riposo = h("span", { style: "opacity:.75" }, "Tocca una colonna per vedere il giorno");
+  lettura.append(riposo);
+
+  const evidenza = el("line", {
+    y1: 0, y2: areaBarre, stroke: "currentColor", "stroke-width": 1, opacity: 0,
+  });
+  const pallino = el("circle", { r: 2.6, fill: "var(--accent)", opacity: 0 });
+  svg.append(evidenza, pallino);
+
+  const descrivi = (d) => {
+    const giorno = GIORNI_ABBR[weekdayOf(d.data)];
+    const data = `${giorno} ${dataBreve(d.data)}`;
+    if (d.futuro) return `${data} · ${d.previsto ? "allenamento in programma" : "niente in programma"}`;
+    if (!d.presente || d.kcal == null) {
+      return `${data} · nessun dato${d.allenamento ? " · allenamento registrato" : ""}`;
+    }
+    const kcal = `${Math.round(d.kcal).toLocaleString("it-IT")} kcal`;
+    const quota = d.obiettivo ? ` (${num((d.kcal / d.obiettivo) * 100)}% dell'obiettivo)` : "";
+    return `${data} · ${kcal}${quota} · ${d.allenamento ? "allenamento" : "riposo"}`;
+  };
+
+  let selezionato = null;
+  const mostra = (i) => {
+    const d = dati[i];
+    if (!d || i === selezionato) return;
+    selezionato = i;
+    const cx = i * passo + passo / 2;
+    evidenza.setAttribute("x1", cx);
+    evidenza.setAttribute("x2", cx);
+    evidenza.setAttribute("opacity", "0.22");
+    const alt = d.presente && d.kcal != null ? Math.max(2, (d.kcal / massimo) * areaBarre) : 2;
+    pallino.setAttribute("cx", cx);
+    pallino.setAttribute("cy", areaBarre - alt);
+    pallino.setAttribute("opacity", d.futuro ? "0" : "1");
+    lettura.textContent = descrivi(d);
+  };
+
+  const indiceDa = (clientX) => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return null;
+    const x = ((clientX - r.left) / r.width) * L;
+    return Math.max(0, Math.min(dati.length - 1, Math.floor(x / passo)));
+  };
+
+  let premuto = false;
+  const aggiorna = (e) => {
+    const i = indiceDa(e.clientX);
+    if (i != null) mostra(i);
+  };
+  svg.addEventListener("pointerdown", (e) => {
+    premuto = true;
+    aggiorna(e);
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (premuto) aggiorna(e);
+  });
+  const rilascia = () => {
+    premuto = false;
+  };
+  svg.addEventListener("pointerup", rilascia);
+  svg.addEventListener("pointercancel", rilascia);
+  svg.addEventListener("pointerleave", rilascia);
+  // scorrere la pagina resta possibile: si cattura solo il movimento orizzontale
+  svg.style.touchAction = "pan-y";
+  svg.style.cursor = "pointer";
+
+  return h("div", lettura, svg);
 }
 
 /** Riga di numeri sopra il grafico. */
