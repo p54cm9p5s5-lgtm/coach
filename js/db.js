@@ -42,7 +42,19 @@ export function open() {
         }
       }
     };
-    req.onsuccess = () => resolve(req.result);
+    // Se un'altra scheda tiene aperta la versione vecchia, l'aggiornamento
+    // resterebbe in attesa per sempre e l'app non partirebbe più.
+    req.onblocked = () =>
+      reject(new Error("L'archivio è aperto in un'altra scheda: chiudila e riapri l'app."));
+    req.onsuccess = () => {
+      const database = req.result;
+      // Quando una scheda nuova porta uno schema nuovo, questa si fa da parte.
+      database.onversionchange = () => {
+        database.close();
+        dbPromise = null;
+      };
+      resolve(database);
+    };
     req.onerror = () => reject(req.error);
   });
   return dbPromise;

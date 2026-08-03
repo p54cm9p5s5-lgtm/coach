@@ -222,6 +222,15 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         titolo
       ),
       h("p", { style: "margin:6px 0 16px;font-size:13px;color:var(--label-secondary)" }, sotto),
+      (() => {
+        const o = store.origineGiorno(oggi);
+        if (o.fonte !== "calendario") return null;
+        return h(
+          "p",
+          { style: "margin:-8px 0 14px;font-size:11px;color:var(--label-tertiary)" },
+          o.diverso ? `dal calendario, al posto dello split` : "dal calendario"
+        );
+      })(),
       previsto
         ? h(
             "button.btn",
@@ -388,7 +397,9 @@ async function bloccoCalendario(vaiA, ridisegna) {
     h(
       "p.footnote",
       { style: "margin-top:10px" },
-      "Vista dell'app: disegna lo split del master brief e le sue cadenze. Gli orari e i promemoria veri restano su Google Calendar."
+      imp.ultimoImportAgenda
+        ? `Gli allenamenti arrivano dal calendario del coach, letti l'ultima volta il ${new Date(imp.ultimoImportAgenda).toLocaleDateString("it-IT")}. Orari e promemoria restano su Google Calendar: qui si vede solo cosa tocca.`
+        : "Vista dell'app: disegna lo split del master brief e le sue cadenze. Gli orari e i promemoria veri restano su Google Calendar."
     ),
     inRitardo.length
       ? h(

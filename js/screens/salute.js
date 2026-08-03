@@ -263,6 +263,7 @@ async function incolla(ridisegna) {
       `${conteggio.giorni} giorni con dati${conteggio.aggiornati ? ` (${conteggio.aggiornati} aggiornati)` : ""}`,
       `${conteggio.notti} notti`,
       `${conteggio.allenamenti} allenamenti`,
+      conteggio.agenda ? `${conteggio.agenda} giorni letti dal calendario` : null,
       conteggio.vuoti ? `${conteggio.vuoti} giorni segnati come non registrati` : null,
       pacchetto.avvisi.length ? `Avvisi: ${pacchetto.avvisi.slice(0, 3).join(" · ")}` : null,
     ]
