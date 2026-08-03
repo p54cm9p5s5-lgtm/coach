@@ -40,6 +40,16 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
   const passo = L / Math.max(dati.length, 1);
   const larghezza = Math.max(2, passo * 0.62);
 
+  const etichettaFascia = (testo, y) => {
+    const t = el("text", {
+      x: 0, y, "font-size": 7.5, fill: "currentColor", opacity: 0.4,
+      "letter-spacing": 0.6,
+    });
+    t.textContent = testo.toUpperCase();
+    return t;
+  };
+  svg.append(etichettaFascia("movimento", 8));
+
   // linea dell'obiettivo
   const yObiettivo = areaBarre - (obiettivo / massimo) * areaBarre;
   svg.append(
@@ -52,6 +62,15 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
     })
   );
   svg.lastChild.textContent = `obiettivo ${obiettivo}`;
+
+  const ySonnoBase = areaBarre + 8;
+  svg.append(
+    el("line", {
+      x1: 0, x2: L, y1: ySonnoBase - 3, y2: ySonnoBase - 3,
+      stroke: "currentColor", "stroke-width": 0.5, opacity: 0.18,
+    }),
+    etichettaFascia("sonno", ySonnoBase + 6)
+  );
 
   dati.forEach((d, i) => {
     const x = i * passo + (passo - larghezza) / 2;
@@ -76,14 +95,15 @@ export function graficoAttivita(dati, { altezza = 150 } = {}) {
     }
 
     // fascia sonno
-    const ySonno = areaBarre + 8;
+    const ySonno = ySonnoBase;
     if (d.sonnoMin != null) {
       const quota = Math.min(1, d.sonnoMin / (9 * 60));
       svg.append(
         el("rect", {
           x, y: ySonno + (altezzaSonno - quota * altezzaSonno), width: larghezza,
           height: Math.max(2, quota * altezzaSonno), rx: 1,
-          fill: "currentColor", opacity: d.sonnoMin < 6 * 60 ? 0.55 : 0.28,
+          fill: d.sonnoMin < 6 * 60 ? "var(--orange)" : "currentColor",
+          opacity: d.sonnoMin < 6 * 60 ? 0.8 : 0.45,
         })
       );
     } else {
@@ -145,10 +165,10 @@ export function legenda() {
   return h(
     "div",
     { style: "display:flex;flex-wrap:wrap;gap:12px;margin-top:8px" },
-    punto("background:var(--accent)", "allenamento"),
-    punto("background:currentColor;opacity:.3", "riposo"),
-    punto("background:currentColor;opacity:.3;width:5px;height:5px;border-radius:50%", "nessun dato"),
-    punto("background:currentColor;opacity:.5;height:5px", "sonno")
+    punto("background:var(--accent)", "giorno di allenamento"),
+    punto("background:currentColor;opacity:.3", "giorno di riposo"),
+    punto("background:var(--orange);opacity:.8", "notte sotto le 6 ore"),
+    punto("background:currentColor;opacity:.3;width:5px;height:5px;border-radius:50%", "nessun dato")
   );
 }
 
