@@ -1021,8 +1021,15 @@ export async function importaSalute(pacchetto) {
       });
       conteggio.agenda = (conteggio.agenda || 0) + 1;
     }
-    // Le date presenti nel pacchetto vengono riscritte per intero: se il coach
-    // ha tolto un allenamento, deve sparire anche qui.
+    // Il pacchetto copre un intervallo continuo: dentro quell'intervallo è la
+    // verità completa. Le date che il calendario non nomina più vanno svuotate,
+    // altrimenti un allenamento cancellato dal coach resterebbe qui per sempre.
+    const lette = [...perData.keys()].sort();
+    const da = lette[0];
+    const a = lette[lette.length - 1];
+    for (const data of Object.keys(precedente)) {
+      if (data >= da && data <= a && !perData.has(data)) delete precedente[data];
+    }
     for (const [data, voce] of perData) precedente[data] = voce;
     // Oltre le sei settimane non serve a niente e non deve crescere all'infinito.
     const limite = new Date(Date.now() - 42 * 86400000).toISOString().slice(0, 10);
