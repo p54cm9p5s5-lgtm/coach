@@ -36,8 +36,8 @@ export async function render({ vaiA, ridisegna }) {
     return wrap;
   }
 
-  aggiungi(wrap, await bloccoGrafico());
   aggiungi(wrap, await bloccoAllenamento(vaiA, ridisegna, oggi));
+  aggiungi(wrap, await bloccoGrafico());
   aggiungi(wrap, await bloccoProposte());
   aggiungi(wrap, await bloccoCalendario(vaiA, ridisegna));
 
