@@ -72,12 +72,14 @@ export async function render({ ridisegna }) {
 
   // Ogni scheda ha il suo periodo, ricordato separatamente: si può guardare i
   // passi sul mese e il sonno sugli ultimi sette giorni.
-  const conPeriodo = (chiave) => {
-    const periodo = periodoSalvato(chiave);
+  // Un solo periodo per tutta la schermata e per la Home: ogni selettore lo
+  // legge e lo scrive nello stesso posto.
+  const conPeriodo = () => {
+    const periodo = periodoSalvato();
     const da = inizioPeriodo(periodo, oggiIso);
     return {
       periodo,
-      selettore: selettorePeriodo(chiave, periodo, ridisegna),
+      selettore: selettorePeriodo(periodo, ridisegna),
       dentro: (r) => !da || (r.data >= da && r.data <= oggiIso),
     };
   };
@@ -92,7 +94,7 @@ export async function render({ ridisegna }) {
   );
 
   // ---- completezza degli allenamenti ----
-  const fComp = conPeriodo("completezza");
+  const fComp = conPeriodo();
   const chiuse = (await store.allenamenti())
     .filter((x) => x.stato === "completata" && fComp.dentro(x))
     .sort((a, b) => (a.data < b.data ? 1 : -1));
@@ -159,7 +161,7 @@ export async function render({ ridisegna }) {
   }
 
   // ---- movimento ----
-  const fMov2 = conPeriodo("movimento");
+  const fMov2 = conPeriodo();
   const giorniMov = perGrafico(giorni.filter(fMov2.dentro));
   const mKcal = media(giorniMov, "kcalAttive");
   if (giorniMov.length) {
@@ -189,7 +191,7 @@ export async function render({ ridisegna }) {
   }
 
   // ---- passi ----
-  const fPassi = conPeriodo("passi");
+  const fPassi = conPeriodo();
   const giorniPassi = perGrafico(giorni.filter(fPassi.dentro));
   const mPassi = media(giorniPassi, "passi");
   if (giorniPassi.some((g) => g.passi != null)) {
@@ -213,7 +215,7 @@ export async function render({ ridisegna }) {
   }
 
   // ---- sonno ----
-  const fSonno2 = conPeriodo("sonno");
+  const fSonno2 = conPeriodo();
   const nottiOrd = perGrafico(notti.filter(fSonno2.dentro));
   const mSonno = media(nottiOrd, "durataMin");
   if (nottiOrd.length) {
