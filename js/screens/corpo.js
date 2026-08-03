@@ -1,5 +1,5 @@
 import {
-  h, toast, sheet, chiedi, num, dataBreve, dataLunga, isoDate, giorniTra, aggiungi,
+  h, toast, sheet, chiedi, clear, num, dataBreve, dataLunga, isoDate, giorniTra, aggiungi,
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
@@ -277,8 +277,35 @@ async function bloccoFoto(ridisegna) {
           )
         );
       }
+      const fuoriProtocollo = s.scatti.some((x) => x.checklist?.daLibreria);
       aggiungi(gruppo,
-        h("p", { style: "margin:14px 4px 0;font-size:13px;color:var(--label-secondary)" }, dataLunga(s.data)),
+        h(
+          "div",
+          { style: "display:flex;align-items:baseline;justify-content:space-between;margin:14px 4px 0;gap:10px" },
+          h(
+            "p",
+            { style: "margin:0;font-size:13px;color:var(--label-secondary)" },
+            `${dataLunga(s.data)}${fuoriProtocollo ? " · riferimento, fuori protocollo" : ""}`
+          ),
+          h(
+            "button",
+            {
+              style: "background:none;border:0;padding:0;color:var(--red);font-size:13px;font:inherit;font-size:13px",
+              onclick: async () => {
+                const c = await chiedi({
+                  titolo: `Eliminare il set del ${dataBreve(s.data)}?`,
+                  testo: `${s.scatti.length} ${s.scatti.length === 1 ? "foto" : "foto"} di quel giorno. Non si recupera.`,
+                  opzioni: [{ etichetta: "Elimina il set", valore: "si", stile: "danger" }],
+                });
+                if (c !== "si") return;
+                for (const x of s.scatti) await store.db.del("foto", x.id);
+                toast("Set eliminato.");
+                await ridisegna();
+              },
+            },
+            "Elimina"
+          )
+        ),
         griglia
       );
     }
@@ -404,54 +431,92 @@ async function nuovoSet(ridisegna) {
  * una differenza che non è la tua.
  */
 async function importaSet(ridisegna) {
-  const campoData = h("input", {
-    type: "date",
-    value: isoDate(),
-    max: isoDate(),
-    style: "width:100%;padding:12px;border-radius:10px;border:0;background:var(--fill-tertiary);color:var(--label);font:inherit",
-  });
+  const scelte = new Map();
 
-  const scelta = await sheet((close) =>
-    h(
+  const esito = await sheet((close) => {
+    const campoData = h("input", {
+      type: "date",
+      value: isoDate(),
+      max: isoDate(),
+      style:
+        "width:100%;padding:12px;border-radius:10px;border:0;background:var(--fill-tertiary);color:var(--label);font:inherit",
+    });
+
+    const salva = h("button.btn", { disabled: true, onclick: () => close(campoData.value || isoDate()) }, "Salva il riferimento");
+    const verifica = () => {
+      salva.disabled = scelte.size === 0;
+      salva.textContent = scelte.size
+        ? `Salva ${scelte.size} ${scelte.size === 1 ? "posa" : "pose"}`
+        : "Salva il riferimento";
+    };
+
+    const lista = h("div.list");
+    for (const posa of store.POSE) {
+      const anteprima = h("span.value", "—");
+      const riga = h(
+        "button.row.accent",
+        {
+          onclick: async () => {
+            // Prima si dice quale posa serve, poi si apre la libreria: così
+            // non si carica una foto senza sapere dove va a finire.
+            const immagine = await catturaDaFile(posa);
+            if (!immagine) return;
+            scelte.set(posa.id, immagine);
+            clear(anteprima);
+            anteprima.append(
+              h("img", {
+                src: immagine,
+                alt: posa.nome,
+                style: "width:34px;height:46px;object-fit:cover;border-radius:6px;display:block",
+              })
+            );
+            verifica();
+          },
+        },
+        h("div.main", h("span.title", posa.nome), h("span.sub", posa.come)),
+        anteprima,
+        h("span.chevron", "›")
+      );
+      aggiungi(lista, riga);
+    }
+
+    return h(
       "div",
       h("h2", "Usa foto che hai già"),
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        "Scegli una foto per ogni posa dalla libreria. Diventano il riferimento: dal prossimo set la fotocamera guidata te le sovrappone per allineare posa e distanza."
+        "Le quattro pose sono quelle del protocollo del master brief. Carica solo quelle che hai: le altre restano vuote e le farai col prossimo set."
       ),
-      h("div.group", { style: "margin-top:12px" }, h("div", { style: "padding:0 16px" }, h("p", { style: "margin:0 0 6px;font-size:13px;color:var(--label-secondary)" }, "Quando sono state scattate"), campoData)),
+      h("div.group", { style: "margin-top:12px" }, lista),
+      h(
+        "div.group",
+        h("div", { style: "padding:0 16px" },
+          h("p", { style: "margin:0 0 6px;font-size:13px;color:var(--label-secondary)" }, "Quando sono state scattate"),
+          campoData
+        )
+      ),
       h(
         "p.footnote",
         { style: "margin-top:12px" },
-        "Vengono salvate come «fuori protocollo»: valgono per allineare gli scatti futuri, non come metro di paragone."
+        "Salvate come «fuori protocollo»: servono ad allineare gli scatti futuri, non come metro di paragone."
       ),
-      h("div.btn-wrap", h("button.btn", { onclick: () => close(campoData.value || isoDate()) }, "Scegli le foto"))
-    )
-  );
-  if (!scelta) return;
+      h("div.btn-wrap", salva)
+    );
+  });
 
-  let fatte = 0;
-  for (const posa of store.POSE) {
-    const immagine = await catturaDaFile(posa);
-    if (!immagine) break;
+  if (!esito || !scelte.size) return;
+
+  for (const [posaId, immagine] of scelte) {
     await store.registraFoto({
-      data: scelta,
-      posa: posa.id,
+      data: esito,
+      posa: posaId,
       immagine,
       checklist: { protocollo: false, daLibreria: true },
     });
-    fatte++;
   }
-
-  if (fatte) {
-    await store.snapshotAutomatico("foto importate");
-    toast(
-      fatte === store.POSE.length
-        ? "Set di riferimento salvato."
-        : `Salvate ${fatte} pose su ${store.POSE.length}.`
-    );
-  }
+  await store.snapshotAutomatico("foto importate");
+  toast(`${scelte.size} ${scelte.size === 1 ? "posa salvata" : "pose salvate"} come riferimento.`);
   await ridisegna();
 }
 

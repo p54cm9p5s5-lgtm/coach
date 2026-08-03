@@ -1210,11 +1210,13 @@ export function statoFinestra(righe, { settimane = 3, minimoSettimana = 5 } = {}
 
 // ---------- foto ----------
 
+/* Le quattro pose sono quelle del protocollo §15 del master brief, non una
+   scelta dell'app: braccia lungo i fianchi, rilassate, respiro normale. */
 export const POSE = [
-  { id: "fronte", nome: "Fronte" },
-  { id: "profiloDx", nome: "Profilo destro" },
-  { id: "schiena", nome: "Schiena" },
-  { id: "profiloSx", nome: "Profilo sinistro" },
+  { id: "fronte", nome: "Fronte", come: "Braccia lungo i fianchi, rilassate" },
+  { id: "profiloDx", nome: "Profilo destro", come: "Spalla destra verso la fotocamera, braccia lungo i fianchi" },
+  { id: "schiena", nome: "Schiena", come: "Di spalle, braccia lungo i fianchi" },
+  { id: "profiloSx", nome: "Profilo sinistro", come: "Spalla sinistra verso la fotocamera, braccia lungo i fianchi" },
 ];
 
 /**
