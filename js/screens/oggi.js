@@ -62,7 +62,7 @@ export async function render({ vaiA, ridisegna }) {
 // ---------- grafico ----------
 
 async function bloccoGrafico(ridisegna) {
-  const periodo = periodoSalvato("home");
+  const periodo = periodoSalvato();
   const oggi = isoDate();
   const giorni = await store.giorniSalute();
   const notti = await store.notti();
@@ -129,7 +129,7 @@ async function bloccoGrafico(ridisegna) {
   const quantiPassi = giorniConDati.filter((g) => g.passi != null).length;
   const quanteNotti = nottiConDati.filter((n) => n.durataMin != null).length;
 
-  const selettore = selettorePeriodo("home", periodo, ridisegna);
+  const selettore = selettorePeriodo(periodo, ridisegna);
 
   return h(
     "div.group",

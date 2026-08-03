@@ -249,16 +249,21 @@ export const PERIODI = [
   { id: "tutto", etichetta: "Sempre", giorni: null, graficoGiorni: 30, futuri: 7 },
 ];
 
-export function periodoSalvato(chiave, predefinito = "tutto") {
+/* La finestra è una sola per tutta l'app: cambiarla da un grafico qualunque
+   sposta anche tutti gli altri, così i numeri che guardi insieme parlano
+   sempre dello stesso periodo. */
+const CHIAVE_PERIODO = "coach-periodo";
+
+export function periodoSalvato(predefinito = "tutto") {
   try {
-    const id = localStorage.getItem(`coach-periodo-${chiave}`);
+    const id = localStorage.getItem(CHIAVE_PERIODO);
     return PERIODI.find((p) => p.id === id) || PERIODI.find((p) => p.id === predefinito) || PERIODI[2];
   } catch {
     return PERIODI.find((p) => p.id === predefinito) || PERIODI[2];
   }
 }
 
-export function selettorePeriodo(chiave, periodo, onCambia) {
+export function selettorePeriodo(periodo, onCambia) {
   return h(
     "div.segmented",
     { style: "margin:0 0 12px" },
@@ -271,7 +276,7 @@ export function selettorePeriodo(chiave, periodo, onCambia) {
           onclick: async () => {
             if (p.id === periodo.id) return;
             try {
-              localStorage.setItem(`coach-periodo-${chiave}`, p.id);
+              localStorage.setItem(CHIAVE_PERIODO, p.id);
             } catch {
               /* senza localStorage la scelta vale solo per questa schermata */
             }
