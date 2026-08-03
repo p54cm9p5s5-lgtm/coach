@@ -87,7 +87,6 @@ function fermaTimer() {
   if (S.timerHandle) clearInterval(S.timerHandle);
   S.timerHandle = null;
   fermaAllarme();
-  S.contenitore.classList.remove("alarm");
 }
 
 // ---------- disegno ----------
@@ -728,7 +727,6 @@ async function vistaRecupero(corpo, piede) {
       testoTimer.classList.add("done");
       if (!allarmeAttivo()) {
         avviaAllarme();
-        S.contenitore.classList.add("alarm");
       }
       pulsante.textContent = "Pronto · ferma il suono";
     }
@@ -742,8 +740,7 @@ function spostaTimer(sec) {
   S.recuperoFine = Math.max(Date.now(), S.recuperoFine + sec * 1000);
   if (S.recuperoFine > Date.now()) {
     fermaAllarme();
-    S.contenitore.classList.remove("alarm");
-  }
+    }
   salvaProgresso({ recuperoFine: S.recuperoFine });
 }
 

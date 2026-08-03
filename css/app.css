@@ -564,27 +564,6 @@ a.row:active {
   stroke: var(--green);
 }
 
-.session.alarm {
-  animation: alarm 0.9s ease-in-out infinite;
-}
-
-@keyframes alarm {
-  0%,
-  100% {
-    background: var(--bg);
-  }
-  50% {
-    background: color-mix(in srgb, var(--green) 24%, var(--bg));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .session.alarm {
-    animation: none;
-    background: color-mix(in srgb, var(--green) 18%, var(--bg));
-  }
-}
-
 /* ---------- righello 1-10 ---------- */
 
 .scale {
