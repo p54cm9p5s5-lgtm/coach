@@ -6,6 +6,7 @@ import * as store from "../store.js";
 import { graficoAttivita, fascia, legenda } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 import { anello, giudizio } from "../punteggio.js";
+import { sbloccaAudio } from "../ui.js";
 
 let meseMostrato = null;
 
@@ -248,6 +249,9 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
             {
               class: giaFatto ? "btn secondary" : "btn",
               onclick: async () => {
+                // Il tocco che avvia l'allenamento è anche quello che autorizza
+                // il suono del recupero: dopo non ci sono più occasioni utili.
+                sbloccaAudio();
                 await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
                 vaiA("seduta");
               },
