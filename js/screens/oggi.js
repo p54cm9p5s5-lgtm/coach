@@ -1,5 +1,5 @@
 import {
-  h, isoDate, dataLunga, dataBreve, chiedi, sheet, num, giorniTra, durataUmana, aggiungi,
+  h, isoDate, dataLunga, dataBreve, sheet, num, giorniTra, durataUmana, aggiungi,
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
@@ -235,27 +235,17 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
             giaFatto ? "Rifai questo allenamento" : "Inizia allenamento"
           )
         : null,
-      h("div", { style: "height:8px" }),
-      h(
-        "button.btn.secondary",
-        { onclick: () => altroAllenamento(vaiA, ridisegna) },
-        previsto ? "Fai un altro allenamento" : "Allenati comunque"
-      )
+      // Quale allenamento si fa in un dato giorno lo decide lo split del master
+      // brief. L'app non offre alternative: non è una scelta che spetta a lei.
+      previsto
+        ? null
+        : h(
+            "p",
+            { style: "margin:10px 0 0;font-size:12px;color:var(--label-tertiary)" },
+            "Il giorno di riposo fa parte del programma."
+          )
     )
   );
-}
-
-async function altroAllenamento(vaiA, ridisegna) {
-  const giorni = store.giorniSplit();
-  const scelta = await chiedi({
-    titolo: "Quale allenamento?",
-    testo: "Viene registrato quello che fai davvero, non quello in programma.",
-    opzioni: giorni.map((g) => ({ etichetta: g.nome, valore: g.id })),
-  });
-  if (!scelta) return;
-  await store.iniziaSeduta({ data: isoDate(), giornoId: scelta });
-  vaiA("seduta");
-  await ridisegna();
 }
 
 // ---------- proposte ----------
