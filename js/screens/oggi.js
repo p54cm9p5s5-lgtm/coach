@@ -101,6 +101,7 @@ async function bloccoGrafico() {
       previsto: Boolean(store.giornoPrevisto(data)),
       presente: Boolean(g?.presente),
       kcal: g?.presente ? g.kcalAttive : null,
+      passi: g?.presente ? g.passi : null,
       obiettivo: g?.obiettivoKcal || obiettivo,
       allenamento: allenati.has(data),
       sonnoMin: n?.presente ? n.durataMin : null,
@@ -112,24 +113,14 @@ async function bloccoGrafico() {
   const settimana = passato.slice(-7);
   const kcalSettimana = settimana.filter((d) => d.kcal != null);
   const sonnoSettimana = settimana.filter((d) => d.sonnoMin != null);
-  const allenamentiSettimana = settimana.filter((d) => d.allenamento).length;
-  // Quanti allenamenti prevedeva questa settimana. Col calendario collegato
-  // il conto è suo, ma solo per i giorni che la lettura copre davvero: fuori da
-  // quell'intervallo l'app non sa cosa era previsto, e non lo inventa.
-  const intervallo = store.intervalloAgenda();
-  const copertaDalCalendario =
-    intervallo && settimana.some((d) => d.data >= intervallo.da && d.data <= intervallo.a);
-  const previstiSettimana = store.agendaAttiva()
-    ? copertaDalCalendario
-      ? settimana.filter((d) => d.previsto).length
-      : null
-    : store.giorniSplit().length || 5;
+  const passiSettimana = settimana.filter((d) => d.passi != null);
 
   const media = (arr, campo) =>
     arr.length ? Math.round(arr.reduce((a, b) => a + b[campo], 0) / arr.length) : null;
 
   const mediaKcal = media(kcalSettimana, "kcal");
   const mediaSonno = media(sonnoSettimana, "sonnoMin");
+  const mediaPassi = media(passiSettimana, "passi");
 
   return h(
     "div.group",
@@ -139,9 +130,9 @@ async function bloccoGrafico() {
       { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
       fascia([
         {
-          etichetta: "Allenamenti",
-          valore: previstiSettimana != null ? `${allenamentiSettimana}/${previstiSettimana}` : String(allenamentiSettimana),
-          nota: previstiSettimana != null ? "questa settimana" : "questa settimana · calendario non letto",
+          etichetta: "Passi",
+          valore: mediaPassi != null ? mediaPassi.toLocaleString("it-IT") : "—",
+          nota: passiSettimana.length < 7 ? `media su ${passiSettimana.length} giorni` : "media 7 giorni",
         },
         {
           etichetta: "Movimento",
