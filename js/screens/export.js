@@ -139,6 +139,9 @@ async function componi(stato) {
   if (stato.salute) {
     const giorni = await store.giorniSalute();
     const notti = await store.notti();
+    const complete = (await store.allenamenti()).filter((s) => s.stato === "completata");
+    const perData = new Map(complete.map((s) => [s.data, s.tipoNome]));
+    const tipoGiorno = (data) => (perData.has(data) ? `Allenamento (${perData.get(data)})` : "Riposo");
     if (giorni.length || notti.length) {
       const r = store.regole().finestre || {};
       pezzi.push(
@@ -146,6 +149,7 @@ async function componi(stato) {
           giorni,
           notti,
           obiettivo: await store.impostazione("obiettivoMovimentoKcal"),
+          tipoGiorno,
           finestraMovimento: store.statoFinestra(giorni, {
             settimane: r.movimento?.settimane ?? 3,
             minimoSettimana: r.movimento?.giorniMinSettimana ?? 5,

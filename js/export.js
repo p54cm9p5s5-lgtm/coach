@@ -68,7 +68,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }
   const durata = seduta.oraFine ? Math.round((seduta.oraFine - seduta.oraInizio) / 1000) : null;
 
   return [
-    `ALLENAMENTO — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
+    `SEDUTA — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
     "",
     tabella(["Esercizio", "Carico", "Serie x Rip", "RPE", "Nota"], righe),
     "",
@@ -92,27 +92,43 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }
 }
 
 /** Dati di salute recenti e stato delle finestre. */
-export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, obiettivo }) {
-  const righeG = giorni.slice(0, 7).map((g) =>
-    g.presente
-      ? [
-          dataBreve(g.data),
-          `${Math.round(g.kcalAttive ?? 0)}/${g.obiettivoKcal || obiettivo}`,
-          g.kcalAttive != null ? `${num((g.kcalAttive / (g.obiettivoKcal || obiettivo)) * 100)}%` : "—",
-          g.passi != null ? g.passi.toLocaleString("it-IT") : "—",
-        ]
-      : [dataBreve(g.data), "non registrato", "—", "—"]
-  );
+const GIORNI_ABBR = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+const ore = (min) => (min == null ? "—" : `${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}`);
+
+/**
+ * Le tabelle rispettano alla lettera §9-bis e §9-ter del master brief: stesse
+ * colonne, stesso ordine, stesse etichette. Non è pignoleria — è il formato
+ * che il coach legge, e riformattarlo costringe a rileggere invece che a
+ * confrontare.
+ */
+export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, obiettivo, tipoGiorno }) {
+  const righeG = giorni.slice(0, 7).map((g) => {
+    const giorno = GIORNI_ABBR[new Date(g.data + "T00:00:00").getDay()];
+    if (!g.presente) return [dataBreve(g.data), giorno, tipoGiorno(g.data), "non registrato", "—", "—", ""];
+    const obb = g.obiettivoKcal || obiettivo;
+    return [
+      dataBreve(g.data),
+      giorno,
+      tipoGiorno(g.data),
+      g.kcalAttive != null ? `${Math.round(g.kcalAttive)}/${obb}` : "—",
+      g.kcalAttive != null && obb ? `${num((g.kcalAttive / obb) * 100)}%` : "—",
+      g.passi != null ? g.passi.toLocaleString("it-IT") : "—",
+      "",
+    ];
+  });
 
   const righeN = notti.slice(0, 7).map((n) =>
     n.presente
       ? [
           dataBreve(n.data),
-          n.durataMin != null ? durataUmana(n.durataMin * 60) : "—",
-          n.profondoMin != null ? `${n.profondoMin}m` : "—",
-          n.remMin != null ? `${n.remMin}m` : "—",
+          ore(n.durataMin),
+          "—",
+          n.profondoMin != null ? ore(n.profondoMin) : "—",
+          n.remMin != null ? ore(n.remMin) : "—",
+          n.vegliaMin != null ? `${n.vegliaMin} min` : "—",
+          n.risvegli != null ? `${n.risvegli} risvegli` : "",
         ]
-      : [dataBreve(n.data), "non registrata", "—", "—"]
+      : [dataBreve(n.data), "non registrata", "—", "—", "—", "—", ""]
   );
 
   const stato = (f, unita) =>
@@ -125,11 +141,20 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
     `Finestra movimento: ${stato(finestraMovimento, "giorni")}`,
     `Finestra sonno: ${stato(finestraSonno, "notti")}`,
     "",
-    righeG.length ? tabella(["Data", "Movimento", "% obiettivo", "Passi"], righeG) : "Nessun dato di movimento.",
+    righeG.length
+      ? tabella(["Data", "Giorno", "Tipo", "Movimento kcal", "% obiettivo", "Passi", "Note"], righeG)
+      : "Nessun dato di movimento.",
     "",
-    righeN.length ? tabella(["Notte del", "Durata", "Profondo", "REM"], righeN) : "Nessun dato di sonno.",
+    righeN.length
+      ? tabella(
+          ["Data (notte del)", "Ore sonno", "Punteggio", "Fase Profondo", "Fase REM", "Veglia", "Note"],
+          righeN
+        )
+      : "Nessun dato di sonno.",
     "",
     "Nota: un giorno «non registrato» non vale zero, resta fuori dalle medie.",
+    "La colonna Punteggio del sonno resta vuota: l'app Salute non la espone, va scritta a mano.",
+    "Le kcal del Watch servono solo al confronto nel tempo, mai come base per calcoli alimentari.",
   ].join("\n");
 }
 
@@ -151,7 +176,8 @@ export function bloccoProposte(proposte, nomeLivello) {
       ].join("\n")
     ),
     "",
-    "L'app propone e non applica: nessuna di queste è stata eseguita.",
+    "Materiale per la valutazione, non decisioni: l'app non applica nulla e non modifica il programma.",
+    "Le soglie usate sono quelle del blocco tecnico del master brief; la decisione resta al coach.",
   ].join("\n");
 }
 
