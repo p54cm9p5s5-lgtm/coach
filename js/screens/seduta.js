@@ -296,12 +296,22 @@ async function vistaEsercizio(corpo, piede) {
   const n = fatte.length + 1;
   const inv = await store.inventario();
 
-  const caricoPrec = fatte.at(-1)?.carico ?? (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
+  // Una proposta accettata vale per la prossima esposizione: qui è dove si vede.
+  // Non è l'app che decide, è la decisione dell'atleta che torna a galla.
+  const obiettivo = v.aTempo ? null : await store.obiettivoCorrente(v.esercizioId);
+  S.obiettivo = obiettivo;
+
+  const caricoPrec =
+    fatte.at(-1)?.carico ??
+    obiettivo?.carico ??
+    (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
   S.caricoCorrente = S.caricoCorrente ?? caricoPrec;
 
   const bersaglio = v.aTempo
     ? `${v.serie} × ${v.durataSec}s`
-    : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
+    : obiettivo?.rip != null
+      ? `${v.serie} × ${obiettivo.rip}`
+      : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
 
   aggiungi(corpo, 
     h(
@@ -314,6 +324,13 @@ async function vistaEsercizio(corpo, piede) {
       h("p.target", `Obiettivo ${bersaglio}`)
     )
   );
+
+  if (obiettivo) {
+    aggiungi(
+      corpo,
+      h("div.plates", h("span.etichetta", "Proposta accettata"), h("b", obiettivo.titolo))
+    );
+  }
 
   if (S.caricoCorrente != null && def?.attrezzo === "bilanciere") {
     const d = descriviDischi(S.caricoCorrente, inv);
@@ -524,7 +541,7 @@ async function modificaCarico(def, inv) {
 }
 
 async function completaSerie(v, def, numero) {
-  const target = v.aTempo ? v.durataSec : v.ripMax ?? v.ripMin;
+  const target = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMax ?? v.ripMin;
   const rec = await store.registraSerie({
     sedutaId: S.sed.id,
     esercizioId: v.esercizioId,
@@ -590,6 +607,7 @@ async function avanzaEsercizio() {
   S.caricoCorrente = null;
   S.recuperoFine = null;
   S.tsInizioSerie = null;
+  S.obiettivo = null;
   if (prossimo >= S.esercizi.length) {
     await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "fine", indice: prossimo });
   } else {
@@ -605,7 +623,10 @@ async function vistaRecupero(corpo, piede) {
   const def = store.esercizio(v.esercizioId);
   const fatte = await serieFatte(v.esercizioId);
   const ultima = fatte.at(-1);
-  const bersaglio = v.aTempo ? v.durataSec : v.ripMax ?? v.ripMin;
+  // Riletto invece che dato per scontato: se l'app riparte a metà recupero,
+  // S è nuovo di zecca e l'obiettivo accettato non deve sparire dallo schermo.
+  S.obiettivo = v.aTempo ? null : await store.obiettivoCorrente(v.esercizioId);
+  const bersaglio = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMax ?? v.ripMin;
 
   const testoTimer = h("p.timer", "--:--");
   const CIRC = 2 * Math.PI * 100;
@@ -1046,9 +1067,16 @@ async function vistaFine(corpo, piede) {
       onclick: azione(async () => {
         await store.chiudiSeduta(S.sed.id, { notaGenerale: qs("#nota-seduta")?.value || null });
         await store.snapshotAutomatico("fine seduta");
+        // I dati di oggi entrano nel motore solo adesso, a seduta chiusa.
+        const { proposte } = await store.aggiornaMotore();
         fermaTimer();
         rilasciaSchermo();
-        toast("Seduta chiusa e salvata.");
+        toast(
+          proposte.create
+            ? `Seduta chiusa. ${proposte.create} ${proposte.create === 1 ? "nuova proposta" : "nuove proposte"} in Oggi.`
+            : "Seduta chiusa e salvata.",
+          proposte.create ? 4000 : 2200
+        );
         S.vaiA("storico");
       }),
     }, "Chiudi seduta"),

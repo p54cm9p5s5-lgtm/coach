@@ -18,12 +18,24 @@ js/store.js           logica di dominio
 js/brief.js           lettura del blocco COACH-DATA dal master brief
 js/plates.js          calcolo dei dischi da montare
 js/salute.js          formato e lettura del pacchetto dati Salute
+js/segnali.js         motore deterministico di segnali e proposte
 js/screens/*.js       una schermata per file
 data/esercizi.json    libreria esercizi (contenuto generico)
 tools/icona.py        ritaglia e riquadra l'icona sorgente
 tools/icona-da-immagine.sh  genera le tre misure delle icone
 tools/serve.py        server di sviluppo senza cache
+tools/prova.sh        esegue le prove del motore
 ```
+
+## Prove
+
+```bash
+tools/prova.sh
+```
+
+Coprono la progressione, i segnali e il ciclo proposta → risposta → obiettivo →
+verifica. Sull'host non c'è node (vincolo dichiarato nella specifica): lo script
+usa `jsc`, il motore JS già presente in macOS dentro JavaScriptCore.
 
 ## Sviluppo
 
@@ -52,5 +64,10 @@ lo applica solo su conferma. I dati salvati non vengono toccati dagli aggiorname
 
 ## Stato
 
-Fase 1 completa: programma, Modalità Seduta, storico, volumi, backup.
-Fasi successive: misure e foto, ponte con l'app Salute, segnali e proposte di progressione.
+Fasi 1-4 complete: programma, Modalità Seduta, storico e volumi, misure e foto,
+ponte con l'app Salute, segnali e proposte di progressione con registro decisioni.
+Resta la fase 5: export per la chat, caricamento del .md, rifinitura.
+
+Il motore delle proposte è deterministico e non applica mai niente da solo:
+propone, l'atleta accetta o rifiuta, e ogni esito finisce nel registro con una
+data di verifica.
