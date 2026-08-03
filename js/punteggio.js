@@ -191,17 +191,20 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
     else if (rapporto < 0.9) tetti.push({ tetto: 85, perche: "cardio più corto del previsto" });
   }
 
+  // Riscaldamento e stretching sono la stessa voce: aprono e chiudono la
+  // seduta, e nel brief valgono per lo stesso motivo.
   voci.push({
-    nome: "Riscaldamento",
-    quota: riscaldamento ? 1 : 0,
-    peso: 5,
-    dettaglio: riscaldamento ? "fatto" : "saltato",
-  });
-  voci.push({
-    nome: "Stretching",
-    quota: stretching ? 1 : 0,
-    peso: 15,
-    dettaglio: stretching ? "fatto" : "saltato",
+    nome: "Riscaldamento e stretching",
+    quota: ((riscaldamento ? 1 : 0) + (stretching ? 1 : 0)) / 2,
+    peso: 20,
+    dettaglio:
+      riscaldamento && stretching
+        ? "tutti e due fatti"
+        : riscaldamento
+          ? "stretching saltato"
+          : stretching
+            ? "riscaldamento saltato"
+            : "saltati tutti e due",
   });
 
   const pesoTotale = voci.reduce((t, v) => t + v.peso, 0) || 1;
