@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260803-180827";
+const VERSION = "20260803-181148";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -71,7 +71,7 @@ self.addEventListener("fetch", (e) => {
 
   if (req.mode === "navigate") {
     e.respondWith(
-      fetch(req)
+      fetch(new Request(req.url, { cache: "no-cache" }))
         .then((r) => {
           const copy = r.clone();
           caches.open(CACHE).then((c) => c.put("./index.html", copy));
@@ -88,7 +88,9 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     caches.open(CACHE).then((c) =>
       c.match(req).then((hit) => {
-        const rete = fetch(req)
+        // no-cache: la rivalidazione deve parlare col server, non con la
+        // cache HTTP, altrimenti l'aggiornamento arriva con dieci minuti di ritardo
+        const rete = fetch(new Request(req.url, { cache: "no-cache" }))
           .then((r) => {
             if (r.ok) c.put(req, r.clone());
             return r;

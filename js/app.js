@@ -130,8 +130,21 @@ async function registraServiceWorker() {
     return;
   }
   try {
-    const reg = await navigator.serviceWorker.register("sw.js");
+    // updateViaCache: "none" impedisce al browser di servire dalla cache HTTP
+    // proprio il file che decide gli aggiornamenti. Senza, GitHub Pages lo
+    // tiene per dieci minuti e il telefono non si accorge delle novità.
+    const reg = await navigator.serviceWorker.register("sw.js", { updateViaCache: "none" });
     reg.update();
+
+    // ricontrolla quando l'app torna in primo piano: su iPhone l'app viene
+    // ripresa dalla memoria e senza questo non ci sarebbe nessun controllo
+    let ultimoControllo = Date.now();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - ultimoControllo < 30_000) return;
+      ultimoControllo = Date.now();
+      reg.update();
+    });
     // Quando la nuova versione prende il comando, la pagina si ricarica una
     // volta sola: così i moduli già in memoria non restano quelli vecchi.
     let ricaricato = false;
