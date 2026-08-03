@@ -5,6 +5,7 @@ import {
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { descriviDischi, carichoPiuVicino } from "../plates.js";
+import { punteggioEsercizio, anello, scomposizione, legenda as legendaPunteggio, commento } from "../punteggio.js";
 
 export let nascondiTabBar = true;
 
@@ -1133,6 +1134,7 @@ async function vistaQuestionario(corpo, piede) {
             b.setAttribute("aria-pressed", "true");
             onPick(i);
             verifica();
+            ridisegnaPunteggio();
           },
         },
         String(i)
@@ -1144,8 +1146,38 @@ async function vistaQuestionario(corpo, piede) {
 
   const zona = store.regole().rpeTarget;
 
+  const serieFatteQui = await serieFatte(v.esercizioId);
+  const regoleOra = store.regole();
+  const zonaPunteggio = h("div", { style: "padding:4px 0 2px" });
+
+  const calcolaPunteggio = () =>
+    punteggioEsercizio({
+      variante: v,
+      serie: serieFatteQui,
+      rpe: stato.rpe,
+      tecnica: stato.tecnica,
+      dolorePolso: stato.polso === true,
+      regole: regoleOra,
+    });
+
+  const ridisegnaPunteggio = () => {
+    const r = calcolaPunteggio();
+    clear(zonaPunteggio);
+    aggiungi(zonaPunteggio,
+      anello(r.totale),
+      legendaPunteggio(),
+      h(
+        "p",
+        { style: "margin:12px 16px 0;text-align:center;font-size:13px;color:var(--label-secondary);line-height:1.35" },
+        commento(r, def?.nome || v.esercizioId)
+      ),
+      h("div.group", { style: "margin-top:14px" }, scomposizione(r))
+    );
+  };
+
   aggiungi(corpo, 
-    h("div.hero", h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
+    h("div.hero", { style: "padding-bottom:2px" }, h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
+    zonaPunteggio,
 
     h("p.footnote", { style: "margin:14px 16px 0" }, "Quanto è stata dura l'ultima serie?"),
     righello((i) => {
@@ -1176,12 +1208,14 @@ async function vistaQuestionario(corpo, piede) {
   );
 
   aggiungi(piede, avanti);
+  ridisegnaPunteggio();
 
   function setPolso(e, valore) {
     const gruppo = e.target.parentElement;
     for (const b of gruppo.children) b.setAttribute("aria-pressed", "false");
     e.target.setAttribute("aria-pressed", "true");
     stato.polso = valore;
+    ridisegnaPunteggio();
     clear(dettaglioPolso);
     if (valore) {
       stato.quando = null;
@@ -1209,10 +1243,13 @@ async function vistaQuestionario(corpo, piede) {
     ev.target.setAttribute("aria-pressed", "true");
     stato[campo] = valore;
     verifica();
+    ridisegnaPunteggio();
   }
 
   async function conferma() {
+    const r = calcolaPunteggio();
     await store.registraQuestionario({
+      punteggio: r.totale,
       sedutaId: S.sed.id,
       esercizioId: v.esercizioId,
       ordine: S.sed.progresso.indice,
