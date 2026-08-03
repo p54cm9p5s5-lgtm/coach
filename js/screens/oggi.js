@@ -3,37 +3,12 @@ import {
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
-import { graficoAttivita, fascia, legenda } from "../grafico.js";
+import { graficoAttivita, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 import { anello, giudizio } from "../punteggio.js";
 import { sbloccaAudio } from "../ui.js";
 
 let meseMostrato = null;
-
-/* Periodo scelto per i numeri della Home. Il grafico non va mai oltre il mese:
-   più indietro le barre diventano illeggibili e non dicono niente in più. */
-const PERIODI = [
-  { id: "7", etichetta: "7 gg", giorni: 7, graficoGiorni: 7, futuri: 3 },
-  { id: "30", etichetta: "1 mese", giorni: 30, graficoGiorni: 30, futuri: 7 },
-  { id: "tutto", etichetta: "Sempre", giorni: null, graficoGiorni: 30, futuri: 7 },
-];
-
-function periodoCorrente() {
-  try {
-    const id = localStorage.getItem("coach-periodo");
-    return PERIODI.find((p) => p.id === id) || PERIODI[2];
-  } catch {
-    return PERIODI[2];
-  }
-}
-
-function salvaPeriodo(id) {
-  try {
-    localStorage.setItem("coach-periodo", id);
-  } catch {
-    /* senza localStorage la scelta vale solo per questa schermata */
-  }
-}
 
 async function versioneApp() {
   try {
@@ -87,7 +62,7 @@ export async function render({ vaiA, ridisegna }) {
 // ---------- grafico ----------
 
 async function bloccoGrafico(ridisegna) {
-  const periodo = periodoCorrente();
+  const periodo = periodoSalvato("home");
   const oggi = isoDate();
   const giorni = await store.giorniSalute();
   const notti = await store.notti();
@@ -143,14 +118,7 @@ async function bloccoGrafico(ridisegna) {
   };
 
   // Finestra dei numeri: quella scelta, oppure tutto lo storico.
-  const daQuando = periodo.giorni
-    ? (() => {
-        const d = new Date(oggi + "T00:00:00");
-        d.setDate(d.getDate() - (periodo.giorni - 1));
-        const p = (n) => String(n).padStart(2, "0");
-        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-      })()
-    : null;
+  const daQuando = inizioPeriodo(periodo, oggi);
   const dentro = (r) => !daQuando || (r.data >= daQuando && r.data <= oggi);
   const giorniConDati = giorni.filter((g) => g.presente && dentro(g));
   const nottiConDati = notti.filter((n) => n.presente && dentro(n));
@@ -161,25 +129,7 @@ async function bloccoGrafico(ridisegna) {
   const quantiPassi = giorniConDati.filter((g) => g.passi != null).length;
   const quanteNotti = nottiConDati.filter((n) => n.durataMin != null).length;
 
-  const selettore = h(
-    "div.segmented",
-    { style: "margin:0 0 12px" },
-    ...PERIODI.map((p) =>
-      h(
-        "button",
-        {
-          "aria-pressed": p.id === periodo.id,
-          style: "min-height:34px;font-size:14px",
-          onclick: async () => {
-            if (p.id === periodo.id) return;
-            salvaPeriodo(p.id);
-            await ridisegna();
-          },
-        },
-        p.etichetta
-      )
-    )
-  );
+  const selettore = selettorePeriodo("home", periodo, ridisegna);
 
   return h(
     "div.group",
