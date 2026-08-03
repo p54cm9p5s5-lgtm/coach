@@ -219,13 +219,13 @@ async function vistaRisultato(id, vaiA) {
   const durataSec = sed.oraFine ? Math.round((sed.oraFine - sed.oraInizio) / 1000) : null;
   const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
   const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
-  // Media dei punteggi per esercizio: dice quanto l'allenamento è aderito al
-  // programma, che è la domanda vera. Il volume totale in kg non guida nessuna
-  // decisione: cambia con il numero di esercizi, non con la qualità.
-  const conPunteggio = logs.filter((l) => !l.saltato && l.punteggio != null);
-  const completezza = conPunteggio.length
-    ? Math.round(conPunteggio.reduce((a, b) => a + b.punteggio, 0) / conPunteggio.length)
-    : null;
+  const bersagli = serie.map((s) => s.recuperoTargetSec).filter((x) => x != null);
+  const recTarget = bersagli.length ? Math.round(bersagli.reduce((a, b) => a + b, 0) / bersagli.length) : null;
+  // Completezza dell'allenamento intero: esercizi, cardio, riscaldamento e
+  // stretching. Il volume totale in kg non guida nessuna decisione — cambia con
+  // il numero di esercizi, non con la qualità del lavoro.
+  const comp = await store.completezzaSeduta(id);
+  const completezza = comp?.totale ?? null;
   const previsti = store.giornoSplit(sed.tipoId)?.esercizi?.length ?? logs.length;
   const svolti = logs.filter((l) => !l.saltato).length;
   const valutati = logs.filter((l) => !l.saltato && l.rpe != null);
@@ -235,12 +235,33 @@ async function vistaRisultato(id, vaiA) {
   aggiungi(wrap,
     h(
       "div.hero",
-      { style: "padding-top:8px" },
+      { style: "padding-top:8px;padding-bottom:6px" },
       h("p.kicker", dataLunga(sed.data)),
       h("h2", sed.tipoNome),
       h("p.target", durataSec ? durataUmana(durataSec) : "durata non registrata")
     )
   );
+
+  // L'anello è la prima cosa che si vede: il resto lo spiega.
+  if (comp) {
+    aggiungi(wrap,
+      h(
+        "div",
+        { style: "margin:6px 0 2px" },
+        anello(comp.totale, { dimensione: 224, sottotitolo: giudizio(comp.totale).testo }),
+        h(
+          "p",
+          { style: "margin:14px 16px 0;text-align:center;font-size:13px;color:var(--label-secondary);line-height:1.4" },
+          comp.limite
+            ? `Fermo a ${comp.totale}: ${comp.limite.perche}.`
+            : comp.totale >= 90
+              ? "Allenamento pieno: niente resta indietro."
+              : `Il punto debole è ${[...comp.voci].sort((a, b) => a.quota - b.quota)[0].nome.toLowerCase()}.`
+        )
+      ),
+      h("div.group", h("h2", "Da cosa viene il punteggio"), scomposizione(comp))
+    );
+  }
 
   const scheda = (etichetta, valore, nota) =>
     h(
@@ -259,14 +280,14 @@ async function vistaRisultato(id, vaiA) {
     h(
       "div",
       { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
-      scheda(
-        "Completezza",
-        completezza != null ? `${completezza}` : "—",
-        completezza != null ? giudizio(completezza).testo : "punteggi non registrati"
-      ),
       scheda("Esercizi", `${svolti}/${previsti}`, `${serie.length} serie in tutto`),
+      scheda("Durata", durataSec ? durataUmana(durataSec) : "—", "dall'inizio alla chiusura"),
       scheda("RPE medio", rpeMedio != null ? num(rpeMedio) : "—", tecMedia != null ? `tecnica ${num(tecMedia)}` : `zona ${store.regole().rpeTarget.min}-${store.regole().rpeTarget.max}`),
-      scheda("Recupero medio", recMedio != null ? mmss(recMedio) : "—", "cronometrato dall'app")
+      scheda(
+        "Recupero medio",
+        recMedio != null ? mmss(recMedio) : "—",
+        recTarget ? `previsti ${mmss(recTarget)}` : "cronometrato dall'app"
+      )
     )
   );
 
@@ -305,6 +326,18 @@ async function vistaRisultato(id, vaiA) {
           h("span.sub", [carico != null ? `${num(carico)} kg` : "corpo libero", `${mie.length}×${rip}`, confronto].filter(Boolean).join(" · "))
         ),
         h("span.value", `RPE ${l.rpe ?? "—"}`),
+        (() => {
+          const p = comp?.perEsercizio?.get(l.esercizioId);
+          if (!p) return null;
+          const g = giudizio(p.totale);
+          return h(
+            "span.pill",
+            {
+              style: `font-variant-numeric:tabular-nums;background:${g.livello === 1 ? "var(--fill-tertiary)" : "color-mix(in srgb, var(--accent) 18%, transparent)"};color:${g.livello === 1 ? "var(--orange)" : "var(--accent)"}`,
+            },
+            String(p.totale)
+          );
+        })(),
         l.dolorePolso ? h("span.pill.bad", "polso") : null
       )
     );
@@ -1455,7 +1488,9 @@ async function vistaCardio(corpo, piede) {
         onclick: azione(async () => {
           sbloccaAudio();
           S.sed = await store.aggiornaSeduta(S.sed.id, {
-            cardio: { ...S.sed.cardio, kmh, durataMin: durata, note: qs("#nota-cardio")?.value || null },
+            // durataPrevistaMin resta quella scelta alla partenza: serve per
+          // sapere quanto del cardio è stato davvero fatto.
+          cardio: { ...S.sed.cardio, kmh, durataMin: durata, durataPrevistaMin: durata, note: qs("#nota-cardio")?.value || null },
           });
           await salvaProgresso({ cardioInizio: Date.now(), cardioFine: Date.now() + durata * 60000 });
           await disegna();

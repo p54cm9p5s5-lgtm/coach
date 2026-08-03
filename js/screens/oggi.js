@@ -5,6 +5,7 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { graficoAttivita, fascia, legenda } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
+import { anello, giudizio } from "../punteggio.js";
 
 let meseMostrato = null;
 
@@ -177,6 +178,30 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
   const previsto = store.giornoPrevisto(oggi);
   const fatteOggi = (await store.allenamenti()).filter((s) => s.data === oggi && s.stato === "completata");
   const giaFatto = fatteOggi.some((s) => s.tipoId === previsto?.id);
+
+  // Allenamento già chiuso: al posto dei pulsanti si vede il punteggio, che è
+  // l'unica cosa che serve sapere a lavoro finito.
+  const ultima = fatteOggi.filter((s) => s.oraFine).sort((a, b) => a.oraFine - b.oraFine).at(-1);
+  if (ultima) {
+    const comp = await store.completezzaSeduta(ultima.id);
+    return h(
+      "div.group",
+      h("h2", "Oggi"),
+      h(
+        "button",
+        {
+          style:
+            "display:block;width:calc(100% - 32px);margin:0 16px;background:var(--bg-grouped);border:0;border-radius:14px;padding:20px 16px 18px;text-align:center;color:inherit;font:inherit",
+          onclick: () => (location.hash = `#/seduta?riepilogo=${ultima.id}`),
+        },
+        h("p", { style: "margin:0 0 14px;font-size:26px;font-weight:700;letter-spacing:-0.5px" }, ultima.tipoNome),
+        comp
+          ? anello(comp.totale, { dimensione: 168, sottotitolo: giudizio(comp.totale).testo })
+          : h("p", { style: "margin:0;color:var(--label-secondary)" }, "completato oggi"),
+        h("p", { style: "margin:14px 0 0;font-size:13px;color:var(--label-secondary)" }, "Vedi il risultato ›")
+      )
+    );
+  }
 
   const titolo = previsto ? previsto.nome : "Riposo";
   const sotto = giaFatto

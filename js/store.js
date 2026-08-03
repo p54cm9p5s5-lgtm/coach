@@ -4,6 +4,7 @@ import * as db from "./db.js";
 import { isoDate, weekdayOf, giorniTra } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
 import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello } from "./segnali.js";
+import { punteggioEsercizio, punteggioAllenamento } from "./punteggio.js";
 
 let LIBRERIA = null;
 let PROGRAMMA = null;
@@ -383,6 +384,54 @@ export async function registraSalto({ sedutaId, esercizioId, ordine, motivo, not
 export async function questionariDi(sedutaId) {
   const r = await db.byIndex("esercizioLog", "sedutaId", sedutaId);
   return r.sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0));
+}
+
+/**
+ * Completezza di un allenamento, ricalcolata dai dati grezzi ogni volta.
+ * Non si legge il punteggio salvato: se i criteri cambiano, cambiano anche i
+ * punteggi vecchi, e due allenamenti restano confrontabili fra loro.
+ */
+export async function completezzaSeduta(id) {
+  const sed = await db.get("sedute", id);
+  if (!sed) return null;
+  const giorno = giornoSplit(sed.tipoId);
+  const serie = await serieDi(id);
+  const logs = await questionariDi(id);
+  const reg = regole();
+
+  const punteggi = [];
+  let saltati = 0;
+  const perEsercizio = new Map();
+  for (const v of giorno?.esercizi || []) {
+    const log = logs.find((l) => l.esercizioId === v.esercizioId);
+    if (!log) continue;
+    if (log.saltato) {
+      saltati++;
+      continue;
+    }
+    const r = punteggioEsercizio({
+      variante: v,
+      serie: serie.filter((s) => s.esercizioId === v.esercizioId),
+      rpe: log.rpe,
+      tecnica: log.tecnica,
+      dolorePolso: Boolean(log.dolorePolso),
+      regole: reg,
+    });
+    punteggi.push(r.totale);
+    perEsercizio.set(v.esercizioId, r);
+  }
+
+  const totale = punteggioAllenamento({
+    previsti: giorno?.esercizi?.length ?? logs.length,
+    punteggi,
+    saltati,
+    cardio: sed.cardio,
+    riscaldamento: Boolean(sed.riscaldamento?.fatto),
+    stretching: Boolean(sed.stretching?.fatto),
+    regole: reg,
+  });
+
+  return { ...totale, perEsercizio };
 }
 
 // ---------- storico per esercizio ----------
