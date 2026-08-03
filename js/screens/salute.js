@@ -1,8 +1,9 @@
-import { h, sheet, chiedi, num, dataBreve, isoDate, durataUmana, aggiungi } from "../ui.js";
+import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, aggiungi } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
 import { graficoLinea, schedaGrafico } from "../grafico.js";
+import { anello, giudizio } from "../punteggio.js";
 
 const NOME_SHORTCUT = "Coach Salute";
 
@@ -86,32 +87,65 @@ export async function render({ ridisegna }) {
   // ---- completezza degli allenamenti ----
   const chiuse = (await store.allenamenti())
     .filter((x) => x.stato === "completata")
-    .sort((a, b) => (a.data < b.data ? -1 : 1));
+    .sort((a, b) => (a.data < b.data ? 1 : -1));
   if (chiuse.length) {
-    const punti = [];
+    const voci = [];
     for (const sed of chiuse) {
       const comp = await store.completezzaSeduta(sed.id);
-      punti.push({ data: sed.data, valore: comp?.totale ?? null, evidenza: true, nota: sed.tipoNome });
+      voci.push({ sed, totale: comp?.totale ?? null });
     }
-    const validi = punti.map((p) => p.valore).filter((v) => v != null);
+    const validi = voci.map((v) => v.totale).filter((x) => x != null);
     const mediaComp = validi.length
       ? Math.round(validi.reduce((a, b) => a + b, 0) / validi.length)
       : null;
+
+    const pillola = (n) => {
+      const g = giudizio(n);
+      return h(
+        "span.pill",
+        {
+          style:
+            `font-variant-numeric:tabular-nums;background:${g.livello === 1 ? "var(--fill-tertiary)" : "color-mix(in srgb, var(--accent) 18%, transparent)"};` +
+            `color:${g.livello === 1 ? "var(--orange)" : "var(--accent)"}`,
+        },
+        String(n)
+      );
+    };
+
     aggiungi(wrap,
-      schedaGrafico({
-        titolo: "Completezza degli allenamenti",
-        valore: mediaComp != null ? String(mediaComp) : "—",
-        unita: "su 100",
-        nota: `media su ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"}`,
-        grafico: graficoLinea({
-          punti,
-          obiettivo: 100,
-          etichettaObiettivo: "100",
-          formatta: (v) => `${Math.round(v)} su 100`,
-          invito: "Tocca un allenamento per vedere il punteggio",
-        }),
-        piede: "Quanto ogni allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching.",
-      })
+      h(
+        "div.group",
+        h("h2", "Completezza degli allenamenti"),
+        h(
+          "div",
+          { style: "background:var(--bg-grouped);border-radius:14px;padding:20px 14px 16px" },
+          mediaComp != null ? anello(mediaComp, { dimensione: 168 }) : null,
+          mediaComp != null
+            ? h(
+                "p",
+                { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
+                `${giudizio(mediaComp).testo} · media su ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"}`
+              )
+            : h("p", { style: "margin:0;text-align:center;color:var(--label-secondary)" }, "Nessun punteggio registrato"),
+          h(
+            "div.list",
+            { style: "margin-top:16px;background:none" },
+            ...voci.slice(0, 8).map((v) =>
+              h(
+                "a.row",
+                { href: `#/seduta?riepilogo=${v.sed.id}` },
+                h("div.main", h("span.title", v.sed.tipoNome), h("span.sub", dataLunga(v.sed.data))),
+                v.totale != null ? pillola(v.totale) : h("span.value", "—"),
+                h("span.chevron", "›")
+              )
+            )
+          )
+        ),
+        h(
+          "p.footnote",
+          "Quanto ogni allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching. Tocca un allenamento per aprirne il risultato."
+        )
+      )
     );
   }
 
