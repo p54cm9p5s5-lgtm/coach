@@ -497,39 +497,72 @@ async function cambiaVideo(def) {
 
 async function modificaCarico(def, inv) {
   const bilanciere = def?.attrezzo === "bilanciere";
-  let valore = S.caricoCorrente ?? 0;
-  await sheet((close) => {
-    const etichetta = h("div.hero", h("p.load", `${num(valore)} kg`), h("p.target", bilanciere ? descriviDischi(valore, inv) || "combinazione non disponibile" : "manubri"));
-    const aggiorna = (nuovo) => {
-      valore = Math.max(0, nuovo);
-      clear(etichetta).append(
-        h("p.load", `${num(valore)} kg`),
-        h("p.target", bilanciere ? descriviDischi(valore, inv) || "combinazione non disponibile" : "manubri")
-      );
+  const partenza = S.caricoCorrente ?? 0;
+
+  const scelto = await sheet((close) => {
+    const campo = h("input", {
+      type: "text",
+      inputmode: "decimal",
+      value: String(partenza).replace(".", ","),
+      "aria-label": "Carico totale in chilogrammi",
+      style:
+        "width:calc(100% - 32px);margin:14px 16px 0;padding:14px 16px;border:0;border-radius:12px;" +
+        "background:var(--bg-grouped);font-size:32px;font-weight:700;text-align:center;" +
+        "font-variant-numeric:tabular-nums;color:var(--label)",
+    });
+
+    // riga d'aiuto ad altezza fissa: se cambiasse altezza sposterebbe i tasti
+    const aiuto = h("p", {
+      style:
+        "margin:10px 16px 0;min-height:34px;font-size:13px;line-height:1.3;" +
+        "color:var(--label-secondary);text-align:center",
+    });
+
+    const leggi = () => {
+      const v = Number(String(campo.value).replace(",", ".").trim());
+      return Number.isFinite(v) && v >= 0 ? Math.round(v * 10) / 10 : null;
     };
+
+    const aggiorna = () => {
+      const v = leggi();
+      if (v === null) {
+        aiuto.textContent = "Scrivi un numero, per esempio 22,5";
+        return;
+      }
+      if (!bilanciere) {
+        aiuto.textContent = `${num(v)} kg per manubrio`;
+        return;
+      }
+      const d = descriviDischi(v, inv);
+      aiuto.textContent = d
+        ? `Da montare: ${d}`
+        : `${num(v)} kg non si compone con i dischi che hai. Puoi salvarlo lo stesso.`;
+    };
+    campo.addEventListener("input", aggiorna);
+    setTimeout(aggiorna, 0);
+
     return h(
       "div",
       h("h2", "Carico"),
-      etichetta,
       h(
-        "div.field",
-        { style: "justify-content:center" },
-        h(
-          "div.stepper",
-          h("button", { onclick: () => aggiorna(bilanciere ? carichoPiuVicino(valore, -1, inv) : valore - 1) }, "−"),
-          h("span.val", `${num(valore)} kg`),
-          h("button", { onclick: () => aggiorna(bilanciere ? carichoPiuVicino(valore, 1, inv) : valore + 1) }, "+")
-        )
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+        bilanciere ? "Peso totale, bilanciere compreso." : "Peso di un singolo manubrio."
       ),
+      campo,
+      aiuto,
       h(
         "div.btn-wrap",
         h(
           "button.btn",
           {
-            onclick: async () => {
-              S.caricoCorrente = valore;
-              close();
-              await disegna();
+            onclick: () => {
+              const v = leggi();
+              if (v === null) {
+                toast("Numero non valido.");
+                return;
+              }
+              close(v);
             },
           },
           "Usa questo carico"
@@ -537,6 +570,10 @@ async function modificaCarico(def, inv) {
       )
     );
   });
+
+  if (scelto === undefined || scelto === null) return;
+  S.caricoCorrente = scelto;
+  await disegna();
 }
 
 async function completaSerie(v, def, numero) {

@@ -144,7 +144,10 @@ export function toast(msg, ms = 2200) {
 
 export function sheet(build) {
   return new Promise((resolve) => {
+    let chiuso = false;
     const close = (val) => {
+      if (chiuso) return;
+      chiuso = true;
       backdrop.remove();
       document.removeEventListener("keydown", onKey);
       resolve(val);
@@ -152,20 +155,53 @@ export function sheet(build) {
     const onKey = (e) => {
       if (e.key === "Escape") close(undefined);
     };
+
     const panel = h("div.sheet", h("div.grabber"));
+
+    /**
+     * Si chiude solo se il tocco è COMINCIATO sullo sfondo. Senza questo, un
+     * secondo tocco rapido su un pulsante che nel frattempo si è spostato
+     * (il contenuto cambia altezza) finisce sullo sfondo e chiude il pannello.
+     */
+    let partitoDaSfondo = false;
     const backdrop = h(
       "div.sheet-backdrop",
       {
+        onpointerdown: (e) => {
+          partitoDaSfondo = e.target === backdrop;
+        },
         onclick: (e) => {
-          if (e.target === backdrop) close(undefined);
+          if (e.target === backdrop && partitoDaSfondo) close(undefined);
         },
       },
       panel
     );
+
+    // trascinamento verso il basso per chiudere
+    let y0 = null;
+    let spostamento = 0;
+    panel.addEventListener("touchstart", (e) => {
+      if (e.target.closest("input, textarea, button")) return;
+      y0 = e.touches[0].clientY;
+      spostamento = 0;
+      panel.style.transition = "none";
+    }, { passive: true });
+    panel.addEventListener("touchmove", (e) => {
+      if (y0 === null) return;
+      spostamento = Math.max(0, e.touches[0].clientY - y0);
+      panel.style.transform = `translateY(${spostamento}px)`;
+    }, { passive: true });
+    panel.addEventListener("touchend", () => {
+      if (y0 === null) return;
+      panel.style.transition = "transform .2s ease-out";
+      if (spostamento > 90) close(undefined);
+      else panel.style.transform = "";
+      y0 = null;
+    });
+
     panel.append(build(close));
     document.body.append(backdrop);
     document.addEventListener("keydown", onKey);
-    panel.querySelector("button, input, textarea")?.focus?.();
   });
 }
 
