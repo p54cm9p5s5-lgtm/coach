@@ -2,5 +2,6 @@
 _privato/
 *.backup.json
 coach-backup-*.json
+coach-dati-iniziali.json
 
 .DS_Store

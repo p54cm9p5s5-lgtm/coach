@@ -56,7 +56,14 @@ fi
 
 echo "Controlli superati: nessun dato personale nei file tracciati."
 
-# --- 4. pubblicazione ---------------------------------------------------------
+# --- 4. impronta della versione ----------------------------------------------
+# Cambia VERSION in sw.js a ogni pubblicazione: garantisce che i telefoni
+# scarichino la nuova versione invece di restare sulla cache.
+IMPRONTA="$(date +%Y%m%d-%H%M%S)"
+sed -i '' "s/^const VERSION = .*/const VERSION = \"$IMPRONTA\";/" sw.js
+echo "Versione pubblicata: $IMPRONTA"
+
+# --- 5. pubblicazione ---------------------------------------------------------
 if [ -n "$(git status --porcelain)" ]; then
   git add -A
   git commit -m "${1:-Aggiornamento app}"
