@@ -1,8 +1,8 @@
 /* Coach — service worker.
-   Cache-first per lo shell. Un cambio di VERSION pubblica un aggiornamento:
-   l'app mostra un avviso e applica solo su conferma dell'utente. */
+   Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
+   subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260803-174100";
+const VERSION = "20260803-175118";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -37,6 +37,10 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
+  // Prende il posto della versione precedente senza aspettare che tutte le
+  // schede si chiudano: su un telefono l'app non si "chiude" mai davvero, e la
+  // versione vecchia resterebbe al comando per giorni.
+  self.skipWaiting();
   e.waitUntil(
     caches
       .open(CACHE)

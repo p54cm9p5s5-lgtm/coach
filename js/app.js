@@ -131,14 +131,14 @@ async function registraServiceWorker() {
   }
   try {
     const reg = await navigator.serviceWorker.register("sw.js");
-    if (reg.waiting) bannerAggiornamento(reg);
-    reg.addEventListener("updatefound", () => {
-      const nuovo = reg.installing;
-      nuovo?.addEventListener("statechange", () => {
-        if (nuovo.state === "installed" && navigator.serviceWorker.controller) {
-          bannerAggiornamento(reg);
-        }
-      });
+    reg.update();
+    // Quando la nuova versione prende il comando, la pagina si ricarica una
+    // volta sola: così i moduli già in memoria non restano quelli vecchi.
+    let ricaricato = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (ricaricato) return;
+      ricaricato = true;
+      location.reload();
     });
   } catch {
     /* in locale senza https il service worker può non registrarsi: non è un errore bloccante */
