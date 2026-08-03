@@ -10,6 +10,31 @@ import { sbloccaAudio } from "../ui.js";
 
 let meseMostrato = null;
 
+/* Periodo scelto per i numeri della Home. Il grafico non va mai oltre il mese:
+   più indietro le barre diventano illeggibili e non dicono niente in più. */
+const PERIODI = [
+  { id: "7", etichetta: "7 gg", giorni: 7, graficoGiorni: 7, futuri: 3 },
+  { id: "30", etichetta: "1 mese", giorni: 30, graficoGiorni: 30, futuri: 7 },
+  { id: "tutto", etichetta: "Sempre", giorni: null, graficoGiorni: 30, futuri: 7 },
+];
+
+function periodoCorrente() {
+  try {
+    const id = localStorage.getItem("coach-periodo");
+    return PERIODI.find((p) => p.id === id) || PERIODI[2];
+  } catch {
+    return PERIODI[2];
+  }
+}
+
+function salvaPeriodo(id) {
+  try {
+    localStorage.setItem("coach-periodo", id);
+  } catch {
+    /* senza localStorage la scelta vale solo per questa schermata */
+  }
+}
+
 async function versioneApp() {
   try {
     const r = await fetch("sw.js", { cache: "no-store" });
@@ -38,7 +63,7 @@ export async function render({ vaiA, ridisegna }) {
   }
 
   aggiungi(wrap, await bloccoAllenamento(vaiA, ridisegna, oggi));
-  aggiungi(wrap, await bloccoGrafico());
+  aggiungi(wrap, await bloccoGrafico(ridisegna));
   aggiungi(wrap, await bloccoProposte());
   aggiungi(wrap, await bloccoCalendario(vaiA, ridisegna));
 
@@ -61,7 +86,8 @@ export async function render({ vaiA, ridisegna }) {
 
 // ---------- grafico ----------
 
-async function bloccoGrafico() {
+async function bloccoGrafico(ridisegna) {
+  const periodo = periodoCorrente();
   const oggi = isoDate();
   const giorni = await store.giorniSalute();
   const notti = await store.notti();
@@ -75,18 +101,19 @@ async function bloccoGrafico() {
   // Il grafico parte dal primo giorno per cui esiste un dato e arriva a oggi:
   // il periodo prima dell'app non racconta niente. Oltre le otto settimane la
   // finestra scorre, altrimenti le barre diventano illeggibili.
-  const MASSIMO_GIORNI = 56;
   const primeDate = [
     ...giorni.filter((g) => g.presente).map((g) => g.data),
     ...notti.filter((n) => n.presente).map((n) => n.data),
     ...[...allenati],
   ].sort();
   const inizio = primeDate[0] || oggi;
-  let quanti = giorniTra(inizio, oggi) + 1;
-  if (quanti < 7) quanti = 7;
-  if (quanti > MASSIMO_GIORNI) quanti = MASSIMO_GIORNI;
+  // Il grafico non parte mai da prima del primo dato: sarebbe una fila di
+  // giorni vuoti. Oltre il mese non va comunque.
+  const disponibili = giorniTra(inizio, oggi) + 1;
+  let quanti = Math.min(periodo.graficoGiorni, Math.max(disponibili, 7));
+  if (periodo.id === "7") quanti = 7;
 
-  const GIORNI_FUTURI = 7;
+  const GIORNI_FUTURI = periodo.futuri;
   const serie = [];
   for (let i = quanti - 1; i >= -GIORNI_FUTURI; i--) {
     const d = new Date(oggi + "T00:00:00");
@@ -115,8 +142,18 @@ async function bloccoGrafico() {
     return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
   };
 
-  const giorniConDati = giorni.filter((g) => g.presente);
-  const nottiConDati = notti.filter((n) => n.presente);
+  // Finestra dei numeri: quella scelta, oppure tutto lo storico.
+  const daQuando = periodo.giorni
+    ? (() => {
+        const d = new Date(oggi + "T00:00:00");
+        d.setDate(d.getDate() - (periodo.giorni - 1));
+        const p = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+      })()
+    : null;
+  const dentro = (r) => !daQuando || (r.data >= daQuando && r.data <= oggi);
+  const giorniConDati = giorni.filter((g) => g.presente && dentro(g));
+  const nottiConDati = notti.filter((n) => n.presente && dentro(n));
   const mediaKcal = media(giorniConDati, "kcalAttive");
   const mediaPassi = media(giorniConDati, "passi");
   const mediaSonno = media(nottiConDati, "durataMin");
@@ -124,14 +161,33 @@ async function bloccoGrafico() {
   const quantiPassi = giorniConDati.filter((g) => g.passi != null).length;
   const quanteNotti = nottiConDati.filter((n) => n.durataMin != null).length;
 
+  const selettore = h(
+    "div.segmented",
+    { style: "margin:0 0 12px" },
+    ...PERIODI.map((p) =>
+      h(
+        "button",
+        {
+          "aria-pressed": p.id === periodo.id,
+          style: "min-height:34px;font-size:14px",
+          onclick: async () => {
+            if (p.id === periodo.id) return;
+            salvaPeriodo(p.id);
+            await ridisegna();
+          },
+        },
+        p.etichetta
+      )
+    )
+  );
+
   return h(
     "div.group",
-    // Il titolo non promette una finestra: le medie sono su tutto, il grafico
-    // mostra il periodo che ci sta.
     h("h2", "Andamento"),
     h(
       "div",
       { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
+      selettore,
       fascia([
         {
           etichetta: "Passi",
