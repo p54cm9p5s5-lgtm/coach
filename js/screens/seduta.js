@@ -69,6 +69,7 @@ async function vistaProgramma(vaiA, ridisegna) {
     (s) => s.data === oggi && s.stato === "completata"
   );
 
+  const origine = store.origineGiorno(oggi);
   const ultimaOggi = fatteOggi.filter((s) => s.oraFine).sort((a, b) => a.oraFine - b.oraFine).at(-1);
   aggiungi(wrap,
     intestazione(
@@ -113,8 +114,26 @@ async function vistaProgramma(vaiA, ridisegna) {
           : h(
               "p",
               { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);text-align:center" },
-              "Lo split non prevede allenamenti oggi"
+              origine.riposo ? "Riposo, dal calendario" : "Lo split non prevede allenamenti oggi"
+            ),
+        // Da dove arriva questo giorno: il calendario del coach o lo split del
+        // brief. Se i due dicono cose diverse, comanda il calendario e si vede.
+        origine.fonte === "calendario"
+          ? h(
+              "p",
+              { style: "margin:10px 0 0;font-size:11px;opacity:.66;text-align:center" },
+              origine.diverso
+                ? `Dal calendario: «${origine.titolo}», al posto dello split`
+                : `Dal calendario: «${origine.titolo}»`
             )
+          : null,
+        origine.sconosciuto
+          ? h(
+              "p",
+              { style: "margin:6px 0 0;font-size:11px;opacity:.66;text-align:center" },
+              "Evento non riconosciuto: serve il brief aggiornato per sapere cosa contiene."
+            )
+          : null
       )
     )
   );

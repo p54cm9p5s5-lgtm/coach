@@ -9,6 +9,7 @@ import { punteggioEsercizio, punteggioAllenamento } from "./punteggio.js";
 let LIBRERIA = null;
 let PROGRAMMA = null;
 let RISCALDAMENTO = null;
+let AGENDA = null;
 
 // ---------- avvio ----------
 
@@ -17,6 +18,7 @@ export async function init() {
   await caricaLibreria();
   await caricaRiscaldamento();
   PROGRAMMA = (await db.get("programma", "corrente")) || null;
+  await caricaAgenda();
   return { libreria: LIBRERIA, programma: PROGRAMMA };
 }
 
@@ -145,6 +147,10 @@ export async function applicaBrief(dati) {
   if (daRiattivare.length) await db.putMany("esercizi", daRiattivare);
   if (daArchiviare.length || daRiattivare.length) await caricaLibreria();
 
+  // Il brief nuovo può contenere giorni che prima non esistevano: gli eventi
+  // del calendario rimasti senza abbinamento vanno riprovati adesso.
+  await riabbinaAgenda();
+
   await registraDecisione({
     oggetto: "Programma aggiornato dal master brief",
     livello: null,
@@ -158,10 +164,40 @@ export async function applicaBrief(dati) {
 }
 
 /** Giorno dello split previsto per una data, o null se è riposo. */
+/**
+ * Cosa tocca in un dato giorno.
+ * Gli allenamenti li decide il coach e li scrive sul calendario: se per quel
+ * giorno c'è un evento, comanda quello. Lo split del brief resta la regola di
+ * base, usata finché il calendario non dice altro.
+ */
 export function giornoPrevisto(iso = isoDate()) {
   if (!PROGRAMMA) return null;
+  const ev = AGENDA?.get(iso);
+  if (ev) {
+    if (ev.giornoId === "riposo") return null;
+    if (ev.giornoId) return giornoSplit(ev.giornoId);
+    // evento che non corrisponde a nessun giorno del brief: non si inventa
+    // niente, si torna allo split e lo si segnala altrove
+  }
   const wd = weekdayOf(iso);
   return (PROGRAMMA.split || []).find((g) => g.giorno === wd) || null;
+}
+
+/** Da dove viene quello che l'app mostra per un giorno: serve a dirlo a schermo. */
+export function origineGiorno(iso = isoDate()) {
+  const ev = AGENDA?.get(iso);
+  if (!ev) return { fonte: "split" };
+  if (ev.giornoId === "riposo") return { fonte: "calendario", titolo: ev.titolo, riposo: true };
+  if (ev.giornoId) {
+    const wd = weekdayOf(iso);
+    const daSplit = (PROGRAMMA?.split || []).find((g) => g.giorno === wd) || null;
+    return {
+      fonte: "calendario",
+      titolo: ev.titolo,
+      diverso: (daSplit?.id ?? null) !== ev.giornoId,
+    };
+  }
+  return { fonte: "calendario", titolo: ev.titolo, sconosciuto: true };
 }
 
 export function giorniSplit() {
@@ -954,9 +990,101 @@ export async function importaSalute(pacchetto) {
     }
   }
 
+  if (pacchetto.agenda?.length) {
+    // L'agenda vive dentro le impostazioni, non in uno store suo: aggiungere
+    // uno store significherebbe cambiare versione al database, e un
+    // aggiornamento di schema che va storto sul telefono è un rischio che
+    // questi dati non valgono.
+    const precedente = (await impostazione("agenda")) || {};
+    const ora = new Date().toISOString();
+    for (const e of pacchetto.agenda) {
+      precedente[e.data] = {
+        data: e.data,
+        titolo: e.titolo,
+        nota: e.nota ?? null,
+        giornoId: abbinaAlloSplit(e.titolo),
+        importatoIl: ora,
+      };
+      conteggio.agenda = (conteggio.agenda || 0) + 1;
+    }
+    // Oltre le sei settimane non serve a niente e non deve crescere all'infinito.
+    const limite = new Date(Date.now() - 42 * 86400000).toISOString().slice(0, 10);
+    for (const d of Object.keys(precedente)) if (d < limite) delete precedente[d];
+
+    await setImpostazione("agenda", precedente);
+    AGENDA = new Map(Object.entries(precedente));
+    await setImpostazione("ultimoImportAgenda", ora);
+  }
+
   await setImpostazione("ultimoImportSalute", new Date().toISOString());
   await collegaAllenamentiASedute();
   return conteggio;
+}
+
+// ---------- agenda: il calendario dice quale allenamento, il brief cosa contiene ----------
+
+/** Normalizza un titolo per confrontarlo: niente accenti, spazi, punteggiatura. */
+const chiaveTitolo = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
+/**
+ * Trova il giorno dello split che corrisponde al titolo di un evento.
+ * Il confronto è per contenimento nei due sensi: «Coach — Petto/Tricipiti» e
+ * «Petto e tricipiti» trovano entrambi il giorno «Petto/Tricipiti».
+ */
+export function abbinaAlloSplit(titolo) {
+  const t = chiaveTitolo(titolo);
+  if (!t) return null;
+  if (t.includes("riposo")) return "riposo";
+  let migliore = null;
+  for (const g of giorniSplit()) {
+    const k = chiaveTitolo(g.nome);
+    if (!k) continue;
+    if (t.includes(k) || k.includes(t)) {
+      if (!migliore || k.length > chiaveTitolo(migliore.nome).length) migliore = g;
+    }
+  }
+  return migliore?.id ?? null;
+}
+
+async function caricaAgenda() {
+  AGENDA = new Map(Object.entries((await impostazione("agenda")) || {}));
+  return AGENDA;
+}
+
+export function agendaDi(iso) {
+  return AGENDA?.get(iso) || null;
+}
+
+export async function agenda() {
+  if (!AGENDA) await caricaAgenda();
+  return [...AGENDA.values()].sort((a, b) => (a.data < b.data ? -1 : 1));
+}
+
+/** Riprova ad abbinare gli eventi già letti ai giorni dello split corrente. */
+async function riabbinaAgenda() {
+  const salvata = (await impostazione("agenda")) || {};
+  if (!Object.keys(salvata).length) return;
+  let cambiato = false;
+  for (const e of Object.values(salvata)) {
+    const id = abbinaAlloSplit(e.titolo);
+    if (id !== e.giornoId) {
+      e.giornoId = id;
+      cambiato = true;
+    }
+  }
+  if (cambiato) await setImpostazione("agenda", salvata);
+  AGENDA = new Map(Object.entries(salvata));
+}
+
+/** Toglie tutto quello che è arrivato dal calendario e torna allo split del brief. */
+export async function svuotaAgenda() {
+  await setImpostazione("agenda", {});
+  AGENDA = new Map();
 }
 
 /** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */

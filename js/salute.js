@@ -41,7 +41,7 @@ export function analizza(testo) {
     throw new Error(`Pacchetto in versione v${intestazione[1]}, l'app legge la v${VERSIONE}.`);
   }
 
-  const risultato = { finestra: null, giorni: [], notti: [], allenamenti: [], avvisi: [] };
+  const risultato = { finestra: null, giorni: [], notti: [], allenamenti: [], agenda: [], avvisi: [] };
 
   for (const riga of righe.slice(1)) {
     const [parola, ...resto] = riga.split(/\s+/);
@@ -98,13 +98,27 @@ export function analizza(testo) {
         tipo: c.tipo || null,
         sedutaId: null,
       });
+    } else if (tipo === "AGENDA") {
+      // Un evento del calendario: dice quale allenamento tocca quel giorno.
+      // Il contenuto (esercizi, carichi) resta quello del master brief.
+      const titolo = (c.titolo || "").trim();
+      if (!titolo) {
+        risultato.avvisi.push(`Evento senza titolo il ${data}: ignorato.`);
+        continue;
+      }
+      risultato.agenda.push({ data, titolo, nota: c.nota || null });
     } else {
       risultato.avvisi.push(`Riga di tipo sconosciuto, ignorata: «${tipo}»`);
     }
   }
 
-  if (!risultato.giorni.length && !risultato.notti.length && !risultato.allenamenti.length) {
-    throw new Error("Pacchetto riconosciuto ma vuoto: nessun giorno, notte o allenamento.");
+  if (
+    !risultato.giorni.length &&
+    !risultato.notti.length &&
+    !risultato.allenamenti.length &&
+    !risultato.agenda.length
+  ) {
+    throw new Error("Pacchetto riconosciuto ma vuoto: nessun giorno, notte, allenamento o evento.");
   }
   return risultato;
 }
