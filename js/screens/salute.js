@@ -2,13 +2,14 @@ import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, aggi
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
-import { graficoLinea, schedaGrafico } from "../grafico.js";
+import { graficoLinea, schedaGrafico, periodoSalvato, selettorePeriodo, inizioPeriodo } from "../grafico.js";
 import { anello, giudizio } from "../punteggio.js";
 
 const NOME_SHORTCUT = "Coach Salute";
 
 export async function render({ ridisegna }) {
   const wrap = h("div.screen");
+  const oggiIso = isoDate();
   aggiungi(wrap, intestazione("Salute", { etichetta: "Aggiorna", onclick: () => aggiorna(ridisegna) }));
 
   const giorni = await store.giorniSalute();
@@ -68,25 +69,32 @@ export async function render({ ridisegna }) {
   // I giorni arrivano dal più recente: per il grafico servono in ordine di
   // calendario, e senza la coda di giorni vuoti che non racconta niente.
   const perGrafico = (righe) => [...righe].sort((a, b) => (a.data < b.data ? -1 : 1));
-  const giorniOrd = perGrafico(giorni);
-  const nottiOrd = perGrafico(notti);
+
+  // Ogni scheda ha il suo periodo, ricordato separatamente: si può guardare i
+  // passi sul mese e il sonno sugli ultimi sette giorni.
+  const conPeriodo = (chiave) => {
+    const periodo = periodoSalvato(chiave);
+    const da = inizioPeriodo(periodo, oggiIso);
+    return {
+      periodo,
+      selettore: selettorePeriodo(chiave, periodo, ridisegna),
+      dentro: (r) => !da || (r.data >= da && r.data <= oggiIso),
+    };
+  };
 
   const media = (righe, campo) => {
     const v = righe.filter((r) => r.presente).map((r) => r[campo]).filter((x) => x != null);
     return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
   };
 
-  const mKcal = media(giorni, "kcalAttive");
-  const mPassi = media(giorni, "passi");
-  const mSonno = media(notti, "durataMin");
-
   const allenati = new Set(
     (await store.allenamenti()).filter((x) => x.stato === "completata").map((x) => x.data)
   );
 
   // ---- completezza degli allenamenti ----
+  const fComp = conPeriodo("completezza");
   const chiuse = (await store.allenamenti())
-    .filter((x) => x.stato === "completata")
+    .filter((x) => x.stato === "completata" && fComp.dentro(x))
     .sort((a, b) => (a.data < b.data ? 1 : -1));
   if (chiuse.length) {
     const voci = [];
@@ -118,7 +126,8 @@ export async function render({ ridisegna }) {
         h("h2", "Completezza degli allenamenti"),
         h(
           "div",
-          { style: "background:var(--bg-grouped);border-radius:14px;padding:20px 14px 16px" },
+          { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 16px" },
+          fComp.selettore,
           mediaComp != null ? anello(mediaComp, { dimensione: 168 }) : null,
           mediaComp != null
             ? h(
@@ -150,15 +159,19 @@ export async function render({ ridisegna }) {
   }
 
   // ---- movimento ----
-  if (giorniOrd.length) {
+  const fMov2 = conPeriodo("movimento");
+  const giorniMov = perGrafico(giorni.filter(fMov2.dentro));
+  const mKcal = media(giorniMov, "kcalAttive");
+  if (giorniMov.length) {
     aggiungi(wrap,
       schedaGrafico({
+        selettore: fMov2.selettore,
         titolo: "Movimento",
         valore: mKcal ? String(mKcal.valore) : "—",
         unita: "kcal",
         nota: mKcal ? `media su ${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
         grafico: graficoLinea({
-          punti: giorniOrd.map((g) => ({
+          punti: giorniMov.map((g) => ({
             data: g.data,
             valore: g.presente ? g.kcalAttive : null,
             evidenza: allenati.has(g.data),
@@ -176,14 +189,18 @@ export async function render({ ridisegna }) {
   }
 
   // ---- passi ----
-  if (giorniOrd.some((g) => g.passi != null)) {
+  const fPassi = conPeriodo("passi");
+  const giorniPassi = perGrafico(giorni.filter(fPassi.dentro));
+  const mPassi = media(giorniPassi, "passi");
+  if (giorniPassi.some((g) => g.passi != null)) {
     aggiungi(wrap,
       schedaGrafico({
+        selettore: fPassi.selettore,
         titolo: "Passi",
         valore: mPassi ? mPassi.valore.toLocaleString("it-IT") : "—",
         nota: mPassi ? `media su ${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"}` : "nessun dato",
         grafico: graficoLinea({
-          punti: giorniOrd.map((g) => ({
+          punti: giorniPassi.map((g) => ({
             data: g.data,
             valore: g.presente ? g.passi : null,
             evidenza: allenati.has(g.data),
@@ -196,9 +213,13 @@ export async function render({ ridisegna }) {
   }
 
   // ---- sonno ----
+  const fSonno2 = conPeriodo("sonno");
+  const nottiOrd = perGrafico(notti.filter(fSonno2.dentro));
+  const mSonno = media(nottiOrd, "durataMin");
   if (nottiOrd.length) {
     aggiungi(wrap,
       schedaGrafico({
+        selettore: fSonno2.selettore,
         titolo: "Sonno",
         valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
         nota: mSonno ? `media su ${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"}` : "nessun dato",

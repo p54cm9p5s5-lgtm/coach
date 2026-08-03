@@ -239,6 +239,60 @@ export function legenda() {
   );
 }
 
+/* ---------- periodo mostrato ----------
+   Tre finestre, uguali ovunque. Il grafico non va mai oltre il mese: piu
+   indietro le colonne diventano illeggibili e non dicono niente in piu. */
+
+export const PERIODI = [
+  { id: "7", etichetta: "7 gg", giorni: 7, graficoGiorni: 7, futuri: 3 },
+  { id: "30", etichetta: "1 mese", giorni: 30, graficoGiorni: 30, futuri: 7 },
+  { id: "tutto", etichetta: "Sempre", giorni: null, graficoGiorni: 30, futuri: 7 },
+];
+
+export function periodoSalvato(chiave, predefinito = "tutto") {
+  try {
+    const id = localStorage.getItem(`coach-periodo-${chiave}`);
+    return PERIODI.find((p) => p.id === id) || PERIODI.find((p) => p.id === predefinito) || PERIODI[2];
+  } catch {
+    return PERIODI.find((p) => p.id === predefinito) || PERIODI[2];
+  }
+}
+
+export function selettorePeriodo(chiave, periodo, onCambia) {
+  return h(
+    "div.segmented",
+    { style: "margin:0 0 12px" },
+    ...PERIODI.map((p) =>
+      h(
+        "button",
+        {
+          "aria-pressed": p.id === periodo.id,
+          style: "min-height:34px;font-size:14px",
+          onclick: async () => {
+            if (p.id === periodo.id) return;
+            try {
+              localStorage.setItem(`coach-periodo-${chiave}`, p.id);
+            } catch {
+              /* senza localStorage la scelta vale solo per questa schermata */
+            }
+            await onCambia();
+          },
+        },
+        p.etichetta
+      )
+    )
+  );
+}
+
+/** Prima data compresa nella finestra, o null se la finestra e «sempre». */
+export function inizioPeriodo(periodo, oggi) {
+  if (!periodo.giorni) return null;
+  const d = new Date(oggi + "T00:00:00");
+  d.setDate(d.getDate() - (periodo.giorni - 1));
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 /**
  * Grafico a barre riutilizzabile, con lettura al tocco.
  * @param punti [{ data, valore|null, evidenza?: bool, futuro?: bool }]
@@ -542,13 +596,14 @@ export function graficoLinea({
 }
 
 /** Scheda con titolo, numero grande e grafico. */
-export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede }) {
+export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede, selettore = null }) {
   return h(
     "div.group",
     h("h2", titolo),
     h(
       "div",
       { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
+      selettore,
       h(
         "div",
         { style: "display:flex;align-items:baseline;gap:8px;margin-bottom:12px" },
