@@ -158,6 +158,30 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
   ].join("\n");
 }
 
+/**
+ * Proposte accettate dall'atleta: l'app le usa come obiettivo alla prossima
+ * esposizione, quindi il coach deve saperlo. Tacerlo significherebbe lasciare
+ * che il carico allenato si scosti dal brief senza che nessuno lo veda.
+ */
+export function bloccoAccettate(accettate, esercizio) {
+  if (!accettate.length) return null;
+  return [
+    "PROPOSTE ACCETTATE DALL'ATLETA — obiettivi in vigore nell'app",
+    "",
+    ...accettate.map((p) => {
+      const nome = esercizio(p.esercizioId)?.nome || p.esercizioId;
+      const parti = [];
+      if (p.a?.carico != null) parti.push(`${num(p.a.carico)} kg`);
+      if (p.a?.rip != null) parti.push(`${p.a.rip} rip`);
+      const prima = p.da?.carico != null ? `, prima ${num(p.da.carico)} kg` : "";
+      return `- ${nome}: ${parti.join(" · ") || "—"}${prima} (accettata il ${dataBreve(p.data)})`;
+    }),
+    "",
+    "Finché il brief non li conferma o li smentisce, l'app propone questi valori",
+    "nella prossima esposizione. Il programma scritto non è stato modificato.",
+  ].join("\n");
+}
+
 /** Proposte che aspettano una decisione, con le quattro domande. */
 export function bloccoProposte(proposte, nomeLivello) {
   if (!proposte.length) return "PROPOSTE IN SOSPESO\n\nNessuna.";
@@ -176,7 +200,7 @@ export function bloccoProposte(proposte, nomeLivello) {
       ].join("\n")
     ),
     "",
-    "Materiale per la valutazione, non decisioni: l'app non applica nulla e non modifica il programma.",
+    "Materiale per la valutazione, non decisioni: l'app non tocca il programma scritto.",
     "Le soglie usate sono quelle del blocco tecnico del master brief; la decisione resta al coach.",
   ].join("\n");
 }

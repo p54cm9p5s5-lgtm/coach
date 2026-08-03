@@ -1,6 +1,6 @@
 /* Avvio, routing, aggiornamenti. */
 
-import { h, qs, qsa, clear, toast, sbloccaAudio } from "./ui.js";
+import { h, qs, qsa, clear, toast, sbloccaAudio, chiudiFogli } from "./ui.js";
 import * as store from "./store.js";
 
 const ROTTE = {
@@ -47,10 +47,31 @@ export function vaiA(rotta) {
   location.hash = `#/${rotta}`;
 }
 
+let modCorrente = null;
+
+let hashDisegnato = null;
+
 export async function ridisegna() {
   const nome = nomeRotta();
+  // Cambio di schermata: un pannello aperto non deve sopravvivere alla pagina
+  // che l'ha aperto.
+  if (hashDisegnato !== null && hashDisegnato !== location.hash) chiudiFogli();
+  hashDisegnato = location.hash;
   rottaCorrente = nome;
   const mod = await ROTTE[nome]();
+
+  // Una schermata che se ne va deve spegnere quello che ha acceso: senza
+  // questo, i timer dell'allenamento restano vivi in sottofondo a ogni
+  // cambio di scheda e possono suonare da soli.
+  if (modCorrente && modCorrente !== mod) {
+    try {
+      modCorrente.pulisci?.();
+    } catch (e) {
+      console.error("pulizia schermata", e);
+    }
+  }
+  modCorrente = mod;
+
   const nodo = await mod.render({ vaiA, ridisegna });
 
   clear(view);

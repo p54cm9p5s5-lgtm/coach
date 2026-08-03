@@ -3,7 +3,7 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { nomeLivello } from "../segnali.js";
 import {
-  logSeduta, bloccoSalute, bloccoProposte, bloccoCorpo, intestazionePacchetto,
+  logSeduta, bloccoSalute, bloccoProposte, bloccoAccettate, bloccoCorpo, intestazionePacchetto,
 } from "../export.js";
 
 const ETICHETTE_MISURE = {
@@ -40,8 +40,16 @@ export async function render({ vaiA }) {
   );
 
   let testoCorrente = "";
+  // Comporre il pacchetto legge il database: due tocchi ravvicinati lanciano
+  // due composizioni e la più lenta arriverebbe per ultima, lasciando a schermo
+  // (e negli appunti) un pacchetto che non corrisponde alle scelte.
+  let ultimaRichiesta = 0;
   const rigenera = async () => {
-    testoCorrente = await componi(stato);
+    const mia = ++ultimaRichiesta;
+    anteprima.textContent = "…";
+    const testo = await componi(stato);
+    if (mia !== ultimaRichiesta) return;
+    testoCorrente = testo;
     anteprima.textContent = testoCorrente || "Non hai selezionato niente.";
   };
 
@@ -169,6 +177,15 @@ async function componi(stato) {
     const sospese = await store.proposteInSospeso();
     pezzi.push(bloccoProposte(sospese, nomeLivello));
     contenuto.push(`${sospese.length} proposte`);
+
+    // Quelle già accettate cambiano l'obiettivo che l'app userà: il coach le
+    // deve vedere anche se non deve più deciderle.
+    const accettate = (await store.proposte()).filter((p) => p.stato === "accettata");
+    const blocco = bloccoAccettate(accettate, store.esercizio);
+    if (blocco) {
+      pezzi.push(blocco);
+      contenuto.push(`${accettate.length} accettate`);
+    }
   }
 
   if (stato.corpo) {

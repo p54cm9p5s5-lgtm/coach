@@ -168,7 +168,7 @@ async function elenco(vaiA) {
 async function dettaglioSeduta(id) {
   const wrap = h("div.screen");
   const s = await store.seduta(id);
-  aggiungi(wrap, intestazione(s ? s.tipoNome : "Seduta", { etichetta: "Indietro", onclick: () => (location.hash = "#/storico") }));
+  aggiungi(wrap, intestazione(s ? s.tipoNome : "Allenamento", { etichetta: "Indietro", onclick: () => (location.hash = "#/storico") }));
   if (!s) {
     aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
     return wrap;

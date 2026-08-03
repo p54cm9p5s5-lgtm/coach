@@ -1044,7 +1044,9 @@ export function abbinaAlloSplit(titolo) {
   for (const g of giorniSplit()) {
     const k = chiaveTitolo(g.nome);
     if (!k) continue;
-    if (t.includes(k) || k.includes(t)) {
+    // Il contenimento al contrario vale solo per titoli abbastanza lunghi:
+    // un evento chiamato «F» non deve diventare «Full Body».
+    if (t.includes(k) || (t.length >= 4 && k.includes(t))) {
       if (!migliore || k.length > chiaveTitolo(migliore.nome).length) migliore = g;
     }
   }
@@ -1141,11 +1143,19 @@ export function statoFinestra(righe, { settimane = 3, minimoSettimana = 5 } = {}
     });
   }
 
+  // Una settimana finita prima che l'app esistesse non è una settimana in cui
+  // hai smesso di registrare: non va segnata come mancante.
+  const primaData = valide.map((r) => r.data).sort()[0] || null;
+  for (const s of perSettimana) {
+    s.primaDeiDati = Boolean(primaData) && s.a < primaData;
+  }
+
+  const contano = perSettimana.filter((s) => !s.primaDeiDati);
   return {
     registratiTotali: valide.length,
     richiesti: settimane * 7,
     perSettimana,
-    completa: perSettimana.every((s) => s.sufficiente),
+    completa: contano.length === settimane && contano.every((s) => s.sufficiente),
   };
 }
 

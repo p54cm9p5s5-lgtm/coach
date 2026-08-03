@@ -54,7 +54,9 @@ export async function render({ ridisegna }) {
           "div.row",
           h("div.main", h("span.sub", `Settimana ${i + 1} · ${dataBreve(s.da)}–${dataBreve(s.a)}`)),
           h("span.value", String(s.registrati)),
-          h("span.pill", { class: s.sufficiente ? "pill ok" : "pill warn" }, s.sufficiente ? "ok" : "sotto minimo")
+          s.primaDeiDati
+            ? h("span.pill", "prima dell'app")
+            : h("span.pill", { class: s.sufficiente ? "pill ok" : "pill warn" }, s.sufficiente ? "ok" : "sotto minimo")
         )
       )
     );
