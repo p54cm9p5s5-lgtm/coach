@@ -10,6 +10,9 @@ let LIBRERIA = null;
 let PROGRAMMA = null;
 let RISCALDAMENTO = null;
 let AGENDA = null;
+// Giorno in cui il calendario è stato letto l'ultima volta: serve a sapere da
+// quando l'app può dire «quel giorno non c'era niente».
+let LETTURA_AGENDA = null;
 
 // ---------- avvio ----------
 
@@ -352,15 +355,28 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
   invalidaCacheSedute();
   const s = await db.get("sedute", id);
   if (!s) throw new Error("Questa seduta non esiste più: forse è stata eliminata altrove.");
-  // La durata è quella dell'allenamento, non quella del telefono acceso: se
-  // il riepilogo resta aperto un'ora, «Chiudi» segnava un'ora in più. Si usa
-  // l'ultima cosa che hai davvero fatto — l'ultima serie, o la fine del cardio.
+  // La durata è quella dell'allenamento, non quella del telefono acceso: se il
+  // riepilogo resta aperto un'ora, «Chiudi» segnava un'ora in più. Si guarda
+  // l'ultima cosa fatta davvero: l'ultima serie OPPURE la fine del cardio,
+  // qualunque delle due sia più tarda (il cardio viene dopo i pesi e dura
+  // mezz'ora: dimenticarlo accorciava l'allenamento di tutto il cardio).
   const serieFatte = await db.byIndex("serie", "sedutaId", id);
-  const ultimoGesto = Math.max(0, ...serieFatte.map((x) => x.tsFineSerie || 0));
+  const fineCardio =
+    s.cardio?.finitoIl ||
+    (s.cardio?.eseguito && s.cardio.durataMin && s.progresso?.cardioInizio
+      ? s.progresso.cardioInizio + s.cardio.durataMin * 60000
+      : 0);
+  const ultimoGesto = Math.max(0, ...serieFatte.map((x) => x.tsFineSerie || 0), fineCardio);
   const adesso = Date.now();
   // Un margine di dieci minuti copre stretching e questionario finale; oltre
-  // quello è tempo in cui l'allenamento era già finito.
-  const fine = ultimoGesto && adesso - ultimoGesto > 10 * 60000 ? ultimoGesto + 10 * 60000 : adesso;
+  // quello è tempo in cui l'allenamento era già finito. Senza nessun gesto
+  // registrato si parte dall'inizio: un allenamento aperto e chiuso a vuoto
+  // non può durare giorni.
+  const fine = !ultimoGesto
+    ? Math.min(adesso, s.oraInizio + 10 * 60000)
+    : adesso - ultimoGesto > 10 * 60000
+      ? ultimoGesto + 10 * 60000
+      : adesso;
   const agg = {
     ...s,
     stato: "completata",
@@ -1292,6 +1308,7 @@ export async function importaSalute(pacchetto) {
     await setImpostazione("agenda", precedente);
     AGENDA = new Map(Object.entries(precedente));
     await setImpostazione("ultimoImportAgenda", ora);
+    LETTURA_AGENDA = ora.slice(0, 10);
   }
 
   // «Ultimo import» dei dati salute si aggiorna solo se sono davvero arrivati
@@ -1340,6 +1357,8 @@ export function abbinaAlloSplit(titolo) {
 
 async function caricaAgenda() {
   AGENDA = new Map(Object.entries((await impostazione("agenda")) || {}));
+  const letta = await impostazione("ultimoImportAgenda");
+  LETTURA_AGENDA = letta ? String(letta).slice(0, 10) : null;
   return AGENDA;
 }
 
@@ -1348,10 +1367,19 @@ export function agendaDi(iso) {
 }
 
 /** Da quando a quando arriva l'ultima lettura del calendario. */
+/**
+ * Il periodo che il calendario ha davvero coperto.
+ * Non parte dal primo evento ma dal giorno della lettura: il comando legge da
+ * oggi in avanti, quindi i giorni fra la lettura e il primo evento SONO stati
+ * guardati e sono vuoti sul serio. Prima l'app li riempiva con lo split e
+ * proponeva allenamenti che il coach non aveva messo.
+ */
 export function intervalloAgenda() {
   if (!agendaAttiva()) return null;
   const date = [...AGENDA.keys()].sort();
-  return { da: date[0], a: date[date.length - 1] };
+  const letta = LETTURA_AGENDA;
+  const da = letta && letta < date[0] ? letta : date[0];
+  return { da, a: date[date.length - 1] };
 }
 
 export async function agenda() {
@@ -1405,6 +1433,7 @@ export async function svuotaAgenda() {
   // calendario comandasse ancora.
   await setImpostazione("ultimoImportAgenda", null);
   AGENDA = new Map();
+  LETTURA_AGENDA = null;
 }
 
 /** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */
@@ -1505,8 +1534,12 @@ export const POSE = [
  * su file è JSON, e un Blob dentro JSON sparirebbe senza dire niente.
  */
 export async function registraFoto({ data = isoDate(), posa, immagine, checklist }) {
+  // Una foto per posa e per giorno: rifare uno scatto venuto male lasciava
+  // anche il vecchio, e il confronto pescava quello sbagliato.
+  const stesse = await db.byIndex("foto", "data", data);
+  const prec = stesse.find((f) => f.posa === posa);
   const rec = {
-    id: db.nuovoId("foto"),
+    id: prec?.id || db.nuovoId("foto"),
     data,
     posa,
     immagine,

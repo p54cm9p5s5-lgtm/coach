@@ -276,7 +276,12 @@ async function registra(ridisegna) {
   });
 
   if (salvato) {
-    await store.snapshotAutomatico("misure");
+    try {
+      await store.snapshotAutomatico("misure");
+    } catch {
+      // La copia interna è una comodità: se non riesce, le misure sono già
+      // salvate e l'operazione non va fatta fallire per questo.
+    }
     toast("Misure registrate.");
     await ridisegna();
   }
