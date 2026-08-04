@@ -964,12 +964,19 @@ textarea.note {
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: flex-end;
+  /* Con la tastiera aperta il codice riduce top/height a quello che si vede
+     davvero: essendo allineato in basso, il pannello si appoggia sopra i tasti
+     invece di finirci sotto. Su iOS né vh né dvh si accorgono della tastiera,
+     solo visualViewport. */
+  transition: height 0.18s ease-out;
 }
 
 .sheet {
   width: 100%;
-  /* dvh segue la tastiera di iOS: con vh il pannello restava alto quanto lo
-     schermo intero e i pulsanti finivano sotto i tasti, irraggiungibili. */
+  /* Il tetto vero lo mette il codice quando la tastiera è aperta: su iOS né vh
+     né dvh la vedono, e il pannello restava alto quanto lo schermo intero coi
+     pulsanti sotto i tasti, irraggiungibili. Questi due valori sono il limite
+     a tastiera chiusa. */
   max-height: 86vh;
   max-height: 86dvh;
   overflow-y: auto;

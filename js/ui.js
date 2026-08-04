@@ -167,7 +167,39 @@ export function sheet(build) {
       FOGLI_APERTI.delete(close);
       backdrop.remove();
       document.removeEventListener("keydown", onKey);
+      const vv = window.visualViewport;
+      if (vv) {
+        vv.removeEventListener("resize", adattaTastiera);
+        vv.removeEventListener("scroll", adattaTastiera);
+      }
       resolve(val);
+    };
+
+    /**
+     * Fa spazio alla tastiera. Su iOS la tastiera NON cambia né vh né dvh:
+     * l'unico che se ne accorge è visualViewport. Senza questo, il pannello
+     * resta alto quanto lo schermo e l'ultimo pulsante — «Importa», «Salva» —
+     * finisce sotto i tasti, dove non lo raggiungi.
+     */
+    const adattaTastiera = () => {
+      const vv = window.visualViewport;
+      if (!vv || chiuso) return;
+      const coperto = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      if (coperto > 60) {
+        // Lo sfondo viene ridotto esattamente alla parte di schermo che si
+        // vede: essendo allineato in basso, il pannello si appoggia sopra i
+        // tasti invece di finirci sotto. Agire sull'altezza è più affidabile
+        // che aggiungere spazio in fondo, che iOS a volte ignora.
+        backdrop.style.top = `${Math.round(vv.offsetTop)}px`;
+        backdrop.style.height = `${Math.round(vv.height)}px`;
+        backdrop.style.bottom = "auto";
+        panel.style.maxHeight = `${Math.max(180, Math.round(vv.height - 12))}px`;
+      } else {
+        backdrop.style.top = "";
+        backdrop.style.height = "";
+        backdrop.style.bottom = "";
+        panel.style.maxHeight = "";
+      }
     };
     FOGLI_APERTI.add(close);
     const onKey = (e) => {
@@ -232,6 +264,12 @@ export function sheet(build) {
 
     panel.append(build(close));
     document.body.append(backdrop);
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", adattaTastiera);
+      vv.addEventListener("scroll", adattaTastiera);
+      adattaTastiera();
+    }
     document.addEventListener("keydown", onKey);
   });
 }

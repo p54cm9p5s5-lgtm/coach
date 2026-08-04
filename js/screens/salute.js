@@ -125,21 +125,11 @@ export async function render({ ridisegna }) {
     return v.length ? { valore: v.reduce((a, b) => a + b, 0) / v.length, quanti: v.length } : null;
   };
 
-  // Col periodo «1 gg» i dati di movimento quasi sempre non ci sono ancora:
-  // arrivano col comando delle 5 del mattino, che porta i giorni già finiti.
-  // Invece di lasciare le schede vuote per sempre si mostra l'ultimo giorno che
-  // quel dato ce l'ha davvero, scrivendo di quale giorno si tratta.
-  const ultimoCon = (campo) =>
-    [...giorni]
-      .filter((g) => g.presente && g.data <= oggiIso && g[campo] != null)
-      .sort((a, b) => (a.data < b.data ? 1 : -1))[0] || null;
-  const conRipiego = (righeDelPeriodo, campo) => {
-    if (!soloOggi || righeDelPeriodo.some((r) => r.presente && r[campo] != null)) {
-      return { righe: righeDelPeriodo, etichetta: null };
-    }
-    const u = ultimoCon(campo);
-    return u ? { righe: [u], etichetta: `giorno del ${dataBreve(u.data)}` } : { righe: [], etichetta: null };
-  };
+  // «1 gg» vuol dire oggi, e basta. Se oggi il dato non c'è, si scrive che non
+  // c'è: mostrare al suo posto l'ultimo giorno disponibile faceva leggere come
+  // «oggi» un numero di ieri. Il sonno è l'unica eccezione, e per un motivo
+  // vero: una notte comincia la sera prima e finisce stamattina.
+  const conRipiego = (righeDelPeriodo) => ({ righe: righeDelPeriodo, etichetta: null });
 
   const allenati = new Set(
     (await store.allenamenti()).filter((x) => x.stato === "completata").map((x) => x.data)
@@ -222,7 +212,7 @@ export async function render({ ridisegna }) {
 
   // ---- movimento ----
   const fMov2 = conPeriodo();
-  const ripKcal = conRipiego(giorni.filter(fMov2.dentro), "kcalAttive");
+  const ripKcal = conRipiego(giorni.filter(fMov2.dentro));
   const giorniMov = perGrafico(ripKcal.righe);
   const mKcal = media(giorniMov, "kcalAttive");
   // La scheda c'è se il dato esiste in archivio, non solo dentro il periodo
@@ -257,7 +247,7 @@ export async function render({ ridisegna }) {
 
   // ---- passi ----
   const fPassi = conPeriodo();
-  const ripPassi = conRipiego(giorni.filter(fPassi.dentro), "passi");
+  const ripPassi = conRipiego(giorni.filter(fPassi.dentro));
   const giorniPassi = perGrafico(ripPassi.righe);
   const mPassi = media(giorniPassi, "passi");
   if (giorni.some((g) => g.presente && g.passi != null)) {
@@ -353,7 +343,7 @@ export async function render({ ridisegna }) {
   if (ALTRI.length) {
     const righe = h("div.list");
     for (const a of ALTRI) {
-      const rip = conRipiego(giorniAltro, a.campo);
+      const rip = conRipiego(giorniAltro);
       const m = media(rip.righe, a.campo);
       const ultimo = [...rip.righe]
         .sort((x, y) => (x.data < y.data ? 1 : -1))

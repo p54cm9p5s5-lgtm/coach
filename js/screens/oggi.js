@@ -119,22 +119,14 @@ async function bloccoGrafico(ridisegna) {
   // Oggi non è finita: nella media entrerebbe come un giorno fiacco. Col
   // periodo «1 gg» invece è proprio oggi che vuoi vedere.
   const soloOggi = periodo.id === "1";
-  // I dati di movimento arrivano col comando delle 5 del mattino, che porta i
-  // giorni già finiti: su «oggi» sono quasi sempre assenti, e le due schede
-  // restavano vuote per sempre. Come per il sonno si mostra allora l'ultimo
-  // giorno che ha davvero dei numeri, scrivendo quale.
-  const ultimoGiorno = [...giorni]
-    .filter((g) => g.presente && g.data <= oggi && (g.passi != null || g.kcalAttive != null))
-    .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
-  const giorniConDati = soloOggi
-    ? ultimoGiorno
-      ? [ultimoGiorno]
-      : []
-    : giorni.filter((g) => g.presente && dentro(g) && g.data < oggi);
-  const etichettaGiorni =
-    soloOggi && ultimoGiorno && ultimoGiorno.data !== oggi
-      ? `giorno del ${dataBreve(ultimoGiorno.data)}`
-      : etichettaPeriodo(periodo);
+  // «1 gg» vuol dire oggi: se il dato di oggi non c'è, si scrive che non c'è.
+  // Mettere al suo posto l'ultimo giorno disponibile faceva leggere come «oggi»
+  // un numero di ieri. Il sonno resta l'eccezione, più sotto: una notte
+  // comincia la sera prima e finisce stamattina.
+  const giorniConDati = giorni.filter(
+    (g) => g.presente && dentro(g) && (soloOggi || g.data < oggi)
+  );
+  const etichettaGiorni = etichettaPeriodo(periodo);
   // Il sonno di stanotte porta la data di ieri sera: con «1 gg» si guarda
   // l'ultima notte dormita, non «oggi», che deve ancora succedere.
   const ultimaNotte = [...notti]
