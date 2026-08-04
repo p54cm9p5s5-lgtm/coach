@@ -281,6 +281,9 @@ export function legenda() {
    indietro le colonne diventano illeggibili e non dicono niente in piu. */
 
 export const PERIODI = [
+  // «1 gg» è la giornata di oggi: un solo punto sul grafico, e le medie
+  // diventano il valore di oggi. Serve a guardare la giornata da sola.
+  { id: "1", etichetta: "1 gg", giorni: 1, graficoGiorni: 1, futuri: 0 },
   { id: "7", etichetta: "7 gg", giorni: 7, graficoGiorni: 7, futuri: 3 },
   { id: "30", etichetta: "1 mese", giorni: 30, graficoGiorni: 30, futuri: 7 },
   { id: "tutto", etichetta: "Sempre", giorni: null, graficoGiorni: 30, futuri: 7 },
@@ -294,9 +297,9 @@ const CHIAVE_PERIODO = "coach-periodo";
 export function periodoSalvato(predefinito = "tutto") {
   try {
     const id = localStorage.getItem(CHIAVE_PERIODO);
-    return PERIODI.find((p) => p.id === id) || PERIODI.find((p) => p.id === predefinito) || PERIODI[2];
+    return PERIODI.find((p) => p.id === id) || PERIODI.find((p) => p.id === predefinito) || PERIODI[1];
   } catch {
-    return PERIODI.find((p) => p.id === predefinito) || PERIODI[2];
+    return PERIODI.find((p) => p.id === predefinito) || PERIODI[1];
   }
 }
 
@@ -328,6 +331,7 @@ export function selettorePeriodo(periodo, onCambia) {
 
 /** Come si chiama la finestra scelta, per scriverlo accanto ai numeri. */
 export function etichettaPeriodo(periodo) {
+  if (periodo.id === "1") return "oggi";
   if (periodo.id === "7") return "ultimi 7 giorni";
   if (periodo.id === "30") return "ultimo mese";
   return "tutto lo storico";
