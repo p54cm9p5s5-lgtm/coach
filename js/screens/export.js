@@ -40,16 +40,22 @@ export async function render({ vaiA }) {
   );
 
   let testoCorrente = "";
+  let inCorso = false;
   // Comporre il pacchetto legge il database: due tocchi ravvicinati lanciano
   // due composizioni e la più lenta arriverebbe per ultima, lasciando a schermo
   // (e negli appunti) un pacchetto che non corrisponde alle scelte.
   let ultimaRichiesta = 0;
   const rigenera = async () => {
     const mia = ++ultimaRichiesta;
-    anteprima.textContent = "…";
+    inCorso = true;
+    // Il testo vecchio non deve restare copiabile mentre se ne prepara uno
+    // nuovo: si copierebbe un pacchetto che non corrisponde alle spunte.
+    testoCorrente = "";
+    anteprima.textContent = "Sto ricomponendo il pacchetto…";
     const testo = await componi(stato);
     if (mia !== ultimaRichiesta) return;
     testoCorrente = testo;
+    inCorso = false;
     anteprima.textContent = testoCorrente || "Non hai selezionato niente.";
   };
 
@@ -75,6 +81,7 @@ export async function render({ vaiA }) {
         "button.btn",
         {
           onclick: async () => {
+            if (inCorso) return toast("Aspetta un istante: sto ricomponendo il pacchetto.");
             if (!testoCorrente) return toast("Non c'è niente da copiare.");
             try {
               await navigator.clipboard.writeText(testoCorrente);
@@ -95,7 +102,8 @@ export async function render({ vaiA }) {
         "button.btn.secondary",
         {
           onclick: () => {
-            if (!testoCorrente) return;
+            if (inCorso) return toast("Aspetta un istante: sto ricomponendo il pacchetto.");
+            if (!testoCorrente) return toast("Non c'è niente da salvare.");
             const blob = new Blob([testoCorrente], { type: "text/markdown" });
             const url = URL.createObjectURL(blob);
             const a = h("a", { href: url, download: `coach-${new Date().toISOString().slice(0, 10)}.md`, style: "display:none" });

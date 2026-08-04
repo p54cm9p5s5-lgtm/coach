@@ -192,10 +192,14 @@ export function sheet(build) {
     );
 
     // trascinamento verso il basso per chiudere
+    // Il trascinamento parte SOLO dalla maniglia in cima. Prima bastava
+    // scorrere il contenuto del pannello per farlo scendere e chiudere: si
+    // perdeva quello che era stato scritto, per esempio la nota obbligatoria
+    // del salto esercizio.
     let y0 = null;
     let spostamento = 0;
     panel.addEventListener("touchstart", (e) => {
-      if (e.target.closest("input, textarea, button")) return;
+      if (!e.target.closest(".grabber")) return;
       y0 = e.touches[0].clientY;
       spostamento = 0;
       panel.style.transition = "none";
@@ -383,21 +387,35 @@ function beep(freq = 880, dur = 0.16, gain = 0.22) {
   osc.stop(audioCtx.currentTime + dur + 0.02);
 }
 
-/** Suona finché non si chiama fermaAllarme(). */
+let bipTimer = null;
+
+/**
+ * Suona finché non si chiama fermaAllarme(). Se la traccia non parte — succede
+ * quando iOS non ha autorizzato quell'elemento — si passa ai bip generati:
+ * dichiarare che l'allarme sta suonando mentre non si sente niente è il modo
+ * peggiore di fallire, perché il recupero finisce e nessuno se ne accorge.
+ */
 export function avviaAllarme() {
   fermaAllarme();
   sessioneAudio("transient");
   const a = elemento();
   a.currentTime = 0;
-  a.play().catch(() => {
-    /* se l'elemento è bloccato resta l'oscillatore come ripiego */
-  });
+  const p = a.play();
+  if (p && typeof p.catch === "function") {
+    p.catch(() => {
+      if (bipTimer) return;
+      beep(880, 0.3, 0.35);
+      bipTimer = setInterval(() => beep(880, 0.3, 0.35), 1200);
+    });
+  }
   alarmTimer = setInterval(() => {}, 1000);
 }
 
 export function fermaAllarme() {
   if (alarmTimer) clearInterval(alarmTimer);
   alarmTimer = null;
+  if (bipTimer) clearInterval(bipTimer);
+  bipTimer = null;
   if (elementoAllarme) {
     elementoAllarme.pause();
     elementoAllarme.currentTime = 0;

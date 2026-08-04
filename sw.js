@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260804-023418";
+const VERSION = "20260804-024403";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -74,9 +74,15 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
       fetch(new Request(req.url, { cache: "no-cache" }))
         .then((r) => {
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put("./index.html", copy));
-          return r;
+          // Solo una risposta valida diventa la pagina dell'app. Senza questo
+          // controllo una pagina di errore, o quella di un wifi con login,
+          // prendeva il posto dell'app fino al caricamento successivo.
+          if (r && r.ok && r.status === 200 && r.type !== "opaque") {
+            const copy = r.clone();
+            caches.open(CACHE).then((c) => c.put("./index.html", copy));
+            return r;
+          }
+          return caches.match("./index.html").then((salvata) => salvata || r);
         })
         .catch(() => caches.match("./index.html"))
     );

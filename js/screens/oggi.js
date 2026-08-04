@@ -221,9 +221,11 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
     ? "completato oggi"
     : previsto
       ? `${previsto.esercizi?.length || 0} esercizi${previsto.cardio ? " + cardio" : ""}`
-      : origine.fonte === "calendario"
-        ? "niente sul calendario per oggi"
-        : "nessun allenamento previsto dallo split";
+      : origine.sconosciuto
+        ? `«${origine.titolo}» non è un allenamento del programma`
+        : origine.fonte === "calendario"
+          ? "niente sul calendario per oggi"
+          : "nessun allenamento previsto dallo split";
 
   return h(
     "div.group",
