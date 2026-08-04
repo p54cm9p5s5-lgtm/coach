@@ -66,7 +66,12 @@ export async function render({ ridisegna }) {
       )
     );
 
-  const obiettivo = imp.obiettivoMovimentoKcal;
+  // Un obiettivo solo per tutta la scheda: quello più recente che Salute ha
+  // mandato, altrimenti quello impostato nell'app. Prima la linea, le
+  // percentuali e la nota in fondo potevano riferirsi a numeri diversi.
+  const obiettivo =
+    [...giorni].sort((a, b) => (a.data < b.data ? 1 : -1)).find((g) => g.obiettivoKcal)?.obiettivoKcal ||
+    imp.obiettivoMovimentoKcal;
 
   // I giorni arrivano dal più recente: per il grafico servono in ordine di
   // calendario, e senza la coda di giorni vuoti che non racconta niente.
@@ -199,7 +204,7 @@ export async function render({ ridisegna }) {
             valore: g.presente ? g.kcalAttive : null,
             evidenza: allenati.has(g.data),
             nota: g.presente && g.kcalAttive != null && obiettivo
-              ? `${num((g.kcalAttive / (g.obiettivoKcal || obiettivo)) * 100)}% dell'obiettivo`
+              ? `${num((g.kcalAttive / obiettivo) * 100)}% dell'obiettivo`
               : null,
           })),
           obiettivo,

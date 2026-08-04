@@ -53,10 +53,15 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       }
       // Interrotto a metà: le serie già fatte restano, altrimenti sparirebbe
       // lavoro davvero svolto dal log che legge il coach.
-      const car = [...new Set(righeSerie.map((s) => s.carico).filter((c) => c != null))];
+      const car = righeSerie.filter((s) => s.carico != null);
+      const distintiInterrotto = [...new Set(car.map((s) => s.carico))];
       righe.push([
         nome,
-        car.length ? car.map((c) => `${num(c)} kg`).join(" / ") : "corpo libero",
+        !car.length
+          ? "corpo libero"
+          : distintiInterrotto.length === 1
+            ? `${num(distintiInterrotto[0])} kg`
+            : `${righeSerie.map((s) => (s.carico != null ? num(s.carico) : "—")).join("/")} kg`,
         `${righeSerie.length}x${righeSerie.map((s) => s.ripFatte ?? "—").join("/")}`,
         log?.rpe != null ? String(log.rpe) : "non registrato",
         `INTERROTTO dopo ${righeSerie.length} ${righeSerie.length === 1 ? "serie" : "serie"} (${motivo})`,
@@ -69,8 +74,16 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       continue;
     }
 
-    const carichi = [...new Set(righeSerie.map((s) => s.carico).filter((c) => c != null))];
-    const carico = carichi.length === 0 ? "corpo libero" : carichi.map((c) => `${num(c)} kg`).join(" / ");
+    // I carichi si elencano serie per serie, nello stesso ordine delle
+    // ripetizioni: con i soli valori distinti «20 / 22 kg» accanto a
+    // «3x10/8/8» non si capiva quale carico stesse con quale serie.
+    const conCarico = righeSerie.filter((s) => s.carico != null);
+    const distinti = [...new Set(conCarico.map((s) => s.carico))];
+    const carico = !conCarico.length
+      ? "corpo libero"
+      : distinti.length === 1
+        ? `${num(distinti[0])} kg`
+        : `${righeSerie.map((s) => (s.carico != null ? num(s.carico) : "—")).join("/")} kg`;
     const rip = righeSerie.map((s) => s.ripFatte ?? "—").join("/");
     const aTempo = righeSerie.some((s) => s.aTempo);
 
