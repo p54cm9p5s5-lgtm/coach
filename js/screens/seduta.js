@@ -1363,6 +1363,7 @@ async function vistaQuestionario(corpo, piede) {
   const serieFatteQui = await serieFatte(v.esercizioId);
   const regoleOra = store.regole();
   const zonaPunteggio = h("div", { style: "padding:4px 0 2px" });
+  const zonaDettaglio = h("div");
 
   const calcolaPunteggio = () =>
     punteggioEsercizio({
@@ -1374,12 +1375,16 @@ async function vistaQuestionario(corpo, piede) {
       regole: regoleOra,
     });
 
+  // Il punteggio è diviso in due: sopra l'anello, che ha sempre la stessa
+  // altezza, sotto le spiegazioni, che cambiano secondo le risposte. Prima
+  // stava tutto sopra i righelli: ogni tocco allungava le spiegazioni e il
+  // righello dopo si spostava via da sotto il dito.
   const ridisegnaPunteggio = () => {
     const r = calcolaPunteggio();
     clear(zonaPunteggio);
-    aggiungi(zonaPunteggio,
-      anello(r.totale),
-      legendaPunteggio(),
+    aggiungi(zonaPunteggio, anello(r.totale), legendaPunteggio());
+    clear(zonaDettaglio);
+    aggiungi(zonaDettaglio,
       h(
         "p",
         { style: "margin:12px 16px 0;text-align:center;font-size:13px;color:var(--label-secondary);line-height:1.35" },
@@ -1510,7 +1515,8 @@ async function vistaQuestionario(corpo, piede) {
       id: "nota-es",
       placeholder: "Solo se c'è qualcosa da segnalare",
       value: gia?.nota || "",
-    })
+    }),
+    zonaDettaglio
   );
 
   // Se il polso era già segnato, i dettagli devono ricomparire senza toccare
@@ -1725,7 +1731,23 @@ async function vistaCardioInCorso(corpo, piede, r) {
 
   const chiudiCardio = async () => {
     fermaTimer();
-    const trascorsi = Math.max(1, Math.round((Date.now() - inizio) / 60000));
+    let trascorsi = Math.max(1, Math.round((Date.now() - inizio) / 60000));
+    // Il tempo è quello dell'orologio: se il telefono resta in tasca a cardio
+    // finito, «Ho finito» registrava tutte le ore passate. Un cardio molto più
+    // lungo del previsto è quasi sempre questo, e finiva dritto nel pacchetto
+    // per il coach e nel punteggio.
+    const previsti = S.sed.cardio?.durataPrevistaMin || r.durataMin || 0;
+    if (previsti && trascorsi > previsti + 20) {
+      const scelta = await chiedi({
+        titolo: "Quanto è durato davvero?",
+        testo: `Dall'avvio sono passati ${durataUmana(trascorsi * 60)}, ma erano previsti ${previsti} minuti. Se il telefono è rimasto acceso a fine cardio, il conto è più lungo del vero.`,
+        opzioni: [
+          { etichetta: `${previsti} minuti, come previsto`, valore: "previsti" },
+          { etichetta: `${trascorsi} minuti, è giusto`, valore: "trascorsi" },
+        ],
+      });
+      if (scelta !== "trascorsi") trascorsi = previsti;
+    }
     S.sed = await store.aggiornaSeduta(S.sed.id, {
       cardio: { ...S.sed.cardio, eseguito: true, durataMin: trascorsi },
     });
