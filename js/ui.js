@@ -126,10 +126,14 @@ export function num(v, dec = 1) {
   // Anche l'infinito è un «non numero»: una divisione per zero da qualche parte
   // stamperebbe la parola «Infinity» in mezzo a una frase italiana.
   if (v === null || v === undefined || !Number.isFinite(Number(v))) return "—";
-  return Number(v)
+  const testo = Number(v)
     .toFixed(dec)
     .replace(/\.0+$/, "")
     .replace(".", ",");
+  // «-0» non è un numero che si scrive: succede quando un valore negativo
+  // piccolissimo si arrotonda a zero, e in una riga di differenza («-0 kg»)
+  // dichiara un calo che non c'è stato.
+  return /^-0(,0*)?$/.test(testo) ? testo.slice(1) : testo;
 }
 
 // ---------- toast ----------
