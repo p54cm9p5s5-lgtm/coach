@@ -184,10 +184,15 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
  */
 export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, regole }) {
   const R = (regole && regole.salute) || {};
-  const pesi = R.pesi || { sonno: 30, allenamento: 30, movimento: 20, fumo: 20 };
+  const pesi = R.pesi || {
+    sonno: 22, allenamento: 22, fumo: 20, movimento: 12, passi: 10, esercizio: 8, inPiedi: 6,
+  };
   const oreBersaglio = R.sonnoOreBersaglio ?? 7.5;
   const oreMinime = R.sonnoOreMinime ?? 6;
   const tollerate = R.sigaretteTollerate ?? 10;
+  const passiBersaglio = R.passiBersaglio ?? 8000;
+  const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 30;
+  const inPiediBersaglio = R.minutiInPiediBersaglio ?? 150;
   const voci = [];
   const tetti = [];
 
@@ -232,6 +237,42 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
     });
   } else {
     voci.push({ nome: "Movimento", quota: null, peso: pesi.movimento, dettaglio: "non registrato" });
+  }
+
+  // --- passi: quanto ti sei mosso, al di là dell'allenamento
+  if (giorno?.passi != null) {
+    voci.push({
+      nome: "Passi",
+      quota: sottoBersaglio(giorno.passi / passiBersaglio, 1.2),
+      peso: pesi.passi,
+      dettaglio: `${Math.round(giorno.passi).toLocaleString("it-IT")} su ${passiBersaglio.toLocaleString("it-IT")}`,
+    });
+  } else {
+    voci.push({ nome: "Passi", quota: null, peso: pesi.passi, dettaglio: "non registrati" });
+  }
+
+  // --- minuti di esercizio: l'anello verde dell'orologio
+  if (giorno?.minutiEsercizio != null) {
+    voci.push({
+      nome: "Minuti di esercizio",
+      quota: sottoBersaglio(giorno.minutiEsercizio / esercizioBersaglio, 1.2),
+      peso: pesi.esercizio,
+      dettaglio: `${Math.round(giorno.minutiEsercizio)} su ${esercizioBersaglio} min`,
+    });
+  } else {
+    voci.push({ nome: "Minuti di esercizio", quota: null, peso: pesi.esercizio, dettaglio: "non registrati" });
+  }
+
+  // --- tempo in piedi: quanto NON sei stato seduto
+  if (giorno?.minutiInPiedi != null) {
+    voci.push({
+      nome: "Tempo in piedi",
+      quota: sottoBersaglio(giorno.minutiInPiedi / inPiediBersaglio, 1.2),
+      peso: pesi.inPiedi,
+      dettaglio: `${Math.round(giorno.minutiInPiedi)} su ${inPiediBersaglio} min`,
+    });
+  } else {
+    voci.push({ nome: "Tempo in piedi", quota: null, peso: pesi.inPiedi, dettaglio: "non registrato" });
   }
 
   // --- fumo: zero vale pieno, la soglia tollerata vale zero, oltre è un tetto
@@ -367,6 +408,40 @@ export function giudizio(totale) {
   return { testo: "da rivedere", livello: 1 };
 }
 
+/**
+ * Il colore di un punteggio, su una scala continua: lime acceso da 95 in su,
+ * rosso acceso da 20 in giù, e in mezzo il passaggio graduale per giallo e
+ * arancione. Un numero che scende deve VEDERSI scendere, non aspettare una
+ * soglia per cambiare pastello.
+ *
+ * I colori sono fissi e non variabili di tema: sono un dato, come le tacche di
+ * un termometro, e devono voler dire la stessa cosa su fondo chiaro e scuro.
+ */
+const SCALA = [
+  [20, [255, 59, 48]],   // rosso acceso
+  [45, [255, 140, 0]],   // arancione
+  [70, [250, 204, 21]],  // giallo
+  [85, [163, 230, 53]],  // lime-verde
+  [95, [168, 240, 58]],  // lime acceso
+];
+
+export function coloreDaPunteggio(totale) {
+  if (totale == null || Number.isNaN(totale)) return "var(--label-secondary)";
+  const v = Math.max(0, Math.min(100, totale));
+  if (v <= SCALA[0][0]) return `rgb(${SCALA[0][1].join(",")})`;
+  if (v >= SCALA[SCALA.length - 1][0]) return `rgb(${SCALA[SCALA.length - 1][1].join(",")})`;
+  for (let i = 1; i < SCALA.length; i++) {
+    const [x1, c1] = SCALA[i - 1];
+    const [x2, c2] = SCALA[i];
+    if (v <= x2) {
+      const q = (v - x1) / (x2 - x1);
+      const mix = c1.map((c, k) => Math.round(c + (c2[k] - c) * q));
+      return `rgb(${mix.join(",")})`;
+    }
+  }
+  return "var(--label-secondary)";
+}
+
 /** Anello grande con il numero al centro. */
 export function anello(totale, { etichetta = "Completezza", dimensione = 176, sottotitolo = null } = {}) {
   const R = 76;
@@ -381,8 +456,7 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
   });
   // Tre livelli come le barrette della scomposizione: con due soli colori,
   // «sufficiente» e «ottimo» erano indistinguibili a colpo d'occhio.
-  const liv = giudizio(totale).livello;
-  const colore = liv === 1 ? "var(--orange)" : liv === 2 ? "var(--label-secondary)" : "var(--accent)";
+  const colore = coloreDaPunteggio(totale);
   svg.append(
     el("circle", { cx: 88, cy: 88, r: R, fill: "none", stroke: "currentColor", "stroke-width": spessore, opacity: 0.14 }),
     el("circle", {

@@ -298,9 +298,23 @@ const REGOLE_BASE = {
   // sono i bersagli. Sono numeri dichiarati, non inventati dentro al codice:
   // il master brief può cambiarli come cambia tutto il resto.
   salute: {
-    pesi: { sonno: 30, allenamento: 30, movimento: 20, fumo: 20 },
+    // Sette voci, nessuna capace di decidere da sola: con poche voci il
+    // punteggio finiva a coincidere con quello dell'allenamento, che è una
+    // cosa diversa. I pesi sono dichiarati qui, non nascosti nel codice.
+    pesi: {
+      sonno: 22,
+      allenamento: 22,
+      fumo: 20,
+      movimento: 12,
+      passi: 10,
+      esercizio: 8,
+      inPiedi: 6,
+    },
     sonnoOreBersaglio: 7.5,
     sonnoOreMinime: 6,
+    passiBersaglio: 8000,
+    minutiEsercizioBersaglio: 30,
+    minutiInPiediBersaglio: 150,
     // Sopra questa soglia la giornata è comunque compromessa, per quanto bene
     // sia andato tutto il resto: è il tetto, non una sottrazione.
     sigaretteTollerate: 10,
@@ -1823,7 +1837,11 @@ async function riabbinaAgenda() {
  */
 export async function punteggiSalute(dal, al = isoDate()) {
   const { punteggioSalute } = await import("./punteggio.js");
-  const reg = regole();
+  // L'obiettivo di movimento vive nelle impostazioni, non nel brief: senza
+  // passarlo, la voce «movimento» risultava non registrata anche con le kcal
+  // in archivio.
+  const reg = { ...regole() };
+  reg.salute = { ...(reg.salute || {}), obiettivoMovimento: await impostazione("obiettivoMovimentoKcal") };
   const perNotte = new Map((await notti()).map((n) => [n.data, n]));
   const giorni = new Map((await giorniSalute()).map((g) => [g.data, g]));
   const fumate = await conteggioFumo();

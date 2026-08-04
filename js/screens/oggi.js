@@ -6,7 +6,7 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { graficoAttivita, graficoLinea, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
-import { anello, giudizio } from "../punteggio.js";
+import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
 import { sbloccaAudio, unaVoltaSola } from "../ui.js";
 
 let meseMostrato = null;
@@ -163,58 +163,59 @@ async function bloccoGrafico(ridisegna) {
     : null;
   const oggiSalute = perPunteggio.get(oggi);
 
-  const graficoSalute = graficoLinea({
-    punti: serie
-      .filter((r) => !r.futuro)
-      .map((r) => {
-        const p = perPunteggio.get(r.data);
-        return {
-          data: r.data,
-          valore: p?.totale ?? null,
-          evidenza: r.allenamento,
-          nota: p?.voci
-            ?.filter((v) => v.quota != null)
-            .map((v) => `${v.nome.toLowerCase()} ${Math.round(v.quota * 100)}%`)
-            .join(" · ") || null,
-        };
-      }),
-    obiettivo: 80,
-    etichettaObiettivo: "buono 80",
-    formatta: (v) => `${Math.round(v)} su 100`,
-    invito: "Tocca un giorno per vedere da cosa viene",
-  });
+  // Un anello come quello della completezza degli allenamenti: un punteggio è
+  // una quota di qualcosa, e il cerchio lo dice meglio di una linea.
+  const mostrato = oggiSalute?.totale ?? mediaSalute;
+  const voci = (oggiSalute?.voci || []).filter((v) => v.quota != null);
 
   const bloccoSalute = h(
     "div.group",
     h("h2", "Salute"),
     h(
       "div",
-      { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
+      { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 16px" },
       selettorePeriodo(periodo, ridisegna),
-      fascia([
-        {
-          etichetta: "Oggi",
-          valore: oggiSalute?.totale != null ? String(oggiSalute.totale) : "—",
-          nota: oggiSalute?.totale != null ? giudizio(oggiSalute.totale).testo : "dati non ancora arrivati",
-        },
-        {
-          etichetta: "Media",
-          valore: mediaSalute != null ? String(mediaSalute) : "—",
-          nota: `${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`,
-        },
-        {
-          etichetta: "Sigarette",
-          valore: oggiSalute?.sigarette != null ? String(oggiSalute.sigarette) : "—",
-          nota: oggiSalute?.sigarette != null ? "oggi" : "non contate",
-        },
-      ]),
-      graficoSalute,
+      mostrato != null
+        ? anello(mostrato, {
+            etichetta: "Salute",
+            dimensione: 168,
+            sottotitolo: giudizio(mostrato).testo,
+          })
+        : h("p", { style: "margin:0;text-align:center;color:var(--label-secondary)" }, "Nessun dato ancora"),
+      mostrato != null
+        ? h(
+            "p",
+            { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
+            oggiSalute?.totale != null
+              ? `oggi · media ${mediaSalute ?? "—"} su ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`
+              : `media di ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`
+          )
+        : null,
+      // Da cosa viene, voce per voce: un punteggio che non si sa spiegare non
+      // serve a niente.
+      voci.length
+        ? h(
+            "div.list",
+            { style: "margin-top:16px;background:none" },
+            ...voci.map((v) =>
+              h(
+                "div.row",
+                h("div.main", h("span.title", v.nome), h("span.sub", v.dettaglio)),
+                h(
+                  "span.value",
+                  { style: `color:${coloreDaPunteggio(Math.round(v.quota * 100))}` },
+                  `${Math.round(v.quota * 100)}%`
+                )
+              )
+            )
+          )
+        : null,
       h(
         "p.footnote",
-        { style: "margin:10px 0 0" },
+        { style: "margin:12px 0 0" },
         oggiSalute?.limite
           ? `Oggi il punteggio è fermo a ${oggiSalute.totale}: ${oggiSalute.limite.perche}.`
-          : "Sonno, allenamento, movimento e fumo. Le voci senza dato restano fuori dal conto invece di valere zero."
+          : "Sonno, allenamento, fumo, movimento, passi, minuti di esercizio e tempo in piedi. Le voci senza dato restano fuori dal conto invece di valere zero."
       )
     )
   );

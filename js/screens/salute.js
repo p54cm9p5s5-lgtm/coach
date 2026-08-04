@@ -3,7 +3,7 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
 import { graficoLinea, schedaGrafico, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
-import { anello, giudizio } from "../punteggio.js";
+import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
 
 const NOME_SHORTCUT = "Coach Salute";
 
@@ -155,14 +155,15 @@ export async function render({ ridisegna }) {
       ? Math.round(validi.reduce((a, b) => a + b, 0) / validi.length)
       : null;
 
+    // Stessa scala di colori del punteggio Salute: lime acceso da 95 in su,
+    // rosso acceso da 20 in giù, e in mezzo il passaggio graduale.
     const pillola = (n) => {
-      const g = giudizio(n);
+      const c = coloreDaPunteggio(n);
       return h(
         "span.pill",
         {
           style:
-            `font-variant-numeric:tabular-nums;background:${g.livello === 1 ? "var(--fill-tertiary)" : "color-mix(in srgb, var(--accent) 18%, transparent)"};` +
-            `color:${g.livello === 1 ? "var(--orange)" : "var(--accent)"}`,
+            `font-variant-numeric:tabular-nums;background:color-mix(in srgb, ${c} 16%, transparent);color:${c}`,
         },
         String(n)
       );
