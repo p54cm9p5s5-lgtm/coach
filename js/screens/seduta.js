@@ -1476,7 +1476,7 @@ async function vistaRecupero(corpo, piede) {
             "div.stepper",
             h("button", { "aria-label": v.aTempo ? "meno 5 secondi" : "una ripetizione in meno", onclick: async () => { rip = Math.max(0, rip - (v.aTempo ? 5 : 1)); valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "−"),
             valRip,
-            h("button", { "aria-label": v.aTempo ? "più 5 secondi" : "una ripetizione in più", onclick: async () => { rip += v.aTempo ? 5 : 1; valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "+")
+            h("button", { "aria-label": v.aTempo ? "più 5 secondi" : "una ripetizione in più", onclick: async () => { rip = Math.min(v.aTempo ? 3600 : 200, rip + (v.aTempo ? 5 : 1)); valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "+")
           )
         ),
         carico != null
@@ -1589,6 +1589,10 @@ async function chiudiRecupero() {
 async function vistaQuestionario(corpo, piede) {
   const v = vocePrevista();
   const def = store.esercizio(v.esercizioId);
+  // Servono alla correzione dell'ultima serie: i passi del carico devono
+  // essere quelli montabili davvero, come nella schermata di recupero.
+  const invQui = await store.inventario();
+  const bilanciereQui = def?.attrezzo === "bilanciere";
 
   // Se questo esercizio è già stato valutato (si torna indietro dal riepilogo,
   // o l'app è ripartita), il questionario riparte da quello che avevi scritto:
@@ -1615,14 +1619,27 @@ async function vistaQuestionario(corpo, piede) {
   const hintTec = h("p.scale-hint", "");
   const dettaglioPolso = h("div");
   const avanti = h("button.btn", { disabled: true, onclick: azione(conferma) }, "Avanti");
+  // Un bottone spento senza spiegazione, a metà allenamento, è una trappola:
+  // premi e non succede niente. Il commento sotto al punteggio parla solo di
+  // intensità e tecnica, quindi rispondendo a quelle spariva anche l'unico
+  // indizio e restavano fuori le domande sul polso. Qui c'è sempre scritto
+  // cosa manca, con le parole delle domande.
+  const mancano = h("p.footnote", { style: "margin:0 0 8px;text-align:center" }, "");
 
   const verifica = () => {
-    const ok =
-      stato.rpe != null &&
-      stato.tecnica != null &&
-      stato.polso != null &&
-      (stato.polso === false || (stato.quando && stato.intensita));
-    avanti.disabled = !ok;
+    const manca = [];
+    if (stato.rpe == null) manca.push("quanto è stata dura");
+    if (stato.tecnica == null) manca.push("com'è andata la tecnica");
+    if (stato.polso == null) manca.push("il dolore al polso");
+    else if (stato.polso === true) {
+      if (!stato.quando) manca.push("quando faceva male");
+      if (!stato.intensita) manca.push("quanto faceva male");
+    }
+    avanti.disabled = manca.length > 0;
+    mancano.textContent = manca.length
+      ? `Manca ancora: ${manca.join(", ")}.`
+      : "";
+    mancano.style.display = manca.length ? "block" : "none";
   };
 
   const righello = (onPick, zona, scelto = null) => {
@@ -1726,7 +1743,10 @@ async function vistaQuestionario(corpo, piede) {
               valRip,
               h("button", {
                 onclick: async () => {
-                  rip += v.aTempo ? 5 : 1;
+                  // Un tetto largo, ma un tetto: il carico ce l'ha (l'inventario),
+                  // le ripetizioni no, e con il dito fermo sul «+» si arrivava a
+                  // numeri che nessuno ha mai fatto.
+                  rip = Math.min(v.aTempo ? 3600 : 200, rip + (v.aTempo ? 5 : 1));
                   valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`;
                   await salvaUltima({ ripFatte: rip });
                 },
@@ -1739,17 +1759,24 @@ async function vistaQuestionario(corpo, piede) {
                 h("label", "Carico usato"),
                 h(
                   "div.stepper",
+                  // Gli stessi passi della schermata di recupero. Prima qui si
+                  // andava di mezzo chilo alla volta e senza tetto: con dischi
+                  // da 1,25 il passo più piccolo montabile è 2,5 kg, e si
+                  // finiva per registrare 70,5 kg, un carico che non esiste in
+                  // casa. Correggere 70 in 60 chiedeva venti tocchi.
                   h("button", {
+                    "aria-label": "carico più basso",
                     onclick: async () => {
-                      carico = Math.max(0, Math.round((carico - 0.5) * 10) / 10);
+                      carico = bilanciereQui ? carichoPiuVicino(carico, -1, invQui) : Math.max(0, carico - 1);
                       valCar.textContent = `${num(carico)} kg`;
                       await salvaUltima({ carico });
                     },
                   }, "−"),
                   valCar,
                   h("button", {
+                    "aria-label": "carico più alto",
                     onclick: async () => {
-                      carico = Math.round((carico + 0.5) * 10) / 10;
+                      carico = bilanciereQui ? carichoPiuVicino(carico, 1, invQui) : carico + 1;
                       valCar.textContent = `${num(carico)} kg`;
                       await salvaUltima({ carico });
                     },
@@ -1813,7 +1840,7 @@ async function vistaQuestionario(corpo, piede) {
   // niente, altrimenti «Avanti» resterebbe spento con le risposte già date.
   if (stato.polso === true) mostraDettaglioPolso();
 
-  aggiungi(piede, avanti);
+  aggiungi(piede, mancano, avanti);
   verifica();
   ridisegnaPunteggio();
 
@@ -2177,7 +2204,14 @@ async function vistaStretching(corpo, piede) {
       "div.hero",
       h("p.kicker", "Ultimo passo"),
       h("h2", "Stretching"),
-      h("p.target", `${S.sed.tipoNome} · ${voci.length} allungamenti, circa 3 minuti`)
+      // Senza allungamenti previsti non c'è una durata da promettere: «0
+      // allungamenti, circa 3 minuti» sono due parole che si contraddicono.
+      h(
+        "p.target",
+        voci.length
+          ? `${S.sed.tipoNome} · ${voci.length} ${voci.length === 1 ? "allungamento" : "allungamenti"}, circa 3 minuti`
+          : S.sed.tipoNome
+      )
     ),
     voci.length
       ? h("div.guida", { style: "margin-top:12px" }, ...voci.map((v, i) => passo(i + 1, v.nome, v.dose, v.come)))
@@ -2314,23 +2348,49 @@ function bloccoOrologio(sed, quale, salva) {
       value: valori[c.id] != null ? (c.testo ? String(valori[c.id]) : num(valori[c.id], c.dec ?? 1)) : "",
       style: c.testo ? "width:120px" : "",
     });
+    // Quello che non si riesce a leggere come numero non veniva salvato, ma
+    // restava scritto nel campo: sembrava registrato e non lo era. Adesso lo
+    // dice, e appena lasci il campo rimette quello che c'è davvero in archivio.
+    const avviso = h(
+      "p.footnote",
+      { style: "margin:2px 16px 6px;color:var(--orange);display:none" },
+      ""
+    );
+    const rimettiSalvato = () => {
+      campo.value = valori[c.id] != null ? (c.testo ? String(valori[c.id]) : num(valori[c.id], c.dec ?? 1)) : "";
+    };
     campo.addEventListener("input", async () => {
       const t = campo.value.trim();
       if (t === "") valori[c.id] = null;
       else if (c.testo) valori[c.id] = t;
       else {
         const n = Number(t.replace(",", "."));
-        if (!Number.isFinite(n) || n < 0) return;
+        if (!Number.isFinite(n) || n < 0) {
+          campo.setAttribute("aria-invalid", "true");
+          avviso.textContent = `«${t}» non è un numero: il campo resta come prima.`;
+          avviso.style.display = "block";
+          return;
+        }
         // I decimali che servono, campo per campo: la distanza ne vuole due
         // (3,01 km diventava 3) e i battiti nessuno.
         const p10 = 10 ** (c.dec ?? 1);
         valori[c.id] = Math.round(n * p10) / p10;
       }
+      campo.removeAttribute("aria-invalid");
+      avviso.style.display = "none";
       await salva({ ...tutto, [quale]: { ...valori } });
+    });
+    // L'avviso resta scritto anche dopo: se il campo si svuotasse in silenzio
+    // sembrerebbe di non aver mai scritto niente.
+    campo.addEventListener("blur", () => {
+      if (campo.getAttribute("aria-invalid") !== "true") return;
+      rimettiSalvato();
+      campo.removeAttribute("aria-invalid");
     });
     aggiungi(
       lista,
-      h("div.field", h("label", `${c.nome}${c.unita ? ` (${c.unita})` : ""}`), h("div.stepper", campo))
+      h("div.field", h("label", `${c.nome}${c.unita ? ` (${c.unita})` : ""}`), h("div.stepper", campo)),
+      avviso
     );
   }
   return h(

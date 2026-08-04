@@ -160,7 +160,11 @@ async function bloccoGrafico(ridisegna) {
   const daQuandoP = inizioPeriodo(periodo, oggi) || primeDate[0] || oggi;
   const punteggi = await store.punteggiSalute(daQuandoP, oggi);
   const perPunteggio = new Map(punteggi.map((p) => [p.data, p]));
-  const conPunteggio = punteggi.filter((p) => p.totale != null);
+  // Oggi è a metà: entra nella media come una giornata fiacca e la tira giù di
+  // qualche punto, che è esattamente il motivo per cui è fuori dalle medie di
+  // passi e movimento qui accanto. Con «1 gg» invece è proprio oggi che vuoi
+  // vedere, e lì il numero è quello di oggi, non una media.
+  const conPunteggio = punteggi.filter((p) => p.totale != null && (soloOggi || p.data < oggi));
   const mediaSalute = conPunteggio.length
     ? Math.round(conPunteggio.reduce((t, p) => t + p.totale, 0) / conPunteggio.length)
     : null;
