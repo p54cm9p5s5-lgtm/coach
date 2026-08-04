@@ -72,12 +72,20 @@ async function elenco(vaiA) {
         },
         h(
           "div.main",
-          h("span.title", `Mostra gli altri ${restanti.length}`),
+          // Al singolare non si dice «gli altri 1»: quando ne resta uno solo la
+          // riga diventa «Mostra l'ultimo», e la riga sotto smette di dire
+          // «dal … al …» per lo stesso giorno.
+          h(
+            "span.title",
+            restanti.length === 1 ? "Mostra l'ultimo" : `Mostra gli altri ${restanti.length}`
+          ),
           // Con l'anno: senza, «dal 10/07 al 09/07» sembrava un giorno solo
           // mentre erano dodici mesi.
           h(
             "span.sub",
-            `dal ${conAnno(restanti[restanti.length - 1].data)} al ${conAnno(restanti[0].data)}`
+            restanti.length === 1
+              ? conAnno(restanti[0].data)
+              : `dal ${conAnno(restanti[restanti.length - 1].data)} al ${conAnno(restanti[0].data)}`
           )
         ),
         h("span.chevron", "›")
