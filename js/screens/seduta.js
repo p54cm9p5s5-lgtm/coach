@@ -315,11 +315,16 @@ async function vistaRisultato(id, vaiA) {
 
   // Anche a allenamento chiuso: l'orologio lo guardi con calma dopo, e i
   // numeri devono poter entrare lo stesso.
-  aggiungi(wrap,
-    bloccoOrologio(sed, async (orologio) => {
-      await store.aggiornaSeduta(sed.id, { orologio });
-    })
-  );
+  // Anche a allenamento chiuso: l'orologio lo guardi con calma dopo, e i
+  // numeri devono poter entrare lo stesso.
+  const salvaOrologio = async (orologio) => {
+    await store.aggiornaSeduta(sed.id, { orologio });
+    sed.orologio = orologio;
+  };
+  aggiungi(wrap, bloccoOrologio(sed, "pesi", salvaOrologio));
+  if (sed.cardio?.previsto || sed.cardio?.eseguito) {
+    aggiungi(wrap, bloccoOrologio(sed, "cardio", salvaOrologio));
+  }
 
   const scheda = (etichetta, valore, nota) =>
     h(
@@ -1828,6 +1833,11 @@ async function vistaCardio(corpo, piede) {
           )
         )
       : null,
+    // Qui la parte pesi è finita e sull'orologio hai il suo riepilogo davanti:
+    // è il momento giusto per copiarlo, prima di far partire il cardio.
+    bloccoOrologio(S.sed, "pesi", async (orologio) => {
+      S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+    }),
     h(
       "div.group",
       h(
@@ -2082,7 +2092,20 @@ async function vistaStretching(corpo, piede) {
           "A muscolo caldo e a lavoro finito. Prima dell'allenamento allungare a freddo un muscolo che deve spingere riduce la forza espressa: per quello all'inizio c'è la mobilità, non questo."
         )
       )
-    )
+    ),
+    // Il cardio è appena finito: qui il suo riepilogo è ancora sull'orologio.
+    S.sed.cardio?.eseguito
+      ? bloccoOrologio(S.sed, "cardio", async (orologio) => {
+          S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+        })
+      : null,
+    // Nei giorni senza cardio i pesi non sono ancora stati copiati da nessuna
+    // parte: l'occasione è questa.
+    !S.sed.cardio?.previsto
+      ? bloccoOrologio(S.sed, "pesi", async (orologio) => {
+          S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+        })
+      : null
   );
 
   aggiungi(piede,
@@ -2149,42 +2172,75 @@ function bloccoStretching() {
  * lista dei tipi di dato l'allenamento non esiste), e ricavare i battiti da
  * una finestra di ore darebbe una media sporca. Scriverli qui costa dieci
  * secondi ed è il dato esatto.
+ *
+ * Sono due blocchi distinti perché l'orologio registra due allenamenti
+ * separati: la parte pesi e il cardio, con dati diversi.
  */
-function bloccoOrologio(sed, salva) {
-  const CAMPI = [
-    { id: "fcMedia", nome: "FC media", unita: "bpm" },
-    { id: "fcMax", nome: "FC massima", unita: "bpm" },
-    { id: "kcal", nome: "Calorie attive", unita: "kcal" },
-  ];
-  const valori = { ...(sed.orologio || {}) };
+const CAMPI_OROLOGIO = {
+  pesi: [
+    { id: "durata", nome: "Durata allenamento", esempio: "1:35:40", testo: true },
+    { id: "kcalAttive", nome: "Chilocalorie attive", unita: "kcal" },
+    { id: "kcalTotali", nome: "Chilocalorie totali", unita: "kcal" },
+    { id: "fcMedia", nome: "Media battito", unita: "bpm" },
+    { id: "fcMax", nome: "Battito massimo", unita: "bpm" },
+    { id: "sforzo", nome: "Sforzo", unita: "su 10" },
+  ],
+  cardio: [
+    { id: "durata", nome: "Durata allenamento", esempio: "0:30:13", testo: true },
+    { id: "km", nome: "Distanza", unita: "km", dec: 2 },
+    { id: "kcalAttive", nome: "Chilocalorie attive", unita: "kcal" },
+    { id: "kcalTotali", nome: "Chilocalorie totali", unita: "kcal" },
+    { id: "ritmo", nome: "Media ritmo", esempio: "10'02\"", testo: true },
+    { id: "fcMedia", nome: "Media battito", unita: "bpm" },
+    { id: "sforzo", nome: "Sforzo", unita: "su 10" },
+  ],
+};
+
+function bloccoOrologio(sed, quale, salva) {
+  // Compatibilità con la prima versione, che teneva un blocco solo e piatto.
+  const tutto = sed.orologio || {};
+  const vecchioPiatto = tutto.fcMedia != null || tutto.fcMax != null || tutto.kcal != null;
+  const valori = { ...(quale === "pesi" && vecchioPiatto ? tutto : tutto[quale] || {}) };
+
   const lista = h("div.list");
-  for (const c of CAMPI) {
-    // type="text" e inputmode decimale: con type="number" il telefono butta
-    // via quello che scrivi appena metti la virgola.
+  for (const c of CAMPI_OROLOGIO[quale]) {
+    // type="text" e tastiera numerica: con type="number" il telefono butta via
+    // quello che scrivi appena metti la virgola o i due punti.
     const campo = h("input.val", {
       type: "text",
-      inputmode: "decimal",
-      placeholder: "—",
-      "aria-label": `${c.nome} in ${c.unita}`,
-      value: valori[c.id] != null ? num(valori[c.id]) : "",
+      inputmode: c.testo ? "text" : "decimal",
+      placeholder: c.esempio || "—",
+      "aria-label": `${c.nome}${c.unita ? ` in ${c.unita}` : ""}`,
+      value: valori[c.id] != null ? (c.testo ? String(valori[c.id]) : num(valori[c.id], c.dec ?? 1)) : "",
+      style: c.testo ? "width:120px" : "",
     });
     campo.addEventListener("input", async () => {
-      const t = campo.value.replace(",", ".").trim();
+      const t = campo.value.trim();
       if (t === "") valori[c.id] = null;
+      else if (c.testo) valori[c.id] = t;
       else {
-        const n = Number(t);
+        const n = Number(t.replace(",", "."));
         if (!Number.isFinite(n) || n < 0) return;
-        valori[c.id] = Math.round(n * 10) / 10;
+        // I decimali che servono, campo per campo: la distanza ne vuole due
+        // (3,01 km diventava 3) e i battiti nessuno.
+        const p10 = 10 ** (c.dec ?? 1);
+        valori[c.id] = Math.round(n * p10) / p10;
       }
-      await salva({ ...valori });
+      await salva({ ...tutto, [quale]: { ...valori } });
     });
-    aggiungi(lista, h("div.field", h("label", `${c.nome} (${c.unita})`), h("div.stepper", campo)));
+    aggiungi(
+      lista,
+      h("div.field", h("label", `${c.nome}${c.unita ? ` (${c.unita})` : ""}`), h("div.stepper", campo))
+    );
   }
   return h(
     "div.group",
-    h("h2", "Dall'orologio"),
+    h("h2", quale === "pesi" ? "Dall'orologio — pesi" : "Dall'orologio — cardio"),
     lista,
-    h("p.footnote", "Facoltativi. Li leggi sul riepilogo dell'allenamento nell'orologio e li scrivi qui: finiscono nel pacchetto per il coach.")
+    h(
+      "p.footnote",
+      "Copia i numeri dal riepilogo dell'allenamento sull'orologio. Facoltativi: quelli che scrivi finiscono nel pacchetto per il coach."
+    )
   );
 }
 
@@ -2256,9 +2312,14 @@ async function vistaFine(corpo, piede) {
     mancanti.length
       ? h("div.group", h("h2", "Dati mancanti"), h("div.list", ...mancanti.map((m) => h("div.row", h("div.main", h("span.title", m))))))
       : null,
-    bloccoOrologio(S.sed, async (orologio) => {
+    bloccoOrologio(S.sed, "pesi", async (orologio) => {
       S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
     }),
+    S.sed.cardio?.previsto || S.sed.cardio?.eseguito
+      ? bloccoOrologio(S.sed, "cardio", async (orologio) => {
+          S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+        })
+      : null,
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota generale (dolori, sensazioni — solo se presenti)"),
     h("textarea.note", { id: "nota-seduta", value: S.sed.notaGenerale || "" })
   );

@@ -6,6 +6,27 @@ import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate } from "./ui.js";
 
 const riga = (etichetta, valore) => (valore == null || valore === "" ? null : `${etichetta}: ${valore}`);
 
+/**
+ * I numeri copiati dall'orologio a fine allenamento. Sono due allenamenti
+ * distinti — pesi e cardio — e vanno letti così anche dal coach.
+ */
+function descriviOrologio(o, quale) {
+  if (!o) return null;
+  // La prima versione dell'app teneva un blocco solo e piatto: se arriva
+  // quello, vale come parte pesi.
+  const parti = [
+    o.durata ? `durata ${o.durata}` : null,
+    quale === "cardio" && o.km != null ? `${num(o.km, 2)} km` : null,
+    quale === "cardio" && o.ritmo ? `ritmo ${o.ritmo}/km` : null,
+    o.kcalAttive != null ? `${num(o.kcalAttive, 0)} kcal attive` : o.kcal != null ? `${num(o.kcal, 0)} kcal attive` : null,
+    o.kcalTotali != null ? `${num(o.kcalTotali, 0)} kcal totali` : null,
+    o.fcMedia != null ? `FC media ${num(o.fcMedia, 0)}` : null,
+    o.fcMax != null ? `FC massima ${num(o.fcMax, 0)}` : null,
+    o.sforzo != null ? `sforzo ${num(o.sforzo, 0)}/10` : null,
+  ].filter(Boolean);
+  return parti.length ? parti.join(" · ") : null;
+}
+
 function tabella(intestazioni, righe) {
   if (!righe.length) return "";
   const ultima = intestazioni.length - 1;
@@ -169,18 +190,8 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     // Letti sull'orologio a fine allenamento: i Comandi Rapidi non sanno
     // leggere gli allenamenti dell'Apple Watch, quindi questi numeri li scrive
     // l'atleta a mano — e sono quelli esatti della seduta, non di una finestra.
-    riga(
-      "Dall'orologio",
-      (() => {
-        const o = seduta.orologio || {};
-        const parti = [
-          o.fcMedia != null ? `FC media ${num(o.fcMedia, 0)}` : null,
-          o.fcMax != null ? `FC massima ${num(o.fcMax, 0)}` : null,
-          o.kcal != null ? `${num(o.kcal, 0)} kcal attive` : null,
-        ].filter(Boolean);
-        return parti.length ? parti.join(" · ") : null;
-      })()
-    ),
+    riga("Dall'orologio (pesi)", descriviOrologio(seduta.orologio?.pesi || seduta.orologio, "pesi")),
+    riga("Dall'orologio (cardio)", descriviOrologio(seduta.orologio?.cardio, "cardio")),
     riga("Nota generale", seduta.notaGenerale),
     giornoSplit && seduta.tipoProgrammatoId && seduta.tipoProgrammatoId !== seduta.tipoId
       ? `Nota: in programma era ${giornoSplit(seduta.tipoProgrammatoId)?.nome || seduta.tipoProgrammatoId}`
