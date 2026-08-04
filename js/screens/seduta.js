@@ -1,7 +1,7 @@
 import {
   h, qs, clear, toast, mmss, num, chiedi, sheet,
   avviaAllarme, fermaAllarme, allarmeAttivo, sbloccaAudio, unaVoltaSola, tick,
-  tieniSchermoAcceso, rilasciaSchermo, durataUmana, isoDate, dataLunga, aggiungi } from "../ui.js";
+  tieniSchermoAcceso, rilasciaSchermo, durataUmana, isoDate, dataLunga, dataBreve, aggiungi } from "../ui.js";
 import { intestazione, ridisegna } from "../app.js";
 import * as store from "../store.js";
 import { descriviDischi, carichoPiuVicino } from "../plates.js";
@@ -119,9 +119,13 @@ async function vistaProgramma(vaiA, ridisegna) {
               { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);text-align:center" },
               origine.riposo
                 ? "Riposo, dal calendario"
-                : origine.vuoto
-                  ? "Niente sul calendario per oggi"
-                  : "Lo split non prevede allenamenti oggi"
+                : origine.scaduta
+                  ? `Il calendario letto arriva al ${dataBreve(origine.fine)}: rileggilo con «Coach Calendario»`
+                  : origine.sconosciuto
+                    ? `«${origine.titolo}» non è un allenamento del programma`
+                    : origine.vuoto
+                      ? "Niente sul calendario per oggi"
+                      : "Lo split non prevede allenamenti oggi"
             ),
         // Da dove arriva questo giorno: il calendario del coach o lo split del
         // brief. Se i due dicono cose diverse, comanda il calendario e si vede.

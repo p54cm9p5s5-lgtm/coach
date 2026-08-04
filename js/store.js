@@ -3,7 +3,7 @@
 import * as db from "./db.js";
 import { isoDate, weekdayOf, giorniTra } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
-import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello } from "./segnali.js";
+import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni } from "./segnali.js";
 import { punteggioEsercizio, punteggioAllenamento } from "./punteggio.js";
 
 let LIBRERIA = null;
@@ -829,12 +829,15 @@ export async function aggiornaProposte(cache = null) {
       }
     }
 
-    if (sospese.some((p) => p.firma === firma)) continue;
-
+    // Le proposte in sospeso che non corrispondono più a quello che dicono i
+    // dati vanno tolte comunque, anche quando quella giusta c'è già: restavano
+    // in Home a chiedere una decisione su una situazione superata.
     for (const p of sospese) {
+      if (p.firma === firma) continue;
       await db.del("proposte", p.id);
       tolte++;
     }
+    if (sospese.some((p) => p.firma === firma)) continue;
     await db.put("proposte", {
       id: db.nuovoId("pro"),
       data: oggi,
@@ -911,11 +914,16 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
   // prima di rispondere, «Accetto» valeva già zero (l'obiettivo veniva scartato
   // subito) e «Rimando» faceva ricomparire la stessa proposta all'istante.
   const espOra = esposizioniSvolte(await esposizioni(p.esercizioId));
+  // La verifica si conta da quando accetti, non da quando la proposta è nata:
+  // una proposta accettata dopo tre settimane risultava «da verificare» il
+  // giorno stesso, e la verifica non voleva più dire niente.
+  const giorniVerifica = 14;
   const agg = {
     ...p,
     stato,
     rispostoIl: new Date().toISOString(),
     esposizioniAllaRisposta: espOra.length,
+    dataVerifica: stato === "accettata" ? piuGiorni(isoDate(), giorniVerifica) : p.dataVerifica,
     notaRisposta: nota,
   };
   await db.put("proposte", agg);
@@ -927,7 +935,7 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
       `Proposta ${ETICHETTA_ESITO[stato]} (livello ${p.livelloGerarchia} — ${nomeLivello(p.livelloGerarchia)}).` +
       (nota ? ` Nota: ${nota}` : ""),
     fonte: "app",
-    dataVerifica: stato === "accettata" ? p.dataVerifica : null,
+    dataVerifica: stato === "accettata" ? agg.dataVerifica : null,
     propostaId: p.id,
   });
 
