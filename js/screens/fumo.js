@@ -21,11 +21,11 @@ function colore(n) {
 /**
  * Il segnale «vietato fumare», a sole linee.
  *
- * Un colore solo — quello del testo — e nessun riempimento: così funziona
- * uguale su fondo chiaro e su fondo scuro, e non litiga col numero, che è
- * l'unica cosa colorata della schermata perché è l'unica che è un dato.
+ * Prende lo stesso identico colore del numero: sotto 4 il colore del testo,
+ * poi giallo, arancione, rosso. Un colore solo per tutta la schermata, così
+ * non c'è modo di leggere due segnali diversi.
  */
-function sigarettaSvg() {
+function sigarettaSvg(tinta) {
   const NS = "http://www.w3.org/2000/svg";
   const el = (tag, attrs = {}) => {
     const n = document.createElementNS(NS, tag);
@@ -38,7 +38,7 @@ function sigarettaSvg() {
 
   const g = el("g", {
     fill: "none",
-    stroke: "var(--label)",
+    stroke: tinta,
     "stroke-width": 7,
     "stroke-linecap": "round",
     "stroke-linejoin": "round",
@@ -52,9 +52,10 @@ function sigarettaSvg() {
     // la sigaretta e i tre segmenti della parte che brucia
     el("rect", { x: 40, y: 89, width: 88, height: 22, rx: 3 }),
     el("path", { d: "M138 89v22M149 89v22M160 89v22" }),
-    // le due volute di fumo
-    el("path", { d: "M137 82C137 70 122 70 122 58 122 46 137 46 137 34" }),
-    el("path", { d: "M113 82C113 71 99 71 99 59 99 47 113 47 113 36" })
+    // Le due volute salgono tutte e due dalla punta che brucia. Quella esterna
+    // è più corta: più in alto il cerchio si stringe e la toccherebbe.
+    el("path", { d: "M154 82C154 72 143 72 143 62 143 52 154 52 154 44" }),
+    el("path", { d: "M140 82C140 70 128 70 128 58 128 46 140 46 140 34" })
   );
   g.append(
     motivo,
@@ -119,7 +120,7 @@ export async function render({ ridisegna }) {
           style:
             "flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px",
         },
-        sigarettaSvg(),
+        sigarettaSvg(tinta),
       h(
         "p",
         {
