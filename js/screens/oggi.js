@@ -365,6 +365,20 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
             "dal calendario"
           )
         : null,
+      // La nota che il coach ha scritto nell'evento è un'istruzione per oggi
+      // («porta la cintura»): si vedeva solo toccando il giorno sul
+      // calendarietto, cioè quasi mai.
+      origine.nota
+        ? h(
+            "p",
+            {
+              style:
+                "margin:-4px 16px 14px;padding:10px 12px;background:var(--fill-tertiary);border-radius:10px;" +
+                "font-size:13px;color:var(--label);text-align:left",
+            },
+            origine.nota
+          )
+        : null,
       previsto
         ? h(
             "button.btn",
