@@ -996,6 +996,18 @@ textarea.note {
 
 /* La lineetta è 36x5 px, ma l'area da toccare per trascinare il pannello è
    tutta la fascia in cima: centrare cinque pixel col pollice è impossibile. */
+/* Tastiera aperta: i riquadri di testo alti si stringono e i margini si
+   accorciano, così l'ultimo pulsante resta sopra la barra di iOS senza
+   bisogno di scorrere. */
+.sheet.con-tastiera textarea.note {
+  min-height: 84px !important;
+}
+
+.sheet.con-tastiera .btn-wrap {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 .sheet .grabber {
   width: 100%;
   height: 28px;

@@ -495,17 +495,7 @@ async function incolla(ridisegna) {
       style: "min-height:160px",
       placeholder: "Incolla qui il testo copiato dal comando rapido",
     });
-    // Appena il testo è dentro, la tastiera non serve più: la si chiude da
-    // sola. Su iPhone, sopra la tastiera, il sistema disegna la sua barra
-    // («Inserisci info», le frecce, la spunta) SOPRA la pagina, e il pulsante
-    // «Importa» ci finisce sotto: nessun calcolo di altezze può evitarlo,
-    // perché quella barra non compare in nessuna misura del browser. Togliere
-    // la tastiera è l'unica cosa che funziona sempre.
-    const chiudiTastiera = () => {
-      if (area.value.trim().length > 20) area.blur();
-    };
-    area.addEventListener("paste", () => setTimeout(chiudiTastiera, 60));
-    area.addEventListener("input", () => setTimeout(chiudiTastiera, 400));
+
     const nota = h(
       "p.footnote",
       { style: "margin:8px 16px 0" },
