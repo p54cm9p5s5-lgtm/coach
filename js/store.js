@@ -1316,6 +1316,12 @@ export async function snapshotAutomatico(motivo = "") {
   dump.motivo = motivo;
   dump.parziale = ["foto"]; // le immagini restano fuori: peserebbero troppo
   dump.dati.foto = [];
+  // La copia precedente vive dentro le impostazioni: se la includessimo,
+  // ogni salvataggio conterrebbe tutti quelli prima e il peso raddoppierebbe
+  // ogni volta, fino a saturare l'archivio.
+  dump.dati.impostazioni = (dump.dati.impostazioni || []).filter(
+    (i) => i.chiave !== "snapshotAutomatico"
+  );
   await setImpostazione("snapshotAutomatico", JSON.stringify(dump));
   await setImpostazione("ultimoSnapshot", new Date().toISOString());
   return dump;
