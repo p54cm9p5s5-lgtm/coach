@@ -119,7 +119,22 @@ async function bloccoGrafico(ridisegna) {
   // Oggi non è finita: nella media entrerebbe come un giorno fiacco. Col
   // periodo «1 gg» invece è proprio oggi che vuoi vedere.
   const soloOggi = periodo.id === "1";
-  const giorniConDati = giorni.filter((g) => g.presente && dentro(g) && (soloOggi || g.data < oggi));
+  // I dati di movimento arrivano col comando delle 5 del mattino, che porta i
+  // giorni già finiti: su «oggi» sono quasi sempre assenti, e le due schede
+  // restavano vuote per sempre. Come per il sonno si mostra allora l'ultimo
+  // giorno che ha davvero dei numeri, scrivendo quale.
+  const ultimoGiorno = [...giorni]
+    .filter((g) => g.presente && g.data <= oggi && (g.passi != null || g.kcalAttive != null))
+    .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
+  const giorniConDati = soloOggi
+    ? ultimoGiorno
+      ? [ultimoGiorno]
+      : []
+    : giorni.filter((g) => g.presente && dentro(g) && g.data < oggi);
+  const etichettaGiorni =
+    soloOggi && ultimoGiorno && ultimoGiorno.data !== oggi
+      ? `giorno del ${dataBreve(ultimoGiorno.data)}`
+      : etichettaPeriodo(periodo);
   // Il sonno di stanotte porta la data di ieri sera: con «1 gg» si guarda
   // l'ultima notte dormita, non «oggi», che deve ancora succedere.
   const ultimaNotte = [...notti]
@@ -150,13 +165,13 @@ async function bloccoGrafico(ridisegna) {
         {
           etichetta: "Passi",
           valore: mediaPassi != null ? mediaPassi.toLocaleString("it-IT") : "—",
-          nota: `${quantiPassi} ${quantiPassi === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`,
+          nota: `${quantiPassi} ${quantiPassi === 1 ? "giorno" : "giorni"} · ${etichettaGiorni}`,
         },
         {
           etichetta: "Movimento",
           valore: mediaKcal != null ? String(mediaKcal) : "—",
           unita: "kcal",
-          nota: `${quantiKcal} ${quantiKcal === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`,
+          nota: `${quantiKcal} ${quantiKcal === 1 ? "giorno" : "giorni"} · ${etichettaGiorni}`,
         },
         {
           etichetta: "Sonno",
@@ -310,11 +325,13 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         ? "Calendario da aggiornare"
         : origine.oltreProgrammato
           ? "Non ancora programmato"
-          : "Riposo";
+          : origine.nonLetta
+            ? "Giorno non letto"
+            : "Riposo";
   const sotto = giaFatto
     ? "completato oggi"
     : previsto
-      ? `${previsto.esercizi?.length || 0} esercizi${previsto.cardio ? " + cardio" : ""}`
+      ? `${previsto.esercizi?.length || 0} ${(previsto.esercizi?.length || 0) === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}`
       : origine.riposo
         ? "riposo, dal calendario del coach"
         : origine.sconosciuto
@@ -323,7 +340,9 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
           ? `il calendario importato arriva al ${dataBreve(origine.fine)}: aggiornalo con il comando Coach Calendario`
           : origine.oltreProgrammato
             ? `il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}`
-            : origine.fonte === "calendario"
+            : origine.nonLetta
+              ? "questo giorno non è mai stato letto dal calendario"
+              : origine.fonte === "calendario"
               ? "niente sul calendario per oggi"
               : "nessun allenamento previsto dallo split";
 
@@ -378,6 +397,8 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
               ? `Il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}: oltre non c'è ancora niente.`
               : origine.scaduta
               ? "Il calendario letto è vecchio: rileggilo per sapere cosa tocca."
+              : origine.nonLetta
+              ? "Nessuna lettura del calendario copre questo giorno: rileggilo per sapere cosa c'era."
               : origine.sconosciuto
                 ? "Sul calendario c'è qualcosa, ma non è un allenamento del programma."
                 : origine.vuoto

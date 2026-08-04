@@ -43,7 +43,7 @@ async function elenco(vaiA) {
           h(
             "div.main",
             h("span.title", `${dataBreve(s.data)} · ${s.tipoNome}`),
-            h("span.sub", `${serie.length} serie · ${durata}${saltati ? ` · ${saltati} saltati` : ""}`)
+            h("span.sub", `${serie.length} serie · ${durata}${saltati ? ` · ${saltati} ${saltati === 1 ? "saltato" : "saltati"}` : ""}`)
           ),
           h("span.chevron", "›")
         )
@@ -97,7 +97,7 @@ async function elenco(vaiA) {
         h(
           "a.row",
           { href: `#/storico?esercizio=${id}` },
-          h("div.main", h("span.title", def?.nome || id), h("span.sub", `${esp.length} esposizioni`)),
+          h("div.main", h("span.title", def?.nome || id), h("span.sub", `${esp.length} ${esp.length === 1 ? "esposizione" : "esposizioni"}`)),
           h("span.chevron", "›")
         )
       );
