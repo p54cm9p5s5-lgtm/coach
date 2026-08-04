@@ -299,6 +299,20 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
     progresso: { fase: "fine", indice: 0 },
   };
   await db.put("sedute", agg);
+  // Il punteggio si calcola adesso, con il programma in vigore adesso, e resta
+  // quello. Le Map non sopravvivono al salvataggio: diventano oggetti normali.
+  const comp = await completezzaSeduta(id);
+  if (comp) {
+    agg.completezza = {
+      totale: comp.totale,
+      voci: comp.voci,
+      penalita: comp.penalita,
+      limite: comp.limite,
+      perEsercizio: Object.fromEntries(comp.perEsercizio || new Map()),
+      congelatoIl: new Date().toISOString(),
+    };
+    await db.put("sedute", agg);
+  }
   return agg;
 }
 
@@ -435,6 +449,12 @@ export async function questionariDi(sedutaId) {
 export async function completezzaSeduta(id) {
   const sed = await db.get("sedute", id);
   if (!sed) return null;
+  // Un allenamento chiuso è un fatto avvenuto: il suo punteggio viene congelato
+  // alla chiusura. Ricalcolarlo sullo split di oggi lo farebbe cambiare da solo
+  // ogni volta che il coach aggiorna il programma.
+  if (sed.completezza) {
+    return { ...sed.completezza, perEsercizio: new Map(Object.entries(sed.completezza.perEsercizio || {})) };
+  }
   const giorno = giornoSplit(sed.tipoId);
   const serie = await serieDi(id);
   const logs = await questionariDi(id);
@@ -1200,8 +1220,12 @@ export function statoFinestra(righe, { settimane = 3, minimoSettimana = 5 } = {}
   }
 
   const contano = perSettimana.filter((s) => !s.primaDeiDati);
+  // Il numeratore conta i giorni DENTRO la finestra, non tutti quelli mai
+  // registrati: altrimenti dopo un mese si legge «120/21 giorni».
+  const dentroFinestra = perSettimana.reduce((t, s) => t + s.registrati, 0);
   return {
-    registratiTotali: valide.length,
+    registratiTotali: dentroFinestra,
+    registratiInArchivio: valide.length,
     richiesti: settimane * 7,
     perSettimana,
     completa: contano.length === settimane && contano.every((s) => s.sufficiente),
