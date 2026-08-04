@@ -86,6 +86,11 @@ export function valida(dati, libreria) {
 }
 
 /** Differenze leggibili tra programma attuale e nuovo, per la conferma. */
+/** Nomi dei giorni della settimana, indice 0 = domenica come in JavaScript. */
+const GIORNI_SETTIMANA = [
+  "domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato",
+];
+
 export function confronta(corrente, nuovo, libreria) {
   const nome = (id) => libreria.find((e) => e.id === id)?.nome || id;
   const righe = [];
@@ -112,6 +117,32 @@ export function confronta(corrente, nuovo, libreria) {
   for (const g of giorniB) if (!giorniA.has(g)) righe.push({ tipo: "aggiunto", testo: `Nuovo giorno: ${g}` });
   for (const g of giorniA) if (!giorniB.has(g)) righe.push({ tipo: "rimosso", testo: `Giorno rimosso: ${g}` });
 
+  // Il giorno della settimana, il nome e il cardio non venivano confrontati:
+  // spostare Spalle dal mercoledì al sabato cambia tutto il calendario, e
+  // passava senza una riga. Stessa cosa per il cardio tolto o aggiunto.
+  const perId = (p) => new Map((p.split || []).map((g) => [g.id, g]));
+  const gA = perId(corrente);
+  const gB = perId(nuovo);
+  for (const [id, g] of gB) {
+    const vecchio = gA.get(id);
+    if (!vecchio) continue;
+    if (vecchio.giorno !== g.giorno) {
+      righe.push({
+        tipo: "modificato",
+        testo: `${g.nome || id}: spostato da ${GIORNI_SETTIMANA[vecchio.giorno] ?? vecchio.giorno} a ${GIORNI_SETTIMANA[g.giorno] ?? g.giorno}`,
+      });
+    }
+    if ((vecchio.nome || "") !== (g.nome || "")) {
+      righe.push({ tipo: "modificato", testo: `Giorno rinominato: ${vecchio.nome || id} → ${g.nome || id}` });
+    }
+    if (Boolean(vecchio.cardio) !== Boolean(g.cardio)) {
+      righe.push({
+        tipo: "modificato",
+        testo: `${g.nome || id}: cardio ${g.cardio ? "aggiunto" : "tolto"}`,
+      });
+    }
+  }
+
   for (const [k, { g, v }] of b) {
     if (!a.has(k)) {
       righe.push({ tipo: "aggiunto", testo: `${g.nome}: aggiunto ${nome(v.esercizioId)}` });
@@ -125,6 +156,14 @@ export function confronta(corrente, nuovo, libreria) {
     }
     if ((vecchio.carico ?? null) !== (v.carico ?? null)) {
       cambi.push(`carico ${vecchio.carico ?? "—"} → ${v.carico ?? "—"} kg`);
+    }
+    // Su un esercizio a tempo la durata è la prescrizione: un plank che passa
+    // da 60 a 90 secondi cambiava in silenzio.
+    if ((vecchio.durataSec ?? null) !== (v.durataSec ?? null)) {
+      cambi.push(`durata ${vecchio.durataSec ?? "—"}s → ${v.durataSec ?? "—"}s`);
+    }
+    if (Boolean(vecchio.aTempo) !== Boolean(v.aTempo)) {
+      cambi.push(v.aTempo ? "ora è a tempo" : "ora è a ripetizioni");
     }
     if (cambi.length) {
       righe.push({ tipo: "modificato", testo: `${g.nome} · ${nome(v.esercizioId)}: ${cambi.join(", ")}` });

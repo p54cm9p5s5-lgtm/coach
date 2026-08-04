@@ -231,12 +231,17 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
   } else if (!attese.length) {
     // Col calendario collegato «niente» non è riposo per scelta dell'app: è
     // quello che c'è scritto, o l'assenza di qualunque cosa.
-    righe.push(
+    const riga = (
       origine?.riposo
         ? {
             // Il riposo scritto dal coach è un'informazione, non un'assenza:
-            // dire «niente sul calendario» era il contrario del vero.
-            testo: origine.titolo ? `Riposo — ${origine.titolo}` : "Riposo, dal calendario",
+            // dire «niente sul calendario» era il contrario del vero. Se però
+            // l'evento si chiama proprio «Riposo», ripeterlo dava «Riposo —
+            // Riposo».
+            testo:
+              origine.titolo && origine.titolo.trim().toLowerCase() !== "riposo"
+                ? `Riposo — ${origine.titolo}`
+                : "Riposo, dal calendario",
             stato: "info",
           }
         : origine?.scaduta
@@ -250,16 +255,19 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
           ? { testo: `Non ancora programmato (il coach arriva al ${dataBreve(origine.ultimoEvento)})`, stato: "info" }
           : origine?.nonLetta
           ? { testo: "Giorno non letto dal calendario", stato: "info" }
+          : origine?.sconosciuto
+          ? // Sul calendario c'è qualcosa: la riga che lo spiega viene aggiunta
+            // più sotto, e dire «niente sul calendario» la contraddiceva.
+            null
           : {
               testo: origine?.fonte === "calendario" ? "Niente sul calendario" : "Riposo",
               stato: "info",
             }
     );
+    if (riga) righe.push(riga);
   }
   // Evita di ripetere lo stesso titolo due volte: se è già fra le cose attese
   // del giorno, basta segnalarne la natura una volta sola.
-  // La nota che il coach ha scritto nell'evento vale quanto il titolo.
-  if (origine?.nota) righe.push({ testo: origine.nota, stato: "info" });
   if (origine?.sconosciuto && origine.titolo) {
     const gia = attese.findIndex((a) => a.testo === origine.titolo);
     // Se quella riga era segnata in ritardo, il ritardo va tenuto: toglierla e
@@ -269,6 +277,9 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
     if (eraScaduta) righe.push({ testo: `${origine.titolo} — in ritardo`, stato: "warn" });
     righe.push({ testo: `«${origine.titolo}» non è un allenamento del programma`, stato: "info" });
   }
+  // La nota che il coach ha scritto nell'evento vale quanto il titolo, e va
+  // letta DOPO di lui: prima arrivava per prima e sembrava riferita ad altro.
+  if (origine?.nota) righe.push({ testo: origine.nota, stato: "info" });
 
   for (const a of attese) righe.push({ testo: a.testo, stato: a.tipo === "scaduto" ? "warn" : "info" });
   return { titolo: dataLunga(data), righe };

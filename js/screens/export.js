@@ -3,7 +3,8 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { nomeLivello } from "../segnali.js";
 import {
-  logSeduta, bloccoSalute, bloccoProposte, bloccoAccettate, bloccoCorpo, intestazionePacchetto,
+  logSeduta, bloccoSalute, bloccoProposte, bloccoAccettate, bloccoCorpo, bloccoSegnali,
+  intestazionePacchetto,
 } from "../export.js";
 
 const ETICHETTE_MISURE = {
@@ -20,6 +21,7 @@ const SCELTE = [
   { id: "seduta", nome: "Log dell'ultimo allenamento", sub: "formato §12, con recuperi e densità reali" },
   { id: "salute", nome: "Dati salute e finestre", sub: "movimento, sonno, stato delle 3 settimane" },
   { id: "proposte", nome: "Proposte in sospeso", sub: "con le quattro domande già compilate" },
+  { id: "segnali", nome: "Segnali aperti", sub: "quello che l'app ha notato e non è una proposta" },
   { id: "corpo", nome: "Misure e indici", sub: "solo se registrate" },
 ];
 
@@ -27,7 +29,7 @@ export async function render({ vaiA }) {
   const wrap = h("div.screen");
   aggiungi(wrap, intestazione("Pacchetto", { etichetta: "Home", onclick: () => vaiA("oggi") }));
 
-  const stato = { seduta: true, salute: true, proposte: true, corpo: false };
+  const stato = { seduta: true, salute: true, proposte: true, segnali: true, corpo: false };
   const anteprima = h("pre", {
     style:
       "margin:0;padding:14px;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;" +
@@ -253,6 +255,16 @@ async function componi(stato) {
     if (blocco) {
       pezzi.push(blocco);
       contenuto.push(`${accettate.length} accettate`);
+    }
+  }
+
+  if (stato.segnali) {
+    await store.inCoda(() => store.aggiornaSegnali());
+    const avvisi = await store.segnali();
+    const blocco = bloccoSegnali(avvisi);
+    if (blocco) {
+      pezzi.push(blocco);
+      contenuto.push(`${avvisi.length} ${avvisi.length === 1 ? "segnale" : "segnali"}`);
     }
   }
 

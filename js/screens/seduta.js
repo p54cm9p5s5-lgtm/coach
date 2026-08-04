@@ -1239,14 +1239,18 @@ async function completaSerie(v, def, numero) {
     recuperoTargetSec: def?.recuperoDefaultSec ?? 120,
   });
 
-  const ultima = numero >= v.serie;
+  // Il recupero serve anche dopo l'ultima serie: prima si andava dritti alla
+  // valutazione, cioè si chiedeva un giudizio mentre il fiato non era ancora
+  // tornato, e il riposo prima dell'esercizio dopo spariva. Quando il recupero
+  // finisce, `vistaEsercizio` vede che le serie previste sono tutte fatte e
+  // manda al questionario da sé.
   const durata = (S.recuperoTarget ?? def?.recuperoDefaultSec ?? 120) * 1000;
   S.serieCorrenteId = rec.id;
-  S.recuperoFine = ultima ? null : Date.now() + durata;
+  S.recuperoFine = Date.now() + durata;
   S.tsInizioSerie = null;
 
   await salvaProgresso({
-    fase: ultima ? "questionario" : "recupero",
+    fase: "recupero",
     recuperoFine: S.recuperoFine,
     tsInizioSerie: null,
   });
@@ -1336,6 +1340,71 @@ async function avanzaEsercizio() {
 
 // ---------- recupero ----------
 
+/**
+ * Cosa viene dopo l'esercizio appena finito: si mostra durante l'ultimo
+ * recupero, per arrivare al prossimo con il bilanciere già montato.
+ */
+async function bloccoProssimo(inv) {
+  const prossima = vocePrevista(S.sed.progresso.indice + 1);
+
+  if (!prossima) {
+    const dopo = S.sed.cardio?.previsto ? "il cardio" : "lo stretching";
+    return h(
+      "div.group",
+      h("h2", "Dopo questo"),
+      h("div.list", h("div.row", h("div.main", h("span.title", `Finiti i pesi: tocca ${dopo}`)))),
+      h("p.footnote", "È l'ultimo esercizio della seduta.")
+    );
+  }
+
+  const def = store.esercizio(prossima.esercizioId);
+  const obiettivo = prossima.aTempo ? null : await store.obiettivoCorrente(prossima.esercizioId);
+  const carico =
+    obiettivo?.carico ??
+    (prossima.carico > 0 ? prossima.carico : null) ??
+    (await store.ultimoCarico(prossima.esercizioId, prossima.carico ?? null));
+  const bersaglio = prossima.aTempo
+    ? `${prossima.serie} × ${prossima.durataSec}s`
+    : obiettivo?.rip != null
+      ? `${prossima.serie} × ${obiettivo.rip}`
+      : `${prossima.serie} × ${prossima.ripMin === prossima.ripMax ? prossima.ripMin : `${prossima.ripMin}-${prossima.ripMax}`}`;
+
+  const gruppo = h(
+    "div.group",
+    h("h2", "Prossimo esercizio"),
+    h(
+      "div.list",
+      h(
+        "div.row",
+        h("div.main", h("span.title", def?.nome || prossima.esercizioId), h("span.sub", bersaglio)),
+        h("span.value", carico != null ? `${num(carico)} kg` : "corpo libero")
+      )
+    )
+  );
+
+  if (carico != null && def?.attrezzo === "bilanciere") {
+    const dischi = descriviDischi(carico, inv);
+    aggiungi(gruppo,
+      h(
+        "div.plates",
+        h("span.etichetta", "Da montare"),
+        dischi
+          ? h("b", dischi)
+          : h(
+              "span",
+              `carico non componibile: con i tuoi dischi i più vicini sono ` +
+                `${num(carichoPiuVicino(carico, -1, inv))} e ${num(carichoPiuVicino(carico, 1, inv))} kg`
+            )
+      )
+    );
+  }
+
+  if (obiettivo?.titolo) aggiungi(gruppo, h("p.footnote", `Proposta accettata: ${obiettivo.titolo}`));
+  if (def?.video?.id) aggiungi(gruppo, riquadroVideo(def));
+
+  return gruppo;
+}
+
 async function vistaRecupero(corpo, piede) {
   const v = vocePrevista();
   const def = store.esercizio(v.esercizioId);
@@ -1345,6 +1414,7 @@ async function vistaRecupero(corpo, piede) {
   // S è nuovo di zecca e l'obiettivo accettato non deve sparire dallo schermo.
   S.obiettivo = v.aTempo ? null : await store.obiettivoCorrente(v.esercizioId);
   const bersaglio = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMax ?? v.ripMin;
+  const inv = await store.inventario();
 
   const testoTimer = h("p.timer", "--:--");
   const CIRC = 2 * Math.PI * 100;
@@ -1364,14 +1434,22 @@ async function vistaRecupero(corpo, piede) {
   );
   const sottotitolo = h(
     "p.target",
-    `Prossima: serie ${Math.min(fatte.length + 1, v.serie)} di ${v.serie}`
+    fatte.length >= v.serie
+      ? "Ultima serie fatta: dopo il recupero c'è la valutazione"
+      : `Prossima: serie ${fatte.length + 1} di ${v.serie}`
   );
   aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo));
+
+  // Dopo l'ultima serie il recupero è il tempo per prepararsi a quello dopo:
+  // nome, carico da montare e video del prossimo esercizio stanno qui, così ci
+  // si arriva pronti invece di scoprirlo quando il timer è già finito.
+  if (fatte.length >= v.serie) {
+    aggiungi(corpo, await bloccoProssimo(inv));
+  }
 
   // campi della serie appena chiusa
   let rip = ultima?.ripFatte ?? bersaglio;
   let carico = ultima?.carico ?? null;
-  const inv = await store.inventario();
   const bilanciere = def?.attrezzo === "bilanciere";
 
   // Rileggere prima di scrivere: partendo dalla copia caricata al disegno, la
@@ -1396,9 +1474,9 @@ async function vistaRecupero(corpo, piede) {
           h("label", v.aTempo ? "Secondi tenuti" : "Ripetizioni fatte"),
           h(
             "div.stepper",
-            h("button", { onclick: async () => { rip = Math.max(0, rip - (v.aTempo ? 5 : 1)); valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "−"),
+            h("button", { "aria-label": v.aTempo ? "meno 5 secondi" : "una ripetizione in meno", onclick: async () => { rip = Math.max(0, rip - (v.aTempo ? 5 : 1)); valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "−"),
             valRip,
-            h("button", { onclick: async () => { rip += v.aTempo ? 5 : 1; valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "+")
+            h("button", { "aria-label": v.aTempo ? "più 5 secondi" : "una ripetizione in più", onclick: async () => { rip += v.aTempo ? 5 : 1; valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "+")
           )
         ),
         carico != null
@@ -1407,9 +1485,9 @@ async function vistaRecupero(corpo, piede) {
               h("label", "Carico usato"),
               h(
                 "div.stepper",
-                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, -1, inv) : Math.max(0, carico - 1); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "−"),
+                h("button", { "aria-label": "carico più basso", onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, -1, inv) : Math.max(0, carico - 1); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "−"),
                 valCar,
-                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, 1, inv) : carico + 1; valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "+")
+                h("button", { "aria-label": "carico più alto", onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, 1, inv) : carico + 1; valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "+")
               )
             )
           : null

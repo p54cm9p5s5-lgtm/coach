@@ -632,40 +632,51 @@ function passo(n, titolo, ...dettagli) {
 
 async function istruzioni() {
   const oggi = isoDate();
+  // Il formato descritto qui è quello che l'app legge DAVVERO oggi: prima
+  // queste istruzioni erano rimaste all'esplorazione iniziale e insegnavano un
+  // pacchetto più povero di quello in uso.
   const esempio = [
-    "COACH-SALUTE v1",
+    "COACH-DATI v1",
     "FINESTRA AAAA-MM-GG AAAA-MM-GG",
-    `GIORNO ${oggi} kcal=NNN obiettivo=NNN passi=NNNN esercizio=NN fc=NN`,
+    `GIORNO ${oggi} kcal=NNN obiettivo=NNN passi=NNNN esercizio=NN inpiedi=NNN piani=NN km=N,NN fc=NN`,
     "NOTTE AAAA-MM-GG durata=NNN profondo=NN rem=NN veglia=NN risvegli=N",
-    `ALLENAMENTO ${oggi} inizio=HH:MM durata=NNNN kcal=NNN kcalTot=NNN fcMedia=NNN fcMax=NNN tipo="Rafforzamento funzionale"`,
+    "FASE AAAA-MM-GG HH:MM AAAA-MM-GG HH:MM Core",
+    `ALLENAMENTO ${oggi} inizio=HH:MM durata=NNNN kcal=NNN kcaltot=NNN fcmedia=NNN fcmax=NNN tipo="Rafforzamento funzionale"`,
+    "AGENDA AAAA-MM-GG titolo=Gambe/Core nota=porta la cintura",
   ].join("\n");
 
   await sheet((close) =>
     h(
       "div",
-      h("h2", "Comando rapido"),
+      h("h2", "Comandi rapidi"),
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        "Si costruisce una volta sola nell'app Comandi Rapidi. Prima la sonda, per scoprire cosa il tuo iPhone espone davvero."
+        "Si costruiscono una volta sola nell'app Comandi Rapidi. Poi girano da soli e tu incolli qui."
       ),
 
       h(
         "div.group",
-        h("h2", "1. La sonda, 5 minuti"),
+        h("h2", "1. I due comandi"),
         h(
           "div.guida",
           { style: "margin:0" },
-          passo(1, "Nuovo comando rapido", "App Comandi Rapidi → «+» in alto a destra. Chiamalo «Coach Sonda»."),
-          passo(2, "Azione «Trova campioni di salute»", "Tipo: Energia attiva. Ordina per data di inizio, decrescente. Limite: 5."),
-          passo(3, "Azione «Ripeti con ciascuno»", "Dentro metti «Ottieni dettagli di campione di salute» e guarda quali voci propone: Valore, Data di inizio, Unità."),
-          passo(4, "Azione «Mostra risultato»", "Eseguilo e mandami cosa esce. Da lì scrivo il comando definitivo sui campi che esistono davvero, non su ipotesi.")
+          passo(
+            1,
+            "«Coach Salute»",
+            "Legge dall'app Salute gli ultimi 30 giorni: movimento, passi, minuti di esercizio, tempo in piedi, piani, distanza, frequenza a riposo, e le fasi del sonno. Ultima azione: «Copia negli appunti»."
+          ),
+          passo(
+            2,
+            "«Coach Calendario»",
+            "Legge gli eventi del calendario da oggi ai prossimi 28 giorni e scrive una riga AGENDA per ognuno. Serve solo se gli allenamenti te li scrive il coach sul calendario."
+          )
         )
       ),
 
       h(
         "div.group",
-        h("h2", "2. Cosa deve produrre"),
+        h("h2", "2. Cosa devono produrre"),
         h(
           "div.guida",
           { style: "margin:0" },
@@ -683,9 +694,10 @@ async function istruzioni() {
             h("h3", "Regole"),
             h(
               "ul",
-              h("li", "La prima riga è sempre COACH-SALUTE v1."),
+              h("li", "La prima riga è sempre COACH-DATI v1."),
               h("li", "FINESTRA dice quali giorni copre il pacchetto: quelli senza riga GIORNO diventano «non registrati»."),
-              h("li", "Sonno in minuti, durata allenamento in secondi."),
+              h("li", "Sonno in minuti, durata allenamento in secondi, distanza in km (oppure metri= e la converte l'app)."),
+              h("li", "Le righe FASE sono le fasi grezze dell'orologio: durata, profondo, REM e risvegli li calcola l'app. Se ci sono sia NOTTE che FASE per la stessa notte, vince NOTTE."),
               h("li", "Un campo che manca si omette: assente non vuol dire zero."),
               h("li", "Righe sconosciute vengono ignorate senza far fallire l'import.")
             )
