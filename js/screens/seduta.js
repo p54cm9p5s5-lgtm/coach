@@ -429,7 +429,14 @@ async function vistaRisultato(id, vaiA) {
             "div.row",
             h(
               "div.main",
-              h("span.title", sed.cardio.eseguito ? `${num(sed.cardio.kmh)} km/h per ${sed.cardio.durataMin} min` : "Non eseguito"),
+              h(
+                "span.title",
+                sed.cardio.eseguito
+                  ? `${num(sed.cardio.kmh)} km/h per ${sed.cardio.durataMin} min`
+                  : sed.cardio.saltatoMotivo
+                    ? `Non eseguito — ${sed.cardio.saltatoMotivo}`
+                    : "Non eseguito"
+              ),
               h(
                 "span.sub",
                 `previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h${attesi ? ` · ${attesi} min` : ""}`

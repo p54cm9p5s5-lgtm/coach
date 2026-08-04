@@ -1362,7 +1362,13 @@ export async function importaSalute(pacchetto) {
     await setImpostazione("agenda", precedente);
     AGENDA = new Map(Object.entries(precedente));
     await setImpostazione("ultimoImportAgenda", ora);
-    LETTURA_AGENDA = ora.slice(0, 10);
+    // La finestra coperta parte dalla PRIMA lettura: le letture successive
+    // guardano sempre in avanti, ma i giorni già letti restano letti. Usando
+    // l'ultima lettura, i giorni in mezzo tornavano allo split e l'app
+    // riproponeva allenamenti che il coach non aveva messo.
+    const prima = await impostazione("primaLetturaAgenda");
+    if (!prima) await setImpostazione("primaLetturaAgenda", ora.slice(0, 10));
+    LETTURA_AGENDA = (prima || ora.slice(0, 10)).slice(0, 10);
   }
 
   // «Ultimo import» dei dati salute si aggiorna solo se sono davvero arrivati
@@ -1411,7 +1417,8 @@ export function abbinaAlloSplit(titolo) {
 
 async function caricaAgenda() {
   AGENDA = new Map(Object.entries((await impostazione("agenda")) || {}));
-  const letta = await impostazione("ultimoImportAgenda");
+  const prima = await impostazione("primaLetturaAgenda");
+  const letta = prima || (await impostazione("ultimoImportAgenda"));
   LETTURA_AGENDA = letta ? String(letta).slice(0, 10) : null;
   return AGENDA;
 }
@@ -1486,6 +1493,7 @@ export async function svuotaAgenda() {
   // continuavano a dire «letto il …» e la Home a comportarsi come se il
   // calendario comandasse ancora.
   await setImpostazione("ultimoImportAgenda", null);
+  await setImpostazione("primaLetturaAgenda", null);
   AGENDA = new Map();
   LETTURA_AGENDA = null;
 }

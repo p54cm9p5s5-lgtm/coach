@@ -154,6 +154,19 @@ async function componi(stato) {
     const ultima = tutte
       .filter((s) => s.stato === "completata")
       .sort((a, b) => (b.oraFine || 0) - (a.oraFine || 0))[0];
+    // Un allenamento ancora aperto oggi non entra nel pacchetto (i dati non
+    // sono chiusi), ma va detto: senza, il coach riceveva il log di ieri
+    // credendo che fosse l'ultima cosa fatta.
+    const aperta = tutte.find((s) => s.stato === "inCorso");
+    if (aperta) {
+      const quante = (await store.serieDi(aperta.id)).length;
+      pezzi.push(
+        `NOTA: c'è un allenamento ancora aperto (${aperta.tipoNome} del ${dataBreve(aperta.data)}, ` +
+          `${quante} ${quante === 1 ? "serie registrata" : "serie registrate"}). ` +
+          `Non è in questo pacchetto perché non è stato chiuso: il log qui sotto è quello precedente.`
+      );
+      contenuto.push("avviso allenamento aperto");
+    }
     if (ultima) {
       const serie = await store.serieDi(ultima.id);
       const questionari = await store.questionariDi(ultima.id);
@@ -188,6 +201,8 @@ async function componi(stato) {
       if (previsto) return `Non fatto (era previsto ${previsto.nome})`;
       const org = store.origineGiorno(data);
       if (org.sconosciuto) return `Da calendario: «${org.titolo}»`;
+      if (org.scaduta) return `Calendario non aggiornato (letto fino al ${dataBreve(org.fine)})`;
+      if (org.nonLetta) return "Calendario non letto per quel giorno";
       return "Riposo";
     };
     if (giorni.length || notti.length) {
