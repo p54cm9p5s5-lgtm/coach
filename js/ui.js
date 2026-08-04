@@ -123,7 +123,9 @@ export function durataUmana(sec) {
 }
 
 export function num(v, dec = 1) {
-  if (v === null || v === undefined || Number.isNaN(v)) return "—";
+  // Anche l'infinito è un «non numero»: una divisione per zero da qualche parte
+  // stamperebbe la parola «Infinity» in mezzo a una frase italiana.
+  if (v === null || v === undefined || !Number.isFinite(Number(v))) return "—";
   return Number(v)
     .toFixed(dec)
     .replace(/\.0+$/, "")
@@ -441,6 +443,8 @@ function beep(freq = 880, dur = 0.16, gain = 0.22) {
 }
 
 let bipTimer = null;
+// Il `play()` dell'allarme che non ha ancora finito di partire.
+let playInVolo = null;
 
 /**
  * Suona finché non si chiama fermaAllarme(). Se la traccia non parte — succede
@@ -452,11 +456,22 @@ export function avviaAllarme() {
   fermaAllarme();
   sessioneAudio("transient");
   const a = elemento();
+  a.loop = true;
   a.currentTime = 0;
   const p = a.play();
-  if (p && typeof p.catch === "function") {
-    p.catch(() => {
-      if (bipTimer) return;
+  if (p && typeof p.then === "function") {
+    // iOS risolve `play()` con calma. Se nel frattempo l'allarme è stato
+    // spento, il `pause()` di fermaAllarme è arrivato PRIMA che la traccia
+    // partisse: veniva ignorato, la traccia partiva lo stesso e — essendo in
+    // loop — non la fermava più nessuno. Qui si rimette in pausa appena il
+    // play atterra, se nel frattempo l'allarme è stato spento.
+    playInVolo = p;
+    p.then(() => {
+      if (playInVolo === p) playInVolo = null;
+      if (alarmTimer === null) fermaAllarme();
+    }).catch(() => {
+      if (playInVolo === p) playInVolo = null;
+      if (bipTimer || alarmTimer === null) return;
       beep(880, 0.3, 0.35);
       bipTimer = setInterval(() => beep(880, 0.3, 0.35), 1200);
     });
@@ -470,6 +485,10 @@ export function fermaAllarme() {
   if (bipTimer) clearInterval(bipTimer);
   bipTimer = null;
   if (elementoAllarme) {
+    // Prima si toglie la ripetizione: se un `play()` in volo dovesse comunque
+    // partire dopo questa pausa, la traccia finisce dopo un giro invece di
+    // suonare per sempre.
+    elementoAllarme.loop = false;
     elementoAllarme.pause();
     elementoAllarme.currentTime = 0;
   }

@@ -7,6 +7,25 @@ import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate } from "./ui.js";
 const riga = (etichetta, valore) => (valore == null || valore === "" ? null : `${etichetta}: ${valore}`);
 
 /**
+ * I motivi vengono salvati con una parola sola («attrezzo»), che è comoda per
+ * il codice e oscura per chi legge: al coach arrivava «cardio non eseguito
+ * (attrezzo)» invece delle parole che l'app aveva mostrato all'atleta.
+ */
+const MOTIVI_ESERCIZIO = {
+  tempo: "tempo finito",
+  dolore: "dolore",
+  attrezzo: "attrezzo non disponibile",
+  altro: "altro",
+};
+const MOTIVI_CARDIO = {
+  tempo: "tempo finito",
+  attrezzo: "tapis non disponibile",
+  altro: "altro",
+};
+const inParole = (codice, tabella) =>
+  codice == null ? null : tabella[codice] || String(codice).replace(/\s*\n+\s*/g, " · ");
+
+/**
  * I numeri copiati dall'orologio a fine allenamento. Sono due allenamenti
  * distinti — pesi e cardio — e vanno letti così anche dal coach.
  */
@@ -29,6 +48,16 @@ function descriviOrologio(o, quale) {
 
 function tabella(intestazioni, righe) {
   if (!righe.length) return "";
+  // Una barra verticale scritta in una nota («ho sentito un click | poi
+  // niente») spezzava la riga in colonne che non esistono, e il coach leggeva
+  // una tabella sfasata. Qui viene protetta una volta sola, per tutte le
+  // tabelle: gli a capo diventano separatori per lo stesso motivo.
+  const cella = (v) =>
+    String(v ?? "")
+      .replace(/\s*\n+\s*/g, " · ")
+      .replace(/\|/g, "\\|");
+  righe = righe.map((r) => r.map(cella));
+  intestazioni = intestazioni.map(cella);
   const ultima = intestazioni.length - 1;
   // L'ultima colonna (le note) non viene allineata: è lunga e variabile, e
   // riempirla di spazi renderebbe la tabella illeggibile in chat.
@@ -67,7 +96,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     if (log?.saltato) {
       // Anche qui gli a capo diventano separatori: la nota del salto si scrive
       // in un riquadro a più righe e spezzava la tabella del coach.
-      const motivo = `${log.saltato.motivo}${log.saltato.nota ? `: ${String(log.saltato.nota).replace(/\s*\n+\s*/g, " · ")}` : ""}`;
+      const motivo = `${inParole(log.saltato.motivo, MOTIVI_ESERCIZIO)}${log.saltato.nota ? `: ${String(log.saltato.nota).replace(/\s*\n+\s*/g, " · ")}` : ""}`;
       if (!righeSerie.length) {
         righe.push([nome, "—", "—", "—", `NON ESEGUITO (${motivo})`]);
         continue;
@@ -144,24 +173,24 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     ),
     // Il motivo per cui il cardio non è stato fatto è un dato clinico, non un
     // dettaglio: veniva registrato nell'app e poi non arrivava al coach.
-    riga(
-      "Velocità impostata sul tapis",
-      (() => {
-        if (!seduta.cardio?.eseguito && !seduta.cardio?.previsto) return null;
-        // La nota che hai scritto sul cardio è un dato come gli altri: restava
-        // nell'app e non arrivava mai al coach.
-        const nota = seduta.cardio.note
-          ? ` — ${String(seduta.cardio.note).replace(/\s*\n+\s*/g, " · ")}`
-          : "";
-        if (seduta.cardio.eseguito) {
-          return `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min${nota}`;
-        }
-        const motivo = seduta.cardio.saltatoMotivo
-          ? ` (${String(seduta.cardio.saltatoMotivo).replace(/\s*\n+\s*/g, " · ")})`
-          : "";
-        return `cardio non eseguito${motivo}${nota}`;
-      })()
-    ),
+    // L'etichetta cambia con il caso: «Velocità impostata sul tapis: cardio non
+    // eseguito» era una frase che non voleva dire niente.
+    (() => {
+      if (!seduta.cardio?.eseguito && !seduta.cardio?.previsto) return null;
+      // La nota che hai scritto sul cardio è un dato come gli altri: restava
+      // nell'app e non arrivava mai al coach.
+      const nota = seduta.cardio.note
+        ? ` — ${String(seduta.cardio.note).replace(/\s*\n+\s*/g, " · ")}`
+        : "";
+      if (seduta.cardio.eseguito) {
+        return riga(
+          "Velocità impostata sul tapis",
+          `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min${nota}`
+        );
+      }
+      const motivo = inParole(seduta.cardio.saltatoMotivo, MOTIVI_CARDIO);
+      return riga("Cardio", `non eseguito${motivo ? ` (${motivo})` : ""}${nota}`);
+    })(),
     riga("Durata allenamento", durata ? durataUmana(durata) : null),
     // La densità si misura sul tempo di lavoro, non sul tempo passato: con una
     // seduta ripresa il giorno dopo veniva «0,01 serie/min».
@@ -376,6 +405,32 @@ export function bloccoProposte(proposte, nomeLivello) {
     "",
     "Materiale per la valutazione, non decisioni: l'app non tocca il programma scritto.",
     "Le soglie usate sono quelle del blocco tecnico del master brief; la decisione resta al coach.",
+  ].join("\n");
+}
+
+/**
+ * I segnali aperti: quello che l'app ha notato e che non è una proposta.
+ * Restavano dentro l'app, cioè invisibili proprio a chi deve decidere.
+ */
+export function bloccoSegnali(segnali) {
+  if (!segnali.length) return null;
+  const ordine = { attenzione: 0, info: 1 };
+  const ordinati = [...segnali].sort(
+    (a, b) => (ordine[a.gravita] ?? 2) - (ordine[b.gravita] ?? 2)
+  );
+  return [
+    "SEGNALI APERTI",
+    "",
+    ...ordinati.map((s, i) =>
+      [
+        `${i + 1}. ${s.messaggio}${s.gravita === "attenzione" ? " [attenzione]" : ""}`,
+        s.dettaglio ? `   ${s.dettaglio}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    ),
+    "",
+    "Osservazioni, non proposte: nessuna di queste tocca il programma.",
   ].join("\n");
 }
 

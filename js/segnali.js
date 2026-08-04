@@ -9,6 +9,18 @@
 import { carichoPiuVicino } from "./plates.js";
 import { dataBreve, giorniTra, parseIso, isoDate, num } from "./ui.js";
 
+/**
+ * I motivi di un salto sono salvati con una parola sola: comoda per il codice,
+ * oscura per chi legge. Il segnale finisce nel pacchetto del coach, e «attrezzo»
+ * lì dentro non vuol dire niente.
+ */
+const MOTIVI_SALTO = {
+  tempo: "tempo finito",
+  dolore: "dolore",
+  attrezzo: "attrezzo non disponibile",
+  altro: "altro",
+};
+
 /** Gerarchia delle modifiche, ordine fisso del master brief §7. */
 export const GERARCHIA = [
   "Correzione della tecnica",
@@ -483,6 +495,106 @@ export function calcolaSegnali(ctx) {
       gravita: "info",
       messaggio: `Dati incompleti in ${buchi.length} degli ultimi ${ultime.length} allenamenti.`,
       dettaglio: `${buchi.join(" · ")}. Un'esposizione incompleta blocca ogni proposta su quell'esercizio: non è prudenza, è che la regola non è verificabile.`,
+      riferimenti: [],
+    });
+  }
+
+  // --- tecnica ferma sotto la soglia, al carico giusto ---------------------
+  // La gerarchia del brief mette la tecnica prima di tutto, e il punteggio la
+  // penalizza. Ma finché il carico è quello programmato non c'è nessun carico
+  // «a cui tornare», quindi non nasceva nessuna proposta e il coach non veniva
+  // mai avvisato: restava una tecnica da correggere, in silenzio, per sempre.
+  for (const [id, esp] of esposizioniPerEsercizio) {
+    const v = varianti.get(id);
+    if (!v) continue;
+    const recenti = esp.slice(0, regole.progressione.esposizioniMinime);
+    if (recenti.length < regole.progressione.esposizioniMinime) continue;
+    if (!recenti.every(datiCompleti)) continue;
+    if (!recenti.every((e) => e.tecnica < regole.progressione.tecnicaMinima)) continue;
+    // Un cedimento tecnico grave sopra il carico previsto ha già la sua
+    // proposta di rientro: ripeterlo qui sarebbe rumore.
+    const caricoUsato = recenti[0].caricoLavoro ?? recenti[0].caricoMax ?? null;
+    const sopraProgramma = v.carico != null && caricoUsato != null && caricoUsato > v.carico;
+    if (sopraProgramma && recenti[0].tecnica < regole.progressione.tecnicaRiduzione) continue;
+    const voti = recenti.map((e) => `${dataBreve(e.data)}: ${num(e.tecnica)}/10`).join(" · ");
+    agg({
+      id: `seg_tecnica_${id}`,
+      tipo: "tecnicaSottoSoglia",
+      gravita: "attenzione",
+      messaggio: `${nome(id)}: tecnica sotto ${regole.progressione.tecnicaMinima}/10 nelle ultime ${recenti.length} volte.`,
+      dettaglio:
+        `${voti}. ` +
+        (sopraProgramma
+          ? `Il carico usato (${num(caricoUsato)} kg) è sopra i ${num(v.carico)} kg previsti dal programma: il primo passo è tornare a quello che c'è scritto, poi si guarda di nuovo la tecnica.`
+          : `Il carico è quello previsto dal programma, quindi non c'è niente da ridurre: l'app non inventa un carico che nessuno ha deciso. Serve una correzione dell'esecuzione, un cue diverso o una variante — ed è una scelta del coach.`),
+      riferimenti: [],
+    });
+  }
+
+  // --- ripetizioni sotto il range con RPE al massimo -----------------------
+  // Il contrario del tetto: il carico previsto non regge. L'app non abbassa
+  // niente di sua iniziativa — non le spetta — ma tacere sarebbe peggio: è
+  // esattamente il dato su cui il coach decide.
+  for (const [id, esp] of esposizioniPerEsercizio) {
+    const v = varianti.get(id);
+    if (!v || v.aTempo || v.ripMin == null) continue;
+    const recenti = esp.filter((e) => !e.saltato && e.serie?.length).slice(0, regole.progressione.esposizioniMinime);
+    if (recenti.length < regole.progressione.esposizioniMinime) continue;
+    if (!recenti.every(datiCompleti)) continue;
+    if (!recenti.every((e) => ripetizioniEffettive(e) < v.ripMin && e.rpe >= 9)) continue;
+    const prove = recenti
+      .map((e) => `${dataBreve(e.data)}: ${ripetizioniEffettive(e)} rip a RPE ${num(e.rpe)}`)
+      .join(" · ");
+    agg({
+      id: `seg_sotto_range_${id}`,
+      tipo: "sottoRange",
+      gravita: "attenzione",
+      messaggio: `${nome(id)}: serie chiuse sotto le ${v.ripMin} ripetizioni previste, a RPE massimo.`,
+      dettaglio: `${prove}. Il carico previsto non sta reggendo il range del programma. L'app non lo abbassa da sola: un carico ridotto a occhio non l'ha deciso nessuno. La scelta fra ridurre, cambiare variante o tenere duro è del coach.`,
+      riferimenti: [],
+    });
+  }
+
+  // --- esercizio saltato più volte di fila ---------------------------------
+  for (const [id, esp] of esposizioniPerEsercizio) {
+    if (!varianti.get(id)) continue;
+    const recenti = esp.slice(0, 2);
+    if (recenti.length < 2 || !recenti.every((e) => e.saltato)) continue;
+    const motivi = recenti
+      .map(
+        (e) =>
+          `${dataBreve(e.data)}: ${MOTIVI_SALTO[e.saltato.motivo] || e.saltato.motivo}` +
+          `${e.saltato.nota ? ` (${String(e.saltato.nota).replace(/\s*\n+\s*/g, " · ")})` : ""}`
+      )
+      .join(" · ");
+    agg({
+      id: `seg_saltato_${id}`,
+      tipo: "saltatoRipetuto",
+      gravita: recenti.some((e) => e.saltato.motivo === "dolore") ? "attenzione" : "info",
+      messaggio: `${nome(id)}: saltato le ultime ${recenti.length} volte.`,
+      dettaglio: `${motivi}. Due volte di fila non è un imprevisto: o l'esercizio non è praticabile così com'è, o il momento in cui capita nella seduta è sbagliato. Senza esposizioni non nascono nemmeno proposte su questo esercizio.`,
+      riferimenti: [],
+    });
+  }
+
+  // --- tetto raggiunto su un esercizio a tempo -----------------------------
+  // La progressione a tempo resta una valutazione a mano (non c'è un carico da
+  // aggiungere), ma il fatto che il tetto sia raggiunto va detto lo stesso.
+  for (const [id, esp] of esposizioniPerEsercizio) {
+    const v = varianti.get(id);
+    if (!v?.aTempo || !v.durataSec) continue;
+    const recenti = esp.filter((e) => !e.saltato && e.serie?.length).slice(0, regole.progressione.esposizioniMinime);
+    if (recenti.length < regole.progressione.esposizioniMinime) continue;
+    if (!recenti.every((e) => e.rpe != null && e.tecnica != null)) continue;
+    if (!recenti.every((e) => (ripetizioniEffettive(e) ?? 0) >= v.durataSec)) continue;
+    if (!recenti.every((e) => e.rpe <= regole.progressione.rpePerSalire)) continue;
+    if (!recenti.every((e) => e.tecnica >= regole.progressione.tecnicaMinima)) continue;
+    agg({
+      id: `seg_tetto_tempo_${id}`,
+      tipo: "tettoTempo",
+      gravita: "info",
+      messaggio: `${nome(id)}: ${v.durataSec}s tenuti puliti per ${recenti.length} volte.`,
+      dettaglio: `RPE ≤ ${regole.progressione.rpePerSalire} e tecnica ≥ ${regole.progressione.tecnicaMinima}/10 su tutte le serie. Su un esercizio a tempo l'app non allunga la durata da sola: quanto tenere lo decide il programma. È il momento di dirlo al coach.`,
       riferimenti: [],
     });
   }

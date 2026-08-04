@@ -179,9 +179,12 @@ export function nuovoId(prefisso = "id") {
 
 // ---------- backup ----------
 
+/** Versione del formato di backup che questa app sa scrivere e rileggere. */
+export const VERSIONE_BACKUP = 1;
+
 /** `salta` evita di leggere store pesanti quando non servono (le foto). */
 export async function esportaTutto({ salta = [] } = {}) {
-  const dump = { formato: "coach-backup", versione: 1, creatoIl: new Date().toISOString(), dati: {} };
+  const dump = { formato: "coach-backup", versione: VERSIONE_BACKUP, creatoIl: new Date().toISOString(), dati: {} };
   const mancanti = await archiviMancanti();
   for (const store of Object.keys(SCHEMA)) {
     // Un archivio che su questo telefono non esiste non è un errore: si salta,
@@ -204,6 +207,25 @@ export async function esportaTutto({ salta = [] } = {}) {
 export async function importaTutto(dump, modo = "sostituisci") {
   if (!dump || dump.formato !== "coach-backup") {
     throw new Error("File non riconosciuto: manca l'intestazione coach-backup.");
+  }
+  // Un file scritto da una versione più nuova può contenere cose che questa
+  // app non sa leggere: importarlo lo stesso significherebbe ricostruire un
+  // archivio a metà senza dirlo.
+  if (Number(dump.versione) > VERSIONE_BACKUP) {
+    throw new Error(
+      `Il file è in formato v${dump.versione}, questa app legge la v${VERSIONE_BACKUP}. Aggiorna l'app e riprova: così com'è non lo tocco.`
+    );
+  }
+  // Un file troncato o modificato a mano può avere una sezione illeggibile.
+  // Prima quella sezione veniva semplicemente saltata — ma in «sostituisci»
+  // era già stata svuotata, e i dati sparivano senza un avviso.
+  const rotte = Object.entries(dump.dati || {})
+    .filter(([nome, v]) => nome in SCHEMA && !Array.isArray(v))
+    .map(([nome]) => nome);
+  if (rotte.length) {
+    throw new Error(
+      `Il file è danneggiato: ${rotte.length === 1 ? "la sezione" : "le sezioni"} «${rotte.join("», «")}» non ${rotte.length === 1 ? "è leggibile" : "sono leggibili"}. Non ho toccato niente.`
+    );
   }
   // Si scrive solo negli archivi che questo telefono ha davvero: nominarne uno
   // inesistente farebbe fallire tutto il ripristino, dati validi compresi.
