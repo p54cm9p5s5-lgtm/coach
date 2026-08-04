@@ -1042,8 +1042,22 @@ async function modificaCarico(def, inv) {
   await disegna();
 }
 
+/**
+ * Il carico corrente si scrive sempre anche nella seduta: correggerlo durante
+ * il recupero lo cambiava solo in memoria, e dopo un riavvio la serie dopo
+ * tornava al carico di prima.
+ */
+async function impostaCarico(carico) {
+  S.caricoCorrente = carico;
+  await salvaProgresso({ caricoCorrente: carico });
+}
+
 async function completaSerie(v, def, numero) {
-  const target = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMax ?? v.ripMin;
+  // Il bersaglio è il fondo del range, non il tetto: «8-10» chiede 8, e chi ne
+  // fa 8 ha fatto il suo lavoro. Prima veniva registrato 10 — cioè il massimo,
+  // che non avevi detto di aver fatto — e il punteggio ti giudicava contro
+  // quello: fare il compito risultava «da rivedere».
+  const target = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMin ?? v.ripMax;
   const rec = await store.registraSerie({
     sedutaId: S.sed.id,
     esercizioId: v.esercizioId,
@@ -1224,9 +1238,9 @@ async function vistaRecupero(corpo, piede) {
               h("label", "Carico usato"),
               h(
                 "div.stepper",
-                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, -1, inv) : Math.max(0, carico - 1); valCar.textContent = `${num(carico)} kg`; S.caricoCorrente = carico; await salva({ carico }); } }, "−"),
+                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, -1, inv) : Math.max(0, carico - 1); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "−"),
                 valCar,
-                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, 1, inv) : carico + 1; valCar.textContent = `${num(carico)} kg`; S.caricoCorrente = carico; await salva({ carico }); } }, "+")
+                h("button", { onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, 1, inv) : carico + 1; valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "+")
               )
             )
           : null
@@ -1400,7 +1414,7 @@ async function vistaQuestionario(corpo, piede) {
   const ultimaSerie = serieFatteQui.at(-1) || null;
   const correzione = h("div");
   if (ultimaSerie) {
-    let rip = ultimaSerie.ripFatte ?? (v.aTempo ? v.durataSec : v.ripMax ?? v.ripMin);
+    let rip = ultimaSerie.ripFatte ?? (v.aTempo ? v.durataSec : v.ripMin ?? v.ripMax);
     let carico = ultimaSerie.carico ?? null;
     const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
     const valCar = h("span.val", carico != null ? `${num(carico)} kg` : "—");
