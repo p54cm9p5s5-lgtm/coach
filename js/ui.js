@@ -186,19 +186,24 @@ export function sheet(build) {
       if (!vv || chiuso) return;
       const coperto = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
       if (coperto > 60) {
-        // Lo sfondo viene ridotto esattamente alla parte di schermo che si
-        // vede: essendo allineato in basso, il pannello si appoggia sopra i
-        // tasti invece di finirci sotto. Agire sull'altezza è più affidabile
-        // che aggiungere spazio in fondo, che iOS a volte ignora.
+        // Lo sfondo si riduce alla parte di schermo che si vede, così il
+        // pannello si appoggia sopra i tasti invece di finirci sotto.
         backdrop.style.top = `${Math.round(vv.offsetTop)}px`;
         backdrop.style.height = `${Math.round(vv.height)}px`;
         backdrop.style.bottom = "auto";
         panel.style.maxHeight = `${Math.max(180, Math.round(vv.height - 12))}px`;
+        // In più, spazio scorribile in fondo: sopra la tastiera iOS disegna la
+        // sua barra («Inserisci info», le frecce, la spunta) SOPRA la pagina, e
+        // il browser non la misura in nessun modo. L'ultimo pulsante ci
+        // finirebbe sotto: con questo spazio lo si può portare più su
+        // scorrendo, invece di restare irraggiungibile.
+        panel.style.paddingBottom = "96px";
       } else {
         backdrop.style.top = "";
         backdrop.style.height = "";
         backdrop.style.bottom = "";
         panel.style.maxHeight = "";
+        panel.style.paddingBottom = "";
       }
     };
     FOGLI_APERTI.add(close);
