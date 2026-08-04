@@ -25,7 +25,7 @@ export const nomeLivello = (n) => GERARCHIA[n - 1] || `Livello ${n}`;
 
 const arrotonda = (n) => Math.round(n * 100) / 100;
 
-function piuGiorni(iso, giorni) {
+export function piuGiorni(iso, giorni) {
   const d = parseIso(iso);
   d.setDate(d.getDate() + giorni);
   return isoDate(d);

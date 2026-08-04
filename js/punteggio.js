@@ -180,7 +180,15 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
     nome: "Esercizi",
     quota: quanti ? limita(somma / 100 / quanti) : 0,
     peso: 60,
-    dettaglio: `${punteggi.length} su ${quanti}${saltati ? ` · ${saltati} saltati` : ""}`,
+    // Gli esercizi previsti di cui non c'è traccia (né serie né questionario)
+    // vanno detti: prima abbassavano il punteggio in silenzio e sembrava un
+    // errore di conto.
+    dettaglio:
+      `${punteggi.length} su ${quanti}` +
+      (saltati ? ` · ${saltati} saltati` : "") +
+      (quanti - punteggi.length - saltati > 0
+        ? ` · ${quanti - punteggi.length - saltati} mai iniziati`
+        : ""),
   });
   if (saltati) tetti.push({ tetto: 75, perche: saltati === 1 ? "un esercizio saltato" : "esercizi saltati" });
 

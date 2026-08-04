@@ -211,7 +211,14 @@ export function bloccoAccettate(accettate, esercizio) {
     // La data della risposta, non quella in cui la proposta è nata: sono cose
     // diverse e stampare la seconda faceva sembrare vecchia una decisione di ieri.
     const quando = p.rispostoIl ? p.rispostoIl.slice(0, 10) : p.data;
-    return `- ${nome}: ${parti.join(" · ") || "—"}${prima} (accettata il ${dataBreve(quando)})`;
+    // Lo stato della verifica: senza, il coach non sa se una decisione è stata
+    // controllata o se è ancora in attesa di prova.
+    const verifica = p.esitoVerifica
+      ? `, verifica del ${dataBreve(p.esitoVerifica.data)}: ${p.esitoVerifica.esito === "confermata" ? "confermata" : "NON confermata"}`
+      : p.dataVerifica
+        ? `, verifica prevista il ${dataBreve(p.dataVerifica)}`
+        : "";
+    return `- ${nome}: ${parti.join(" · ") || "—"}${prima} (accettata il ${dataBreve(quando)}${verifica})`;
   };
   // `inVigore` manca quando la lista arriva da una versione vecchia: in quel
   // caso si stampa tutto insieme, come prima, invece di dichiarare il falso.

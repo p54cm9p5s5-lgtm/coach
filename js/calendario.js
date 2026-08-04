@@ -106,7 +106,22 @@ export function calcolaAttese({
         // Solo quello che l'app registra davvero può essere «in ritardo»: la
         // pressione, per esempio, non la tiene e resta un promemoria e basta.
         const tipo = /foto/.test(t) ? "foto" : /peso|vita|circonferenz/.test(t) ? "misura" : "info";
-        const fattoDa = tipo === "foto" ? ultimaFoto : tipo === "misura" ? ultimoPeso : null;
+        // Peso e circonferenze sono due misure diverse: prima bastava essersi
+        // pesati per dare per fatto anche «misura vita», e il promemoria del
+        // coach spariva senza che tu l'avessi fatta. Se l'evento le chiede
+        // tutte e due, conta la più vecchia.
+        const chiedePeso = /peso/.test(t);
+        const chiedeVita = /vita|circonferenz/.test(t);
+        const fattoDa =
+          tipo === "foto"
+            ? ultimaFoto
+            : tipo !== "misura"
+              ? null
+              : chiedePeso && chiedeVita
+                ? [ultimoPeso, ultimaVita].filter(Boolean).sort()[0] || null
+                : chiedeVita
+                  ? ultimaVita
+                  : ultimoPeso;
         const scaduto =
           e.data <= oggi && tipo !== "info" && (!fattoDa || giorniTra(fattoDa, e.data) >= 1);
         aggiungiA(e.data, scaduto ? "scaduto" : tipo, titolo);
