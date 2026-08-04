@@ -1,5 +1,5 @@
 import {
-  h, isoDate, dataLunga, dataBreve, sheet, num, giorniTra, durataUmana, aggiungi,
+  h, isoDate, dataLunga, dataBreve, sheet, num, giorniTra, durataUmana, aggiungi, chiedi, toast,
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
@@ -180,9 +180,14 @@ async function bloccoGrafico(ridisegna) {
 async function bloccoAllenamento(vaiA, ridisegna, oggi) {
   const inCorso = await store.sedutaInCorso();
   if (inCorso) {
+    // Un allenamento rimasto aperto da un altro giorno non è «l'allenamento di
+    // oggi»: riprendendolo, le serie di oggi finirebbero registrate alla sua
+    // data. Va detto, e va data la via d'uscita.
+    const vecchio = inCorso.data !== oggi;
+    const ora = new Date(inCorso.oraInizio).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
     return h(
       "div.group",
-      h("h2", "Allenamento aperto"),
+      h("h2", vecchio ? "Allenamento rimasto aperto" : "Allenamento aperto"),
       h(
         "div.list",
         h(
@@ -191,12 +196,63 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
           h(
             "div.main",
             h("span.title", inCorso.tipoNome),
-            h("span.sub", `iniziato alle ${new Date(inCorso.oraInizio).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`)
+            h("span.sub", vecchio ? `iniziato ${dataLunga(inCorso.data).toLowerCase()} alle ${ora}` : `iniziato alle ${ora}`)
           ),
           h("span.chevron", "›")
         )
       ),
-      h("div.btn-wrap", h("button.btn", { onclick: () => vaiA("seduta") }, "Riprendi allenamento"))
+      vecchio
+        ? h(
+            "p.footnote",
+            { style: "margin:10px 16px 0" },
+            `È aperto dal ${dataBreve(inCorso.data)}. Se lo riprendi, quello che registri oggi resta datato ${dataBreve(inCorso.data)}. Chiudilo o eliminalo per cominciarne uno nuovo.`
+          )
+        : null,
+      h(
+        "div.btn-wrap",
+        h("button.btn", { onclick: () => vaiA("seduta") }, vecchio ? `Riprendi (resta del ${dataBreve(inCorso.data)})` : "Riprendi allenamento"),
+        vecchio
+          ? h(
+              "button.btn.secondary",
+              {
+                onclick: unaVoltaSola(async () => {
+                  const scelta = await chiedi({
+                    titolo: `Chiudere l'allenamento del ${dataBreve(inCorso.data)}?`,
+                    testo: "Resta in archivio con quello che ci hai registrato, alla sua data. Poi puoi cominciare quello di oggi.",
+                    opzioni: [{ etichetta: "Chiudi e archivia", valore: "chiudi" }],
+                  });
+                  if (scelta !== "chiudi") return;
+                  await store.chiudiSeduta(inCorso.id, {});
+                  await store.aggiornaMotore();
+                  toast("Allenamento archiviato alla sua data.");
+                  await ridisegna();
+                }),
+              },
+              "Chiudi e archivia"
+            )
+          : null,
+        vecchio
+          ? h(
+              "button.btn.secondary",
+              {
+                style: "color:var(--red)",
+                onclick: unaVoltaSola(async () => {
+                  const scelta = await chiedi({
+                    titolo: "Eliminare l'allenamento aperto?",
+                    testo: "Spariscono anche le serie e i questionari che contiene. Non si recupera.",
+                    opzioni: [{ etichetta: "Elimina", valore: "si", stile: "danger" }],
+                  });
+                  if (scelta !== "si") return;
+                  await store.annullaSeduta(inCorso.id);
+                  await store.aggiornaMotore();
+                  toast("Allenamento eliminato.");
+                  await ridisegna();
+                }),
+              },
+              "Elimina"
+            )
+          : null
+      )
     );
   }
 
@@ -236,9 +292,11 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
       ? `${previsto.esercizi?.length || 0} esercizi${previsto.cardio ? " + cardio" : ""}`
       : origine.sconosciuto
         ? `«${origine.titolo}» non è un allenamento del programma`
-        : origine.fonte === "calendario"
-          ? "niente sul calendario per oggi"
-          : "nessun allenamento previsto dallo split";
+        : origine.scaduta
+          ? `il calendario importato arriva al ${dataBreve(origine.fine)}: aggiornalo con il comando Coach Calendario`
+          : origine.fonte === "calendario"
+            ? "niente sul calendario per oggi"
+            : "nessun allenamento previsto dallo split";
 
   return h(
     "div.group",

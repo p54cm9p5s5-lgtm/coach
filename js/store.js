@@ -196,7 +196,15 @@ export function giornoPrevisto(iso = isoDate()) {
 /** Da dove viene quello che l'app mostra per un giorno: serve a dirlo a schermo. */
 export function origineGiorno(iso = isoDate()) {
   const ev = AGENDA?.get(iso);
-  if (!ev) return agendaAttiva() ? { fonte: "calendario", vuoto: true } : { fonte: "split" };
+  if (!ev) {
+    if (!agendaAttiva()) return { fonte: "split" };
+    // Un'agenda che finisce nel passato non è «oggi riposo»: è un pacchetto
+    // vecchio. Senza dirlo, chi smette di importare vede riposo per sempre e
+    // crede che il coach non abbia previsto niente.
+    const fine = intervalloAgenda()?.a;
+    if (fine && fine < iso) return { fonte: "calendario", scaduta: true, fine };
+    return { fonte: "calendario", vuoto: true };
+  }
   if (ev.giornoId === "riposo") return { fonte: "calendario", titolo: ev.titolo, riposo: true };
   if (ev.giornoId) {
     const wd = weekdayOf(iso);
@@ -217,7 +225,15 @@ export function giornoSplit(id) {
 const REGOLE_BASE = {
   rpeTarget: { min: 6, max: 8 },
   cardio: { kmhMin: 4.5, kmhMax: 5, fcMin: 105, fcMax: 115, fcLimite: 125, durataMin: 30 },
-  progressione: { esposizioniMinime: 2, rpePerSalire: 7, tecnicaMinima: 8, tecnicaRiduzione: 5 },
+  // esposizioniPerRiproporre: dopo quante sedute di quell'esercizio una
+  // proposta già accettata o rifiutata può tornare, se i dati la rifanno nascere.
+  progressione: {
+    esposizioniMinime: 2,
+    rpePerSalire: 7,
+    tecnicaMinima: 8,
+    tecnicaRiduzione: 5,
+    esposizioniPerRiproporre: 4,
+  },
   finestra: { settimane: 3, minimoSettimana: 5, soglia: 0.2 },
 };
 
@@ -344,6 +360,12 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
       voci: comp.voci,
       penalita: comp.penalita,
       limite: comp.limite,
+      // Quanti esercizi contava lo split quel giorno: congelato col punteggio,
+      // altrimenti fra un mese il riepilogo scriverebbe «1 su 5» sotto un
+      // anello calcolato su 4.
+      previsti: comp.previsti ?? null,
+      svolti: comp.svolti ?? null,
+      saltati: comp.saltati ?? 0,
       perEsercizio: Object.fromEntries(comp.perEsercizio || new Map()),
       congelatoIl: new Date().toISOString(),
     };
@@ -743,9 +765,16 @@ export async function aggiornaProposte(cache = null) {
       .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))[0];
 
     if (rispostaPrec) {
-      if (rispostaPrec.stato !== "rimandata") continue;
-      // rimandata: torna solo quando c'è un dato nuovo
-      if (esp.length <= (rispostaPrec.esposizioniAllaData ?? 0)) continue;
+      if (rispostaPrec.stato === "rimandata") {
+        // rimandata: torna solo quando c'è un dato nuovo
+        if (esp.length <= (rispostaPrec.esposizioniAllaData ?? 0)) continue;
+      } else {
+        // Accettata o rifiutata non si ripropone subito. Ma «mai più» è
+        // sbagliato: dopo un ciclo intero di allenamenti la situazione è
+        // un'altra, e la stessa proposta torna a essere una domanda sensata.
+        const nuoveEsposizioni = esp.length - (rispostaPrec.esposizioniAllaData ?? 0);
+        if (nuoveEsposizioni < (reg.progressione?.esposizioniPerRiproporre ?? 4)) continue;
+      }
     }
 
     if (sospese.some((p) => p.firma === firma)) continue;
@@ -767,6 +796,21 @@ export async function aggiornaProposte(cache = null) {
       ...nuova,
     });
     create++;
+  }
+
+  // Un esercizio tolto dal brief (o archiviato) non passa più dal giro qui
+  // sopra: le sue proposte in sospeso resterebbero in Home per sempre, a
+  // chiedere una decisione su un esercizio che non fai più.
+  const vivi = new Set(
+    [...varianti()].map(([id]) => id).filter((id) => {
+      const d = esercizio(id);
+      return d && !d.archiviato;
+    })
+  );
+  for (const p of esistenti) {
+    if (p.stato !== "inSospeso" || vivi.has(p.esercizioId)) continue;
+    await db.del("proposte", p.id);
+    tolte++;
   }
 
   return { create, tolte };
@@ -840,6 +884,24 @@ export async function obiettivoCorrente(esercizioId) {
   const esp = await esposizioni(esercizioId);
   if (esp.length !== p.esposizioniAllaData) return null; // già consumato da una nuova esposizione
   return { carico: p.a.carico, rip: p.a.rip, tipo: p.tipo, propostaId: p.id, titolo: p.titolo };
+}
+
+/**
+ * Proposte accettate, ognuna con l'indicazione se l'app la sta ancora usando.
+ * Una proposta vale per la prossima esposizione: dopo quella il motore rivaluta
+ * sui dati nuovi. Dirle tutte «in vigore» farebbe credere al coach che il
+ * carico allenato sia uno mentre l'app ne chiede già un altro.
+ */
+export async function proposteAccettate() {
+  const tutte = (await db.all("proposte")).filter((p) => p.stato === "accettata");
+  const perEsercizio = new Map();
+  for (const p of tutte) {
+    if (!perEsercizio.has(p.esercizioId)) perEsercizio.set(p.esercizioId, await esposizioni(p.esercizioId));
+  }
+  return tutte.map((p) => ({
+    ...p,
+    inVigore: (perEsercizio.get(p.esercizioId) || []).length === p.esposizioniAllaData,
+  }));
 }
 
 /** Proposte accettate arrivate alla data di verifica e ancora senza esito. */
