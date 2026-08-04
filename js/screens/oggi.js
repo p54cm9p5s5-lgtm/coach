@@ -1,5 +1,6 @@
 import {
   h, isoDate, dataLunga, dataBreve, sheet, num, giorniTra, durataUmana, aggiungi, chiedi, toast,
+  versioneInstallata,
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
@@ -9,28 +10,6 @@ import { anello, giudizio } from "../punteggio.js";
 import { sbloccaAudio, unaVoltaSola } from "../ui.js";
 
 let meseMostrato = null;
-
-/**
- * La versione si legge dal service worker che sta girando davvero, non da
- * quello sul server: erano due cose diverse e la Home mostrava la versione
- * pubblicata anche quando il telefono ne aveva una vecchia. Con un limite di
- * tempo, perché il disegno della Home non deve dipendere dalla rete.
- */
-async function versioneApp() {
-  try {
-    const conTempo = (p, ms) =>
-      Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]);
-    const risposta = await conTempo(
-      caches.match("./sw.js").then((c) => c || fetch("sw.js", { cache: "no-store" })),
-      1500
-    );
-    if (!risposta) return "non verificabile";
-    const testo = await risposta.text();
-    return testo.match(/const VERSION = "([^"]+)"/)?.[1] || "sconosciuta";
-  } catch {
-    return "non verificabile";
-  }
-}
 
 export async function render({ vaiA, ridisegna }) {
   const oggi = isoDate();
@@ -65,7 +44,7 @@ export async function render({ vaiA, ridisegna }) {
         style: "margin:18px 16px 0;text-align:center;font-size:11px;color:var(--label-tertiary)",
         onclick: () => vaiA("impostazioni"),
       },
-      `versione ${await versioneApp()}`
+      `versione ${await versioneInstallata()}`
     )
   );
 
@@ -352,9 +331,13 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         : h(
             "p",
             { style: "margin:10px 0 0;font-size:12px;color:var(--label-tertiary)" },
-            origine.fonte === "calendario"
-              ? "Sul calendario oggi non c'è niente."
-              : "Il giorno di riposo fa parte del programma."
+            origine.scaduta
+              ? "Il calendario letto è vecchio: rileggilo per sapere cosa tocca."
+              : origine.sconosciuto
+                ? "Sul calendario c'è qualcosa, ma non è un allenamento del programma."
+                : origine.vuoto
+                  ? "Sul calendario oggi non c'è niente."
+                  : "Il giorno di riposo fa parte del programma."
           )
     )
   );
@@ -510,9 +493,12 @@ async function bloccoCalendario(vaiA, ridisegna) {
     h(
       "p.footnote",
       { style: "margin-top:10px" },
-      imp.ultimoImportAgenda
-        ? `Gli allenamenti arrivano dal calendario del coach, letti l'ultima volta il ${new Date(imp.ultimoImportAgenda).toLocaleDateString("it-IT")}. Orari e promemoria restano su Google Calendar: qui si vede solo cosa tocca.`
-        : "Vista dell'app: disegna lo split del master brief e le sue cadenze. Gli orari e i promemoria veri restano su Google Calendar."
+      // Comanda il calendario solo se gli eventi ci sono davvero: la data
+      // dell'ultima lettura restava scritta anche dopo averli dimenticati, e
+      // l'app diceva di seguire un calendario che non aveva più.
+      store.agendaAttiva()
+        ? `Gli allenamenti arrivano dal calendario del coach${imp.ultimoImportAgenda ? `, letti l'ultima volta il ${new Date(imp.ultimoImportAgenda).toLocaleDateString("it-IT")}` : ""}. Orari e promemoria restano sul calendario: qui si vede solo cosa tocca.`
+        : "Vista dell'app: disegna lo split del master brief e le sue cadenze. Gli orari e i promemoria veri restano sul calendario."
     ),
     inRitardo.length
       ? h(

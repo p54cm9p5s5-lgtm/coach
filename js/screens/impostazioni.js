@@ -1,4 +1,4 @@
-import { h, toast, sheet, chiedi, num, dataLunga, aggiungi, provaSuono } from "../ui.js";
+import { h, toast, sheet, chiedi, num, dataLunga, aggiungi, provaSuono, versioneInstallata } from "../ui.js";
 import { intestazione, applicaTema, temaCorrente } from "../app.js";
 import * as store from "../store.js";
 import { estraiBlocco, valida, confronta } from "../brief.js";
@@ -567,45 +567,6 @@ async function azzera(ridisegna) {
 }
 
 
-/**
- * Versione che sta girando davvero sul telefono.
- * Si chiede a chi la conosce: prima al service worker attivo, poi al nome
- * della copia locale dei file. Solo se non c'è né l'uno né l'altra si guarda
- * il server — che però dice cosa è stato pubblicato, non cosa hai installato.
- */
-async function versioneInstallata() {
-  try {
-    const attivo = navigator.serviceWorker?.controller;
-    if (attivo) {
-      const risposta = await new Promise((ok) => {
-        const canale = new MessageChannel();
-        const scaduto = setTimeout(() => ok(null), 1200);
-        canale.port1.onmessage = (e) => {
-          clearTimeout(scaduto);
-          ok(e.data);
-        };
-        attivo.postMessage("VERSIONE", [canale.port2]);
-      });
-      if (risposta) return risposta;
-    }
-  } catch {
-    /* si prova col nome della copia locale */
-  }
-  try {
-    const nome = (await caches.keys()).find((k) => k.startsWith("coach-"));
-    if (nome) return nome.slice("coach-".length);
-  } catch {
-    /* niente cache: resta il server */
-  }
-  try {
-    const r = await fetch("sw.js", { cache: "no-store" });
-    const t = await r.text();
-    const v = t.match(/const VERSION = "([^"]+)"/)?.[1];
-    return v ? `${v} (sul server)` : null;
-  } catch {
-    return null;
-  }
-}
 
 async function forzaAggiornamento() {
   const scelta = await chiedi({
