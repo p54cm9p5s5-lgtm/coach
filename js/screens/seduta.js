@@ -155,6 +155,15 @@ async function vistaProgramma(vaiA, ridisegna) {
               `Dal calendario: «${origine.titolo}»`
             )
           : null,
+        // Quello che il coach ha scritto nell'evento va letto prima di
+        // cominciare, non cercato dentro il calendarietto.
+        origine.nota
+          ? h(
+              "p",
+              { style: "margin:8px 0 0;font-size:13px;opacity:.9;text-align:center" },
+              origine.nota
+            )
+          : null,
         origine.sconosciuto
           ? h(
               "p",

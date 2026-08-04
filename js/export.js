@@ -416,9 +416,12 @@ export function bloccoCorpo({ misure, indici, etichette, dateIndici = {} }) {
 }
 
 export function intestazionePacchetto(cosa) {
+  // Con l'archivio ancora vuoto l'elenco diceva «Contenuto: 0 proposte.», che
+  // sembra un guasto invece di quello che è: non c'è ancora niente da mandare.
+  const vuoto = !cosa.length || cosa.every((c) => /^0\b/.test(c));
   return [
     `COACH — pacchetto del ${dataLunga(isoDate())}`,
-    `Contenuto: ${cosa.join(", ")}.`,
+    vuoto ? "Contenuto: ancora niente da mandare." : `Contenuto: ${cosa.join(", ")}.`,
     "Generato dall'app: i numeri non sono trascritti a mano.",
   ].join("\n");
 }
