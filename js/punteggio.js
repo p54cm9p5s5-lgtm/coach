@@ -211,6 +211,9 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
     if (cardio.eseguito && soglie.kmhMax != null && cardio.kmh > soglie.kmhMax) {
       quota = Math.min(quota, 0.7);
       dettaglio += ` · ${num(cardio.kmh)} km/h sopra protocollo`;
+    } else if (cardio.eseguito && soglie.kmhMin != null && cardio.kmh < soglie.kmhMin) {
+      quota = Math.min(quota, 0.85);
+      dettaglio += ` · ${num(cardio.kmh)} km/h sotto protocollo`;
     }
     voci.push({ nome: "Cardio", quota, peso: 20, dettaglio });
     if (rapporto < 0.5) tetti.push({ tetto: 60, perche: "cardio quasi non fatto" });

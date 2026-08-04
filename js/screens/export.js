@@ -192,6 +192,12 @@ async function componi(stato) {
     const notti = await store.notti();
     const complete = (await store.allenamenti()).filter((s) => s.stato === "completata");
     const perData = new Map(complete.map((s) => [s.data, s.tipoNome]));
+    // Anche l'allenamento ancora aperto va segnato: sulla riga di oggi il coach
+    // deve vedere che c'è del lavoro registrato ma non chiuso.
+    const apertaOggi = (await store.allenamenti()).find((s) => s.stato === "inCorso");
+    if (apertaOggi && !perData.has(apertaOggi.data)) {
+      perData.set(apertaOggi.data, `${apertaOggi.tipoNome}, non chiuso`);
+    }
     // «Riposo» solo dove il riposo era previsto. Un giorno in cui il coach
     // aveva messo un allenamento e non l'hai fatto è un'altra cosa, e scriverlo
     // «Riposo» nascondeva al coach esattamente quello che gli serve vedere.
