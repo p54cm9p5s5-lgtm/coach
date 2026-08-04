@@ -57,6 +57,13 @@ export function open() {
     };
     req.onerror = () => reject(req.error);
   });
+  // Un fallimento non resta memorizzato: senza questo, un errore momentaneo
+  // (archivio occupato da un'altra scheda) rendeva l'app inutilizzabile fino
+  // al riavvio, perché ogni tentativo successivo riusava la stessa promessa
+  // già fallita.
+  dbPromise.catch(() => {
+    dbPromise = null;
+  });
   return dbPromise;
 }
 

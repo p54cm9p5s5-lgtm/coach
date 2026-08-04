@@ -80,7 +80,42 @@ export async function ridisegna() {
   if (hashDisegnato !== null && cambioSchermata) chiudiFogli();
   hashDisegnato = location.hash;
   rottaCorrente = nome;
-  const mod = await ROTTE[nome]();
+  let mod;
+  try {
+    mod = await ROTTE[nome]();
+  } catch (e) {
+    // Il modulo di una schermata può non arrivare: rete caduta a metà, file
+    // non ancora in cache. Senza questo la sezione restava irraggiungibile
+    // per sempre, senza nessun messaggio.
+    console.error("caricamento di", nome, e);
+    if (mioTurno !== turnoCorrente) return;
+    clear(view);
+    view.append(
+      h(
+        "div.screen",
+        intestazione("Coach"),
+        h(
+          "div.empty",
+          h("h3", "Questa sezione non si è caricata"),
+          h("p", "Probabilmente manca la connessione e il file non è ancora nella copia locale."),
+          h(
+            "div.btn-wrap",
+            h("button.btn", { onclick: () => ridisegna() }, "Riprova"),
+            h("div", { style: "height:8px" }),
+            h("button.btn.secondary", { onclick: () => vaiA("oggi") }, "Torna alla Home")
+          )
+        )
+      )
+    );
+    qs("#tabbar").classList.remove("hidden");
+    return;
+  }
+
+  // Il modulo si carica in tempi diversi a seconda della dimensione: due tocchi
+  // ravvicinati possono risolversi in ordine inverso. Chi è stato sorpassato si
+  // ferma QUI, prima di toccare qualunque cosa: più avanti avrebbe già spento i
+  // timer di una schermata viva o acceso quelli di una che non si vedrà mai.
+  if (mioTurno !== turnoCorrente) return;
 
   // Una schermata che se ne va deve spegnere quello che ha acceso: senza
   // questo, i timer dell'allenamento restano vivi in sottofondo a ogni
@@ -107,6 +142,8 @@ export async function ridisegna() {
     }
   }
 
+  if (mioTurno !== turnoCorrente) return;
+
   let nodo;
   try {
     nodo = await mod.render({ vaiA, ridisegna });
@@ -132,8 +169,17 @@ export async function ridisegna() {
     );
   }
 
-  // Un disegno più lento non deve coprire quello partito dopo.
-  if (mioTurno !== turnoCorrente) return;
+  // Un disegno più lento non deve coprire quello partito dopo. Se è successo,
+  // la schermata giusta viene ridisegnata: il render sorpassato può aver
+  // lasciato acceso qualcosa.
+  if (mioTurno !== turnoCorrente) {
+    try {
+      mod.pulisci?.();
+    } catch {
+      /* niente */
+    }
+    return;
+  }
 
   const posizione = window.scrollY;
   clear(view);
