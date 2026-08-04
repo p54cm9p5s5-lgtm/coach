@@ -501,9 +501,10 @@ export async function questionariDi(sedutaId) {
 }
 
 /**
- * Completezza di un allenamento, ricalcolata dai dati grezzi ogni volta.
- * Non si legge il punteggio salvato: se i criteri cambiano, cambiano anche i
- * punteggi vecchi, e due allenamenti restano confrontabili fra loro.
+ * Completezza di un allenamento. Un allenamento chiuso ha un punteggio solo:
+ * quello congelato alla chiusura. Se manca (allenamento vecchio, o caricato
+ * dai dati iniziali) viene calcolato adesso e congelato, così non esistono due
+ * modi diversi di leggere lo stesso allenamento.
  */
 export async function completezzaSeduta(id) {
   const sed = await db.get("sedute", id);
@@ -550,6 +551,24 @@ export async function completezzaSeduta(id) {
     stretching: Boolean(sed.stretching?.fatto),
     regole: reg,
   });
+
+  // Gli allenamenti chiusi prima che i punteggi venissero congelati (e quelli
+  // caricati dai tuoi dati) non ne avevano uno: si ricalcolavano ogni volta, e
+  // bastava un cambio di programma per far cambiare da solo un punteggio di
+  // luglio. Al primo sguardo vengono congelati anche loro, e da lì restano
+  // fermi come tutti gli altri.
+  if (sed.stato === "completata") {
+    await db.put("sedute", {
+      ...sed,
+      completezza: {
+        ...totale,
+        perEsercizio: Object.fromEntries(perEsercizio),
+        congelatoIl: new Date().toISOString(),
+        congelatoDopo: true,
+      },
+    });
+    invalidaCacheSedute();
+  }
 
   return { ...totale, perEsercizio };
 }

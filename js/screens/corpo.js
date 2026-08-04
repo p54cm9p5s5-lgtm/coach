@@ -172,17 +172,20 @@ async function registra(ridisegna) {
       // Il valore si scrive: la prima misura partiva da zero e per arrivare a
       // 84,5 cm servivano centosettanta tocchi. I tasti − e + restano per le
       // correzioni piccole.
+      // type="text" e non "number": con "number" il telefono butta via quello
+      // che scrivi appena metti la virgola, e «84,5» diventava niente. La
+      // tastiera numerica arriva lo stesso da inputmode.
       const val = h("input.val", {
-        type: "number",
+        type: "text",
         inputmode: "decimal",
-        step: String(def.passo),
-        min: "0",
         "aria-label": `${def.nome} in ${def.unita}`,
         placeholder: "—",
-        value: valori[def.id] != null ? String(valori[def.id]) : "",
+        value: valori[def.id] != null ? num(valori[def.id]) : "",
       });
       const mostra = () => {
-        val.value = valori[def.id] != null ? String(valori[def.id]) : "";
+        // Si scrive con la virgola e si rilegge con la virgola: vedere «84.6»
+        // dopo aver scritto «84,5» fa pensare che il telefono abbia capito altro.
+        val.value = valori[def.id] != null ? num(valori[def.id]) : "";
         val.style.color = scelte.has(def.id) ? "var(--accent)" : "";
       };
       const aggiorna = (d) => {
@@ -549,17 +552,34 @@ async function importaSet(ridisegna) {
 
   if (!esito || !scelte.size) return;
 
+  let salvate = 0;
   for (const [posaId, immagine] of scelte) {
-    await store.registraFoto({
-      data: esito,
-      posa: posaId,
-      immagine,
-      // È il set di riferimento: vale come metro di paragone, non è un ripiego.
-      checklist: { protocollo: true, riferimento: true, daLibreria: true },
-    });
+    try {
+      await store.registraFoto({
+        data: esito,
+        posa: posaId,
+        immagine,
+        // È il set di riferimento: vale come metro di paragone, non è un ripiego.
+        checklist: { protocollo: true, riferimento: true, daLibreria: true },
+      });
+      salvate++;
+    } catch (e) {
+      // Anche qui il silenzio sarebbe il danno peggiore: crederesti di avere il
+      // set di riferimento e non ci sarebbe.
+      await chiedi({
+        titolo: "Foto non salvate",
+        testo: `Ne sono entrate ${salvate} su ${scelte.size}: ${e.message}. Di solito è lo spazio del telefono. Libera spazio e ripeti solo le pose che mancano.`,
+        opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      });
+      break;
+    }
+  }
+  if (!salvate) {
+    await ridisegna();
+    return;
   }
   await store.snapshotAutomatico("foto importate");
-  toast(`${scelte.size} ${scelte.size === 1 ? "posa salvata" : "pose salvate"} come riferimento.`);
+  toast(`${salvate} ${salvate === 1 ? "posa salvata" : "pose salvate"} come riferimento.`);
   await ridisegna();
 }
 
