@@ -253,7 +253,7 @@ async function dettaglioSeduta(id) {
       if (log && !log.saltato) {
         aggiungi(corpo, 
           h("div.row", h("div.main", h("span.title", "RPE ultima serie")), h("span.value", String(log.rpe ?? "—"))),
-          h("div.row", h("div.main", h("span.title", "Tecnica")), h("span.value", String(log.tecnica ?? "—"))),
+          h("div.row", h("div.main", h("span.title", "Tecnica")), h("span.value", log.tecnica == null ? "—" : num(log.tecnica))),
           h("div.row", h("div.main", h("span.title", "Polso destro")), h("span.value", log.dolorePolso ? `${log.dolorePolsoIntensita} · ${log.dolorePolsoQuando}` : "nessun dolore"))
         );
         if (log.nota) aggiungi(corpo, h("div.row", h("div.main", h("span.sub", log.nota))));
@@ -333,7 +333,7 @@ async function dettaglioEsercizio(id) {
       ),
       h(
         "p.footnote",
-        `${esp.length} ${esp.length === 1 ? "esposizione registrata" : "esposizioni registrate"}, di cui ${store.esposizioniSvolte(esp).length} svolte (le altre saltate o senza serie). Le proposte di progressione richiedono almeno ${store.regole().progressione.esposizioniMinime} esposizioni svolte.`
+        `${esp.length} ${esp.length === 1 ? "esposizione registrata" : "esposizioni registrate"}, di cui ${store.esposizioniSvolte(esp).length} ${store.esposizioniSvolte(esp).length === 1 ? "svolta" : "svolte"} (le altre saltate o senza serie). Le proposte di progressione richiedono almeno ${store.regole().progressione.esposizioniMinime} esposizioni svolte.`
       )
     )
   );
