@@ -319,7 +319,7 @@ const REGOLE_BASE = {
     movimentoBersaglio: 1000,
     passiBersaglio: 10000,
     minutiEsercizioBersaglio: 60,
-    minutiInPiediBersaglio: 240,
+    minutiInPiediBersaglio: 180,
     // Sopra questa soglia la giornata è comunque compromessa, per quanto bene
     // sia andato tutto il resto: è il tetto, non una sottrazione.
     sigaretteTollerate: 10,

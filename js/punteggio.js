@@ -192,7 +192,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const tollerate = R.sigaretteTollerate ?? 10;
   const passiBersaglio = R.passiBersaglio ?? 10000;
   const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 60;
-  const inPiediBersaglio = R.minutiInPiediBersaglio ?? 240;
+  const inPiediBersaglio = R.minutiInPiediBersaglio ?? 180;
   const voci = [];
   const tetti = [];
 
