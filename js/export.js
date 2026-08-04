@@ -142,7 +142,15 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       })()
     ),
     riga("Durata allenamento", durata ? durataUmana(durata) : null),
-    riga("Densità", durata ? `${(serie.length / (durata / 60)).toFixed(2).replace(".", ",")} serie/min` : null),
+    // La densità si misura sul tempo di lavoro, non sul tempo passato: con una
+    // seduta ripresa il giorno dopo veniva «0,01 serie/min».
+    riga(
+      "Densità",
+      (() => {
+        const netto = seduta.durataLavoroSec || durata;
+        return netto ? `${(serie.length / (netto / 60)).toFixed(2).replace(".", ",")} serie/min` : null;
+      })()
+    ),
     // Ad allenamento chiuso «non registrato» è una scusa: o l'hai fatto o l'hai
     // saltato, e il coach deve leggere quale delle due.
     riga(

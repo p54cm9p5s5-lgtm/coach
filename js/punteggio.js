@@ -184,7 +184,9 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
   const somma = punteggi.reduce((a, b) => a + b, 0);
   voci.push({
     nome: "Esercizi",
-    quota: quanti ? limita(somma / 100 / quanti) : 0,
+    // Senza esercizi previsti la voce non ha senso: `null` la tiene fuori dal
+    // conto invece di trascinare il punteggio a zero con uno «0 su 0».
+    quota: quanti ? limita(somma / 100 / quanti) : null,
     peso: 60,
     // Gli esercizi previsti di cui non c'è traccia (né serie né questionario)
     // vanno detti: prima abbassavano il punteggio in silenzio e sembrava un
@@ -236,8 +238,11 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
             : "saltati tutti e due",
   });
 
-  const pesoTotale = voci.reduce((t, v) => t + v.peso, 0) || 1;
-  let totale = Math.round((voci.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100);
+  // Solo le voci che hanno un valore entrano nella media: una voce «non
+  // applicabile» non deve contare come zero.
+  const pesate = voci.filter((v) => v.quota != null);
+  const pesoTotale = pesate.reduce((t, v) => t + v.peso, 0) || 1;
+  let totale = Math.round((pesate.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100);
 
   const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];
   if (limite && totale > limite.tetto) totale = limite.tetto;

@@ -170,7 +170,14 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
     const vecchio = inCorso.data !== oggi;
     // Un allenamento aperto e mai cominciato non ha niente da archiviare:
     // «Chiudi e archivia» avrebbe creato un allenamento vuoto nello storico.
-    const vuoto = !(await store.serieDi(inCorso.id)).length;
+    // Vuoto vuol dire davvero niente dentro: anche un esercizio saltato porta
+    // con sé un motivo e una nota, e il cardio registrato è un dato. Prima
+    // l'app diceva «niente da archiviare» e l'unica via era cancellare tutto.
+    const vuoto =
+      !(await store.serieDi(inCorso.id)).length &&
+      !(await store.questionariDi(inCorso.id)).length &&
+      !inCorso.cardio?.eseguito &&
+      !inCorso.riscaldamento?.fatto;
     const ora = new Date(inCorso.oraInizio).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
     return h(
       "div.group",

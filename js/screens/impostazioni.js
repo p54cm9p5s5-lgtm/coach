@@ -485,9 +485,18 @@ async function ripristinaSnapshot() {
   try {
     await store.db.importaTutto(dump, "sostituisci");
   } catch (e) {
+    // La copia di sicurezza appena fatta ha preso il posto di quella che
+    // stavi ripristinando: se il ripristino fallisce va rimessa quella
+    // originale, altrimenti resti senza la copia che volevi.
+    try {
+      await store.setImpostazione("snapshotAutomatico", JSON.stringify(dump));
+      await store.setImpostazione("ultimoSnapshot", dump.creatoIl || new Date().toISOString());
+    } catch {
+      /* niente */
+    }
     await chiedi({
       titolo: "Ripristino non riuscito",
-      testo: `${e.message}\n\nL'archivio è rimasto com'era.`,
+      testo: `${e.message}\n\nL'archivio è rimasto com'era e la copia interna è ancora quella di prima.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
     });
     return;
