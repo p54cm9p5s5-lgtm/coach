@@ -55,7 +55,12 @@ export function valida(dati, libreria) {
         problemi.push(`Esercizio sconosciuto: "${v.esercizioId}" in ${giorno.nome || giorno.id}.`);
       }
       if (!(v.serie > 0)) problemi.push(`Serie non valide per ${v.esercizioId}.`);
-      if (!(v.ripMax >= v.ripMin && v.ripMin > 0) && !v.aTempo) {
+      // A tempo si controlla la durata, a ripetizioni il range: prima un
+      // esercizio a tempo senza durata passava tutti i controlli e poi in
+      // allenamento chiedeva «0 secondi».
+      if (v.aTempo) {
+        if (!(v.durataSec > 0)) problemi.push(`Durata non valida per ${v.esercizioId}.`);
+      } else if (!(v.ripMax >= v.ripMin && v.ripMin > 0)) {
         problemi.push(`Range ripetizioni non valido per ${v.esercizioId}.`);
       }
     }

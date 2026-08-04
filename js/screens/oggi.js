@@ -61,6 +61,7 @@ async function bloccoGrafico(ridisegna) {
   const tutti = await store.allenamenti();
   const obiettivo = await store.impostazione("obiettivoMovimentoKcal");
 
+  const inizioProgramma = store.programma()?.aggiornatoIl || "0000-00-00";
   const perData = new Map(giorni.map((g) => [g.data, g]));
   const perNotte = new Map(notti.map((n) => [n.data, n]));
   const allenati = new Set(tutti.filter((s) => s.stato === "completata").map((s) => s.data));
@@ -92,7 +93,9 @@ async function bloccoGrafico(ridisegna) {
     serie.push({
       data,
       futuro: data > oggi,
-      previsto: Boolean(store.giornoPrevisto(data)),
+      // Prima che il programma esistesse non era previsto niente: segnarlo
+      // dipingerebbe di «allenamento previsto» un passato che non c'era.
+      previsto: data >= inizioProgramma && Boolean(store.giornoPrevisto(data)),
       origine: store.origineGiorno(data),
       presente: Boolean(g?.presente),
       kcal: g?.presente ? g.kcalAttive : null,
@@ -113,7 +116,8 @@ async function bloccoGrafico(ridisegna) {
   // Finestra dei numeri: quella scelta, oppure tutto lo storico.
   const daQuando = inizioPeriodo(periodo, oggi);
   const dentro = (r) => !daQuando || (r.data >= daQuando && r.data <= oggi);
-  const giorniConDati = giorni.filter((g) => g.presente && dentro(g));
+  // Oggi non è finita: nella media entrerebbe come un giorno fiacco.
+  const giorniConDati = giorni.filter((g) => g.presente && dentro(g) && g.data < oggi);
   const nottiConDati = notti.filter((n) => n.presente && dentro(n));
   const mediaKcal = media(giorniConDati, "kcalAttive");
   const mediaPassi = media(giorniConDati, "passi");
@@ -164,6 +168,9 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
     // oggi»: riprendendolo, le serie di oggi finirebbero registrate alla sua
     // data. Va detto, e va data la via d'uscita.
     const vecchio = inCorso.data !== oggi;
+    // Un allenamento aperto e mai cominciato non ha niente da archiviare:
+    // «Chiudi e archivia» avrebbe creato un allenamento vuoto nello storico.
+    const vuoto = !(await store.serieDi(inCorso.id)).length;
     const ora = new Date(inCorso.oraInizio).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
     return h(
       "div.group",
@@ -191,7 +198,14 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
       h(
         "div.btn-wrap",
         h("button.btn", { onclick: () => vaiA("seduta") }, vecchio ? `Riprendi (resta del ${dataBreve(inCorso.data)})` : "Riprendi allenamento"),
-        vecchio
+        vecchio && vuoto
+          ? h(
+              "p.footnote",
+              { style: "margin:10px 0 0;color:var(--label-tertiary);text-align:center" },
+              "Non c'è nessuna serie registrata: non c'è niente da archiviare."
+            )
+          : null,
+        vecchio && !vuoto
           ? h(
               "button.btn.secondary",
               {
@@ -281,7 +295,9 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
     ? "completato oggi"
     : previsto
       ? `${previsto.esercizi?.length || 0} esercizi${previsto.cardio ? " + cardio" : ""}`
-      : origine.sconosciuto
+      : origine.riposo
+        ? "riposo, dal calendario del coach"
+        : origine.sconosciuto
         ? `«${origine.titolo}» non è un allenamento del programma`
         : origine.scaduta
           ? `il calendario importato arriva al ${dataBreve(origine.fine)}: aggiornalo con il comando Coach Calendario`

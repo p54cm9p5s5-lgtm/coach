@@ -28,8 +28,14 @@ async function elenco(vaiA) {
     for (const s of completate) {
       const serie = await store.serieDi(s.id);
       const logs = await store.questionariDi(s.id);
-      const saltati = logs.filter((l) => l.saltato).length;
-      const durata = s.oraFine ? durataUmana(Math.round((s.oraFine - s.oraInizio) / 1000)) : "—";
+      // Interrotto a metà non è «saltato»: il lavoro c'è. Si contano solo gli
+      // esercizi in cui non hai fatto proprio niente.
+      const saltati = logs.filter(
+        (l) => l.saltato && !serie.some((x) => x.esercizioId === l.esercizioId)
+      ).length;
+      const durata = s.oraFine
+        ? durataUmana(Math.round((s.oraFine - (s.oraInizioLavoro || s.oraInizio)) / 1000))
+        : "—";
       aggiungi(lista, 
         h(
           "a.row",
@@ -188,7 +194,7 @@ async function dettaglioSeduta(id) {
       "div.group",
       h("div.list",
         h("div.row", h("div.main", h("span.title", "Data")), h("span.value", dataLunga(s.data))),
-        h("div.row", h("div.main", h("span.title", "Orario")), h("span.value", `${oraDi(s.oraInizio)}${s.oraFine ? `–${oraDi(s.oraFine)}` : ""}`)),
+        h("div.row", h("div.main", h("span.title", "Orario")), h("span.value", `${oraDi(s.oraInizioLavoro || s.oraInizio)}${s.oraFine ? `–${oraDi(s.oraFine)}` : ""}`)),
         s.tipoProgrammatoId && s.tipoProgrammatoId !== s.tipoId
           ? h("div.row", h("div.main", h("span.title", "In programma era")), h("span.value", store.giornoSplit(s.tipoProgrammatoId)?.nome || s.tipoProgrammatoId))
           : null,

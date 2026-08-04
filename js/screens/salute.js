@@ -1,4 +1,4 @@
-import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, aggiungi } from "../ui.js";
+import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, aggiungi, toast } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
@@ -111,7 +111,12 @@ export async function render({ ridisegna }) {
   };
 
   const media = (righe, campo) => {
-    const v = righe.filter((r) => r.presente).map((r) => r[campo]).filter((x) => x != null);
+    // La giornata in corso è a metà: nella media entrerebbe come un giorno
+    // fiacco e farebbe sembrare che stai peggiorando. Nel grafico resta.
+    const v = righe
+      .filter((r) => r.presente && r.data < oggiIso)
+      .map((r) => r[campo])
+      .filter((x) => x != null);
     return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
   };
 
@@ -426,7 +431,12 @@ async function incolla(ridisegna) {
       }
       return;
     }
-    await chiedi({ titolo: "Non importato", testo: e.message, opzioni: [{ etichetta: "Ho capito", valore: "ok" }] });
+    const dettagli = e.avvisi?.length ? `\n\nRighe scartate:\n${e.avvisi.slice(0, 5).join("\n")}` : "";
+    await chiedi({
+      titolo: "Non importato",
+      testo: `${e.message}${dettagli}`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+    });
     return;
   }
 

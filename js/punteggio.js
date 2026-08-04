@@ -274,7 +274,10 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
     style: "transform:rotate(-90deg);display:block",
     "aria-hidden": "true",
   });
-  const colore = giudizio(totale).livello === 1 ? "var(--orange)" : "var(--accent)";
+  // Tre livelli come le barrette della scomposizione: con due soli colori,
+  // «sufficiente» e «ottimo» erano indistinguibili a colpo d'occhio.
+  const liv = giudizio(totale).livello;
+  const colore = liv === 1 ? "var(--orange)" : liv === 2 ? "var(--label-secondary)" : "var(--accent)";
   svg.append(
     el("circle", { cx: 88, cy: 88, r: R, fill: "none", stroke: "currentColor", "stroke-width": spessore, opacity: 0.14 }),
     el("circle", {

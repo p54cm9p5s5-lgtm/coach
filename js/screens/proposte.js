@@ -1,4 +1,4 @@
-import { h, aggiungi, dataBreve, dataLunga, num, toast, chiedi, sheet } from "../ui.js";
+import { h, aggiungi, dataBreve, dataLunga, num, toast, chiedi, sheet , isoDate } from "../ui.js";
 import { intestazione } from "../app.js";
 import { nomeLivello } from "../segnali.js";
 import * as store from "../store.js";
@@ -51,7 +51,7 @@ async function elenco(vaiA, ridisegna) {
             "div.main",
             h("span.title", p.titolo),
             // La data in cui hai risposto, non quella in cui la proposta è nata.
-            h("span.sub", `Accettata il ${dataBreve((p.rispostoIl || p.data).slice(0, 10))} · verifica prevista ${dataBreve(p.dataVerifica)}`)
+            h("span.sub", `Accettata il ${dataBreve(p.rispostoIl ? isoDate(new Date(p.rispostoIl)) : p.data)} · verifica prevista ${dataBreve(p.dataVerifica)}`)
           ),
           h("span.pill.warn", "da verificare"),
           h("span.chevron", "›")
@@ -298,7 +298,7 @@ function chiediNota(stato) {
 async function apriVerifica(p, ridisegna) {
   const esito = await chiedi({
     titolo: p.titolo,
-    testo: `Accettata il ${dataLunga((p.rispostoIl || p.data).slice(0, 10))}. Il risultato atteso era: ${p.quattroDomande.atteso}`,
+    testo: `Accettata il ${dataLunga(p.rispostoIl ? isoDate(new Date(p.rispostoIl)) : p.data)}. Il risultato atteso era: ${p.quattroDomande.atteso}`,
     opzioni: [
       { etichetta: "Confermata", valore: "confermata" },
       { etichetta: "Non confermata", valore: "nonConfermata" },

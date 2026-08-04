@@ -104,7 +104,11 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
   }
 
   const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
-  const durata = seduta.oraFine ? Math.round((seduta.oraFine - seduta.oraInizio) / 1000) : null;
+  // L'inizio del lavoro vero (una seduta ripresa il giorno dopo comincia
+  // quando riprendi, non quando l'avevi aperta).
+  const durata = seduta.oraFine
+    ? Math.round((seduta.oraFine - (seduta.oraInizioLavoro || seduta.oraInizio)) / 1000)
+    : null;
 
   return [
     `SEDUTA — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
@@ -121,11 +125,21 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     // dettaglio: veniva registrato nell'app e poi non arrivava al coach.
     riga(
       "Velocità impostata sul tapis",
-      seduta.cardio?.eseguito
-        ? `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min`
-        : seduta.cardio?.previsto
-          ? `cardio non eseguito${seduta.cardio.saltatoMotivo ? ` (${String(seduta.cardio.saltatoMotivo).replace(/\s*\n+\s*/g, " · ")})` : ""}`
-          : null
+      (() => {
+        if (!seduta.cardio?.eseguito && !seduta.cardio?.previsto) return null;
+        // La nota che hai scritto sul cardio è un dato come gli altri: restava
+        // nell'app e non arrivava mai al coach.
+        const nota = seduta.cardio.note
+          ? ` — ${String(seduta.cardio.note).replace(/\s*\n+\s*/g, " · ")}`
+          : "";
+        if (seduta.cardio.eseguito) {
+          return `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min${nota}`;
+        }
+        const motivo = seduta.cardio.saltatoMotivo
+          ? ` (${String(seduta.cardio.saltatoMotivo).replace(/\s*\n+\s*/g, " · ")})`
+          : "";
+        return `cardio non eseguito${motivo}${nota}`;
+      })()
     ),
     riga("Durata allenamento", durata ? durataUmana(durata) : null),
     riga("Densità", durata ? `${(serie.length / (durata / 60)).toFixed(2).replace(".", ",")} serie/min` : null),
@@ -245,7 +259,7 @@ export function bloccoAccettate(accettate, esercizio) {
     const prima = p.da?.carico != null ? `, prima ${num(p.da.carico)} kg` : "";
     // La data della risposta, non quella in cui la proposta è nata: sono cose
     // diverse e stampare la seconda faceva sembrare vecchia una decisione di ieri.
-    const quando = p.rispostoIl ? p.rispostoIl.slice(0, 10) : p.data;
+    const quando = p.rispostoIl ? isoDate(new Date(p.rispostoIl)) : p.data;
     // Lo stato della verifica: senza, il coach non sa se una decisione è stata
     // controllata o se è ancora in attesa di prova.
     const verifica = p.esitoVerifica

@@ -18,6 +18,14 @@ let LETTURA_AGENDA = null;
 let ULTIMA_LETTURA_AGENDA = null;
 // Fin dove il calendario è stato letto in assoluto: non arretra mai.
 let COPERTURA_AGENDA = null;
+// Le finestre davvero lette, una per lettura: [{da, a}]. Un giorno fuori da
+// tutte è un giorno che nessuno ha guardato, e va detto invece di darlo per
+// vuoto (fra una lettura e l'altra può passare più di un mese).
+let FINESTRE_AGENDA = [];
+
+function dentroUnaFinestra(iso) {
+  return FINESTRE_AGENDA.some((f) => iso >= f.da && iso <= f.a);
+}
 
 // ---------- avvio ----------
 
@@ -198,7 +206,10 @@ export function giornoPrevisto(iso = isoDate()) {
   // riempire con lo split. Ma solo dentro il periodo che il calendario ha
   // davvero letto: prima di quello (il passato, che il comando non guarda) il
   // calendario non ha nulla da dire, e resta valido lo split del brief.
-  if (agendaAttiva() && iso >= (intervalloAgenda()?.da ?? iso)) return null;
+  const letto = FINESTRE_AGENDA.length
+    ? dentroUnaFinestra(iso)
+    : agendaAttiva() && iso >= (intervalloAgenda()?.da ?? iso);
+  if (agendaAttiva() && letto) return null;
   const wd = weekdayOf(iso);
   return (PROGRAMMA.split || []).find((g) => g.giorno === wd) || null;
 }
@@ -220,18 +231,27 @@ export function origineGiorno(iso = isoDate()) {
     if (periodo?.ultimoEvento && iso > periodo.ultimoEvento) {
       return { fonte: "calendario", vuoto: true, oltreProgrammato: true, ultimoEvento: periodo.ultimoEvento };
     }
-    // Prima dell'inizio della lettura non si può dire «niente sul calendario»:
-    // quel giorno il calendario non è mai stato letto. Lì vale lo split.
-    if (periodo?.da && iso < periodo.da) return { fonte: "split", nonLetta: true, da: periodo.da };
+    // Un giorno che nessuna lettura ha coperto non è «niente sul calendario»:
+    // è un giorno che nessuno ha guardato. Lì vale lo split del brief.
+    if (FINESTRE_AGENDA.length ? !dentroUnaFinestra(iso) : periodo?.da && iso < periodo.da) {
+      return { fonte: "split", nonLetta: true, da: periodo?.da };
+    }
     return { fonte: "calendario", vuoto: true };
   }
-  if (ev.giornoId === "riposo") return { fonte: "calendario", titolo: ev.titolo, riposo: true };
+  if (ev.giornoId === "riposo") {
+    return { fonte: "calendario", titolo: ev.titolo, nota: ev.nota || null, riposo: true };
+  }
   if (ev.giornoId) {
     const wd = weekdayOf(iso);
     const daSplit = (PROGRAMMA?.split || []).find((g) => g.giorno === wd) || null;
-    return { fonte: "calendario", titolo: ev.titolo, diverso: (daSplit?.id ?? null) !== ev.giornoId };
+    return {
+      fonte: "calendario",
+      titolo: ev.titolo,
+      nota: ev.nota || null,
+      diverso: (daSplit?.id ?? null) !== ev.giornoId,
+    };
   }
-  return { fonte: "calendario", titolo: ev.titolo, sconosciuto: true };
+  return { fonte: "calendario", titolo: ev.titolo, nota: ev.nota || null, sconosciuto: true };
 }
 
 export function giorniSplit() {
@@ -399,6 +419,28 @@ export function fineStimata(sed, serie = []) {
   return adesso - ultimoGesto > 10 * 60000 ? ultimoGesto + 10 * 60000 : adesso;
 }
 
+/**
+ * Quando è cominciato davvero l'allenamento che stai chiudendo.
+ * Una seduta lasciata aperta ieri e ripresa oggi ha `oraInizio` di ieri: la
+ * durata risultava di venti ore, e quel numero finiva nel pacchetto per il
+ * coach insieme a una densità di 0,01 serie al minuto. Se fra l'inizio (o fra
+ * due gesti) c'è un buco di ore, l'allenamento vero comincia dopo il buco.
+ */
+export function inizioStimato(sed, serie = []) {
+  const BUCO = 3 * 3600000;
+  const gesti = serie
+    .map((x) => x.tsInizioSerie || x.tsFineSerie)
+    .filter(Boolean)
+    .sort((a, b) => a - b);
+  if (!gesti.length) return sed?.oraInizio ?? Date.now();
+  let inizio = sed?.oraInizio ?? gesti[0];
+  if (gesti[0] - inizio > BUCO) inizio = gesti[0];
+  for (let i = 1; i < gesti.length; i++) {
+    if (gesti[i] - gesti[i - 1] > BUCO) inizio = gesti[i];
+  }
+  return inizio;
+}
+
 export async function chiudiSeduta(id, { notaGenerale } = {}) {
   invalidaCacheSedute();
   const s = await db.get("sedute", id);
@@ -410,10 +452,14 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
   // mezz'ora: dimenticarlo accorciava l'allenamento di tutto il cardio).
   const serieFatte = await db.byIndex("serie", "sedutaId", id);
   const fine = fineStimata(s, serieFatte);
+  const inizioVero = inizioStimato(s, serieFatte);
   const agg = {
     ...s,
     stato: "completata",
     oraFine: fine,
+    // L'inizio dichiarato resta (dice quando hai aperto l'allenamento), ma la
+    // durata si misura da quando hai cominciato a lavorare davvero.
+    oraInizioLavoro: inizioVero !== s.oraInizio ? inizioVero : null,
     // `?? ` avrebbe tenuto la nota vecchia anche quando la cancelli davvero:
     // solo l'assenza del campo significa «non toccarla».
     notaGenerale: notaGenerale !== undefined ? notaGenerale : s.notaGenerale,
@@ -1470,6 +1516,20 @@ export async function importaSalute(pacchetto) {
     LETTURA_AGENDA = (prima || oggiLetto).slice(0, 10);
     ULTIMA_LETTURA_AGENDA = oggiLetto;
     const coperturaNuova = piuGiorni(oggiLetto, ORIZZONTE_AGENDA_GIORNI);
+    // Si registra la finestra di QUESTA lettura, senza cancellare le altre.
+    const finestre = (await impostazione("finestreAgenda")) || [];
+    finestre.push({ da: oggiLetto, a: coperturaNuova });
+    // Unione delle finestre che si toccano: l'elenco non deve crescere all'infinito.
+    finestre.sort((x, y) => (x.da < y.da ? -1 : 1));
+    const unite = [];
+    for (const f of finestre) {
+      const ultima = unite[unite.length - 1];
+      if (ultima && f.da <= piuGiorni(ultima.a, 1)) {
+        if (f.a > ultima.a) ultima.a = f.a;
+      } else unite.push({ ...f });
+    }
+    FINESTRE_AGENDA = unite;
+    await setImpostazione("finestreAgenda", unite);
     const coperturaVecchia = await impostazione("coperturaAgenda");
     COPERTURA_AGENDA =
       coperturaVecchia && coperturaVecchia > coperturaNuova ? coperturaVecchia : coperturaNuova;
@@ -1528,6 +1588,11 @@ async function caricaAgenda() {
   LETTURA_AGENDA = letta ? String(letta).slice(0, 10) : null;
   ULTIMA_LETTURA_AGENDA = ultima ? String(ultima).slice(0, 10) : LETTURA_AGENDA;
   COPERTURA_AGENDA = (await impostazione("coperturaAgenda")) || null;
+  FINESTRE_AGENDA = (await impostazione("finestreAgenda")) || [];
+  // Archivi vecchi: nessuna finestra registrata, si usa il periodo intero.
+  if (!FINESTRE_AGENDA.length && LETTURA_AGENDA && COPERTURA_AGENDA) {
+    FINESTRE_AGENDA = [{ da: LETTURA_AGENDA, a: COPERTURA_AGENDA }];
+  }
   return AGENDA;
 }
 
@@ -1619,10 +1684,12 @@ export async function svuotaAgenda() {
   await setImpostazione("ultimoImportAgenda", null);
   await setImpostazione("primaLetturaAgenda", null);
   await setImpostazione("coperturaAgenda", null);
+  await setImpostazione("finestreAgenda", null);
   AGENDA = new Map();
   LETTURA_AGENDA = null;
   ULTIMA_LETTURA_AGENDA = null;
   COPERTURA_AGENDA = null;
+  FINESTRE_AGENDA = [];
 }
 
 /** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */

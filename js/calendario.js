@@ -183,7 +183,14 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
     // Col calendario collegato «niente» non è riposo per scelta dell'app: è
     // quello che c'è scritto, o l'assenza di qualunque cosa.
     righe.push(
-      origine?.scaduta
+      origine?.riposo
+        ? {
+            // Il riposo scritto dal coach è un'informazione, non un'assenza:
+            // dire «niente sul calendario» era il contrario del vero.
+            testo: origine.titolo ? `Riposo — ${origine.titolo}` : "Riposo, dal calendario",
+            stato: "info",
+          }
+        : origine?.scaduta
         ? {
             // Non è «niente»: è che il calendario non è stato riletto. Dirlo
             // qui evita di credere che il coach non avesse previsto nulla.
@@ -202,6 +209,8 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
   }
   // Evita di ripetere lo stesso titolo due volte: se è già fra le cose attese
   // del giorno, basta segnalarne la natura una volta sola.
+  // La nota che il coach ha scritto nell'evento vale quanto il titolo.
+  if (origine?.nota) righe.push({ testo: origine.nota, stato: "info" });
   if (origine?.sconosciuto && origine.titolo) {
     const gia = attese.findIndex((a) => a.testo === origine.titolo);
     // Se quella riga era segnata in ritardo, il ritardo va tenuto: toglierla e
