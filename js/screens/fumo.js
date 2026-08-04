@@ -19,14 +19,11 @@ function colore(n) {
 }
 
 /**
- * Il segnale «vietato fumare».
+ * Il segnale «vietato fumare», a sole linee.
  *
- * Il disegno resta sempre uguale: è un'illustrazione, non un indicatore.
- * A cambiare colore con le soglie è il numero, che è il dato.
- *
- * Sigaretta e fumo prendono il colore del testo invece del nero, se no su
- * fondo scuro sparirebbero. Il cerchio resta rosso: è quello che rende il
- * segnale riconoscibile a colpo d'occhio.
+ * Un colore solo — quello del testo — e nessun riempimento: così funziona
+ * uguale su fondo chiaro e su fondo scuro, e non litiga col numero, che è
+ * l'unica cosa colorata della schermata perché è l'unica che è un dato.
  */
 function sigarettaSvg() {
   const NS = "http://www.w3.org/2000/svg";
@@ -39,36 +36,25 @@ function sigarettaSvg() {
   svg.style.display = "block";
   svg.style.margin = "0 auto";
 
-  const NERO = "var(--label)";
-  // il rosso del segnale, non quello della palette: deve essere quello pieno
-  // dei cartelli, se no sembra sbiadito.
-  const ROSSO = "#ed1c24";
-
-  // la sigaretta: corpo pieno e i tre segmenti della parte che brucia
-  svg.append(
-    el("rect", { x: 36, y: 91, width: 90, height: 19, fill: NERO }),
-    el("rect", { x: 131, y: 91, width: 6, height: 19, fill: NERO }),
-    el("rect", { x: 142, y: 91, width: 6, height: 19, fill: NERO }),
-    el("rect", { x: 153, y: 91, width: 6, height: 19, fill: NERO })
+  const g = el("g", {
+    fill: "none",
+    stroke: "var(--label)",
+    "stroke-width": 7,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+  });
+  g.append(
+    // la sigaretta e i tre segmenti della parte che brucia
+    el("rect", { x: 40, y: 89, width: 88, height: 22, rx: 3 }),
+    el("path", { d: "M138 89v22M149 89v22M160 89v22" }),
+    // le due volute di fumo
+    el("path", { d: "M137 82C137 70 122 70 122 58 122 46 137 46 137 34" }),
+    el("path", { d: "M113 82C113 71 99 71 99 59 99 47 113 47 113 36" }),
+    // il cerchio e la sbarra
+    el("circle", { cx: 100, cy: 100, r: 80 }),
+    el("path", { d: "M43.4 43.4L156.6 156.6" })
   );
-
-  // le due volute di fumo
-  svg.append(
-    el("path", {
-      d: "M136 88C136 75 121 75 121 62 121 49 136 49 136 36",
-      stroke: NERO, "stroke-width": 10, fill: "none", "stroke-linecap": "round",
-    }),
-    el("path", {
-      d: "M113 88C113 77 99 77 99 65 99 53 113 53 113 42",
-      stroke: NERO, "stroke-width": 10, fill: "none", "stroke-linecap": "round",
-    })
-  );
-
-  // il cerchio e la sbarra
-  svg.append(
-    el("circle", { cx: 100, cy: 100, r: 80, stroke: ROSSO, "stroke-width": 22, fill: "none" }),
-    el("path", { d: "M51.2 51.2L148.8 148.8", stroke: ROSSO, "stroke-width": 22 })
-  );
+  svg.append(g);
   return svg;
 }
 
