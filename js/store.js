@@ -1,7 +1,7 @@
 /* Logica di dominio: programma, allenamenti, serie, questionari, volumi. */
 
 import * as db from "./db.js";
-import { isoDate, weekdayOf, giorniTra } from "./ui.js";
+import { isoDate, weekdayOf, giorniTra, dataBreve, num } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
 import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni } from "./segnali.js";
 import { punteggioEsercizio, punteggioAllenamento } from "./punteggio.js";
@@ -1423,8 +1423,21 @@ export async function giorniDaUltimaMisura(tipo) {
  * non registrato — ma un giorno già presente non viene mai declassato: se il
  * dato c'era, un export incompleto non deve cancellarlo.
  */
+/**
+ * Campi che iPhone e Watch registrano tutti e due: se il comando rapido somma i
+ * campioni di entrambe le fonti, li conta due volte. Le kcal attive no — quelle
+ * le scrive solo l'orologio — ed è per questo che un raddoppio si riconosce:
+ * le calorie restano identiche e i passi crescono.
+ */
+const CAMPI_A_RISCHIO_DOPPIO = {
+  passi: "passi",
+  distanzaKm: "distanza",
+  pianiSaliti: "piani",
+  minutiInPiedi: "tempo in piedi",
+};
+
 export async function importaSalute(pacchetto) {
-  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0 };
+  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [] };
 
   /**
    * Fonde solo i campi valorizzati: due righe per lo stesso giorno, una con le
@@ -1449,6 +1462,22 @@ export async function importaSalute(pacchetto) {
   for (const g of pacchetto.giorni) {
     const prec = await db.get("giorniSalute", g.data);
     if (prec?.presente && !giorniVisti.has(g.data)) conteggio.aggiornati++;
+    // Un giorno già chiuso non cambia: se il valore nuovo è molto diverso da
+    // quello che c'era, uno dei due conteggi è sbagliato. Sovrascrivere in
+    // silenzio significherebbe scegliere al posto tuo quale credere.
+    if (prec?.presente && g.data < isoDate()) {
+      for (const [campo, nome] of Object.entries(CAMPI_A_RISCHIO_DOPPIO)) {
+        const vecchio = prec[campo];
+        const nuovo = g[campo];
+        if (vecchio == null || nuovo == null || vecchio <= 0) continue;
+        const rapporto = nuovo / vecchio;
+        if (rapporto >= 1.4 || rapporto <= 0.7) {
+          conteggio.sospetti.push(
+            `${dataBreve(g.data)} ${nome}: ${num(vecchio, 0)} → ${num(nuovo, 0)} (×${num(rapporto, 2)})`
+          );
+        }
+      }
+    }
     await db.put("giorniSalute", {
       ...fondi(prec, g),
       fonte: "salute",

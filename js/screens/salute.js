@@ -610,6 +610,21 @@ async function incolla(ridisegna) {
   if (conteggio.vuoti) righe.push(`${conteggio.vuoti} ${conteggio.vuoti === 1 ? "giorno" : "giorni"} senza dati, ${conteggio.vuoti === 1 ? "segnato" : "segnati"} come non ${conteggio.vuoti === 1 ? "registrato" : "registrati"}`);
   if (pacchetto.avvisi.length) righe.push(`Avvisi: ${pacchetto.avvisi.slice(0, 3).join(" · ")}`);
 
+  // Un giorno già passato che cambia di molto vuol dire che uno dei due
+  // conteggi è sbagliato — quasi sempre il comando rapido che somma iPhone e
+  // Watch insieme. Sovrascrivere in silenzio sarebbe scegliere al posto tuo.
+  if (conteggio.sospetti?.length) {
+    await chiedi({
+      titolo: "Numeri cambiati su giorni già registrati",
+      testo:
+        `${conteggio.sospetti.slice(0, 6).join("\n")}` +
+        `\n\nGiorni finiti non cambiano da soli. Di solito succede quando il comando rapido somma i campioni di iPhone e Watch: i passi, la distanza e i piani li registrano tutti e due, e i periodi in cui li avevi entrambi addosso vengono contati due volte. Le calorie attive no, le scrive solo l'orologio: se quelle restano identiche e i passi crescono, è questo.` +
+        `\n\nControlla su Salute il numero vero di uno di questi giorni e, se serve, filtra l'origine dentro il comando rapido.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
+    });
+  }
+
   await chiedi({
     titolo: righe.length ? "Importato" : "Niente da importare",
     testo: righe.length ? righe.join("\n") : "Il pacchetto era vuoto.",
