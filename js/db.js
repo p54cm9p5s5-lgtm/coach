@@ -206,12 +206,23 @@ export async function importaTutto(dump, modo = "sostituisci") {
   const senzaOpinione = new Set(Array.isArray(dump.parziale) ? dump.parziale : []);
   const daScrivere = presenti.filter((s) => !senzaOpinione.has(s));
 
+  // «Sostituisci tutto» deve sostituire davvero: gli archivi che il file NON
+  // nomina vanno svuotati lo stesso (a meno che il file dichiari di non saperne
+  // niente). Prima restavano i dati vecchi mescolati ai nuovi, e l'archivio
+  // finiva in uno stato che non è mai esistito.
+  const daSvuotare =
+    modo === "sostituisci"
+      ? Object.keys(SCHEMA).filter((s) => !mancanti.includes(s) && !senzaOpinione.has(s))
+      : [];
+  const coinvolti = [...new Set([...daScrivere, ...daSvuotare])];
+
   const db = await open();
-  const { t, done } = tx(db, daScrivere, "readwrite");
+  const { t, done } = tx(db, coinvolti, "readwrite");
   try {
+    for (const store of daSvuotare) t.objectStore(store).clear();
     for (const store of daScrivere) {
       const os = t.objectStore(store);
-      if (modo === "sostituisci") os.clear();
+      if (modo === "sostituisci" && !daSvuotare.includes(store)) os.clear();
       for (const riga of dump.dati[store]) os.put(riga);
     }
   } catch (e) {
@@ -226,6 +237,12 @@ export async function importaTutto(dump, modo = "sostituisci") {
     throw new Error(`Ripristino annullato, archivio invariato: ${e.message}`);
   }
   await done;
+  // Quello che il file conteneva e questo telefono non sa dove mettere va
+  // detto, non inghiottito in silenzio.
+  const ignorati = Object.keys(dump.dati || {}).filter(
+    (nome) => !Object.keys(SCHEMA).includes(nome) || mancanti.includes(nome)
+  );
+  return { scritti: daScrivere, svuotati: daSvuotare, ignorati };
 }
 
 /**

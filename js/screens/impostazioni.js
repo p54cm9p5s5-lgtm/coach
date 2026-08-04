@@ -528,7 +528,7 @@ async function importaBackup(ridisegna) {
     titolo: modo === "unisci" ? "Importare questi dati?" : "Ripristinare il backup?",
     testo:
       modo === "unisci"
-        ? `File del ${quando}. I dati vengono aggiunti a quelli già presenti, niente viene cancellato.`
+        ? `File del ${quando}. I dati vengono aggiunti a quelli già presenti. Le voci con lo stesso identificativo vengono sostituite da quelle del file; il resto resta com'è.`
         : `Backup del ${quando}. I dati attuali vengono sostituiti.`,
     opzioni: [
       {
@@ -549,8 +549,9 @@ async function importaBackup(ridisegna) {
     /* se non riesce si prosegue: l'import resta l'operazione richiesta */
   }
 
+  let esito = null;
   try {
-    await store.db.importaTutto(dump, modo);
+    esito = await store.db.importaTutto(dump, modo);
     if (indietro && modo === "sostituisci") {
       // Il file importato ha riscritto anche le impostazioni: la copia di
       // sicurezza appena fatta va rimessa, altrimenti sparisce proprio quella.
@@ -563,6 +564,15 @@ async function importaBackup(ridisegna) {
   } catch (e) {
     toast(e.message, 5000);
     return;
+  }
+  if (esito?.ignorati?.length) {
+    // Se una parte del file non è entrata bisogna saperlo prima di credere di
+    // avere tutto: succede se il file viene da una versione più nuova dell'app.
+    await chiedi({
+      titolo: "Ripristinato, ma non tutto",
+      testo: `Queste parti del file non sono entrate perché questa versione dell'app non le conosce: ${esito.ignorati.join(", ")}. Tieni il file: aggiornando l'app potrai riprovare.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+    });
   }
   toast("Backup ripristinato.");
   location.reload();

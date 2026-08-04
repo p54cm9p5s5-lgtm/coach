@@ -405,6 +405,27 @@ async function incolla(ridisegna) {
   try {
     pacchetto = analizza(testo);
   } catch (e) {
+    // Un pacchetto vuoto letto dal calendario vuol dire una cosa precisa: il
+    // coach ha tolto tutto. Prima l'app diceva solo «non importato» e teneva
+    // gli allenamenti vecchi, continuando a proporli.
+    const eraCalendario = /COACH-DATI/i.test(testo) && (await store.agenda()).length > 0;
+    if (eraCalendario && /vuoto/i.test(e.message)) {
+      const ok = await chiedi({
+        titolo: "Il calendario è vuoto",
+        testo:
+          "Il comando non ha trovato nessun evento. Se il coach ha svuotato il calendario, posso dimenticare gli allenamenti letti prima: l'app tornerà a seguire lo split del brief finché non rileggi il calendario.",
+        opzioni: [
+          { etichetta: "Dimentica gli allenamenti letti", valore: "svuota", stile: "danger" },
+          { etichetta: "Lascia com'è", valore: "no" },
+        ],
+      });
+      if (ok === "svuota") {
+        await store.svuotaAgenda();
+        toast("Allenamenti letti dimenticati.");
+        if (ridisegna) await ridisegna();
+      }
+      return;
+    }
     await chiedi({ titolo: "Non importato", testo: e.message, opzioni: [{ etichetta: "Ho capito", valore: "ok" }] });
     return;
   }
