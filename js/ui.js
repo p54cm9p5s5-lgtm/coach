@@ -514,7 +514,13 @@ export function tick() {
 }
 
 /** Prova del suono, per verificarlo senza allenarsi. */
+let ripristinoProva = null;
+
 export async function provaSuono() {
+  // Il timer della prova precedente va annullato: due prove ravvicinate
+  // lasciavano un timer orfano che rimetteva la ripetizione mentre la seconda
+  // prova stava ancora suonando, e la traccia partiva in loop senza motivo.
+  if (ripristinoProva) clearTimeout(ripristinoProva);
   await sbloccaAudio();
   sessioneAudio("transient");
   const a = elemento();
@@ -525,7 +531,8 @@ export async function provaSuono() {
   } catch {
     /* se l'elemento resta bloccato non c'è altro da fare qui */
   }
-  setTimeout(() => {
+  ripristinoProva = setTimeout(() => {
+    ripristinoProva = null;
     a.loop = true;
     sessioneAudio("auto");
   }, 2500);
