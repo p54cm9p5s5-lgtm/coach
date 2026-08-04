@@ -214,10 +214,11 @@ export function giornoPrevisto(iso = isoDate()) {
   // riempire con lo split. Ma solo dentro il periodo che il calendario ha
   // davvero letto: prima di quello (il passato, che il comando non guarda) il
   // calendario non ha nulla da dire, e resta valido lo split del brief.
-  const letto = FINESTRE_AGENDA.length
-    ? dentroUnaFinestra(iso)
-    : agendaAttiva() && iso >= (intervalloAgenda()?.da ?? iso);
-  if (agendaAttiva() && letto) return null;
+  // Una sola fonte decide: origineGiorno. Lo split torna valido SOLO per i
+  // giorni che il calendario non ha mai guardato (`fonte: "split"`). Un
+  // calendario vecchio non fa tornare l'app a inventare allenamenti dallo
+  // split spacciandoli per «dal calendario»: dice che va aggiornato, e basta.
+  if (agendaAttiva() && origineGiorno(iso).fonte !== "split") return null;
   const wd = weekdayOf(iso);
   return (PROGRAMMA.split || []).find((g) => g.giorno === wd) || null;
 }
@@ -240,9 +241,13 @@ export function origineGiorno(iso = isoDate()) {
       return { fonte: "calendario", vuoto: true, oltreProgrammato: true, ultimoEvento: periodo.ultimoEvento };
     }
     // Un giorno che nessuna lettura ha coperto non è «niente sul calendario»:
-    // è un giorno che nessuno ha guardato. Lì vale lo split del brief.
-    if (FINESTRE_AGENDA.length ? !dentroUnaFinestra(iso) : periodo?.da && iso < periodo.da) {
-      return { fonte: "split", nonLetta: true, da: periodo?.da };
+    // è un giorno che nessuno ha guardato. Prima della prima lettura vale lo
+    // split (quel passato il comando non lo guarda mai). Dopo, no: un buco fra
+    // due letture significa solo che il calendario va riletto.
+    const maiLetto = FINESTRE_AGENDA.length ? !dentroUnaFinestra(iso) : periodo?.da && iso < periodo.da;
+    if (maiLetto) {
+      if (periodo?.da && iso < periodo.da) return { fonte: "split", nonLetta: true, da: periodo.da };
+      return { fonte: "calendario", scaduta: true, fine: periodo?.a, nonLetta: true, ultimoEvento: periodo?.ultimoEvento };
     }
     return { fonte: "calendario", vuoto: true };
   }
@@ -449,6 +454,31 @@ export function inizioStimato(sed, serie = []) {
   return inizio;
 }
 
+/**
+ * Quanto è durato il lavoro vero, buchi esclusi. Serve alla densità: con una
+ * seduta ripresa il giorno dopo, contare tutto il tempo dall'inizio darebbe
+ * «0,01 serie al minuto» anche a un allenamento fatto bene.
+ */
+export function durataLavoroSec(sed, serie = []) {
+  const BUCO = 3 * 3600000;
+  const gesti = serie
+    .map((x) => x.tsFineSerie || x.tsInizioSerie)
+    .filter(Boolean)
+    .sort((a, b) => a - b);
+  if (!gesti.length) return null;
+  let totale = 0;
+  let prec = Math.min(sed?.oraInizio ?? gesti[0], gesti[0]);
+  for (const g of gesti) {
+    const passo = g - prec;
+    if (passo > 0 && passo <= BUCO) totale += passo;
+    prec = g;
+  }
+  const fine = sed?.oraFine || fineStimata(sed, serie);
+  const coda = fine - prec;
+  if (coda > 0 && coda <= BUCO) totale += coda;
+  return Math.round(totale / 1000);
+}
+
 export async function chiudiSeduta(id, { notaGenerale } = {}) {
   invalidaCacheSedute();
   const s = await db.get("sedute", id);
@@ -468,6 +498,9 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
     // L'inizio dichiarato resta (dice quando hai aperto l'allenamento), ma la
     // durata si misura da quando hai cominciato a lavorare davvero.
     oraInizioLavoro: inizioVero !== s.oraInizio ? inizioVero : null,
+    // Il tempo di lavoro netto, congelato: la densità nel pacchetto per il
+    // coach deve raccontare l'allenamento, non le ore di pausa.
+    durataLavoroSec: durataLavoroSec({ ...s, oraFine: fine }, serieFatte),
     // `?? ` avrebbe tenuto la nota vecchia anche quando la cancelli davvero:
     // solo l'assenza del campo significa «non toccarla».
     notaGenerale: notaGenerale !== undefined ? notaGenerale : s.notaGenerale,
@@ -1087,7 +1120,9 @@ export async function obiettivoCorrente(esercizioId) {
     .filter((p) => p.stato === "accettata")
     // Una proposta nata prima del brief in vigore parlava di un programma che
     // non c'è più: il coach ha appena riscritto i carichi, comanda lui.
-    .filter((p) => !PROGRAMMA?.caricatoIl || (p.creatoIl || "") > PROGRAMMA.caricatoIl)
+    // Conta QUANDO hai risposto: una proposta nata prima del brief nuovo ma
+    // accettata dopo è una tua decisione presa col brief nuovo sotto gli occhi.
+    .filter((p) => !PROGRAMMA?.caricatoIl || (p.rispostoIl || p.creatoIl || "") > PROGRAMMA.caricatoIl)
     .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1));
   const p = mie[0];
   if (!p) return null;
@@ -1148,7 +1183,8 @@ export async function proposteAccettate() {
   const vinta = new Map();
   const scartata = new Map();
   for (const p of [...tutte].sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))) {
-    const vecchiaDiBrief = PROGRAMMA?.caricatoIl && (p.creatoIl || "") <= PROGRAMMA.caricatoIl;
+    const vecchiaDiBrief =
+      PROGRAMMA?.caricatoIl && (p.rispostoIl || p.creatoIl || "") <= PROGRAMMA.caricatoIl;
     if (vecchiaDiBrief) {
       scartata.set(p.id, "annullataDalBrief");
       continue;
@@ -1470,7 +1506,9 @@ export async function importaSalute(pacchetto) {
         scelto.giornoId = giornoId;
         scelto.nota = e.nota ?? null;
       } else {
-        scelto.altri.push(e.titolo);
+        // La nota viaggia col titolo a cui appartiene: promuovendo poi un
+        // titolo diverso, restava appiccicata la nota di un altro evento.
+        scelto.altri.push(e.nota ? { titolo: e.titolo, nota: e.nota } : e.titolo);
       }
       perData.set(e.data, scelto);
     }
@@ -1654,10 +1692,14 @@ async function riabbinaAgenda() {
     // Si riprovano TUTTI i titoli del giorno, non solo il principale: un
     // allenamento finito fra i promemoria perché il brief di allora non lo
     // conosceva deve poter tornare al suo posto adesso.
-    const titoli = [e.titolo, ...(e.altri || [])].filter(Boolean);
+    // `altri` può contenere stringhe (formato vecchio) o {titolo, nota}.
+    const comeVoce = (x) => (typeof x === "string" ? { titolo: x, nota: null } : x);
+    const titoli = [{ titolo: e.titolo, nota: e.nota || null }, ...(e.altri || []).map(comeVoce)].filter(
+      (x) => x && x.titolo
+    );
     let id = null;
     let vincitore = null;
-    for (const t of titoli) {
+    for (const t of titoli.map((x) => x.titolo)) {
       const trovato = abbinaAlloSplit(t);
       if (trovato && trovato !== "riposo") {
         id = trovato;
@@ -1670,8 +1712,10 @@ async function riabbinaAgenda() {
       }
     }
     if (vincitore && vincitore !== e.titolo) {
-      e.altri = titoli.filter((t) => t !== vincitore);
+      const voceVinta = titoli.find((x) => x.titolo === vincitore);
+      e.altri = titoli.filter((x) => x.titolo !== vincitore).map((x) => (x.nota ? x : x.titolo));
       e.titolo = vincitore;
+      e.nota = voceVinta?.nota || null;
       cambiato = true;
     }
     if (id !== e.giornoId) {

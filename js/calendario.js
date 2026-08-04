@@ -105,7 +105,9 @@ export function calcolaAttese({
     for (const e of eventi) {
       // Il titolo principale conta solo se non è l'allenamento (quello ha già
       // il suo segno sul calendario); gli altri eventi del giorno sempre.
-      const titoli = [...(e.giornoId ? [] : [e.titolo]), ...(e.altri || [])].filter(Boolean);
+      // `altri` può contenere stringhe o {titolo, nota}: qui serve il titolo.
+      const titoli = [...(e.giornoId ? [] : [e.titolo]), ...(e.altri || []).map((x) => (typeof x === "string" ? x : x?.titolo))]
+        .filter(Boolean);
       for (const titolo of titoli) {
         const t = titolo.toLowerCase();
         // Solo quello che l'app registra davvero può essere «in ritardo»: la
@@ -114,9 +116,11 @@ export function calcolaAttese({
         // sono due misure diverse: prima bastava essersi pesati per dare per
         // fatto anche «misura vita», e il promemoria del coach spariva senza
         // che tu l'avessi fatta.
-        const chiedeFoto = /foto/.test(t);
-        const chiedePeso = /peso/.test(t);
-        const chiedeVita = /vita|circonferenz/.test(t);
+        // Confini di parola: senza, «evitare» diventava una misura della vita,
+        // «sospeso» una pesata e «fotocopia» un set di foto.
+        const chiedeFoto = /\bfoto\b|\bfotografi/.test(t);
+        const chiedePeso = /\bpes[oi]\b|\bpesat/.test(t);
+        const chiedeVita = /\bvit[ae]\b|\bcirconferenz/.test(t);
         const tipo = chiedeFoto ? "foto" : chiedePeso || chiedeVita ? "misura" : "info";
         // Conta la cosa fatta più indietro nel tempo fra quelle chieste: se
         // una non è MAI stata fatta, l'evento resta da fare (niente data).
@@ -141,7 +145,14 @@ export function calcolaAttese({
       g.setDate(g.getDate() + i);
       if (g.getDay() === 4) {
         const data = iso(g);
-        const scaduto = data <= oggi && (!ultimoPeso || giorniTra(ultimoPeso, data) >= 7);
+        // L'evento chiede DUE misure: basta che una manchi perché sia arretrato.
+        // Prima bastava essersi pesati per dare per fatta anche la vita.
+        const scaduto =
+          data <= oggi &&
+          (!ultimoPeso ||
+            !ultimaVita ||
+            giorniTra(ultimoPeso, data) >= 7 ||
+            giorniTra(ultimaVita, data) >= 7);
         aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita");
       }
       // foto: mercoledì ogni 2 settimane, ancorate al 12/08/2026

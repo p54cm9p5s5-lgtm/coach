@@ -273,6 +273,11 @@ export function unaVoltaSola(fn) {
     if (bottone && "disabled" in bottone) bottone.disabled = true;
     try {
       return await fn(...args);
+    } catch (e) {
+      // Un errore qui non deve sparire: il pulsante tornava attivo e non
+      // succedeva niente, e sembrava che l'app avesse ignorato il tocco.
+      console.error(e);
+      toast(`Qualcosa non ha funzionato: ${e.message}`, 4000);
     } finally {
       occupato = false;
       if (bottone && "disabled" in bottone) bottone.disabled = false;

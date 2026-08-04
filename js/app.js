@@ -361,6 +361,19 @@ async function avvia() {
 
   await ridisegna();
   registraServiceWorker();
+
+  // Le altre schermate si caricano subito dopo la prima, senza fretta: se la
+  // rete se ne va mentre sei in palestra, cambiare scheda continua a
+  // funzionare invece di dare «questa sezione non si è caricata».
+  setTimeout(() => {
+    for (const carica of Object.values(ROTTE)) {
+      try {
+        carica().catch(() => {});
+      } catch {
+        /* niente: è solo un anticipo, non un obbligo */
+      }
+    }
+  }, 1200);
 }
 
 avvia().catch((e) => {

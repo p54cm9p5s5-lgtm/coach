@@ -46,6 +46,7 @@ export function valida(dati, libreria) {
   }
 
   for (const giorno of dati.split || []) {
+    const visti = new Set();
     if (!giorno.id || !giorno.nome) problemi.push("Un giorno dello split è senza id o nome.");
     if (typeof giorno.giorno !== "number" || giorno.giorno < 0 || giorno.giorno > 6) {
       problemi.push(`Giorno della settimana non valido in "${giorno.nome || giorno.id}".`);
@@ -55,6 +56,12 @@ export function valida(dati, libreria) {
         problemi.push(`Esercizio sconosciuto: "${v.esercizioId}" in ${giorno.nome || giorno.id}.`);
       }
       if (!(v.serie > 0)) problemi.push(`Serie non valide per ${v.esercizioId}.`);
+      // Lo stesso esercizio due volte nello stesso giorno manderebbe in
+      // confusione punteggio e proposte, che ragionano per esercizio.
+      if (visti.has(v.esercizioId)) {
+        problemi.push(`${v.esercizioId} compare due volte in ${giorno.nome || giorno.id}.`);
+      }
+      visti.add(v.esercizioId);
       // A tempo si controlla la durata, a ripetizioni il range: prima un
       // esercizio a tempo senza durata passava tutti i controlli e poi in
       // allenamento chiedeva «0 secondi».

@@ -1110,7 +1110,11 @@ async function modificaCarico(def, inv) {
     });
 
     const leggi = () => {
-      const v = Number(String(campo.value).replace(",", ".").trim());
+      // Campo vuoto NON è zero: `Number("")` fa 0, e un campo lasciato in
+      // bianco sarebbe passato per «zero chili» senza che nessuno lo dicesse.
+      const t = String(campo.value).replace(",", ".").trim();
+      if (t === "") return null;
+      const v = Number(t);
       return Number.isFinite(v) && v >= 0 ? Math.round(v * 10) / 10 : null;
     };
 
@@ -2144,7 +2148,9 @@ async function vistaFine(corpo, piede) {
   );
   const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
   const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
-  const densita = durataSec > 0 ? (serie.length / (durataSec / 60)).toFixed(2).replace(".", ",") : "—";
+  // Sul tempo di lavoro netto, come nel pacchetto per il coach.
+  const netto = store.durataLavoroSec(S.sed, serie) || durataSec;
+  const densita = netto > 0 ? (serie.length / (netto / 60)).toFixed(2).replace(".", ",") : "—";
 
   const mancanti = [];
   for (const v of S.esercizi) {
@@ -2236,7 +2242,9 @@ async function vistaFine(corpo, piede) {
         // lungo quanto tutto il tempo passato nel riepilogo).
         S.caricoCorrente = null;
         S.obiettivo = null;
-        S.tsInizioSerie = Date.now();
+        // Niente cronometro finto: la serie ripresa risulta «recupero non
+        // misurato» invece di portarsi dietro il tempo passato nel riepilogo.
+        S.tsInizioSerie = null;
         // Si torna al primo esercizio ANCORA da fare, non al primo in assoluto:
         // ricominciare da uno già chiuso significava rifare il questionario di
         // un esercizio finito.
@@ -2252,7 +2260,7 @@ async function vistaFine(corpo, piede) {
           indice: primoAperto >= 0 ? primoAperto : 0,
           recuperoFine: null,
           caricoCorrente: null,
-          tsInizioSerie: S.tsInizioSerie,
+          tsInizioSerie: null,
         });
         await disegna();
       },
