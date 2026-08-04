@@ -164,7 +164,10 @@ async function componi(stato) {
           questionari,
           esercizio: store.esercizio,
           giornoSplit: store.giornoSplit,
-          previsti: store.giornoSplit(ultima.tipoId)?.esercizi || [],
+          // L'elenco congelato all'avvio: lo split di oggi può essere un altro.
+          previsti: ultima.previstiElenco?.length
+            ? ultima.previstiElenco
+            : store.giornoSplit(ultima.tipoId)?.esercizi || [],
         })
       );
       contenuto.push(`allenamento del ${dataBreve(ultima.data)}`);

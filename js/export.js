@@ -44,7 +44,9 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     const nome = def?.nome || esId;
 
     if (log?.saltato) {
-      const motivo = `${log.saltato.motivo}${log.saltato.nota ? `: ${log.saltato.nota}` : ""}`;
+      // Anche qui gli a capo diventano separatori: la nota del salto si scrive
+      // in un riquadro a più righe e spezzava la tabella del coach.
+      const motivo = `${log.saltato.motivo}${log.saltato.nota ? `: ${String(log.saltato.nota).replace(/\s*\n+\s*/g, " · ")}` : ""}`;
       if (!righeSerie.length) {
         righe.push([nome, "—", "—", "—", `NON ESEGUITO (${motivo})`]);
         continue;

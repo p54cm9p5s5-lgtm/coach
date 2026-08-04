@@ -63,7 +63,8 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
   // --- carico: raggiungere il previsto vale pieno, superarlo non è un merito
   // Un carico previsto pari a zero è un esercizio a corpo libero scritto in un
   // altro modo: trattarlo come numero farebbe una divisione per zero.
-  const previsto = variante.carico > 0 ? variante.carico : null;
+  const chiesto = serie.map((s) => s.caricoTarget).filter((x) => x != null && x > 0);
+  const previsto = chiesto.length ? chiesto.at(-1) : variante.carico > 0 ? variante.carico : null;
   const usato = serie.filter((s) => s.carico != null).at(-1)?.carico ?? null;
   if (previsto == null) {
     voci.push({ nome: "Carico", quota: serie.length ? 1 : 0, peso: 20, dettaglio: "corpo libero" });

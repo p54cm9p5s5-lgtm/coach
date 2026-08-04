@@ -207,9 +207,14 @@ async function dettaglioSeduta(id) {
     const log = logs.find((l) => l.esercizioId === esId);
     const corpo = h("div.list");
 
+    // Anche un esercizio saltato può avere serie già registrate (interrotto a
+    // metà): nasconderle faceva sparire dallo storico lavoro davvero fatto.
     if (log?.saltato) {
-      aggiungi(corpo, h("div.row", h("div.main", h("span.title", `Saltato: ${log.saltato.motivo}`), log.saltato.nota ? h("span.sub", log.saltato.nota) : null)));
-    } else {
+      aggiungi(corpo, h("div.row", h("div.main",
+        h("span.title", righe.length ? `Interrotto dopo ${righe.length} ${righe.length === 1 ? "serie" : "serie"}: ${log.saltato.motivo}` : `Saltato: ${log.saltato.motivo}`),
+        log.saltato.nota ? h("span.sub", log.saltato.nota) : null)));
+    }
+    {
       for (const r of righe) {
         aggiungi(corpo, 
           h(
@@ -219,7 +224,7 @@ async function dettaglioSeduta(id) {
           )
         );
       }
-      if (log) {
+      if (log && !log.saltato) {
         aggiungi(corpo, 
           h("div.row", h("div.main", h("span.title", "RPE ultima serie")), h("span.value", String(log.rpe ?? "—"))),
           h("div.row", h("div.main", h("span.title", "Tecnica")), h("span.value", String(log.tecnica ?? "—"))),
@@ -302,7 +307,7 @@ async function dettaglioEsercizio(id) {
       ),
       h(
         "p.footnote",
-        `${esp.length} ${esp.length === 1 ? "esposizione registrata" : "esposizioni registrate"}. Le proposte di progressione richiedono almeno ${store.regole().progressione.esposizioniMinime} esposizioni valide.`
+        `${esp.length} ${esp.length === 1 ? "esposizione registrata" : "esposizioni registrate"}, di cui ${store.esposizioniSvolte(esp).length} svolte (le altre saltate o senza serie). Le proposte di progressione richiedono almeno ${store.regole().progressione.esposizioniMinime} esposizioni svolte.`
       )
     )
   );

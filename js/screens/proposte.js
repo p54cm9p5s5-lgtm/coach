@@ -221,10 +221,12 @@ async function dettaglio(id) {
   const rispondi = (stato) => async () => {
     const nota = await chiediNota(stato);
     if (nota === undefined) return;
-    await store.rispondiAProposta(p.id, stato, { nota });
+    // La data di verifica giusta è quella appena calcolata sulla risposta, non
+    // quella che la proposta aveva addosso da prima.
+    const agg = await store.rispondiAProposta(p.id, stato, { nota });
     toast(
       stato === "accettata"
-        ? `Accettata. Il nuovo obiettivo compare nella prossima seduta, verifica il ${dataBreve(p.dataVerifica)}.`
+        ? `Accettata. Il nuovo obiettivo compare nella prossima seduta, verifica il ${dataBreve(agg.dataVerifica || p.dataVerifica)}.`
         : `Proposta ${stato}.`,
       3600
     );

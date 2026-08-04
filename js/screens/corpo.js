@@ -128,13 +128,26 @@ export async function render({ ridisegna }) {
     vitaOmbelico: perTipo.get("vitaOmbelico")?.[0]?.valore,
     fianchi: perTipo.get("fianchi")?.[0]?.valore,
   });
+  // Gli indici nascono dall'ultima misura di ciascun tipo, e quelle misure
+  // possono essere di giorni diversi: un vita/fianchi fra una vita di ieri e
+  // dei fianchi di un mese fa non è una fotografia di oggi. Va detto.
+  const dataDi = (tipo) => perTipo.get(tipo)?.[0]?.data || null;
+  const INGREDIENTI = { vitaAltezza: ["vitaOmbelico"], vitaFianchi: ["vitaOmbelico", "fianchi"], bmi: ["peso"] };
+  const quando = (id) => {
+    const d = (INGREDIENTI[id] || []).map(dataDi).filter(Boolean);
+    const uniche = [...new Set(d)].sort();
+    if (!uniche.length) return "";
+    return uniche.length === 1
+      ? `misure del ${dataBreve(uniche[0])}`
+      : `misure di giorni diversi: ${uniche.map(dataBreve).join(" e ")}`;
+  };
   if (ind.length) {
     const listaInd = h("div.list");
     for (const i of ind) {
       aggiungi(listaInd,
         h(
           "div.row",
-          h("div.main", h("span.title", i.nome), h("span.sub", i.nota)),
+          h("div.main", h("span.title", i.nome), h("span.sub", i.nota), quando(i.id) ? h("span.sub", quando(i.id)) : null),
           h("span.value", num(i.valore, i.decimali)),
           h("span.pill", { class: i.sopraSoglia ? "pill warn" : "pill ok" }, i.sopraSoglia ? "sopra soglia" : "sotto")
         )

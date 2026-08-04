@@ -331,7 +331,9 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         : h(
             "p",
             { style: "margin:10px 0 0;font-size:12px;color:var(--label-tertiary)" },
-            origine.scaduta
+            origine.riposo
+              ? "Riposo, e lo dice il calendario del coach."
+              : origine.scaduta
               ? "Il calendario letto è vecchio: rileggilo per sapere cosa tocca."
               : origine.sconosciuto
                 ? "Sul calendario c'è qualcosa, ma non è un allenamento del programma."

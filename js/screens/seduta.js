@@ -48,7 +48,10 @@ export async function render({ vaiA, ridisegna }) {
   S = {
     sed,
     giorno,
-    esercizi: giorno?.esercizi || [],
+    // Gli esercizi sono quelli congelati all'avvio: se il coach cambia il
+    // programma a metà allenamento, quello che stai facendo non cambia sotto
+    // le mani (ed è lo stesso elenco su cui viene calcolato il punteggio).
+    esercizi: sed.previstiElenco?.length ? sed.previstiElenco : giorno?.esercizi || [],
     vaiA,
     contenitore: h("div.session"),
     recuperoFine: sed.progresso?.recuperoFine || null,
@@ -1146,6 +1149,7 @@ async function completaSerie(v, def, numero) {
     esercizioId: v.esercizioId,
     numero,
     carico: S.caricoCorrente ?? null,
+    caricoTarget: S.obiettivo?.carico ?? (v.carico > 0 ? v.carico : null),
     ripFatte: target,
     ripTarget: target,
     aTempo: Boolean(v.aTempo),
@@ -1345,9 +1349,11 @@ async function vistaRecupero(corpo, piede) {
 
   const totale = (ultima?.recuperoTargetSec || def?.recuperoDefaultSec || 120) * 1000;
 
+  let preavvisoFatto = false;
   const aggiorna = () => {
     if (!S.recuperoFine) return;
     const restanti = (S.recuperoFine - Date.now()) / 1000;
+    if (restanti > 3.5) preavvisoFatto = false; // il timer è stato allungato
     const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
     anello.style.strokeDashoffset = String(CIRC * (1 - quota));
 
@@ -1355,7 +1361,13 @@ async function vistaRecupero(corpo, piede) {
       testoTimer.textContent = mmss(restanti);
       quadrante.classList.remove("done");
       testoTimer.classList.remove("done");
-      if (restanti <= 3.05 && restanti > 2.95) tick();
+      // Il preavviso suona una volta sola quando si scende sotto i 3 secondi.
+      // Prima doveva capitare che un controllo cadesse esattamente in una
+      // finestra di un decimo di secondo: quasi sempre non suonava.
+      if (restanti <= 3 && !preavvisoFatto) {
+        preavvisoFatto = true;
+        tick();
+      }
       pulsante.textContent = "Pronto";
     } else {
       testoTimer.textContent = "00:00";
@@ -1714,6 +1726,18 @@ async function vistaCardio(corpo, piede) {
       h("h2", "Cardio"),
       h("p.target", `${r.durataMin} min · ${num(r.kmhMin)}-${num(r.kmhMax)} km/h · FC ${r.fcMin}-${r.fcMax}`)
     ),
+    // Il cardio già fatto va detto: tornando qui dal menu la schermata
+    // ripartiva da zero e rifarlo sovrascriveva quello registrato.
+    S.sed.cardio?.eseguito
+      ? h(
+          "div.group",
+          h(
+            "p.footnote",
+            { style: "color:var(--orange)" },
+            `Il cardio di oggi è già registrato: ${num(S.sed.cardio.kmh)} km/h per ${S.sed.cardio.durataMin} min. Se ricominci, quello di prima viene sostituito.`
+          )
+        )
+      : null,
     h(
       "div.group",
       h(
@@ -2078,7 +2102,20 @@ async function vistaFine(corpo, piede) {
         // tornare indietro la cancellava senza dire niente.
         const nota = qs("#nota-seduta")?.value;
         if (nota != null) S.sed = await store.aggiornaSeduta(S.sed.id, { notaGenerale: nota || null });
-        await salvaProgresso({ fase: "esercizio", indice: 0 });
+        // Si riparte davvero dal primo esercizio: carico e obiettivo del
+        // vecchio non devono restare appiccicati, e il cronometro della serie
+        // riparte adesso (altrimenti il recupero della prima serie risultava
+        // lungo quanto tutto il tempo passato nel riepilogo).
+        S.caricoCorrente = null;
+        S.obiettivo = null;
+        S.tsInizioSerie = Date.now();
+        await salvaProgresso({
+          fase: "esercizio",
+          indice: 0,
+          recuperoFine: null,
+          caricoCorrente: null,
+          tsInizioSerie: S.tsInizioSerie,
+        });
         await disegna();
       },
     }, "Torna agli esercizi")
