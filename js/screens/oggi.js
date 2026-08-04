@@ -120,7 +120,16 @@ async function bloccoGrafico(ridisegna) {
   // periodo «1 gg» invece è proprio oggi che vuoi vedere.
   const soloOggi = periodo.id === "1";
   const giorniConDati = giorni.filter((g) => g.presente && dentro(g) && (soloOggi || g.data < oggi));
-  const nottiConDati = notti.filter((n) => n.presente && dentro(n));
+  // Il sonno di stanotte porta la data di ieri sera: con «1 gg» si guarda
+  // l'ultima notte dormita, non «oggi», che deve ancora succedere.
+  const ultimaNotte = [...notti]
+    .filter((n) => n.presente && n.data <= oggi)
+    .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
+  const nottiConDati = soloOggi
+    ? ultimaNotte
+      ? [ultimaNotte]
+      : []
+    : notti.filter((n) => n.presente && dentro(n));
   const mediaKcal = media(giorniConDati, "kcalAttive");
   const mediaPassi = media(giorniConDati, "passi");
   const mediaSonno = media(nottiConDati, "durataMin");
@@ -152,7 +161,9 @@ async function bloccoGrafico(ridisegna) {
         {
           etichetta: "Sonno",
           valore: mediaSonno != null ? durataUmana(mediaSonno * 60) : "—",
-          nota: `${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"} · ${etichettaPeriodo(periodo)}`,
+          nota: `${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"} · ${
+            soloOggi && ultimaNotte ? `notte del ${dataBreve(ultimaNotte.data)}` : etichettaPeriodo(periodo)
+          }`,
         },
       ]),
       graficoAttivita(serie, { obiettivoRipiego: obiettivo }),

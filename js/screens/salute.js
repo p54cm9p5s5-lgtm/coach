@@ -128,10 +128,14 @@ export async function render({ ridisegna }) {
 
   // ---- completezza degli allenamenti ----
   const fComp = conPeriodo();
-  const chiuse = (await store.allenamenti())
-    .filter((x) => x.stato === "completata" && fComp.dentro(x))
+  const tutteChiuse = (await store.allenamenti()).filter((x) => x.stato === "completata");
+  const chiuse = tutteChiuse
+    .filter((x) => fComp.dentro(x))
     .sort((a, b) => (a.data < b.data ? 1 : -1));
-  if (chiuse.length) {
+  // La scheda resta anche quando il periodo scelto è vuoto (per esempio «1 gg»
+  // in un giorno di riposo): sparire fa pensare a un guasto, dire «nessun
+  // allenamento oggi» è la risposta giusta.
+  if (tutteChiuse.length) {
     const voci = [];
     for (const sed of chiuse) {
       const comp = await store.completezzaSeduta(sed.id);
@@ -170,7 +174,11 @@ export async function render({ ridisegna }) {
                 { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
                 `${giudizio(mediaComp).testo} · ${validi.length} ${validi.length === 1 ? "allenamento" : "allenamenti"} · ${fComp.etichetta}`
               )
-            : h("p", { style: "margin:0;text-align:center;color:var(--label-secondary)" }, "Nessun punteggio registrato"),
+            : h(
+                "p",
+                { style: "margin:0;text-align:center;color:var(--label-secondary)" },
+                `Nessun allenamento · ${fComp.etichetta}`
+              ),
           h(
             "div.list",
             { style: "margin-top:16px;background:none" },
@@ -197,7 +205,9 @@ export async function render({ ridisegna }) {
   const fMov2 = conPeriodo();
   const giorniMov = perGrafico(giorni.filter(fMov2.dentro));
   const mKcal = media(giorniMov, "kcalAttive");
-  if (giorniMov.length) {
+  // La scheda c'è se il dato esiste in archivio, non solo dentro il periodo
+  // scelto: cambiando periodo le schede sparivano e sembrava un guasto.
+  if (giorni.some((g) => g.presente && g.kcalAttive != null)) {
     aggiungi(wrap,
       schedaGrafico({
         selettore: fMov2.selettore,
@@ -227,7 +237,7 @@ export async function render({ ridisegna }) {
   const fPassi = conPeriodo();
   const giorniPassi = perGrafico(giorni.filter(fPassi.dentro));
   const mPassi = media(giorniPassi, "passi");
-  if (giorniPassi.some((g) => g.passi != null)) {
+  if (giorni.some((g) => g.presente && g.passi != null)) {
     aggiungi(wrap,
       schedaGrafico({
         selettore: fPassi.selettore,
@@ -249,15 +259,37 @@ export async function render({ ridisegna }) {
 
   // ---- sonno ----
   const fSonno2 = conPeriodo();
-  const nottiOrd = perGrafico(notti.filter(fSonno2.dentro));
-  const mSonno = media(nottiOrd, "durataMin");
-  if (nottiOrd.length) {
+  // Una notte porta la data della sera in cui cominci a dormire: la «notte di
+  // oggi» deve ancora succedere. Con «1 gg» quindi non si guarda oggi, si
+  // guarda l'ultima notte dormita — altrimenti la scheda spariva.
+  const ultimaNotte = [...notti]
+    .filter((n) => n.presente && n.data <= oggiIso)
+    .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
+  const nottiOrd = perGrafico(
+    soloOggi ? (ultimaNotte ? [ultimaNotte] : []) : notti.filter(fSonno2.dentro)
+  );
+  const etichettaSonno = soloOggi
+    ? ultimaNotte
+      ? `notte del ${dataBreve(ultimaNotte.data)}`
+      : "ultima notte"
+    : fSonno2.etichetta;
+  // Con «1 gg» la notte mostrata è di ieri: la media non deve escluderla come
+  // fa con la giornata in corso.
+  const mSonno = soloOggi
+    ? (() => {
+        const v = nottiOrd.map((n) => n.durataMin).filter((x) => x != null);
+        return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
+      })()
+    : media(nottiOrd, "durataMin");
+  if (notti.some((n) => n.presente && n.durataMin != null)) {
     aggiungi(wrap,
       schedaGrafico({
         selettore: fSonno2.selettore,
         titolo: "Sonno",
         valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
-        nota: mSonno ? `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${fSonno2.etichetta}` : `nessun dato · ${fSonno2.etichetta}`,
+        nota: mSonno
+          ? `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${etichettaSonno}`
+          : `nessun dato · ${etichettaSonno}`,
         grafico: graficoLinea({
           punti: nottiOrd.map((n) => ({
             data: n.data,
@@ -291,7 +323,7 @@ export async function render({ ridisegna }) {
     { campo: "distanzaKm", nome: "Distanza", unita: "km", dec: 1 },
     { campo: "minutiEsercizio", nome: "Minuti di esercizio", unita: "min", dec: 0 },
     { campo: "fcRiposo", nome: "Frequenza a riposo", unita: "bpm", dec: 0 },
-  ].filter((x) => giorniAltro.some((g) => g[x.campo] != null));
+  ].filter((x) => giorni.some((g) => g[x.campo] != null));
 
   if (ALTRI.length) {
     const righe = h("div.list");
