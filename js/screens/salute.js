@@ -433,33 +433,48 @@ export async function apriImport(ridisegna, { titolo, testo, shortcut }) {
 }
 
 async function incolla(ridisegna) {
-  let testo = null;
-  try {
-    testo = await navigator.clipboard.readText();
-  } catch {
-    testo = null;
-  }
-
-  if (!testo) {
-    testo = await sheet((close) => {
-      const area = h("textarea.note", {
-        style: "min-height:160px",
-        placeholder: "Incolla qui il testo copiato dal comando rapido",
-      });
-      return h(
-        "div",
-        h("h2", "Incolla i dati"),
-        h(
-          "p",
-          { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-          "iOS non ha concesso la lettura automatica degli appunti: incolla a mano nel riquadro."
-        ),
-        area,
-        h("div.btn-wrap", h("button.btn", { onclick: () => close(area.value) }, "Importa"))
-      );
+  // Il riquadro si apre SUBITO e la lettura automatica lo riempie se iOS la
+  // concede. Prima si chiedeva prima agli appunti e poi si apriva il riquadro:
+  // ma a pannello chiuso il gesto dell'utente è finito, iOS mostrava il suo
+  // pulsante «Incolla» sopra una schermata che non aspettava più niente, e
+  // sembrava che il tocco non facesse nulla. Serviva toccare due volte.
+  const testo = await sheet((close) => {
+    const area = h("textarea.note", {
+      style: "min-height:160px",
+      placeholder: "Incolla qui il testo copiato dal comando rapido",
     });
-  }
-  if (!testo) return;
+    const nota = h(
+      "p.footnote",
+      { style: "margin:8px 16px 0" },
+      "Se compare il pulsante «Incolla» di iOS, toccalo: il riquadro si riempie da solo."
+    );
+    // Il tentativo parte adesso, mentre il pannello è già a schermo.
+    navigator.clipboard
+      ?.readText()
+      .then((t) => {
+        if (!t || area.value) return;
+        area.value = t;
+        const righe = t.split("\n").filter((r) => r.trim()).length;
+        nota.textContent = `Letto dagli appunti: ${righe} righe. Controlla e tocca Importa.`;
+      })
+      .catch(() => {
+        nota.textContent =
+          "iOS non ha concesso la lettura automatica: tieni premuto nel riquadro e scegli Incolla.";
+      });
+    return h(
+      "div",
+      h("h2", "Incolla i dati"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+        "Qui va il testo copiato dal comando rapido."
+      ),
+      area,
+      nota,
+      h("div.btn-wrap", h("button.btn", { onclick: () => close(area.value) }, "Importa"))
+    );
+  });
+  if (!testo || !testo.trim()) return;
 
   let pacchetto;
   try {
