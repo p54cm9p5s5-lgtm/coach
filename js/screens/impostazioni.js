@@ -557,6 +557,9 @@ async function importaBackup(ridisegna) {
       // sicurezza appena fatta va rimessa, altrimenti sparisce proprio quella.
       try {
         await store.setImpostazione("snapshotAutomatico", JSON.stringify(indietro));
+        // Anche la data, altrimenti le Impostazioni mostrano una copia interna
+        // «di ieri» che in realtà è stata fatta un minuto fa.
+        await store.setImpostazione("ultimoSnapshot", new Date().toISOString());
       } catch {
         /* niente */
       }

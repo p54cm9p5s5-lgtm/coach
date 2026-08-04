@@ -440,6 +440,11 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
 }
 
 export async function annullaSeduta(id) {
+  // L'allenamento del Watch resta in archivio ma non deve più puntare a una
+  // seduta che non esiste: quel collegamento morto impediva di ricollegarlo.
+  for (const a of await db.byIndex("allenamentiWatch", "sedutaId", id)) {
+    await db.put("allenamentiWatch", { ...a, sedutaId: null });
+  }
   invalidaCacheSedute();
   const serie = await db.byIndex("serie", "sedutaId", id);
   const logs = await db.byIndex("esercizioLog", "sedutaId", id);
@@ -1080,12 +1085,27 @@ export async function proposteAccettate() {
   // esattamente quella che la seduta userà. Prima potevano risultare «in
   // vigore» due carichi diversi per lo stesso esercizio.
   const vinta = new Map();
+  const scartata = new Map();
   for (const p of [...tutte].sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))) {
     const vecchiaDiBrief = PROGRAMMA?.caricatoIl && (p.creatoIl || "") <= PROGRAMMA.caricatoIl;
-    if (vecchiaDiBrief || usata(p)) continue;
+    if (vecchiaDiBrief) {
+      scartata.set(p.id, "annullataDalBrief");
+      continue;
+    }
+    if (usata(p)) {
+      scartata.set(p.id, "usata");
+      continue;
+    }
     if (!vinta.has(p.esercizioId)) vinta.set(p.esercizioId, p.id);
+    else scartata.set(p.id, "superata");
   }
-  return tutte.map((p) => ({ ...p, inVigore: vinta.get(p.esercizioId) === p.id }));
+  // Il motivo viaggia con la proposta: il coach deve poter distinguere «l'hai
+  // già allenata» da «l'ha annullata il tuo brief nuovo».
+  return tutte.map((p) => ({
+    ...p,
+    inVigore: vinta.get(p.esercizioId) === p.id,
+    motivoScarto: vinta.get(p.esercizioId) === p.id ? null : scartata.get(p.id) || "usata",
+  }));
 }
 
 /** Proposte accettate arrivate alla data di verifica e ancora senza esito. */
@@ -1435,10 +1455,13 @@ export async function importaSalute(pacchetto) {
     // guardano sempre in avanti, ma i giorni già letti restano letti. Usando
     // l'ultima lettura, i giorni in mezzo tornavano allo split e l'app
     // riproponeva allenamenti che il coach non aveva messo.
+    // Data locale: `ora` è in UTC e dopo le 22 in Italia segnava già domani,
+    // quindi la finestra letta partiva da un giorno che non era ancora arrivato.
+    const oggiLetto = isoDate();
     const prima = await impostazione("primaLetturaAgenda");
-    if (!prima) await setImpostazione("primaLetturaAgenda", ora.slice(0, 10));
-    LETTURA_AGENDA = (prima || ora.slice(0, 10)).slice(0, 10);
-    ULTIMA_LETTURA_AGENDA = ora.slice(0, 10);
+    if (!prima) await setImpostazione("primaLetturaAgenda", oggiLetto);
+    LETTURA_AGENDA = (prima || oggiLetto).slice(0, 10);
+    ULTIMA_LETTURA_AGENDA = oggiLetto;
   }
 
   // «Ultimo import» dei dati salute si aggiorna solo se sono davvero arrivati
