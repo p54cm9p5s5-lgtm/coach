@@ -142,7 +142,15 @@ export async function applicaBrief(dati) {
     id: "corrente",
     versione: dati.versione,
     aggiornatoIl: dati.aggiornatoIl || isoDate(),
-    caricatoIl: new Date().toISOString(),
+    // La data di caricamento cambia solo se cambia davvero il contenuto
+    // tecnico: ricaricare lo stesso brief annullava tutte le proposte
+    // accettate, che vengono scartate se più vecchie del brief in vigore.
+    caricatoIl:
+      precedente &&
+      JSON.stringify([precedente.split, precedente.regole, precedente.inventario]) ===
+        JSON.stringify([dati.split || [], dati.regole || {}, dati.inventario || INVENTARIO_DEFAULT])
+        ? precedente.caricatoIl
+        : new Date().toISOString(),
     atleta: dati.atleta || {},
     inventario: dati.inventario || INVENTARIO_DEFAULT,
     regole: dati.regole || {},
