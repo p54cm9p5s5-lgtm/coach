@@ -43,13 +43,21 @@ function sigarettaSvg() {
     "stroke-linecap": "round",
     "stroke-linejoin": "round",
   });
-  g.append(
+  // Sigaretta e fumo scendono di 9 rispetto al centro geometrico. Il fumo sta
+  // tutto sopra, quindi centrare la sigaretta esatta lascia il vuoto sotto e
+  // l'occhio legge il disegno spostato in alto. Anche il cartello vero mette
+  // la sigaretta appena sotto la metà, per la stessa ragione.
+  const motivo = el("g", { transform: "translate(0 9)" });
+  motivo.append(
     // la sigaretta e i tre segmenti della parte che brucia
     el("rect", { x: 40, y: 89, width: 88, height: 22, rx: 3 }),
     el("path", { d: "M138 89v22M149 89v22M160 89v22" }),
     // le due volute di fumo
     el("path", { d: "M137 82C137 70 122 70 122 58 122 46 137 46 137 34" }),
-    el("path", { d: "M113 82C113 71 99 71 99 59 99 47 113 47 113 36" }),
+    el("path", { d: "M113 82C113 71 99 71 99 59 99 47 113 47 113 36" })
+  );
+  g.append(
+    motivo,
     // il cerchio e la sbarra
     el("circle", { cx: 100, cy: 100, r: 80 }),
     el("path", { d: "M43.4 43.4L156.6 156.6" })
