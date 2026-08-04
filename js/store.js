@@ -214,15 +214,35 @@ export function giornoSplit(id) {
   return giorniSplit().find((g) => g.id === id) || null;
 }
 
+const REGOLE_BASE = {
+  rpeTarget: { min: 6, max: 8 },
+  cardio: { kmhMin: 4.5, kmhMax: 5, fcMin: 105, fcMax: 115, fcLimite: 125, durataMin: 30 },
+  progressione: { esposizioniMinime: 2, rpePerSalire: 7, tecnicaMinima: 8, tecnicaRiduzione: 5 },
+  finestra: { settimane: 3, minimoSettimana: 5, soglia: 0.2 },
+};
+
+/**
+ * Le soglie del brief si fondono voce per voce. Con la fusione superficiale un
+ * brief che toccava una sola soglia azzerava tutte le altre della stessa
+ * famiglia: bastava scrivere `finestra.settimane` per lasciare `soglia`
+ * indefinita e spegnere in silenzio il segnale del ±20%.
+ */
 export function regole() {
   const r = (PROGRAMMA && PROGRAMMA.regole) || {};
-  return {
-    rpeTarget: { min: 6, max: 8 },
-    cardio: { kmhMin: 4.5, kmhMax: 5, fcMin: 105, fcMax: 115, fcLimite: 125, durataMin: 30 },
-    progressione: { esposizioniMinime: 2, rpePerSalire: 7, tecnicaMinima: 8, tecnicaRiduzione: 5 },
-    finestra: { settimane: 3, minimoSettimana: 5, soglia: 0.2 },
-    ...r,
+  const fuse = { ...REGOLE_BASE };
+  for (const [chiave, valore] of Object.entries(r)) {
+    fuse[chiave] =
+      valore && typeof valore === "object" && !Array.isArray(valore)
+        ? { ...(REGOLE_BASE[chiave] || {}), ...valore }
+        : valore;
+  }
+  // le schermate cercavano «finestre» al plurale: una chiave che non è mai
+  // esistita, quindi leggevano sempre i valori scritti a mano
+  fuse.finestre = {
+    movimento: { settimane: fuse.finestra.settimane, giorniMinSettimana: fuse.finestra.minimoSettimana },
+    sonno: { settimane: fuse.finestra.settimane, nottiMinSettimana: fuse.finestra.minimoSettimana },
   };
+  return fuse;
 }
 
 /** La riga dello split che riguarda un esercizio: serie, range, carico di partenza. */
@@ -259,6 +279,7 @@ export async function sedutaInCorso() {
 }
 
 export async function iniziaSeduta({ data = isoDate(), giornoId }) {
+  invalidaCacheSedute();
   // Ultima rete contro il doppio avvio: due allenamenti aperti insieme
   // renderebbero impossibile capire dove finisce l'uno e comincia l'altro.
   const gia = await sedutaInCorso();
@@ -286,6 +307,7 @@ export async function iniziaSeduta({ data = isoDate(), giornoId }) {
 }
 
 export async function aggiornaSeduta(id, patch) {
+  invalidaCacheSedute();
   const s = await db.get("sedute", id);
   if (!s) throw new Error("Seduta non trovata.");
   const agg = { ...s, ...patch };
@@ -294,6 +316,7 @@ export async function aggiornaSeduta(id, patch) {
 }
 
 export async function chiudiSeduta(id, { notaGenerale } = {}) {
+  invalidaCacheSedute();
   const s = await db.get("sedute", id);
   if (!s) throw new Error("Questa seduta non esiste più: forse è stata eliminata altrove.");
   const agg = {
@@ -322,6 +345,7 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
 }
 
 export async function annullaSeduta(id) {
+  invalidaCacheSedute();
   const serie = await db.byIndex("serie", "sedutaId", id);
   const logs = await db.byIndex("esercizioLog", "sedutaId", id);
   for (const r of serie) await db.del("serie", r.id);
@@ -520,11 +544,27 @@ export async function conteggioArchivio() {
 // ---------- storico per esercizio ----------
 
 /** Esposizioni passate di un esercizio, dalla più recente. */
+/* L'elenco delle sedute viene riletto da esposizioni() una volta per ogni
+   esercizio: con sette esercizi e un anno di storico erano sette letture
+   dell'intero archivio a ogni schermata. Qui resta in memoria per pochi
+   istanti, il tempo di un disegno, e si invalida a ogni scrittura. */
+let cacheSedute = null;
+export function invalidaCacheSedute() {
+  cacheSedute = null;
+}
+async function seduteInMemoria() {
+  if (cacheSedute) return cacheSedute;
+  cacheSedute = new Map((await db.all("sedute")).map((s) => [s.id, s]));
+  setTimeout(() => {
+    cacheSedute = null;
+  }, 1500);
+  return cacheSedute;
+}
+
 export async function esposizioni(esercizioId, { soloCompletate = true } = {}) {
   const serie = await db.byIndex("serie", "esercizioId", esercizioId);
   const logs = await db.byIndex("esercizioLog", "esercizioId", esercizioId);
-  const tutteSedute = await db.all("sedute");
-  const perId = new Map(tutteSedute.map((s) => [s.id, s]));
+  const perId = await seduteInMemoria();
 
   const perSeduta = new Map();
   for (const s of serie) {
@@ -1083,7 +1123,11 @@ export async function importaSalute(pacchetto) {
     await setImpostazione("ultimoImportAgenda", ora);
   }
 
-  await setImpostazione("ultimoImportSalute", new Date().toISOString());
+  // «Ultimo import» dei dati salute si aggiorna solo se sono davvero arrivati
+  // dati di salute: leggere il calendario non ha niente a che vedere.
+  if (pacchetto.giorni.length || pacchetto.notti.length || pacchetto.allenamenti.length) {
+    await setImpostazione("ultimoImportSalute", new Date().toISOString());
+  }
   await collegaAllenamentiASedute();
   return conteggio;
 }
@@ -1209,9 +1253,16 @@ export function statoFinestra(righe, { settimane = 3, minimoSettimana = 5 } = {}
       const d = new Date(r.data + "T00:00:00");
       return d >= inizio && d <= fine;
     });
+    // Le date si scrivono in ora locale: toISOString converte in UTC e in Italia
+    // faceva risultare ogni estremo un giorno indietro rispetto ai giorni
+    // davvero contati.
+    const iso = (d) => {
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    };
     perSettimana.push({
-      da: inizio.toISOString().slice(0, 10),
-      a: fine.toISOString().slice(0, 10),
+      da: iso(inizio),
+      a: iso(fine),
       registrati: dentro.length,
       sufficiente: dentro.length >= minimoSettimana,
     });
@@ -1270,6 +1321,26 @@ export async function registraFoto({ data = isoDate(), posa, immagine, checklist
 export async function foto() {
   const f = await db.all("foto");
   return f.sort((a, b) => (a.data < b.data ? 1 : -1));
+}
+
+/**
+ * Solo le date dei set, senza caricare le immagini. La Home voleva sapere
+ * quando è stato l'ultimo set e si portava dietro tutte le foto a piena
+ * risoluzione: decine di megabyte in memoria per una data.
+ */
+export async function dateFoto() {
+  const db_ = await db.open();
+  return new Promise((res, rej) => {
+    const date = [];
+    const req = db_.transaction("foto").objectStore("foto").index("data").openKeyCursor(null, "prev");
+    req.onsuccess = () => {
+      const c = req.result;
+      if (!c) return res(date);
+      if (date[date.length - 1] !== c.key) date.push(c.key);
+      c.continue();
+    };
+    req.onerror = () => rej(req.error);
+  });
 }
 
 /** L'ultima foto di una posa, usata come sagoma per allineare la successiva. */
@@ -1341,9 +1412,12 @@ export function indici({ peso, vitaOmbelico, fianchi, altezzaCm }) {
  * per quello serve l'esportazione su file.
  */
 export async function snapshotAutomatico(motivo = "") {
-  const dump = await db.esportaTutto();
+  // Le foto non entrano nella copia interna: prima venivano lette tutte a
+  // piena risoluzione per essere buttate via subito dopo, a ogni fine
+  // allenamento e a ogni import.
+  const dump = await db.esportaTutto({ salta: ["foto"] });
   dump.motivo = motivo;
-  dump.parziale = ["foto"]; // le immagini restano fuori: peserebbero troppo
+  dump.parziale = ["foto"];
   dump.dati.foto = [];
   // La copia precedente vive dentro le impostazioni: se la includessimo,
   // ogni salvataggio conterrebbe tutti quelli prima e il peso raddoppierebbe

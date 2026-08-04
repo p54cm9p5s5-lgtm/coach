@@ -346,12 +346,14 @@ async function bloccoCalendario(vaiA, ridisegna) {
   }
 
   const imp = await store.impostazioni();
-  const fotoTutte = await store.foto();
+  // Solo le date: caricare tutte le immagini per sapere quando è stato
+  // l'ultimo set costava decine di megabyte a ogni disegno della Home.
+  const dateFoto = await store.dateFoto();
   const attese = calcolaAttese({
     oggi,
     ultimoPeso: (await store.ultimaMisura("peso"))?.data || null,
     ultimaVita: (await store.ultimaMisura("vitaOmbelico"))?.data || null,
-    ultimaFoto: fotoTutte[0]?.data || null,
+    ultimaFoto: dateFoto[0] || null,
     ultimoExport: imp.ultimoExport,
     ultimoImportSalute: imp.ultimoImportSalute,
     // Col calendario collegato le scadenze sono quelle scritte dal coach.
