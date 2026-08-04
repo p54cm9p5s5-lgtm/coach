@@ -14,6 +14,10 @@ export async function render({ vaiA }) {
   return elenco(vaiA);
 }
 
+// Data breve con l'anno a due cifre: serve dove due date lontane potrebbero
+// sembrare vicine («10/07» e «09/07» a un anno di distanza).
+const conAnno = (iso) => `${dataBreve(iso)}/${iso.slice(2, 4)}`;
+
 async function elenco(vaiA) {
   const wrap = h("div.screen");
   aggiungi(wrap, intestazione("Storico"));
@@ -24,8 +28,13 @@ async function elenco(vaiA) {
   if (!completate.length) {
     aggiungi(wrap, h("div.empty", h("h3", "Nessun allenamento registrato"), h("p", "Gli allenamenti completati compaiono qui.")));
   } else {
+    // Un anno di allenamenti sono trecento righe: la pagina diventava lunga
+    // decine di metri e per ritrovare la seduta di ieri bisognava scorrerla
+    // tutta. Se ne mostrano le ultime, il resto si apre con un tocco: niente
+    // viene nascosto, solo rimandato.
+    const A_VISTA = 20;
     const lista = h("div.list");
-    for (const s of completate) {
+    const riga = async (s) => {
       const serie = await store.serieDi(s.id);
       const logs = await store.questionariDi(s.id);
       // Interrotto a metà non è «saltato»: il lavoro c'è. Si contano solo gli
@@ -36,18 +45,44 @@ async function elenco(vaiA) {
       const durata = s.oraFine
         ? durataUmana(Math.round((s.oraFine - (s.oraInizioLavoro || s.oraInizio)) / 1000))
         : "—";
-      aggiungi(lista, 
+      return h(
+        "a.row",
+        { href: `#/storico?seduta=${s.id}` },
         h(
-          "a.row",
-          { href: `#/storico?seduta=${s.id}` },
-          h(
-            "div.main",
-            h("span.title", `${dataBreve(s.data)} · ${s.tipoNome}`),
-            h("span.sub", `${serie.length} serie · ${durata}${saltati ? ` · ${saltati} ${saltati === 1 ? "saltato" : "saltati"}` : ""}`)
-          ),
-          h("span.chevron", "›")
-        )
+          "div.main",
+          h("span.title", `${dataBreve(s.data)} · ${s.tipoNome}`),
+          h("span.sub", `${serie.length} serie · ${durata}${saltati ? ` · ${saltati} ${saltati === 1 ? "saltato" : "saltati"}` : ""}`)
+        ),
+        h("span.chevron", "›")
       );
+    };
+    for (const s of completate.slice(0, A_VISTA)) aggiungi(lista, await riga(s));
+
+    const restanti = completate.slice(A_VISTA);
+    if (restanti.length) {
+      const altri = h(
+        "button.row",
+        {
+          onclick: async () => {
+            altri.disabled = true;
+            altri.querySelector(".title").textContent = "Carico…";
+            for (const s of restanti) lista.insertBefore(await riga(s), altri);
+            altri.remove();
+          },
+        },
+        h(
+          "div.main",
+          h("span.title", `Mostra gli altri ${restanti.length}`),
+          // Con l'anno: senza, «dal 10/07 al 09/07» sembrava un giorno solo
+          // mentre erano dodici mesi.
+          h(
+            "span.sub",
+            `dal ${conAnno(restanti[restanti.length - 1].data)} al ${conAnno(restanti[0].data)}`
+          )
+        ),
+        h("span.chevron", "›")
+      );
+      aggiungi(lista, altri);
     }
     aggiungi(wrap, h("div.group", h("h2", `Allenamenti (${completate.length})`), lista));
   }
