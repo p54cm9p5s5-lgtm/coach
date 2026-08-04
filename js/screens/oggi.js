@@ -97,7 +97,7 @@ async function bloccoGrafico(ridisegna) {
       presente: Boolean(g?.presente),
       kcal: g?.presente ? g.kcalAttive : null,
       passi: g?.presente ? g.passi : null,
-      obiettivo: g?.obiettivoKcal || obiettivo,
+      obiettivo: g?.obiettivoKcal || null,
       allenamento: allenati.has(data),
       sonnoMin: n?.presente ? n.durataMin : null,
     });
@@ -149,7 +149,7 @@ async function bloccoGrafico(ridisegna) {
           nota: `${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"} · ${etichettaPeriodo(periodo)}`,
         },
       ]),
-      graficoAttivita(serie),
+      graficoAttivita(serie, { obiettivoRipiego: obiettivo }),
       legenda()
     )
   );

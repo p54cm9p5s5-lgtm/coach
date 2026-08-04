@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260804-081558";
+const VERSION = "20260804-082910";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -103,11 +103,7 @@ self.addEventListener("fetch", (e) => {
           // Solo una risposta valida diventa la pagina dell'app. Senza questo
           // controllo una pagina di errore, o quella di un wifi con login,
           // prendeva il posto dell'app fino al caricamento successivo.
-          if (r && r.ok && r.status === 200 && r.type !== "opaque") {
-            const copy = r.clone();
-            caches.open(CACHE).then((c) => c.put("./index.html", copy));
-            return r;
-          }
+          if (r && r.ok && r.status === 200 && r.type !== "opaque") return r;
           return caches.match("./index.html").then((salvata) => salvata || r);
         })
         .catch(() => caches.match("./index.html"))
@@ -116,22 +112,14 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Serve subito dalla cache e intanto riscarica: la volta dopo l'app è
-  // aggiornata anche se VERSION non è cambiata. Senza questo, una modifica
-  // pubblicata resterebbe invisibile finché non si tocca il service worker.
+  // Dalla cache, senza riscriverla durante l'uso. Ogni pubblicazione cambia
+  // VERSION e crea una cache nuova, riempita tutta insieme dall'installazione:
+  // così i file dentro una versione sono sempre coerenti fra loro. Riscrivendo
+  // durante l'uso, una connessione a singhiozzo poteva lasciare metà file
+  // nuovi e metà vecchi nella stessa versione — il modo peggiore di rompersi.
   e.respondWith(
     caches.open(CACHE).then((c) =>
-      c.match(req).then((hit) => {
-        // no-cache: la rivalidazione deve parlare col server, non con la
-        // cache HTTP, altrimenti l'aggiornamento arriva con dieci minuti di ritardo
-        const rete = fetch(new Request(req.url, { cache: "no-cache" }))
-          .then((r) => {
-            if (r.ok) c.put(req, r.clone());
-            return r;
-          })
-          .catch(() => hit);
-        return hit || rete;
-      })
+      c.match(req).then((hit) => hit || fetch(req))
     )
   );
 });

@@ -380,6 +380,23 @@ export async function aggiornaSeduta(id, patch) {
   return agg;
 }
 
+/**
+ * Quando è finito davvero un allenamento: l'ultima cosa fatta (ultima serie o
+ * fine cardio) più dieci minuti di margine per stretching e questionario. Se
+ * il telefono resta acceso, l'orologio da solo direbbe ore.
+ */
+export function fineStimata(sed, serie = []) {
+  const fineCardio =
+    sed?.cardio?.finitoIl ||
+    (sed?.cardio?.eseguito && sed.cardio.durataMin && sed.progresso?.cardioInizio
+      ? sed.progresso.cardioInizio + sed.cardio.durataMin * 60000
+      : 0);
+  const ultimoGesto = Math.max(0, ...serie.map((x) => x.tsFineSerie || 0), fineCardio);
+  const adesso = Date.now();
+  if (!ultimoGesto) return Math.min(adesso, (sed?.oraInizio || adesso) + 10 * 60000);
+  return adesso - ultimoGesto > 10 * 60000 ? ultimoGesto + 10 * 60000 : adesso;
+}
+
 export async function chiudiSeduta(id, { notaGenerale } = {}) {
   invalidaCacheSedute();
   const s = await db.get("sedute", id);
@@ -390,22 +407,7 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
   // qualunque delle due sia più tarda (il cardio viene dopo i pesi e dura
   // mezz'ora: dimenticarlo accorciava l'allenamento di tutto il cardio).
   const serieFatte = await db.byIndex("serie", "sedutaId", id);
-  const fineCardio =
-    s.cardio?.finitoIl ||
-    (s.cardio?.eseguito && s.cardio.durataMin && s.progresso?.cardioInizio
-      ? s.progresso.cardioInizio + s.cardio.durataMin * 60000
-      : 0);
-  const ultimoGesto = Math.max(0, ...serieFatte.map((x) => x.tsFineSerie || 0), fineCardio);
-  const adesso = Date.now();
-  // Un margine di dieci minuti copre stretching e questionario finale; oltre
-  // quello è tempo in cui l'allenamento era già finito. Senza nessun gesto
-  // registrato si parte dall'inizio: un allenamento aperto e chiuso a vuoto
-  // non può durare giorni.
-  const fine = !ultimoGesto
-    ? Math.min(adesso, s.oraInizio + 10 * 60000)
-    : adesso - ultimoGesto > 10 * 60000
-      ? ultimoGesto + 10 * 60000
-      : adesso;
+  const fine = fineStimata(s, serieFatte);
   const agg = {
     ...s,
     stato: "completata",
@@ -618,7 +620,10 @@ export async function completezzaSeduta(id) {
       mancanti++;
       continue;
     }
-    if (log?.saltato) {
+    // Saltato ma con serie registrate = interrotto a metà: quel lavoro conta,
+    // e il punteggio lo misura su quello che hai fatto. Solo un esercizio
+    // saltato del tutto è «non svolto».
+    if (log?.saltato && !sueSerie.length) {
       saltati++;
       continue;
     }

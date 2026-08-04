@@ -54,7 +54,12 @@ export function calendario(ctx) {
 
     const punti = h("div.cal-punti");
     if (previsto || fatto) aggiungi(punti, h("i.p-allenamento"));
-    for (const a of attese.slice(0, 2)) aggiungi(punti, h("i", { class: `p-${a.tipo}` }));
+    // Anche i pallini delle cose attese valgono solo da quando il programma
+    // esiste: prima erano segnati arretrati mesi che non ti erano mai stati
+    // chiesti.
+    if (dentroProgramma) {
+      for (const a of attese.slice(0, 2)) aggiungi(punti, h("i", { class: `p-${a.tipo}` }));
+    }
 
     aggiungi(griglia,
       h(

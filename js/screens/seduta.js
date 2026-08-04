@@ -439,7 +439,11 @@ async function vistaRisultato(id, vaiA) {
   if (sed.cardio?.previsto || sed.cardio?.eseguito) {
     // Le soglie di quel giorno: quelle di oggi possono essere altre.
     const r = { ...store.regole().cardio, ...(sed.cardio.soglie || {}) };
-    const fuori = sed.cardio.eseguito && r.kmhMax != null && sed.cardio.kmh > r.kmhMax;
+    // Fuori protocollo vale da tutte e due le parti: andare troppo piano non è
+    // «a protocollo» più di quanto lo sia andare troppo forte.
+    const fuori =
+      sed.cardio.eseguito &&
+      ((r.kmhMax != null && sed.cardio.kmh > r.kmhMax) || (r.kmhMin != null && sed.cardio.kmh < r.kmhMin));
     const attesi = r.durataMin || sed.cardio.durataPrevistaMin || 0;
     const corto = sed.cardio.eseguito && attesi && (sed.cardio.durataMin || 0) < attesi * 0.9;
     aggiungi(wrap,
@@ -1431,6 +1435,25 @@ function spostaTimer(sec) {
 
 async function chiudiRecupero() {
   fermaTimer();
+  // Un recupero durato molto più del previsto è quasi sempre una pausa vera
+  // (telefono in tasca, chiacchiere): registrarlo com'è falserebbe la media
+  // dei recuperi e la densità dell'allenamento.
+  const ultima = (await store.serieDi(S.sed.id)).at(-1);
+  const target = (ultima?.recuperoTargetSec || 120) * 1000;
+  const passato = ultima?.tsFineSerie ? Date.now() - ultima.tsFineSerie : 0;
+  if (ultima && passato > target + 10 * 60000) {
+    const scelta = await chiedi({
+      titolo: "Quanto è durato il recupero?",
+      testo: `Dall'ultima serie sono passati ${durataUmana(passato / 1000)}, ma erano previsti ${mmss(target / 1000)}. Se hai fatto una pausa vera, registriamo il previsto invece del tempo dell'orologio.`,
+      opzioni: [
+        { etichetta: `${mmss(target / 1000)}, come previsto`, valore: "previsto" },
+        { etichetta: "Registra il tempo davvero passato", valore: "reale" },
+      ],
+    });
+    if (scelta !== "reale") {
+      await store.db.put("serie", { ...ultima, tsFineSerie: Date.now() - target });
+    }
+  }
   S.tsInizioSerie = Date.now();
   S.recuperoFine = null;
   await salvaProgresso({ fase: "esercizio", recuperoFine: null, tsInizioSerie: S.tsInizioSerie });
@@ -1742,10 +1765,17 @@ async function vistaCardio(corpo, piede) {
   const valK = h("span.val", `${num(kmh)} km/h`);
   const valD = h("span.val", `${durata} min`);
   const avviso = h("p.footnote", { style: "margin:10px 16px 0" }, "");
+  // La nota scritta prima non si perde tornando su questa schermata.
+  const notaPrec = S.sed.cardio?.note || "";
 
   const controlla = () => {
     if (kmh > r.kmhMax) {
       avviso.textContent = `Sopra protocollo: previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h. Il cardio non deve essere il lavoro più duro della giornata.`;
+      avviso.style.color = "var(--orange)";
+    } else if (kmh < r.kmhMin) {
+      // Anche sotto il minimo si è fuori dal protocollo: il cardio ha una
+      // fascia, non un tetto soltanto.
+      avviso.textContent = `Sotto protocollo: previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h.`;
       avviso.style.color = "var(--orange)";
     } else {
       avviso.textContent = `A protocollo. Riferimento FC ${r.fcMin}-${r.fcMax}, mai sopra ${r.fcLimite}.`;
@@ -1799,7 +1829,7 @@ async function vistaCardio(corpo, piede) {
       ),
       avviso
     ),
-    h("textarea.note", { id: "nota-cardio", placeholder: "Nota sul cardio (facoltativa)" })
+    h("textarea.note", { id: "nota-cardio", placeholder: "Nota sul cardio (facoltativa)", value: notaPrec })
   );
   controlla();
 
@@ -1831,7 +1861,7 @@ async function vistaCardio(corpo, piede) {
               eseguito: false,
               finitoIl: null,
               saltatoMotivo: null,
-              note: qs("#nota-cardio")?.value || null,
+              note: qs("#nota-cardio")?.value ?? notaPrec ?? null,
             },
           });
           await salvaProgresso({ cardioInizio: Date.now(), cardioFine: Date.now() + durata * 60000 });
@@ -1844,6 +1874,14 @@ async function vistaCardio(corpo, piede) {
       "button.btn.secondary",
       {
         onclick: async () => {
+          if (S.sed.cardio?.eseguito) {
+            const ok = await chiedi({
+              titolo: "Cancellare il cardio registrato?",
+              testo: `Oggi risulta ${num(S.sed.cardio.kmh)} km/h per ${S.sed.cardio.durataMin} min. Segnandolo «non eseguito» quel dato sparisce.`,
+              opzioni: [{ etichetta: "Sì, cancellalo", valore: "si", stile: "danger" }],
+            });
+            if (ok !== "si") return;
+          }
           const motivo = await chiedi({
             titolo: "Cardio non eseguito",
             opzioni: [
@@ -2084,7 +2122,12 @@ function bloccoStretching() {
 async function vistaFine(corpo, piede) {
   const serie = await store.serieDi(S.sed.id);
   const logs = await store.questionariDi(S.sed.id);
-  const durataSec = Math.round(((S.sed.oraFine || Date.now()) - S.sed.oraInizio) / 1000);
+  // Lo stesso conto della chiusura: l'orologio da solo contava anche il tempo
+  // in cui il riepilogo restava aperto, e il numero qui non corrispondeva a
+  // quello che poi finiva in archivio.
+  const durataSec = Math.round(
+    ((S.sed.oraFine || store.fineStimata(S.sed, serie)) - S.sed.oraInizio) / 1000
+  );
   const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
   const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
   const densita = durataSec > 0 ? (serie.length / (durataSec / 60)).toFixed(2).replace(".", ",") : "—";
@@ -2148,7 +2191,12 @@ async function vistaFine(corpo, piede) {
     h("button.btn", {
       onclick: azione(async () => {
         await store.chiudiSeduta(S.sed.id, { notaGenerale: qs("#nota-seduta")?.value || null });
-        await store.snapshotAutomatico("fine allenamento");
+        try {
+          await store.snapshotAutomatico("fine allenamento");
+        } catch {
+          // l'allenamento è già chiuso e salvato: la copia interna non deve
+          // far fallire la chiusura né bloccare il passaggio al risultato
+        }
         // I dati di oggi entrano nel motore solo adesso, a seduta chiusa.
         const { proposte } = await store.aggiornaMotore();
         fermaTimer();

@@ -2,7 +2,7 @@
    Un solo grafico in Home: il movimento giornaliero con i giorni di allenamento
    in evidenza, e i giorni già in programma sulla destra. */
 
-import { h, num, dataBreve, weekdayOf } from "./ui.js";
+import { h, num, dataBreve, weekdayOf, isoDate } from "./ui.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const el = (tag, attrs = {}) => {
@@ -38,7 +38,7 @@ const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 /**
  * @param dati [{ data, kcal|null, obiettivo, allenamento: bool, presente, futuro, previsto }]
  */
-export function graficoAttivita(dati, { altezza = 128 } = {}) {
+export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null } = {}) {
   const L = 320;
   const A = altezza;
   const margineBasso = 22;
@@ -56,9 +56,11 @@ export function graficoAttivita(dati, { altezza = 128 } = {}) {
   const valori = dati.map((d) => d.kcal).filter((v) => v != null);
   // L'obiettivo di riferimento è quello più recente, non il primo dell'elenco:
   // se lo cambi su Salute, la linea restava quella di settimane fa.
-  const obiettivo = [...dati].reverse().find((d) => !d.futuro && d.obiettivo)?.obiettivo
-    || dati.find((d) => d.obiettivo)?.obiettivo
-    || 600;
+  const obiettivo =
+    [...dati].reverse().find((d) => !d.futuro && d.obiettivo)?.obiettivo ||
+    dati.find((d) => d.obiettivo)?.obiettivo ||
+    obiettivoRipiego ||
+    600;
   const massimo = Math.max(obiettivo * 1.2, ...valori, 1);
   const passo = L / Math.max(dati.length, 1);
   const larghezza = Math.max(1.5, Math.min(9, passo * 0.42));
@@ -172,6 +174,12 @@ export function graficoAttivita(dati, { altezza = 128 } = {}) {
     }
     if (!d.presente || d.kcal == null) {
       return `${data} · nessun dato${d.allenamento ? " · allenamento registrato" : d.previsto ? " · era previsto un allenamento" : ""}`;
+    }
+    // Oggi non è ancora finito: dire «riposo» a metà giornata è una sentenza
+    // su qualcosa che deve ancora succedere.
+    if (d.data === isoDate() && !d.allenamento) {
+      const kcalOggi = `${Math.round(d.kcal).toLocaleString("it-IT")} kcal`;
+      return `${data} · ${kcalOggi} · giornata in corso`;
     }
     const kcal = `${Math.round(d.kcal).toLocaleString("it-IT")} kcal`;
     const quota = d.obiettivo ? ` (${num((d.kcal / d.obiettivo) * 100)}% dell'obiettivo)` : "";
