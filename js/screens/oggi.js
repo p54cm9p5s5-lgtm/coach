@@ -420,9 +420,28 @@ async function bloccoProposte() {
   });
   const sospese = await store.proposteInSospeso();
   const avvisi = await store.segnali();
-  if (!sospese.length && !avvisi.length) return null;
+  // Una verifica scaduta compariva solo nella schermata Proposte: se non ci
+  // passavi per caso, la decisione restava aperta per sempre. È la cosa più
+  // urgente delle tre, e sta in cima.
+  const verifiche = await store.verificheDovute();
+  if (!sospese.length && !avvisi.length && !verifiche.length) return null;
 
   const lista = h("div.list");
+  for (const p of verifiche.slice(0, 3)) {
+    aggiungi(lista,
+      h(
+        "a.row",
+        { href: `#/proposte` },
+        h(
+          "div.main",
+          h("span.title", p.titolo),
+          h("span.sub", `verifica prevista ${dataBreve(p.dataVerifica)}`)
+        ),
+        h("span.pill.warn", "da verificare"),
+        h("span.chevron", "›")
+      )
+    );
+  }
   for (const p of sospese.slice(0, 3)) {
     aggiungi(lista,
       h(
