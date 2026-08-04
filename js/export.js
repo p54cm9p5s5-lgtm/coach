@@ -26,13 +26,16 @@ function tabella(intestazioni, righe) {
 }
 
 /** Log di una seduta nel formato fisso del §12. */
-export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }) {
+export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, previsti = [] }) {
   const perEsercizio = new Map();
   for (const s of serie) {
     if (!perEsercizio.has(s.esercizioId)) perEsercizio.set(s.esercizioId, []);
     perEsercizio.get(s.esercizioId).push(s);
   }
   for (const q of questionari) if (!perEsercizio.has(q.esercizioId)) perEsercizio.set(q.esercizioId, []);
+  // Gli esercizi previsti ma mai iniziati devono comparire: senza, il coach
+  // legge un allenamento di tre esercizi e non sa che ne erano previsti cinque.
+  for (const v of previsti) if (!perEsercizio.has(v.esercizioId)) perEsercizio.set(v.esercizioId, []);
 
   const righe = [];
   for (const [esId, righeSerie] of perEsercizio) {
@@ -59,6 +62,11 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }
       continue;
     }
 
+    if (!righeSerie.length && !log) {
+      righe.push([nome, "—", "—", "—", "NON INIZIATO (previsto dal programma)"]);
+      continue;
+    }
+
     const carichi = [...new Set(righeSerie.map((s) => s.carico).filter((c) => c != null))];
     const carico = carichi.length === 0 ? "corpo libero" : carichi.map((c) => `${num(c)} kg`).join(" / ");
     const rip = righeSerie.map((s) => s.ripFatte ?? "—").join("/");
@@ -67,7 +75,9 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }
     const note = [];
     if (log?.dolorePolso) note.push(`DOLORE POLSO ${log.dolorePolsoIntensita} ${log.dolorePolsoQuando}`);
     if (log?.tecnica != null) note.push(`tecnica ${num(log.tecnica)}/10`);
-    if (log?.nota) note.push(log.nota);
+    // Gli a capo dentro una cella spezzerebbero la tabella a formato fisso che
+    // il coach si aspetta: diventano separatori.
+    if (log?.nota) note.push(String(log.nota).replace(/\s*\n+\s*/g, " · "));
 
     righe.push([
       nome,

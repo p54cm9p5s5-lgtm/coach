@@ -238,6 +238,14 @@ export function regole() {
   }
   // le schermate cercavano «finestre» al plurale: una chiave che non è mai
   // esistita, quindi leggevano sempre i valori scritti a mano
+  // Un brief può scrivere una soglia come numero invece che come oggetto: senza
+  // questa rete ogni schermata che chiama regole() esploderebbe e l'app
+  // resterebbe utilizzabile solo dalle Impostazioni.
+  for (const [chiave, base] of Object.entries(REGOLE_BASE)) {
+    if (!fuse[chiave] || typeof fuse[chiave] !== "object" || Array.isArray(fuse[chiave])) {
+      fuse[chiave] = { ...base };
+    }
+  }
   fuse.finestre = {
     movimento: { settimane: fuse.finestra.settimane, giorniMinSettimana: fuse.finestra.minimoSettimana },
     sonno: { settimane: fuse.finestra.settimane, nottiMinSettimana: fuse.finestra.minimoSettimana },
@@ -1441,10 +1449,13 @@ export async function snapshotSalvato() {
 }
 
 /** Backup completo destinato a un file fuori dall'app. */
+/**
+ * Prepara il dump. NON segna il backup come fatto: il file potrebbe non essere
+ * mai salvato, ed è chi lo salva a poterlo confermare.
+ */
 export async function esportaCompleto() {
   const dump = await db.esportaTutto();
   dump.motivo = "esportazione manuale";
-  await setImpostazione("ultimoExport", new Date().toISOString());
   return dump;
 }
 

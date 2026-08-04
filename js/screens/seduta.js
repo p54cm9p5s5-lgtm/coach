@@ -587,9 +587,9 @@ function testata() {
     "div",
     h(
       "div.session-head",
-      h("button", { onclick: esci }, "Esci"),
+      h("button", { onclick: unaVoltaSola(esci) }, "Esci"),
       h("span.step", `${S.sed.tipoNome} · ${passo}`),
-      h("button", { onclick: menuSeduta }, "•••")
+      h("button", { onclick: unaVoltaSola(menuSeduta), "aria-label": "Altre azioni dell'allenamento" }, "•••")
     ),
     h("div.progressline", h("i", { style: `width:${avanzamento}%` }))
   );
@@ -844,8 +844,8 @@ async function vistaEsercizio(corpo, piede) {
     h(
       "div",
       { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
-      h("button.btn.secondary", { onclick: () => modificaCarico(def, inv) }, "Cambia carico"),
-      h("button.btn.secondary", { onclick: () => saltaEsercizio(v, def) }, "Salta esercizio")
+      h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, inv)) }, "Cambia carico"),
+      h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
     )
   );
 }

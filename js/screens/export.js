@@ -135,7 +135,11 @@ async function componi(stato) {
 
   if (stato.seduta) {
     const tutte = await store.allenamenti();
-    const ultima = tutte.find((s) => s.stato === "completata");
+    // La più recente per orario, non la prima trovata: con due allenamenti
+    // nello stesso giorno veniva esportato quello più vecchio.
+    const ultima = tutte
+      .filter((s) => s.stato === "completata")
+      .sort((a, b) => (b.oraFine || 0) - (a.oraFine || 0))[0];
     if (ultima) {
       const serie = await store.serieDi(ultima.id);
       const questionari = await store.questionariDi(ultima.id);
@@ -146,6 +150,7 @@ async function componi(stato) {
           questionari,
           esercizio: store.esercizio,
           giornoSplit: store.giornoSplit,
+          previsti: store.giornoSplit(ultima.tipoId)?.esercizi || [],
         })
       );
       contenuto.push(`allenamento del ${dataBreve(ultima.data)}`);

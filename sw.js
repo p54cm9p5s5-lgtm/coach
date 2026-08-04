@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260804-030200";
+const VERSION = "20260804-034014";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -42,17 +42,26 @@ self.addEventListener("install", (e) => {
   // schede si chiudano: su un telefono l'app non si "chiude" mai davvero, e la
   // versione vecchia resterebbe al comando per giorni.
   self.skipWaiting();
+  // Promise.all e non allSettled: se anche un solo file non si scarica
+  // l'installazione FALLISCE, la cache nuova non viene attivata e quella
+  // vecchia resta al suo posto. Con allSettled una rete ballerina produceva
+  // una versione monca che poi cancellava l'unica copia funzionante.
   e.waitUntil(
-    caches
-      .open(CACHE)
-      .then((c) => Promise.allSettled(ASSETS.map((u) => c.add(u))))
+    caches.open(CACHE).then((c) => Promise.all(ASSETS.map((u) => c.add(new Request(u, { cache: "reload" })))))
   );
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
+    // Le cache vecchie si cancellano solo dopo aver verificato che quella nuova
+    // contenga davvero il necessario per aprire l'app senza rete.
     caches
-      .keys()
+      .open(CACHE)
+      .then((c) => Promise.all(["./index.html", "./js/app.js", "./css/app.css"].map((u) => c.match(u))))
+      .then((essenziali) => {
+        if (essenziali.some((x) => !x)) return [];
+        return caches.keys();
+      })
       .then((keys) =>
         Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
       )

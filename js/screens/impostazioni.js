@@ -416,7 +416,42 @@ async function ripristinaSnapshot() {
     opzioni: [{ etichetta: "Ripristina", valore: "si", stile: "destructive" }],
   });
   if (scelta !== "si") return;
-  await store.db.importaTutto(dump, "sostituisci");
+
+  // Prima di sovrascrivere: una copia dello stato attuale, così un ripristino
+  // sbagliato non è un vicolo cieco. Il dump non contiene la copia interna
+  // (si escluderebbe da sola), quindi senza questo il ripristino cancellerebbe
+  // proprio la rete di sicurezza che si sta usando.
+  let indietro = null;
+  try {
+    indietro = await store.snapshotAutomatico("prima del ripristino");
+  } catch {
+    /* se non riesce si prosegue: il ripristino resta l'operazione richiesta */
+  }
+
+  try {
+    await store.db.importaTutto(dump, "sostituisci");
+  } catch (e) {
+    await chiedi({
+      titolo: "Ripristino non riuscito",
+      testo: `${e.message}\n\nL'archivio è rimasto com'era.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+    });
+    return;
+  }
+
+  // Il ripristino ha svuotato le impostazioni: la copia di sicurezza appena
+  // fatta va rimessa, altrimenti dopo l'operazione non resta niente a cui
+  // tornare e la schermata continuerebbe ad annunciare una copia inesistente.
+  try {
+    if (indietro) {
+      await store.setImpostazione("snapshotAutomatico", JSON.stringify(indietro));
+      await store.setImpostazione("ultimoSnapshot", new Date().toISOString());
+    } else {
+      await store.setImpostazione("ultimoSnapshot", null);
+    }
+  } catch {
+    /* niente */
+  }
   location.reload();
 }
 
