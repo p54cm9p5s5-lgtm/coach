@@ -35,10 +35,12 @@ export async function render({ ridisegna }) {
 
   const regole = store.regole().finestre || {};
   const fMov = store.statoFinestra(giorni, {
+    campo: "kcalAttive",
     settimane: regole.movimento?.settimane ?? 3,
     minimoSettimana: regole.movimento?.giorniMinSettimana ?? 5,
   });
   const fSonno = store.statoFinestra(notti, {
+    campo: "durataMin",
     settimane: regole.sonno?.settimane ?? 3,
     minimoSettimana: regole.sonno?.nottiMinSettimana ?? 5,
   });

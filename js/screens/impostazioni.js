@@ -1,4 +1,4 @@
-import { h, toast, sheet, chiedi, num, dataLunga, aggiungi, provaSuono, versioneInstallata } from "../ui.js";
+import { h, toast, sheet, chiedi, num, dataLunga, isoDate, aggiungi, provaSuono, versioneInstallata } from "../ui.js";
 import { intestazione, applicaTema, temaCorrente } from "../app.js";
 import * as store from "../store.js";
 import { estraiBlocco, valida, confronta } from "../brief.js";
@@ -160,7 +160,9 @@ export async function render({ vaiA, ridisegna }) {
 
   // ---- calendario ----
   const eventi = await store.agenda();
-  const oggiIso = new Date().toISOString().slice(0, 10);
+  // Data locale: con toISOString, dopo le 22 in Italia il giorno risultava
+  // già quello dopo e gli eventi di oggi sparivano dal conto.
+  const oggiIso = isoDate();
   const futuri = eventi.filter((e) => e.data >= oggiIso);
   aggiungi(wrap,
     h(
@@ -436,7 +438,7 @@ async function esportaBackup(ridisegna) {
     });
     return;
   }
-  const oggi = new Date().toISOString().slice(0, 10);
+  const oggi = isoDate();
   scarica(`coach-backup-${oggi}.json`, JSON.stringify(dump));
 
   // Il browser non dice se il file è stato davvero salvato: lo chiediamo a te,
@@ -538,8 +540,26 @@ async function importaBackup(ridisegna) {
   });
   if (scelta !== "si") return;
 
+  // Rete di sicurezza: prima di sovrascrivere con un file si tiene una copia
+  // interna di com'era. Un backup sbagliato non deve essere un vicolo cieco.
+  let indietro = null;
+  try {
+    indietro = await store.snapshotAutomatico("prima dell'import da file");
+  } catch {
+    /* se non riesce si prosegue: l'import resta l'operazione richiesta */
+  }
+
   try {
     await store.db.importaTutto(dump, modo);
+    if (indietro && modo === "sostituisci") {
+      // Il file importato ha riscritto anche le impostazioni: la copia di
+      // sicurezza appena fatta va rimessa, altrimenti sparisce proprio quella.
+      try {
+        await store.setImpostazione("snapshotAutomatico", JSON.stringify(indietro));
+      } catch {
+        /* niente */
+      }
+    }
   } catch (e) {
     toast(e.message, 5000);
     return;
