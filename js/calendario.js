@@ -61,10 +61,20 @@ export function calendario(ctx) {
       for (const a of attese.slice(0, 2)) aggiungi(punti, h("i", { class: `p-${a.tipo}` }));
     }
 
+    // I pallini si vedono, ma chi legge lo schermo ad alta voce sentiva solo il
+    // numero: la stessa informazione va scritta anche a parole.
+    const voce = [
+      dataLunga(data),
+      fatto?.completato ? `${fatto.nome} completato` : previsto ? `${previsto.nome}${passato ? " non fatto" : " in programma"}` : null,
+      ...(dentroProgramma ? attese.slice(0, 2).map((a) => (a.tipo === "scaduto" ? `${a.testo} in ritardo` : a.testo)) : []),
+    ]
+      .filter(Boolean)
+      .join(", ");
+
     aggiungi(griglia,
       h(
         "button",
-        { class: classi.join(" "), onclick: () => ctx.onGiorno(data) },
+        { class: classi.join(" "), "aria-label": voce, onclick: () => ctx.onGiorno(data) },
         h("span.n", String(giorno)),
         punti
       )

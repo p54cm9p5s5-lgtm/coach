@@ -365,7 +365,7 @@ async function caricaBrief(ridisegna) {
     const testo = await file.text();
     dati = estraiBlocco(testo);
   } catch (e) {
-    await chiedi({ titolo: "Non caricato", testo: e.message, opzioni: [{ etichetta: "Ho capito", valore: "ok" }] });
+    await chiedi({ titolo: "Non caricato", testo: e.message, opzioni: [{ etichetta: "Ho capito", valore: "ok" }], annulla: false });
     return;
   }
 
@@ -375,6 +375,7 @@ async function caricaBrief(ridisegna) {
       titolo: "Blocco non valido",
       testo: problemi.slice(0, 6).join("\n"),
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
     });
     return;
   }
@@ -435,6 +436,7 @@ async function esportaBackup(ridisegna) {
       titolo: "Backup non riuscito",
       testo: `Non sono riuscito a leggere l'archivio: ${e.message}`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
     });
     return;
   }
@@ -498,6 +500,7 @@ async function ripristinaSnapshot() {
       titolo: "Ripristino non riuscito",
       testo: `${e.message}\n\nL'archivio è rimasto com'era e la copia interna è ancora quella di prima.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
     });
     return;
   }
@@ -584,6 +587,7 @@ async function importaBackup(ridisegna) {
       titolo: "Ripristinato, ma non tutto",
       testo: `Queste parti del file non sono entrate perché questa versione dell'app non le conosce: ${esito.ignorati.join(", ")}. Tieni il file: aggiornando l'app potrai riprovare.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
     });
   }
   toast("Backup ripristinato.");
@@ -615,6 +619,7 @@ async function azzera(ridisegna) {
       titolo: "Eliminazione non riuscita",
       testo: `${e.message}\n\nL'archivio è rimasto com'era: non è stato cancellato niente a metà.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
     });
     return;
   }
@@ -647,6 +652,7 @@ async function forzaAggiornamento() {
       titolo: "Aggiornamento non fatto",
       testo: `I file dell'app non si scaricano (${e.message}). Non ho toccato niente: l'app resta quella che hai, e funziona anche senza rete. Riprova quando sei connesso.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
     });
     return;
   }
