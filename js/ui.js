@@ -394,18 +394,28 @@ function beep(freq = 880, dur = 0.16, gain = 0.22) {
     if (!AC) return;
     audioCtx = new AC();
   }
-  if (audioCtx.state === "suspended") audioCtx.resume();
-  if (audioCtx.state !== "running") return;
-  const osc = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  osc.type = "sine";
-  osc.frequency.value = freq;
-  g.gain.setValueAtTime(0, audioCtx.currentTime);
-  g.gain.linearRampToValueAtTime(gain, audioCtx.currentTime + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-  osc.connect(g).connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + dur + 0.02);
+  const suona = () => {
+    if (audioCtx.state !== "running") return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(gain, audioCtx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    osc.connect(g).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur + 0.02);
+  };
+  // Risvegliare l'audio richiede tempo: prima si suonava subito dopo averlo
+  // chiesto, quando era ancora fermo, e non usciva niente. Proprio i bip di
+  // riserva — quelli che suonano quando l'allarme normale non parte — non si
+  // sentivano mai.
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().then(suona).catch(() => {});
+    return;
+  }
+  suona();
 }
 
 let bipTimer = null;

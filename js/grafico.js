@@ -13,6 +13,25 @@ const el = (tag, attrs = {}) => {
   return n;
 };
 
+/**
+ * Dove hai toccato, in coordinate del disegno.
+ * Il disegno non riempie sempre tutto il riquadro: se le proporzioni non
+ * combaciano il browser lo centra e lascia due margini ai lati. Contando solo
+ * la larghezza del riquadro il tocco risultava spostato, e usciva il giorno
+ * sbagliato. Questa conversione parte dal disegno vero, quindi è esatta comunque.
+ */
+function xNelDisegno(svg, clientX, clientY = 0) {
+  const ctm = typeof svg.getScreenCTM === "function" ? svg.getScreenCTM() : null;
+  if (ctm && typeof svg.createSVGPoint === "function") {
+    const p = svg.createSVGPoint();
+    p.x = clientX;
+    p.y = clientY;
+    const dentro = p.matrixTransform(ctm.inverse());
+    if (Number.isFinite(dentro.x)) return dentro.x;
+  }
+  return null;
+}
+
 const GIORNI_CORTI = ["D", "L", "M", "M", "G", "V", "S"];
 const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
@@ -167,16 +186,15 @@ export function graficoAttivita(dati, { altezza = 128 } = {}) {
     lettura.textContent = descrivi(d);
   };
 
-  const indiceDa = (clientX) => {
-    const r = svg.getBoundingClientRect();
-    if (!r.width) return null;
-    const x = ((clientX - r.left) / r.width) * L;
+  const indiceDa = (clientX, clientY) => {
+    const x = xNelDisegno(svg, clientX, clientY);
+    if (x == null) return null;
     return Math.max(0, Math.min(dati.length - 1, Math.floor(x / passo)));
   };
 
   let premuto = false;
   const aggiorna = (e) => {
-    const i = indiceDa(e.clientX);
+    const i = indiceDa(e.clientX, e.clientY);
     if (i != null) mostra(i);
   };
   svg.addEventListener("pointerdown", (e) => {
@@ -417,9 +435,8 @@ export function graficoBarre({
 
   let premuto = false;
   const aggiorna = (e) => {
-    const r = svg.getBoundingClientRect();
-    if (!r.width) return;
-    const x = ((e.clientX - r.left) / r.width) * L;
+    const x = xNelDisegno(svg, e.clientX, e.clientY);
+    if (x == null) return;
     mostra(Math.max(0, Math.min(punti.length - 1, Math.floor(x / passo))));
   };
   svg.addEventListener("pointerdown", (e) => {
@@ -583,9 +600,8 @@ export function graficoLinea({
 
   let premuto = false;
   const aggiorna = (e) => {
-    const r = svg.getBoundingClientRect();
-    if (!r.width) return;
-    const px = ((e.clientX - r.left) / r.width) * L;
+    const px = xNelDisegno(svg, e.clientX, e.clientY);
+    if (px == null) return;
     mostra(Math.max(0, Math.min(punti.length - 1, Math.floor(px / passo))));
   };
   svg.addEventListener("pointerdown", (e) => {

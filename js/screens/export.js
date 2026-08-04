@@ -176,7 +176,17 @@ async function componi(stato) {
     const notti = await store.notti();
     const complete = (await store.allenamenti()).filter((s) => s.stato === "completata");
     const perData = new Map(complete.map((s) => [s.data, s.tipoNome]));
-    const tipoGiorno = (data) => (perData.has(data) ? `Allenamento (${perData.get(data)})` : "Riposo");
+    // «Riposo» solo dove il riposo era previsto. Un giorno in cui il coach
+    // aveva messo un allenamento e non l'hai fatto è un'altra cosa, e scriverlo
+    // «Riposo» nascondeva al coach esattamente quello che gli serve vedere.
+    const tipoGiorno = (data) => {
+      if (perData.has(data)) return `Allenamento (${perData.get(data)})`;
+      const previsto = store.giornoPrevisto(data);
+      if (previsto) return `Non fatto (era previsto ${previsto.nome})`;
+      const org = store.origineGiorno(data);
+      if (org.sconosciuto) return `Da calendario: «${org.titolo}»`;
+      return "Riposo";
+    };
     if (giorni.length || notti.length) {
       const r = store.regole().finestre || {};
       pezzi.push(
