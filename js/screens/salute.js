@@ -110,11 +110,13 @@ export async function render({ ridisegna }) {
     };
   };
 
+  // La giornata in corso è a metà: nella media entrerebbe come un giorno fiacco
+  // e farebbe sembrare che stai peggiorando. Resta nel grafico — e ovviamente
+  // resta anche col periodo «1 gg», che è fatto apposta per guardare oggi.
+  const soloOggi = periodoSalvato().id === "1";
   const media = (righe, campo) => {
-    // La giornata in corso è a metà: nella media entrerebbe come un giorno
-    // fiacco e farebbe sembrare che stai peggiorando. Nel grafico resta.
     const v = righe
-      .filter((r) => r.presente && r.data < oggiIso)
+      .filter((r) => r.presente && (soloOggi || r.data < oggiIso))
       .map((r) => r[campo])
       .filter((x) => x != null);
     return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
@@ -245,6 +247,39 @@ export async function render({ ridisegna }) {
     );
   }
 
+  // ---- sonno ----
+  const fSonno2 = conPeriodo();
+  const nottiOrd = perGrafico(notti.filter(fSonno2.dentro));
+  const mSonno = media(nottiOrd, "durataMin");
+  if (nottiOrd.length) {
+    aggiungi(wrap,
+      schedaGrafico({
+        selettore: fSonno2.selettore,
+        titolo: "Sonno",
+        valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
+        nota: mSonno ? `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${fSonno2.etichetta}` : `nessun dato · ${fSonno2.etichetta}`,
+        grafico: graficoLinea({
+          punti: nottiOrd.map((n) => ({
+            data: n.data,
+            valore: n.presente ? n.durataMin : null,
+            nota: n.presente
+              ? [
+                  n.profondoMin != null ? `profondo ${n.profondoMin}m` : null,
+                  n.remMin != null ? `REM ${n.remMin}m` : null,
+                  n.vegliaMin != null ? `veglia ${n.vegliaMin}m` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : null,
+          })),
+          formatta: (v) => durataUmana(v * 60),
+          invito: "Tocca una notte per vedere durata e fasi",
+        }),
+        piede: "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali.",
+      })
+    );
+  }
+
   // ---- il resto del movimento: in piedi, piani, distanza ----
   // Non hanno un grafico ciascuno: sarebbero quattro schede quasi uguali. Qui
   // stanno insieme, con la media del periodo e l'ultimo giorno registrato.
@@ -297,39 +332,6 @@ export async function render({ ridisegna }) {
         righe,
         h("p.footnote", "Arrivano dal comando rapido Salute. Non entrano nel punteggio: servono a leggere le giornate.")
       )
-    );
-  }
-
-  // ---- sonno ----
-  const fSonno2 = conPeriodo();
-  const nottiOrd = perGrafico(notti.filter(fSonno2.dentro));
-  const mSonno = media(nottiOrd, "durataMin");
-  if (nottiOrd.length) {
-    aggiungi(wrap,
-      schedaGrafico({
-        selettore: fSonno2.selettore,
-        titolo: "Sonno",
-        valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
-        nota: mSonno ? `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${fSonno2.etichetta}` : `nessun dato · ${fSonno2.etichetta}`,
-        grafico: graficoLinea({
-          punti: nottiOrd.map((n) => ({
-            data: n.data,
-            valore: n.presente ? n.durataMin : null,
-            nota: n.presente
-              ? [
-                  n.profondoMin != null ? `profondo ${n.profondoMin}m` : null,
-                  n.remMin != null ? `REM ${n.remMin}m` : null,
-                  n.vegliaMin != null ? `veglia ${n.vegliaMin}m` : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")
-              : null,
-          })),
-          formatta: (v) => durataUmana(v * 60),
-          invito: "Tocca una notte per vedere durata e fasi",
-        }),
-        piede: "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali.",
-      })
     );
   }
 

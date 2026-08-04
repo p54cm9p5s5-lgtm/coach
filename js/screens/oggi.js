@@ -116,8 +116,10 @@ async function bloccoGrafico(ridisegna) {
   // Finestra dei numeri: quella scelta, oppure tutto lo storico.
   const daQuando = inizioPeriodo(periodo, oggi);
   const dentro = (r) => !daQuando || (r.data >= daQuando && r.data <= oggi);
-  // Oggi non è finita: nella media entrerebbe come un giorno fiacco.
-  const giorniConDati = giorni.filter((g) => g.presente && dentro(g) && g.data < oggi);
+  // Oggi non è finita: nella media entrerebbe come un giorno fiacco. Col
+  // periodo «1 gg» invece è proprio oggi che vuoi vedere.
+  const soloOggi = periodo.id === "1";
+  const giorniConDati = giorni.filter((g) => g.presente && dentro(g) && (soloOggi || g.data < oggi));
   const nottiConDati = notti.filter((n) => n.presente && dentro(n));
   const mediaKcal = media(giorniConDati, "kcalAttive");
   const mediaPassi = media(giorniConDati, "passi");
