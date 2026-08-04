@@ -105,23 +105,24 @@ export function calcolaAttese({
         const t = titolo.toLowerCase();
         // Solo quello che l'app registra davvero può essere «in ritardo»: la
         // pressione, per esempio, non la tiene e resta un promemoria e basta.
-        const tipo = /foto/.test(t) ? "foto" : /peso|vita|circonferenz/.test(t) ? "misura" : "info";
-        // Peso e circonferenze sono due misure diverse: prima bastava essersi
-        // pesati per dare per fatto anche «misura vita», e il promemoria del
-        // coach spariva senza che tu l'avessi fatta. Se l'evento le chiede
-        // tutte e due, conta la più vecchia.
+        // Cosa chiede l'evento, guardato pezzo per pezzo. Peso e circonferenze
+        // sono due misure diverse: prima bastava essersi pesati per dare per
+        // fatto anche «misura vita», e il promemoria del coach spariva senza
+        // che tu l'avessi fatta.
+        const chiedeFoto = /foto/.test(t);
         const chiedePeso = /peso/.test(t);
         const chiedeVita = /vita|circonferenz/.test(t);
-        const fattoDa =
-          tipo === "foto"
-            ? ultimaFoto
-            : tipo !== "misura"
-              ? null
-              : chiedePeso && chiedeVita
-                ? [ultimoPeso, ultimaVita].filter(Boolean).sort()[0] || null
-                : chiedeVita
-                  ? ultimaVita
-                  : ultimoPeso;
+        const tipo = chiedeFoto ? "foto" : chiedePeso || chiedeVita ? "misura" : "info";
+        // Conta la cosa fatta più indietro nel tempo fra quelle chieste: se
+        // una non è MAI stata fatta, l'evento resta da fare (niente data).
+        const richieste = [
+          chiedeFoto ? ultimaFoto : null,
+          chiedePeso ? ultimoPeso : null,
+          chiedeVita ? ultimaVita : null,
+        ].filter((_, i) => [chiedeFoto, chiedePeso, chiedeVita][i]);
+        const fattoDa = richieste.some((d) => !d)
+          ? null
+          : richieste.filter(Boolean).sort()[0] || null;
         const scaduto =
           e.data <= oggi && tipo !== "info" && (!fattoDa || giorniTra(fattoDa, e.data) >= 1);
         aggiungiA(e.data, scaduto ? "scaduto" : tipo, titolo);
@@ -196,7 +197,11 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
   // del giorno, basta segnalarne la natura una volta sola.
   if (origine?.sconosciuto && origine.titolo) {
     const gia = attese.findIndex((a) => a.testo === origine.titolo);
+    // Se quella riga era segnata in ritardo, il ritardo va tenuto: toglierla e
+    // basta faceva sparire l'avviso insieme al doppione.
+    const eraScaduta = gia >= 0 && attese[gia].stato === "scaduto";
     if (gia >= 0) attese = attese.filter((_, i) => i !== gia);
+    if (eraScaduta) righe.push({ testo: `${origine.titolo} — in ritardo`, stato: "warn" });
     righe.push({ testo: `«${origine.titolo}» non è un allenamento del programma`, stato: "info" });
   }
 

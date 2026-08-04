@@ -104,7 +104,16 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
         ? `media ${mmss(recuperi.reduce((a, b) => a + b, 0) / recuperi.length)}, da ${mmss(Math.min(...recuperi))} a ${mmss(Math.max(...recuperi))}`
         : null
     ),
-    riga("Velocità impostata sul tapis", seduta.cardio?.eseguito ? `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min` : seduta.cardio?.previsto ? "cardio non eseguito" : null),
+    // Il motivo per cui il cardio non è stato fatto è un dato clinico, non un
+    // dettaglio: veniva registrato nell'app e poi non arrivava al coach.
+    riga(
+      "Velocità impostata sul tapis",
+      seduta.cardio?.eseguito
+        ? `${num(seduta.cardio.kmh)} km/h per ${seduta.cardio.durataMin} min`
+        : seduta.cardio?.previsto
+          ? `cardio non eseguito${seduta.cardio.saltatoMotivo ? ` (${String(seduta.cardio.saltatoMotivo).replace(/\s*\n+\s*/g, " · ")})` : ""}`
+          : null
+    ),
     riga("Durata allenamento", durata ? durataUmana(durata) : null),
     riga("Densità", durata ? `${(serie.length / (durata / 60)).toFixed(2).replace(".", ",")} serie/min` : null),
     riga("Riscaldamento", seduta.riscaldamento?.fatto ? (seduta.riscaldamento.modalita === "senzaTapis" ? "fatto, senza tapis" : "fatto") : "non registrato"),

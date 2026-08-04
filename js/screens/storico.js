@@ -196,7 +196,7 @@ async function dettaglioSeduta(id) {
           ? h("div.row", h("div.main", h("span.title", "Riscaldamento")), h("span.value", s.riscaldamento.modalita === "senzaTapis" ? "senza tapis" : "con tapis"))
           : null,
         s.cardio?.previsto
-          ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", s.cardio.eseguito ? `${num(s.cardio.kmh)} km/h · ${s.cardio.durataMin} min` : "non eseguito"))
+          ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", s.cardio.eseguito ? `${num(s.cardio.kmh)} km/h · ${s.cardio.durataMin} min` : s.cardio.saltatoMotivo ? `non eseguito — ${s.cardio.saltatoMotivo}` : "non eseguito"))
           : null
       )
     )
