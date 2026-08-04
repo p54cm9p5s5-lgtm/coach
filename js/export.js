@@ -106,6 +106,9 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     riga("Durata allenamento", durata ? durataUmana(durata) : null),
     riga("Densità", durata ? `${(serie.length / (durata / 60)).toFixed(2).replace(".", ",")} serie/min` : null),
     riga("Riscaldamento", seduta.riscaldamento?.fatto ? (seduta.riscaldamento.modalita === "senzaTapis" ? "fatto, senza tapis" : "fatto") : "non registrato"),
+    // Lo stretching pesa nel punteggio quanto il riscaldamento: ometterlo dal
+    // log lasciava il coach senza metà di quella voce.
+    riga("Stretching finale", seduta.stretching ? (seduta.stretching.fatto ? "fatto" : "saltato") : "non registrato"),
     riga("Nota generale", seduta.notaGenerale),
     giornoSplit && seduta.tipoProgrammatoId && seduta.tipoProgrammatoId !== seduta.tipoId
       ? `Nota: in programma era ${giornoSplit(seduta.tipoProgrammatoId)?.nome || seduta.tipoProgrammatoId}`

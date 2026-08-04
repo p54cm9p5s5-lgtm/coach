@@ -315,11 +315,29 @@ async function vistaRisultato(id, vaiA) {
   for (const l of logs) {
     const def = store.esercizio(l.esercizioId);
     if (l.saltato) {
+      // Un esercizio interrotto a metà ha comunque delle serie registrate: qui
+      // sparivano, e il riepilogo diceva «non svolto» su un lavoro fatto.
+      const fatte = serie.filter((x) => x.esercizioId === l.esercizioId);
       aggiungi(righe,
         h(
           "div.row",
-          h("div.main", h("span.title", def?.nome || l.esercizioId), h("span.sub", `saltato — ${l.saltato.motivo}`)),
-          h("span.pill.warn", "non svolto")
+          h(
+            "div.main",
+            h("span.title", def?.nome || l.esercizioId),
+            h(
+              "span.sub",
+              fatte.length
+                ? `interrotto dopo ${fatte.length} ${fatte.length === 1 ? "serie" : "serie"} — ${l.saltato.motivo}`
+                : `saltato — ${l.saltato.motivo}`
+            ),
+            fatte.length
+              ? h(
+                  "span.sub",
+                  `${fatte.at(-1)?.carico != null ? `${num(fatte.at(-1).carico)} kg · ` : ""}${fatte.map((x) => x.ripFatte ?? "—").join("/")}`
+                )
+              : null
+          ),
+          h("span.pill.warn", fatte.length ? "interrotto" : "non svolto")
         )
       );
       continue;
@@ -363,9 +381,13 @@ async function vistaRisultato(id, vaiA) {
   }
   aggiungi(wrap, h("div.group", h("h2", "Esercizio per esercizio"), righe));
 
-  if (sed.cardio?.previsto) {
+  // Anche un cardio non previsto ma fatto va mostrato: era stato registrato e
+  // poi sparito dal riepilogo, come se non l'avessi fatto.
+  if (sed.cardio?.previsto || sed.cardio?.eseguito) {
     const r = store.regole().cardio;
     const fuori = sed.cardio.eseguito && sed.cardio.kmh > r.kmhMax;
+    const attesi = r.durataMin || sed.cardio.durataPrevistaMin || 0;
+    const corto = sed.cardio.eseguito && attesi && (sed.cardio.durataMin || 0) < attesi * 0.9;
     aggiungi(wrap,
       h(
         "div.group",
@@ -377,9 +399,20 @@ async function vistaRisultato(id, vaiA) {
             h(
               "div.main",
               h("span.title", sed.cardio.eseguito ? `${num(sed.cardio.kmh)} km/h per ${sed.cardio.durataMin} min` : "Non eseguito"),
-              h("span.sub", `previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h`)
+              h(
+                "span.sub",
+                `previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h${attesi ? ` · ${attesi} min` : ""}`
+              )
             ),
-            fuori ? h("span.pill.warn", "sopra protocollo") : sed.cardio.eseguito ? h("span.pill.ok", "a protocollo") : null
+            // «A protocollo» dipende anche dalla durata, non solo dalla
+            // velocità: un cardio di 5 minuti su 30 non è a protocollo.
+            fuori
+              ? h("span.pill.warn", "sopra protocollo")
+              : corto
+                ? h("span.pill.warn", "più corto del previsto")
+                : sed.cardio.eseguito
+                  ? h("span.pill.ok", "a protocollo")
+                  : null
           )
         )
       )
@@ -546,7 +579,26 @@ function fermaTimer() {
 async function disegna() {
   fermaTimer();
   S.occupato = false;
-  const fase = S.sed.progresso?.fase || "riscaldamento";
+  let fase = S.sed.progresso?.fase || "riscaldamento";
+
+  // Il coach può cambiare il programma mentre l'allenamento è aperto: se
+  // l'esercizio a cui eri arrivato non c'è più, le schermate che lo cercavano
+  // si rompevano e l'allenamento restava bloccato. Si va avanti da dove è
+  // possibile, senza perdere niente di quello che hai già registrato.
+  if ((fase === "esercizio" || fase === "recupero" || fase === "questionario") && !vocePrevista()) {
+    const successivo = S.esercizi.findIndex((_, i) => i >= (S.sed.progresso?.indice ?? 0));
+    if (successivo >= 0 && S.esercizi[successivo]) {
+      await salvaProgresso({ fase: "esercizio", indice: successivo, recuperoFine: null });
+    } else {
+      await salvaProgresso({
+        fase: S.sed.cardio?.previsto ? "cardio" : "stretching",
+        indice: S.esercizi.length,
+        recuperoFine: null,
+      });
+    }
+    fase = S.sed.progresso.fase;
+  }
+
   clear(S.contenitore);
   S.contenitore.append(testata());
 
@@ -608,7 +660,10 @@ async function menuSeduta() {
   const scelta = await chiedi({
     titolo: "Allenamento",
     opzioni: [
-      { etichetta: "Salta al cardio", valore: "cardio" },
+      // Il cardio si può saltare solo se era previsto: portarci l'allenamento
+      // quando il programma non lo chiede faceva comparire una schermata di
+      // cardio inventata dal nulla.
+      ...(S.sed.cardio?.previsto ? [{ etichetta: "Salta al cardio", valore: "cardio" }] : []),
       { etichetta: "Vai allo stretching", valore: "stretching" },
       { etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" },
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
@@ -1988,6 +2043,10 @@ async function vistaFine(corpo, piede) {
     }, "Chiudi allenamento"),
     h("button.btn.secondary", {
       onclick: async () => {
+        // La nota che stavi scrivendo si salva prima di cambiare schermata:
+        // tornare indietro la cancellava senza dire niente.
+        const nota = qs("#nota-seduta")?.value;
+        if (nota != null) S.sed = await store.aggiornaSeduta(S.sed.id, { notaGenerale: nota || null });
         await salvaProgresso({ fase: "esercizio", indice: 0 });
         await disegna();
       },
