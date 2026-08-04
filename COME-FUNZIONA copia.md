@@ -357,28 +357,10 @@ pacchetto**.
 non trascritti a mano. Si sceglie cosa includere. Contiene:
 
 - **Log della seduta** in formato §12: tabella esercizio / carico / serie×rip /
-  RPE / nota, più recuperi reali cronometrati (media, minimo, massimo **e per
-  singolo esercizio**), velocità e durata del cardio, durata dell'allenamento,
-  **densità sui pesi** (serie/min dalla prima all'ultima serie), riscaldamento
-  (con o senza tapis), stretching, numeri dall'orologio, nota generale, il
-  **punteggio che l'app si è data** con l'eventuale tetto che l'ha fermato, e
-  gli **obiettivi chiesti dall'app diversi dal brief** (quando una proposta
-  accettata ha cambiato il bersaglio)
-- **Dettaglio serie per serie**: una riga per ogni singola serie con carico,
-  ripetizioni fatte, quello che l'app aveva chiesto in quel momento, il
-  **recupero cronometrato prima di quella serie** contro quello previsto, e
-  l'orario. Sotto ogni esercizio: RPE, tecnica, prescrizione del brief,
-  eventuale dolore al polso con quando e quanto, note. Serve quando il
-  riassunto non basta — cedimenti a metà esercizio, recuperi saltati, carichi
-  cambiati in corsa
-
-**Come si leggono i carichi.** Il numero comprende sempre la barra sul
-bilanciere ed è **per manubrio** sui manubri: l'app lo scrive accanto al valore,
-così non resta da indovinare. Se il carico è rimasto costante la riga è
-compatta (`30 kg barra compresa` · `3x8/8/6`); se è cambiato durante
-l'esercizio ogni serie viene scritta per intero (`4 → 6 kg per manubrio` ·
-`s1 4 kg×12 · s2 6 kg×10`), perché una forma come «4/6 kg» accanto a «2x12/10»
-si può leggere in tre modi diversi
+  RPE / nota, più recuperi reali cronometrati (media, minimo e massimo),
+  velocità e durata del cardio, durata dell'allenamento, **densità sui pesi**
+  (serie/min dalla prima all'ultima serie), riscaldamento, stretching, numeri
+  dall'orologio, nota generale
 - **Dati salute**: stato delle finestre a 3 settimane e la tabella giorno per
   giorno con movimento, percentuale sull'obiettivo, passi e note
 - **Proposte in sospeso**, con le quattro domande già compilate
@@ -388,11 +370,6 @@ si può leggere in tre modi diversi
 
 La giornata in corso è marcata **«giornata in corso, non finita»**: i suoi numeri
 non sono confrontabili con quelli dei giorni chiusi.
-
-Nella colonna «Tipo» un giorno senza allenamento è **Riposo**, anche quando sul
-calendario c'è un promemoria di altro genere (una misurazione, una visita): il
-titolo del promemoria compare fra parentesi come contesto, non come
-classificazione della giornata.
 
 ---
 

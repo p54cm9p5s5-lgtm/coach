@@ -185,6 +185,7 @@ async function componi(stato) {
           previsti: ultima.previstiElenco?.length
             ? ultima.previstiElenco
             : store.giornoSplit(ultima.tipoId)?.esercizi || [],
+          completezza: await store.completezzaSeduta(ultima.id),
         })
       );
       contenuto.push(`allenamento del ${dataBreve(ultima.data)}`);
@@ -213,7 +214,12 @@ async function componi(stato) {
       if (data >= isoDate()) return previsto ? `Oggi (previsto ${previsto.nome})` : "Oggi";
       if (previsto) return `Non fatto (era previsto ${previsto.nome})`;
       const org = store.origineGiorno(data);
-      if (org.sconosciuto) return `Da calendario: «${org.titolo}»`;
+      // Un evento in calendario che non è un allenamento — un promemoria per la
+      // pressione, una visita — NON rende quel giorno «di tipo promemoria».
+      // Prima finiva nella colonna Tipo al posto di «Riposo», e un giorno di
+      // riposo passava per una giornata indefinita: il titolo dell'evento resta,
+      // ma come nota fra parentesi, non come classificazione.
+      if (org.sconosciuto) return `Riposo (in calendario: «${org.titolo}»)`;
       if (org.scaduta) return `Calendario non aggiornato (letto fino al ${dataBreve(org.fine)})`;
       if (org.oltreProgrammato) return "Non ancora programmato dal coach";
       if (org.nonLetta) return "Calendario non letto per quel giorno";

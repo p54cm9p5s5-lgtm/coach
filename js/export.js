@@ -2,7 +2,7 @@
    Formato §12 del master brief per il log seduta, più il contorno che serve
    a leggerlo: dati salute del giorno, stato delle finestre, proposte aperte. */
 
-import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate } from "./ui.js";
+import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate, oraDi } from "./ui.js";
 
 // Il pacchetto si legge per righe: una nota scritta con l'invio ne produceva
 // una senza etichetta, e il coach leggeva una frase sospesa senza sapere di chi
@@ -32,6 +32,56 @@ const MOTIVI_CARDIO = {
 };
 const inParole = (codice, tabella) =>
   codice == null ? null : tabella[codice] || String(codice).replace(/\s*\n+\s*/g, " · ");
+
+/**
+ * Come va letto un carico, secondo l'attrezzo. «4 kg» su un esercizio con i
+ * manubri non dice se sono per manubrio o in tutto, e chi legge deve tirare a
+ * indovinare. Col bilanciere il numero comprende la barra.
+ */
+const unitaCarico = (def) => {
+  const a = (def?.attrezzo || "").toLowerCase();
+  if (a.includes("manubri")) return "per manubrio";
+  if (a.includes("bilanciere")) return "barra compresa";
+  return null;
+};
+
+/**
+ * Carico e ripetizioni, serie per serie.
+ *
+ * Con un carico costante la forma compatta va benissimo: «60 kg» e «4x8/6/6/6».
+ * Quando il carico cambia in mezzo all'esercizio no: «4/6 kg» accanto a
+ * «2x12/10» costringe a incrociare due colonne, e non si capisce se è un range,
+ * una salita o un refuso. In quel caso ogni serie si scrive per intero.
+ */
+function caricoESerie(righeSerie, def) {
+  const aTempo = righeSerie.some((s) => s.aTempo);
+  const conCarico = righeSerie.filter((s) => s.carico != null);
+  const distinti = [...new Set(conCarico.map((s) => s.carico))];
+  const unita = unitaCarico(def);
+  const suffisso = unita ? ` ${unita}` : "";
+  const rip = (s) => `${s.ripFatte ?? "—"}${aTempo ? "s" : ""}`;
+
+  if (!conCarico.length) {
+    return { carico: "corpo libero", serie: `${righeSerie.length}x${righeSerie.map(rip).join("/")}` };
+  }
+  if (distinti.length === 1) {
+    return {
+      carico: `${num(distinti[0])} kg${suffisso}`,
+      serie: `${righeSerie.length}x${righeSerie.map(rip).join("/")}`,
+    };
+  }
+  // Carico cambiato in corsa: si accoppia serie per serie e si dice in che
+  // direzione è andato, così la riga si legge senza doverla ricostruire.
+  const primo = conCarico[0].carico;
+  const ultimo = conCarico[conCarico.length - 1].carico;
+  const freccia = ultimo > primo ? "→" : ultimo < primo ? "→" : "/";
+  return {
+    carico: `${num(primo)} ${freccia} ${num(ultimo)} kg${suffisso}`,
+    serie: righeSerie
+      .map((s, i) => `s${i + 1} ${s.carico != null ? `${num(s.carico)} kg` : "—"}×${rip(s)}`)
+      .join(" · "),
+  };
+}
 
 /**
  * I numeri copiati dall'orologio a fine allenamento. Sono due allenamenti
@@ -84,7 +134,7 @@ function tabella(intestazioni, righe) {
 }
 
 /** Log di una seduta nel formato fisso del §12. */
-export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, previsti = [] }) {
+export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, previsti = [], completezza = null }) {
   const perEsercizio = new Map();
   for (const s of serie) {
     if (!perEsercizio.has(s.esercizioId)) perEsercizio.set(s.esercizioId, []);
@@ -111,16 +161,11 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       }
       // Interrotto a metà: le serie già fatte restano, altrimenti sparirebbe
       // lavoro davvero svolto dal log che legge il coach.
-      const car = righeSerie.filter((s) => s.carico != null);
-      const distintiInterrotto = [...new Set(car.map((s) => s.carico))];
+      const c = caricoESerie(righeSerie, def);
       righe.push([
         nome,
-        !car.length
-          ? "corpo libero"
-          : distintiInterrotto.length === 1
-            ? `${num(distintiInterrotto[0])} kg`
-            : `${righeSerie.map((s) => (s.carico != null ? num(s.carico) : "—")).join("/")} kg`,
-        `${righeSerie.length}x${righeSerie.map((s) => s.ripFatte ?? "—").join("/")}`,
+        c.carico,
+        c.serie,
         log?.rpe != null ? String(log.rpe) : "non registrato",
         `INTERROTTO dopo ${righeSerie.length} ${righeSerie.length === 1 ? "serie" : "serie"} (${motivo})`,
       ]);
@@ -132,18 +177,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       continue;
     }
 
-    // I carichi si elencano serie per serie, nello stesso ordine delle
-    // ripetizioni: con i soli valori distinti «20 / 22 kg» accanto a
-    // «3x10/8/8» non si capiva quale carico stesse con quale serie.
-    const conCarico = righeSerie.filter((s) => s.carico != null);
-    const distinti = [...new Set(conCarico.map((s) => s.carico))];
-    const carico = !conCarico.length
-      ? "corpo libero"
-      : distinti.length === 1
-        ? `${num(distinti[0])} kg`
-        : `${righeSerie.map((s) => (s.carico != null ? num(s.carico) : "—")).join("/")} kg`;
-    const rip = righeSerie.map((s) => s.ripFatte ?? "—").join("/");
-    const aTempo = righeSerie.some((s) => s.aTempo);
+    const c = caricoESerie(righeSerie, def);
 
     const note = [];
     if (log?.dolorePolso) note.push(`DOLORE POLSO ${log.dolorePolsoIntensita} ${log.dolorePolsoQuando}`);
@@ -154,11 +188,44 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
 
     righe.push([
       nome,
-      carico,
-      `${righeSerie.length}x${rip}${aTempo ? "s" : ""}`,
+      c.carico,
+      c.serie,
       log?.rpe != null ? String(log.rpe) : "non registrato",
       note.join(" · ") || "—",
     ]);
+  }
+
+  // Recuperi esercizio per esercizio, non solo la media della seduta: la media
+  // nasconde proprio il caso che interessa, cioè l'esercizio in cui il recupero
+  // è saltato e la serie dopo ne ha risentito.
+  const recuperiPerEsercizio = [...perEsercizio.entries()]
+    .map(([esId, righeSerie]) => {
+      const r = righeSerie.map((x) => x.recuperoRealeSec).filter((x) => x != null);
+      if (!r.length) return null;
+      const target = righeSerie.find((x) => x.recuperoTargetSec)?.recuperoTargetSec ?? null;
+      const media = Math.round(r.reduce((a, b) => a + b, 0) / r.length);
+      return `${esercizio(esId)?.nome || esId} ${mmss(media)}${target ? ` su ${mmss(target)}` : ""}`;
+    })
+    .filter(Boolean);
+
+  // Cosa ha chiesto l'app, quando è diverso da quello che c'è scritto nel
+  // brief: è l'unico modo di capire perché una serie da 13 non è un errore ma
+  // una proposta accettata.
+  const chiestiDiversi = [];
+  for (const [esId, righeSerie] of perEsercizio) {
+    if (!righeSerie.length) continue;
+    const v = (previsti || []).find((x) => x.esercizioId === esId);
+    if (!v) continue;
+    const ripChiesta = righeSerie.map((x) => x.ripTarget).filter((x) => x != null).at(-1);
+    const carChiesto = righeSerie.map((x) => x.caricoTarget).filter((x) => x != null).at(-1);
+    const parti = [];
+    if (ripChiesta != null && ripChiesta !== v.ripMax && ripChiesta !== v.ripMin) {
+      parti.push(`${ripChiesta} rip (brief ${v.ripMin}-${v.ripMax})`);
+    }
+    if (carChiesto != null && v.carico != null && carChiesto !== v.carico) {
+      parti.push(`${num(carChiesto)} kg (brief ${num(v.carico)})`);
+    }
+    if (parti.length) chiestiDiversi.push(`${esercizio(esId)?.nome || esId}: ${parti.join(" · ")}`);
   }
 
   const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
@@ -167,6 +234,78 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
   const durata = seduta.oraFine
     ? Math.round((seduta.oraFine - (seduta.oraInizioLavoro || seduta.oraInizio)) / 1000)
     : null;
+
+  // Il dettaglio completo, serie per serie. La tabella qui sopra è il riassunto
+  // che si legge a colpo d'occhio; questa è la registrazione integrale, dove
+  // non si perde nemmeno una ripetizione, un recupero o un orario. Serve quando
+  // il riassunto non basta: cedimenti a metà esercizio, recuperi saltati,
+  // carichi cambiati in corsa.
+  const righeDettaglio = [];
+  let ordine = 0;
+  for (const [esId, righeSerie] of perEsercizio) {
+    ordine++;
+    const def = esercizio(esId);
+    const nome = def?.nome || esId;
+    const log = questionari.find((q) => q.esercizioId === esId);
+    const v = (previsti || []).find((x) => x.esercizioId === esId);
+    const unita = unitaCarico(def);
+    if (!righeSerie.length) {
+      righeDettaglio.push([
+        `${ordine}. ${nome}`,
+        "—",
+        "—",
+        "—",
+        "—",
+        "—",
+        log?.saltato ? `non eseguito (${inParole(log.saltato.motivo, MOTIVI_ESERCIZIO)})` : "mai iniziato",
+      ]);
+      continue;
+    }
+    righeSerie.forEach((x, i) => {
+      const aTempo = Boolean(x.aTempo);
+      const chiesto = [
+        x.ripTarget != null ? `${x.ripTarget}${aTempo ? "s" : " rip"}` : null,
+        x.caricoTarget != null ? `${num(x.caricoTarget)} kg` : null,
+      ]
+        .filter(Boolean)
+        .join(" @ ");
+      righeDettaglio.push([
+        i === 0 ? `${ordine}. ${nome}` : "",
+        `s${x.numero ?? i + 1}`,
+        x.carico != null ? `${num(x.carico)} kg${unita ? ` ${unita}` : ""}` : "corpo libero",
+        `${x.ripFatte ?? "—"}${aTempo ? "s" : ""}`,
+        chiesto || "—",
+        i === 0
+          ? "—"
+          : x.recuperoRealeSec != null
+            ? `${mmss(x.recuperoRealeSec)}${x.recuperoTargetSec ? ` / ${mmss(x.recuperoTargetSec)}` : ""}`
+            : "non misurato",
+        x.tsFineSerie ? oraDi(x.tsFineSerie) : "—",
+      ]);
+    });
+    // Quello che chiude l'esercizio: risposte, dolore, nota. Sta sotto le sue
+    // serie, non in fondo alla seduta, perché è di quell'esercizio che parla.
+    const coda = [];
+    if (log?.rpe != null) coda.push(`RPE ${log.rpe}`);
+    if (log?.tecnica != null) coda.push(`tecnica ${log.tecnica}/10`);
+    if (v) {
+      coda.push(
+        `brief ${v.serie}×${v.aTempo ? `${v.durataSec}s` : `${v.ripMin}-${v.ripMax}`}${v.carico != null ? ` @ ${num(v.carico)} kg` : ""}`
+      );
+    }
+    if (log?.dolorePolso) {
+      coda.push(
+        `DOLORE POLSO ${log.dolorePolsoIntensita || "intensità non detta"} ${log.dolorePolsoQuando || ""}`.trim()
+      );
+    }
+    if (log?.saltato) {
+      coda.push(
+        `INTERROTTO: ${inParole(log.saltato.motivo, MOTIVI_ESERCIZIO)}${log.saltato.nota ? ` — ${String(log.saltato.nota).replace(/\s*\n+\s*/g, " · ")}` : ""}`
+      );
+    }
+    if (log?.nota) coda.push(`nota: ${String(log.nota).replace(/\s*\n+\s*/g, " · ")}`);
+    if (coda.length) righeDettaglio.push(["", "", "", "", "", "", coda.join(" · ")]);
+  }
 
   return [
     `SEDUTA — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
@@ -178,6 +317,11 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       recuperi.length
         ? `media ${mmss(recuperi.reduce((a, b) => a + b, 0) / recuperi.length)}, da ${mmss(Math.min(...recuperi))} a ${mmss(Math.max(...recuperi))}`
         : null
+    ),
+    riga("Recuperi per esercizio", recuperiPerEsercizio.join(" · ") || null),
+    riga(
+      "Obiettivi chiesti dall'app diversi dal brief",
+      chiestiDiversi.length ? `${chiestiDiversi.join(" · ")} — vengono da proposte accettate` : null
     ),
     // Il motivo per cui il cardio non è stato fatto è un dato clinico, non un
     // dettaglio: veniva registrato nell'app e poi non arrivava al coach.
@@ -221,14 +365,41 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
           : null;
       })()
     ),
+    // Il punteggio che l'app si è data, con il motivo se è stato tenuto fermo da
+    // un tetto: senza, il coach vede i pezzi e non la lettura che ne fa l'app.
+    riga(
+      "Punteggio dell'app",
+      completezza?.totale != null
+        ? `${completezza.totale}/100` +
+          (completezza.limite ? ` — fermo a ${completezza.limite.tetto}: ${completezza.limite.perche}` : "") +
+          (completezza.voci?.length
+            ? ` (${completezza.voci
+                .filter((v) => v.quota != null)
+                .map((v) => `${v.nome.toLowerCase()} ${Math.round(v.quota * 100)}%`)
+                .join(", ")})`
+            : "")
+        : null
+    ),
     // Ad allenamento chiuso «non registrato» è una scusa: o l'hai fatto o l'hai
     // saltato, e il coach deve leggere quale delle due.
     riga(
       "Riscaldamento",
+      // Anche «con tapis» va scritto: prima si dichiarava solo il caso senza, e
+      // un «fatto» secco non diceva se il riscaldamento cardiovascolare c'era
+      // stato o no.
       seduta.riscaldamento?.fatto
-        ? seduta.riscaldamento.modalita === "senzaTapis"
-          ? "fatto, senza tapis"
-          : "fatto"
+        ? [
+            seduta.riscaldamento.modalita === "senzaTapis"
+              ? "fatto, senza tapis"
+              : seduta.riscaldamento.modalita === "conTapis"
+                ? "fatto, con tapis"
+                : "fatto",
+            seduta.riscaldamento.note
+              ? String(seduta.riscaldamento.note).replace(/\s*\n+\s*/g, " · ")
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" — ")
         : seduta.oraFine
           ? "saltato"
           : "non registrato"
@@ -244,6 +415,17 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     riga("Nota generale", seduta.notaGenerale),
     giornoSplit && seduta.tipoProgrammatoId && seduta.tipoProgrammatoId !== seduta.tipoId
       ? `Nota: in programma era ${giornoSplit(seduta.tipoProgrammatoId)?.nome || seduta.tipoProgrammatoId}`
+      : null,
+    righeDettaglio.length ? "" : null,
+    righeDettaglio.length ? "DETTAGLIO SERIE PER SERIE" : null,
+    righeDettaglio.length
+      ? tabella(
+          ["Esercizio", "Serie", "Carico", "Fatte", "Chiesto", "Recupero prima", "Ora"],
+          righeDettaglio
+        )
+      : null,
+    righeDettaglio.length
+      ? "«Recupero prima» è il tempo cronometrato fra la fine della serie precedente e l'inizio di questa, con accanto quello previsto. «Chiesto» è quello che l'app ha domandato in quel momento, proposte accettate comprese."
       : null,
   ]
     .filter(Boolean)
