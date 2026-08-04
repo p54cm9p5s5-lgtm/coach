@@ -17,6 +17,9 @@
   --red: #ff3b30;
   --green: #34c759;
   --orange: #ff9500;
+  /* Il giallo esiste solo per il contatore delle sigarette: la soglia di mezzo
+     va vista subito, e fra verde e arancione non c'era niente. */
+  --giallo: #e6b800;
   --bar-bg: rgba(249, 249, 249, 0.94);
 
   --radius: 10px;
@@ -44,6 +47,7 @@
   --red: #ff5c47;
   --green: #b8ff4e;
   --orange: #ffc24e;
+  --giallo: #ffe066;
   --bar-bg: rgba(8, 8, 10, 0.92);
 }
 
@@ -76,6 +80,7 @@
     --red: #ff453a;
     --green: #30d158;
     --orange: #ff9f0a;
+    --giallo: #ffd60a;
     --bar-bg: rgba(28, 28, 30, 0.94);
   }
 }

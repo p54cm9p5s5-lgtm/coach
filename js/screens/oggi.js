@@ -29,8 +29,12 @@ export async function render({ vaiA, ridisegna }) {
     return wrap;
   }
 
+  // Il punteggio Salute sta in cima a tutto: è la domanda a cui l'app deve
+  // rispondere per prima quando la apri — com'è andata oggi, tutto compreso.
+  const grafici = await bloccoGrafico(ridisegna);
+  aggiungi(wrap, grafici.salute);
   aggiungi(wrap, await bloccoAllenamento(vaiA, ridisegna, oggi));
-  aggiungi(wrap, await bloccoGrafico(ridisegna));
+  aggiungi(wrap, grafici.andamento);
   aggiungi(wrap, await bloccoProposte());
   aggiungi(wrap, await bloccoCalendario(vaiA, ridisegna));
 
@@ -247,7 +251,7 @@ async function bloccoGrafico(ridisegna) {
     )
   );
 
-  return h("div", bloccoSalute, bloccoAndamento);
+  return { salute: bloccoSalute, andamento: bloccoAndamento };
 }
 
 // ---------- allenamento di oggi ----------
