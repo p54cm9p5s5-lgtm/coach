@@ -201,22 +201,26 @@ async function dettaglioSeduta(id) {
         s.riscaldamento?.fatto
           ? h("div.row", h("div.main", h("span.title", "Riscaldamento")), h("span.value", s.riscaldamento.modalita === "senzaTapis" ? "senza tapis" : "con tapis"))
           : null,
-        s.orologio && (s.orologio.fcMedia != null || s.orologio.fcMax != null || s.orologio.kcal != null)
-          ? h(
-              "div.row",
-              h("div.main", h("span.title", "Dall'orologio")),
-              h(
-                "span.value",
-                [
-                  s.orologio.fcMedia != null ? `FC ${num(s.orologio.fcMedia, 0)}` : null,
-                  s.orologio.fcMax != null ? `max ${num(s.orologio.fcMax, 0)}` : null,
-                  s.orologio.kcal != null ? `${num(s.orologio.kcal, 0)} kcal` : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")
-              )
-            )
-          : null,
+        ...["pesi", "cardio"].map((quale) => {
+          const o = s.orologio?.[quale] || (quale === "pesi" && s.orologio?.fcMedia != null ? s.orologio : null);
+          if (!o) return null;
+          const testo = [
+            o.durata || null,
+            o.km != null ? `${num(o.km, 2)} km` : null,
+            o.kcalAttive != null ? `${num(o.kcalAttive, 0)} kcal` : o.kcal != null ? `${num(o.kcal, 0)} kcal` : null,
+            o.fcMedia != null ? `FC ${num(o.fcMedia, 0)}` : null,
+            o.fcMax != null ? `max ${num(o.fcMax, 0)}` : null,
+            o.sforzo != null ? `sforzo ${num(o.sforzo, 0)}/10` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          if (!testo) return null;
+          return h(
+            "div.row",
+            h("div.main", h("span.title", quale === "pesi" ? "Orologio — pesi" : "Orologio — cardio")),
+            h("span.value", testo)
+          );
+        }),
         s.cardio?.previsto
           ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", s.cardio.eseguito ? `${num(s.cardio.kmh)} km/h · ${s.cardio.durataMin} min` : s.cardio.saltatoMotivo ? `non eseguito — ${s.cardio.saltatoMotivo}` : "non eseguito"))
           : null
