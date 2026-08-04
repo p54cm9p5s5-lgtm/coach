@@ -251,7 +251,7 @@ export async function render({ ridisegna }) {
   const fAltro = conPeriodo();
   const giorniAltro = giorni.filter(fAltro.dentro);
   const ALTRI = [
-    { campo: "oreInPiedi", nome: "Ore in piedi", unita: "h", dec: 0 },
+    { campo: "minutiInPiedi", nome: "Tempo in piedi", tempo: true },
     { campo: "pianiSaliti", nome: "Piani saliti", unita: "", dec: 0 },
     { campo: "distanzaKm", nome: "Distanza", unita: "km", dec: 1 },
     { campo: "minutiEsercizio", nome: "Minuti di esercizio", unita: "min", dec: 0 },
@@ -276,9 +276,15 @@ export async function render({ ridisegna }) {
               m ? `media su ${m.quanti} ${m.quanti === 1 ? "giorno" : "giorni"} · ${fAltro.etichetta}` : "nessun dato"
             )
           ),
-          h("span.value", m ? `${num(m.valore, a.dec)}${a.unita ? ` ${a.unita}` : ""}` : "—"),
+          h(
+            "span.value",
+            m ? (a.tempo ? durataUmana(m.valore * 60) : `${num(m.valore, a.dec)}${a.unita ? ` ${a.unita}` : ""}`) : "—"
+          ),
           ultimo
-            ? h("span.pill", `${dataBreve(ultimo.data)}: ${num(ultimo[a.campo], a.dec)}`)
+            ? h(
+                "span.pill",
+                `${dataBreve(ultimo.data)}: ${a.tempo ? durataUmana(ultimo[a.campo] * 60) : num(ultimo[a.campo], a.dec)}`
+              )
             : null
         )
       );
