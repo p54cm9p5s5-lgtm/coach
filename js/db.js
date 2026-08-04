@@ -151,6 +151,20 @@ export async function clearStore(store) {
   await done;
 }
 
+/**
+ * Svuota tutto in un colpo solo: o si cancella tutto, o non si cancella
+ * niente. A pezzi, un'interruzione lasciava l'app con metà archivio.
+ */
+export async function svuotaTutto() {
+  const db = await open();
+  const mancanti = await archiviMancanti();
+  const presenti = Object.keys(SCHEMA).filter((s) => !mancanti.includes(s));
+  const { t, done } = tx(db, presenti, "readwrite");
+  for (const s of presenti) t.objectStore(s).clear();
+  await done;
+  return presenti;
+}
+
 export async function count(store) {
   const db = await open();
   return wrap(db.transaction(store).objectStore(store).count());
