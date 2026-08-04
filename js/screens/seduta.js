@@ -313,6 +313,14 @@ async function vistaRisultato(id, vaiA) {
     );
   }
 
+  // Anche a allenamento chiuso: l'orologio lo guardi con calma dopo, e i
+  // numeri devono poter entrare lo stesso.
+  aggiungi(wrap,
+    bloccoOrologio(sed, async (orologio) => {
+      await store.aggiornaSeduta(sed.id, { orologio });
+    })
+  );
+
   const scheda = (etichetta, valore, nota) =>
     h(
       "div",
@@ -2135,6 +2143,51 @@ function bloccoStretching() {
   );
 }
 
+/**
+ * I numeri che l'orologio mostra a fine allenamento, scritti a mano.
+ * I Comandi Rapidi non sanno leggere gli allenamenti dell'Apple Watch (nella
+ * lista dei tipi di dato l'allenamento non esiste), e ricavare i battiti da
+ * una finestra di ore darebbe una media sporca. Scriverli qui costa dieci
+ * secondi ed è il dato esatto.
+ */
+function bloccoOrologio(sed, salva) {
+  const CAMPI = [
+    { id: "fcMedia", nome: "FC media", unita: "bpm" },
+    { id: "fcMax", nome: "FC massima", unita: "bpm" },
+    { id: "kcal", nome: "Calorie attive", unita: "kcal" },
+  ];
+  const valori = { ...(sed.orologio || {}) };
+  const lista = h("div.list");
+  for (const c of CAMPI) {
+    // type="text" e inputmode decimale: con type="number" il telefono butta
+    // via quello che scrivi appena metti la virgola.
+    const campo = h("input.val", {
+      type: "text",
+      inputmode: "decimal",
+      placeholder: "—",
+      "aria-label": `${c.nome} in ${c.unita}`,
+      value: valori[c.id] != null ? num(valori[c.id]) : "",
+    });
+    campo.addEventListener("input", async () => {
+      const t = campo.value.replace(",", ".").trim();
+      if (t === "") valori[c.id] = null;
+      else {
+        const n = Number(t);
+        if (!Number.isFinite(n) || n < 0) return;
+        valori[c.id] = Math.round(n * 10) / 10;
+      }
+      await salva({ ...valori });
+    });
+    aggiungi(lista, h("div.field", h("label", `${c.nome} (${c.unita})`), h("div.stepper", campo)));
+  }
+  return h(
+    "div.group",
+    h("h2", "Dall'orologio"),
+    lista,
+    h("p.footnote", "Facoltativi. Li leggi sul riepilogo dell'allenamento nell'orologio e li scrivi qui: finiscono nel pacchetto per il coach.")
+  );
+}
+
 // ---------- riepilogo ----------
 
 async function vistaFine(corpo, piede) {
@@ -2203,6 +2256,9 @@ async function vistaFine(corpo, piede) {
     mancanti.length
       ? h("div.group", h("h2", "Dati mancanti"), h("div.list", ...mancanti.map((m) => h("div.row", h("div.main", h("span.title", m))))))
       : null,
+    bloccoOrologio(S.sed, async (orologio) => {
+      S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+    }),
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota generale (dolori, sensazioni — solo se presenti)"),
     h("textarea.note", { id: "nota-seduta", value: S.sed.notaGenerale || "" })
   );

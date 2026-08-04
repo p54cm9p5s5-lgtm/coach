@@ -166,6 +166,21 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     // Lo stretching pesa nel punteggio quanto il riscaldamento: ometterlo dal
     // log lasciava il coach senza metà di quella voce.
     riga("Stretching finale", seduta.stretching ? (seduta.stretching.fatto ? "fatto" : "saltato") : "non registrato"),
+    // Letti sull'orologio a fine allenamento: i Comandi Rapidi non sanno
+    // leggere gli allenamenti dell'Apple Watch, quindi questi numeri li scrive
+    // l'atleta a mano — e sono quelli esatti della seduta, non di una finestra.
+    riga(
+      "Dall'orologio",
+      (() => {
+        const o = seduta.orologio || {};
+        const parti = [
+          o.fcMedia != null ? `FC media ${num(o.fcMedia, 0)}` : null,
+          o.fcMax != null ? `FC massima ${num(o.fcMax, 0)}` : null,
+          o.kcal != null ? `${num(o.kcal, 0)} kcal attive` : null,
+        ].filter(Boolean);
+        return parti.length ? parti.join(" · ") : null;
+      })()
+    ),
     riga("Nota generale", seduta.notaGenerale),
     giornoSplit && seduta.tipoProgrammatoId && seduta.tipoProgrammatoId !== seduta.tipoId
       ? `Nota: in programma era ${giornoSplit(seduta.tipoProgrammatoId)?.nome || seduta.tipoProgrammatoId}`
