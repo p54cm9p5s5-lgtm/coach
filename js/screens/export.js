@@ -270,7 +270,7 @@ async function componi(stato) {
   }
 
   if (stato.fumo) {
-    const primoGiorno = await store.primoGiornoFumo();
+    const primoGiorno = await store.fumoContatoDal();
     if (primoGiorno) {
       const conteggi = await store.conteggioFumo();
       const oggi = isoDate();

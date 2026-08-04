@@ -72,6 +72,9 @@ export async function render({ ridisegna }) {
   aggiungi(wrap, intestazione("Fumo"));
 
   const oggi = isoDate();
+  // Aprire questa sezione accende il conteggio: da oggi «nessuna riga» vuol
+  // dire zero sigarette, non «non lo stavo contando».
+  await store.accendiConteggioFumo(oggi);
   const tollerate = store.regole().salute?.sigaretteTollerate ?? 10;
   const dOggi = await store.sigaretteDi(oggi);
   const quante = dOggi.length;
@@ -160,7 +163,7 @@ export async function render({ ridisegna }) {
   );
 
   // ---- i giorni precedenti, sotto ----
-  const primo = await store.primoGiornoFumo();
+  const primo = await store.fumoContatoDal();
   if (primo) {
     const conteggi = await store.conteggioFumo();
     const righe = h("div.list");
