@@ -292,7 +292,21 @@ export async function render({ vaiA, ridisegna }) {
               h("div.main", h("span.title", "Ripristina la copia interna")),
               h("span.chevron", "›")
             )
-          : null
+          : null,
+        // Quando un comando rapido cambia (o sbagliava), i giorni già scritti
+        // restano com'erano per i campi che il pacchetto nuovo non contiene:
+        // «assente non vuol dire zero» protegge i dati parziali, ma impedisce
+        // anche di correggerli. Questo azzera solo la parte importata.
+        h(
+          "button.row.accent",
+          { onclick: () => svuotaSalute(ridisegna) },
+          h(
+            "div.main",
+            h("span.title", "Cancella i dati importati da Salute"),
+            h("span.sub", "per rileggerli da zero col comando rapido")
+          ),
+          h("span.chevron", "›")
+        )
       ),
       h(
         "p.footnote",
@@ -458,6 +472,28 @@ async function esportaBackup(ridisegna) {
     toast("Backup registrato.");
     if (ridisegna) await ridisegna();
   }
+}
+
+async function svuotaSalute(ridisegna) {
+  const giorni = (await store.giorniSalute()).length;
+  const notti = (await store.notti()).length;
+  if (!giorni && !notti) {
+    toast("Non c'è niente da cancellare: nessun dato importato da Salute.");
+    return;
+  }
+  const conferma = await chiedi({
+    titolo: "Cancellare i dati importati da Salute?",
+    testo:
+      `Vengono cancellati ${giorni} ${giorni === 1 ? "giorno" : "giorni"} di movimento e ${notti} ${notti === 1 ? "notte" : "notti"} di sonno.\n\n` +
+      "Allenamenti, misure, foto e programma NON si toccano.\n\n" +
+      "Poi riesegui il comando rapido e reimporta: tornano gli ultimi 30 giorni. " +
+      "Quello che è più vecchio di 30 giorni non si può più rileggere e va perso.",
+    opzioni: [{ etichetta: "Cancella e rileggo", valore: "si", stile: "danger" }],
+  });
+  if (conferma !== "si") return;
+  await store.svuotaSalute();
+  toast("Dati salute cancellati. Ora reimporta col comando rapido.");
+  await ridisegna();
 }
 
 async function ripristinaSnapshot() {
