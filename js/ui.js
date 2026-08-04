@@ -186,24 +186,26 @@ export function sheet(build) {
       if (!vv || chiuso) return;
       const coperto = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
       if (coperto > 60) {
-        // Lo sfondo si riduce alla parte di schermo che si vede, così il
-        // pannello si appoggia sopra i tasti invece di finirci sotto.
+        // Sopra la tastiera iOS disegna la sua barra («Inserisci info», le
+        // frecce, la spunta) SOPRA la pagina: non compare in nessuna misura del
+        // browser, quindi va tenuta in conto a mano. Senza, il pannello finisce
+        // esattamente sotto di lei e l'ultimo pulsante sparisce.
+        const BARRA_IOS = 72;
+        const utile = Math.max(180, Math.round(vv.height - BARRA_IOS));
         backdrop.style.top = `${Math.round(vv.offsetTop)}px`;
-        backdrop.style.height = `${Math.round(vv.height)}px`;
+        backdrop.style.height = `${utile}px`;
         backdrop.style.bottom = "auto";
-        panel.style.maxHeight = `${Math.max(180, Math.round(vv.height - 12))}px`;
-        // In più, spazio scorribile in fondo: sopra la tastiera iOS disegna la
-        // sua barra («Inserisci info», le frecce, la spunta) SOPRA la pagina, e
-        // il browser non la misura in nessun modo. L'ultimo pulsante ci
-        // finirebbe sotto: con questo spazio lo si può portare più su
-        // scorrendo, invece di restare irraggiungibile.
-        panel.style.paddingBottom = "96px";
+        panel.style.maxHeight = `${Math.max(160, utile - 12)}px`;
+        // Con la tastiera aperta lo spazio è poco: i riquadri di testo alti si
+        // stringono, così i pulsanti restano visibili senza dover scorrere.
+        // Mentre scrivi non stai leggendo il testo, lo stai incollando.
+        panel.classList.add("con-tastiera");
       } else {
         backdrop.style.top = "";
         backdrop.style.height = "";
         backdrop.style.bottom = "";
         panel.style.maxHeight = "";
-        panel.style.paddingBottom = "";
+        panel.classList.remove("con-tastiera");
       }
     };
     FOGLI_APERTI.add(close);
