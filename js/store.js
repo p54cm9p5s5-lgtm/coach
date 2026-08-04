@@ -561,9 +561,15 @@ export async function completezzaSeduta(id) {
   const punteggi = [];
   let saltati = 0;
   const perEsercizio = new Map();
+  let mancanti = 0;
   for (const v of giorno?.esercizi || []) {
     const log = logs.find((l) => l.esercizioId === v.esercizioId);
-    if (!log) continue;
+    // Previsto e mai toccato: non è un esercizio "che non c'era", è lavoro che
+    // manca. Contarlo qui lo rende visibile nel dettaglio del punteggio.
+    if (!log) {
+      mancanti++;
+      continue;
+    }
     if (log.saltato) {
       saltati++;
       continue;
@@ -827,6 +833,17 @@ export async function aggiornaProposte(cache = null) {
     }
 
     const firma = firmaProposta(nuova);
+
+    // Le proposte in sospeso che non corrispondono più a quello che dicono i
+    // dati vanno tolte comunque, anche quando poi si esce senza crearne una
+    // nuova: restavano in Home a chiedere una decisione su una situazione
+    // superata.
+    for (const p of sospese) {
+      if (p.firma === firma) continue;
+      await db.del("proposte", p.id);
+      tolte++;
+    }
+
     const rispostaPrec = mie
       .filter((p) => p.firma === firma && p.stato !== "inSospeso")
       .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))[0];
@@ -845,14 +862,6 @@ export async function aggiornaProposte(cache = null) {
       }
     }
 
-    // Le proposte in sospeso che non corrispondono più a quello che dicono i
-    // dati vanno tolte comunque, anche quando quella giusta c'è già: restavano
-    // in Home a chiedere una decisione su una situazione superata.
-    for (const p of sospese) {
-      if (p.firma === firma) continue;
-      await db.del("proposte", p.id);
-      tolte++;
-    }
     if (sospese.some((p) => p.firma === firma)) continue;
     await db.put("proposte", {
       id: db.nuovoId("pro"),
@@ -969,10 +978,22 @@ export async function obiettivoCorrente(esercizioId) {
   const p = mie[0];
   if (!p) return null;
   const esp = esposizioniSvolte(await esposizioni(esercizioId));
-  // Il conto giusto è quello del momento in cui hai risposto (le proposte
-  // vecchie hanno solo quello di quando sono nate: si usa quello).
-  const quando = p.esposizioniAllaRisposta ?? p.esposizioniAllaData;
-  if (esp.length !== quando) return null; // già consumato da una nuova esposizione
+  // Consumato o no si decide sul TEMPO, non su un conteggio: se cancelli un
+  // allenamento il conteggio scende e un obiettivo già usato tornava in vita.
+  // Se dopo la risposta hai allenato quell'esercizio, la proposta è servita.
+  const rispostoIl = p.rispostoIl || null;
+  if (rispostoIl) {
+    const sedute = await seduteInMemoria();
+    const dopo = esp.some((e) => {
+      const sed = sedute.get(e.sedutaId);
+      const fine = sed?.oraFine ? new Date(sed.oraFine).toISOString() : null;
+      return fine ? fine > rispostoIl : false;
+    });
+    if (dopo) return null;
+  } else {
+    const quando = p.esposizioniAllaRisposta ?? p.esposizioniAllaData;
+    if (esp.length !== quando) return null;
+  }
   return { carico: p.a.carico, rip: p.a.rip, tipo: p.tipo, propostaId: p.id, titolo: p.titolo };
 }
 
@@ -990,11 +1011,17 @@ export async function proposteAccettate() {
       perEsercizio.set(p.esercizioId, esposizioniSvolte(await esposizioni(p.esercizioId)));
     }
   }
-  return tutte.map((p) => ({
-    ...p,
-    inVigore:
-      (perEsercizio.get(p.esercizioId) || []).length === (p.esposizioniAllaRisposta ?? p.esposizioniAllaData),
-  }));
+  const sedute = await seduteInMemoria();
+  const usata = (p) => {
+    const esp = perEsercizio.get(p.esercizioId) || [];
+    if (!p.rispostoIl) return esp.length !== (p.esposizioniAllaRisposta ?? p.esposizioniAllaData);
+    return esp.some((e) => {
+      const sed = sedute.get(e.sedutaId);
+      const fine = sed?.oraFine ? new Date(sed.oraFine).toISOString() : null;
+      return fine ? fine > p.rispostoIl : false;
+    });
+  };
+  return tutte.map((p) => ({ ...p, inVigore: !usata(p) }));
 }
 
 /** Proposte accettate arrivate alla data di verifica e ancora senza esito. */
@@ -1065,8 +1092,8 @@ export async function aggiornaSegnali(cache = null) {
     esposizioniPerEsercizio,
     giorniSalute: giorni,
     notti: nottiTutte,
-    finestraMovimento: giorni.length ? statoFinestra(giorni, conf) : null,
-    finestraSonno: nottiTutte.length ? statoFinestra(nottiTutte, conf) : null,
+    finestraMovimento: giorni.length ? statoFinestra(giorni, { ...conf, campo: "kcalAttive" }) : null,
+    finestraSonno: nottiTutte.length ? statoFinestra(nottiTutte, { ...conf, campo: "durataMin" }) : null,
     regole: reg,
     oggi: isoDate(),
   });
@@ -1103,7 +1130,20 @@ async function mappaEsposizioni() {
 }
 
 /** Un solo giro: proposte e segnali si ricalcolano insieme, sugli stessi dati. */
-export async function aggiornaMotore() {
+let giroMotore = null;
+/**
+ * Un giro alla volta: due ricalcoli in parallelo (fine allenamento e apertura
+ * della Home nello stesso istante) leggevano gli stessi dati e potevano creare
+ * la stessa proposta due volte.
+ */
+export function aggiornaMotore(...args) {
+  giroMotore = (giroMotore || Promise.resolve())
+    .catch(() => {})
+    .then(() => giroMotoreVero(...args));
+  return giroMotore;
+}
+
+async function giroMotoreVero() {
   const cache = await mappaEsposizioni();
   const p = await aggiornaProposte(cache);
   const s = await aggiornaSegnali(cache);
@@ -1177,25 +1217,32 @@ export async function importaSalute(pacchetto) {
     return out;
   };
 
+  // Il riepilogo conta i GIORNI, non le righe: il comando può mandare una riga
+  // per le kcal e una per i passi dello stesso giorno, e «14 giorni importati»
+  // quando i giorni erano sette è un numero che non vuol dire niente.
+  const giorniVisti = new Set();
+  const nottiViste = new Set();
   for (const g of pacchetto.giorni) {
     const prec = await db.get("giorniSalute", g.data);
-    if (prec?.presente) conteggio.aggiornati++;
+    if (prec?.presente && !giorniVisti.has(g.data)) conteggio.aggiornati++;
     await db.put("giorniSalute", {
       ...fondi(prec, g),
       fonte: "salute",
       importatoIl: new Date().toISOString(),
     });
-    conteggio.giorni++;
+    giorniVisti.add(g.data);
+    conteggio.giorni = giorniVisti.size;
   }
 
   for (const n of pacchetto.notti) {
     const prec = await db.get("notti", n.data);
+    nottiViste.add(n.data);
     await db.put("notti", {
       ...fondi(prec, n),
       fonte: "salute",
       importatoIl: new Date().toISOString(),
     });
-    conteggio.notti++;
+    conteggio.notti = nottiViste.size;
   }
 
   for (const a of pacchetto.allenamenti) {
@@ -1279,6 +1326,7 @@ export async function importaSalute(pacchetto) {
     }
     // Contano i giorni, non gli eventi: due eventi lo stesso giorno restano
     // un giorno solo.
+    // (stessa idea per i giorni di salute: vedi `conteggio.giorni` più su)
     conteggio.agenda = perData.size;
     // Il pacchetto copre un intervallo continuo: dentro quell'intervallo è la
     // verità completa. Le date che il calendario non nomina più vanno svuotate,
@@ -1467,8 +1515,11 @@ export async function notti() {
  * settimana per settimana. La regola richiede un minimo di giorni a settimana:
  * le settimane sotto la soglia non contano.
  */
-export function statoFinestra(righe, { settimane = 3, minimoSettimana = 5 } = {}) {
-  const valide = righe.filter((r) => r.presente);
+export function statoFinestra(righe, { settimane = 3, minimoSettimana = 5, campo = null } = {}) {
+  // «Presente» vuol dire che il giorno è stato letto, non che il dato ci sia:
+  // un giorno senza passi contava lo stesso come registrato e la finestra
+  // risultava completa quando non lo era.
+  const valide = righe.filter((r) => r.presente && (!campo || r[campo] != null));
   const perSettimana = [];
   const oggi = new Date();
   oggi.setHours(0, 0, 0, 0);

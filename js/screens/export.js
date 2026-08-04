@@ -1,4 +1,4 @@
-import { h, toast, chiedi, dataBreve, dataLunga, aggiungi } from "../ui.js";
+import { h, toast, chiedi, dataBreve, dataLunga, aggiungi , isoDate } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { nomeLivello } from "../segnali.js";
@@ -120,7 +120,7 @@ export async function render({ vaiA }) {
             if (!testoCorrente) return toast("Non c'è niente da salvare.");
             const blob = new Blob([testoCorrente], { type: "text/markdown" });
             const url = URL.createObjectURL(blob);
-            const a = h("a", { href: url, download: `coach-${new Date().toISOString().slice(0, 10)}.md`, style: "display:none" });
+            const a = h("a", { href: url, download: `coach-${isoDate()}.md`, style: "display:none" });
             document.body.append(a);
             a.click();
             setTimeout(() => {
@@ -196,10 +196,12 @@ async function componi(stato) {
           obiettivo: await store.impostazione("obiettivoMovimentoKcal"),
           tipoGiorno,
           finestraMovimento: store.statoFinestra(giorni, {
+            campo: "kcalAttive",
             settimane: r.movimento?.settimane ?? 3,
             minimoSettimana: r.movimento?.giorniMinSettimana ?? 5,
           }),
           finestraSonno: store.statoFinestra(notti, {
+            campo: "durataMin",
             settimane: r.sonno?.settimane ?? 3,
             minimoSettimana: r.sonno?.nottiMinSettimana ?? 5,
           }),

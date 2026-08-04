@@ -2,7 +2,7 @@
    Sostituisce l'elenco «da registrare»: le stesse informazioni, ma collocate
    nel giorno a cui appartengono. */
 
-import { h, isoDate, parseIso, dataLunga, giorniTra, aggiungi } from "./ui.js";
+import { h, isoDate, parseIso, dataLunga, dataBreve, giorniTra, aggiungi } from "./ui.js";
 
 const MESI = [
   "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
@@ -176,10 +176,21 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
   } else if (!attese.length) {
     // Col calendario collegato «niente» non è riposo per scelta dell'app: è
     // quello che c'è scritto, o l'assenza di qualunque cosa.
-    righe.push({
-      testo: origine?.fonte === "calendario" ? "Niente sul calendario" : "Riposo",
-      stato: "info",
-    });
+    righe.push(
+      origine?.scaduta
+        ? {
+            // Non è «niente»: è che il calendario non è stato riletto. Dirlo
+            // qui evita di credere che il coach non avesse previsto nulla.
+            testo: `Calendario da aggiornare — letto fino al ${dataBreve(origine.fine)}`,
+            stato: "warn",
+          }
+        : origine?.nonLetta
+          ? { testo: "Giorno non letto dal calendario", stato: "info" }
+          : {
+              testo: origine?.fonte === "calendario" ? "Niente sul calendario" : "Riposo",
+              stato: "info",
+            }
+    );
   }
   // Evita di ripetere lo stesso titolo due volte: se è già fra le cose attese
   // del giorno, basta segnalarne la natura una volta sola.
