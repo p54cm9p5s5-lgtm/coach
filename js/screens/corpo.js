@@ -169,23 +169,54 @@ async function registra(ridisegna) {
   await sheet((close) => {
     const campi = h("div.list");
     for (const def of MISURE) {
-      const val = h("span.val", valori[def.id] != null ? num(valori[def.id]) : "—");
-      const aggiorna = (d) => {
-        const base = valori[def.id] ?? 0;
-        valori[def.id] = Math.max(0, Math.round((base + d) * 10) / 10);
-        scelte.add(def.id);
-        val.textContent = num(valori[def.id]);
-        val.style.color = "var(--accent)";
+      // Il valore si scrive: la prima misura partiva da zero e per arrivare a
+      // 84,5 cm servivano centosettanta tocchi. I tasti − e + restano per le
+      // correzioni piccole.
+      const val = h("input.val", {
+        type: "number",
+        inputmode: "decimal",
+        step: String(def.passo),
+        min: "0",
+        "aria-label": `${def.nome} in ${def.unita}`,
+        placeholder: "—",
+        value: valori[def.id] != null ? String(valori[def.id]) : "",
+      });
+      const mostra = () => {
+        val.value = valori[def.id] != null ? String(valori[def.id]) : "";
+        val.style.color = scelte.has(def.id) ? "var(--accent)" : "";
       };
+      const aggiorna = (d) => {
+        // Senza una misura di partenza − e + non hanno da cosa partire: invece
+        // di registrare uno zero che non hai mai misurato, aprono la tastiera.
+        if (valori[def.id] == null) {
+          val.focus();
+          return;
+        }
+        valori[def.id] = Math.max(0, Math.round((valori[def.id] + d) * 10) / 10);
+        scelte.add(def.id);
+        mostra();
+      };
+      val.addEventListener("input", () => {
+        const n = parseFloat(val.value.replace(",", "."));
+        if (val.value.trim() === "") {
+          valori[def.id] = null;
+          scelte.delete(def.id);
+          return;
+        }
+        if (!Number.isFinite(n) || n < 0) return;
+        valori[def.id] = Math.round(n * 10) / 10;
+        scelte.add(def.id);
+        val.style.color = "var(--accent)";
+      });
       aggiungi(campi,
         h(
           "div.field",
           h("label", `${def.nome} (${def.unita})`),
           h(
             "div.stepper",
-            h("button", { onclick: () => aggiorna(-def.passo) }, "−"),
+            h("button", { "aria-label": `meno ${def.passo}`, onclick: () => aggiorna(-def.passo) }, "−"),
             val,
-            h("button", { onclick: () => aggiorna(def.passo) }, "+")
+            h("button", { "aria-label": `più ${def.passo}`, onclick: () => aggiorna(def.passo) }, "+")
           )
         )
       );
@@ -412,8 +443,19 @@ async function nuovoSet(ridisegna) {
     const sagoma = await store.ultimaFoto(posa.id, oggi);
     const immagine = await cattura(posa, sagoma);
     if (!immagine) break;
-    await store.registraFoto({ data: oggi, posa: posa.id, immagine, checklist: { protocollo: true } });
-    fatte++;
+    try {
+      await store.registraFoto({ data: oggi, posa: posa.id, immagine, checklist: { protocollo: true } });
+      fatte++;
+    } catch (e) {
+      // Se l'archivio rifiuta la foto (spazio finito, quasi sempre) tacere
+      // sarebbe il peggio: ti ritroveresti un set che credi fatto e non c'è.
+      await chiedi({
+        titolo: "Foto non salvata",
+        testo: `«${posa.nome}» non è entrata nell'archivio: ${e.message}. Di solito è lo spazio del telefono. Libera spazio e rifai il set: le pose già salvate restano.`,
+        opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      });
+      break;
+    }
   }
 
   if (fatte) {

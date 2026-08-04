@@ -155,9 +155,19 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
       : [dataBreve(n.data), "non registrata", "—", "—", "—", "—", ""]
   );
 
+  // Le settimane si scrivono con le date, non numerate: erano elencate dalla
+  // più recente alla più vecchia ma chiamate «sett.1, 2, 3», e «sett.1 sotto
+  // minimo» faceva pensare alla prima settimana del ciclo invece che a questa.
+  // Le settimane finite prima che l'app esistesse non sono ammanchi.
   const stato = (f, unita) =>
     `${f.registratiTotali}/${f.richiesti} ${unita}${f.completa ? " — completa" : " — incompleta"}` +
-    ` (${f.perSettimana.map((s, i) => `sett.${i + 1}: ${s.registrati}${s.sufficiente ? "" : " sotto minimo"}`).join(", ")})`;
+    ` (${f.perSettimana
+      .map(
+        (s) =>
+          `${dataBreve(s.da)}–${dataBreve(s.a)}: ${s.registrati}` +
+          (s.primaDeiDati ? " prima dei dati" : s.sufficiente ? "" : " sotto minimo")
+      )
+      .join("; ")})`;
 
   return [
     "DATI SALUTE",
@@ -189,21 +199,39 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
  */
 export function bloccoAccettate(accettate, esercizio) {
   if (!accettate.length) return null;
+  const riga = (p) => {
+    const nome = esercizio(p.esercizioId)?.nome || p.esercizioId;
+    const parti = [];
+    if (p.a?.carico != null) parti.push(`${num(p.a.carico)} kg`);
+    if (p.a?.rip != null) parti.push(`${p.a.rip} rip`);
+    const prima = p.da?.carico != null ? `, prima ${num(p.da.carico)} kg` : "";
+    // La data della risposta, non quella in cui la proposta è nata: sono cose
+    // diverse e stampare la seconda faceva sembrare vecchia una decisione di ieri.
+    const quando = p.rispostoIl ? p.rispostoIl.slice(0, 10) : p.data;
+    return `- ${nome}: ${parti.join(" · ") || "—"}${prima} (accettata il ${dataBreve(quando)})`;
+  };
+  // `inVigore` manca quando la lista arriva da una versione vecchia: in quel
+  // caso si stampa tutto insieme, come prima, invece di dichiarare il falso.
+  const noto = accettate.some((p) => p.inVigore !== undefined);
+  const attive = noto ? accettate.filter((p) => p.inVigore) : accettate;
+  const consumate = noto ? accettate.filter((p) => !p.inVigore) : [];
+
   return [
-    "PROPOSTE ACCETTATE DALL'ATLETA — obiettivi in vigore nell'app",
+    "PROPOSTE ACCETTATE DALL'ATLETA",
     "",
-    ...accettate.map((p) => {
-      const nome = esercizio(p.esercizioId)?.nome || p.esercizioId;
-      const parti = [];
-      if (p.a?.carico != null) parti.push(`${num(p.a.carico)} kg`);
-      if (p.a?.rip != null) parti.push(`${p.a.rip} rip`);
-      const prima = p.da?.carico != null ? `, prima ${num(p.da.carico)} kg` : "";
-      return `- ${nome}: ${parti.join(" · ") || "—"}${prima} (accettata il ${dataBreve(p.data)})`;
-    }),
-    "",
-    "Finché il brief non li conferma o li smentisce, l'app propone questi valori",
-    "nella prossima esposizione. Il programma scritto non è stato modificato.",
-  ].join("\n");
+    attive.length ? "In vigore adesso — l'app chiede questi valori alla prossima esposizione:" : null,
+    ...attive.map(riga),
+    attive.length ? "" : null,
+    consumate.length
+      ? "Già consumate — accettate e poi allenate: l'app non le usa più, il motore\nrivaluta sui dati nuovi. Restano qui perché spiegano i carichi registrati:"
+      : null,
+    ...consumate.map(riga),
+    consumate.length ? "" : null,
+    "Finché il brief non li conferma o li smentisce, il programma scritto non è",
+    "stato modificato.",
+  ]
+    .filter((r) => r !== null)
+    .join("\n");
 }
 
 /** Proposte che aspettano una decisione, con le quattro domande. */
@@ -230,8 +258,24 @@ export function bloccoProposte(proposte, nomeLivello) {
 }
 
 /** Misure e indici, solo se aggiornati di recente. */
-export function bloccoCorpo({ misure, indici, etichette }) {
+export function bloccoCorpo({ misure, indici, etichette, dateIndici = {} }) {
   if (!misure.length) return null;
+  // Ogni indice nasce dall'ultima misura di ciascun tipo, e quelle misure
+  // possono essere di giorni diversi: un rapporto vita/fianchi fra una vita di
+  // ieri e dei fianchi di un mese fa non è una fotografia di oggi. Va detto.
+  const INGREDIENTI = {
+    vitaAltezza: ["vitaOmbelico"],
+    vitaFianchi: ["vitaOmbelico", "fianchi"],
+    bmi: ["peso"],
+  };
+  const quando = (id) => {
+    const d = (INGREDIENTI[id] || []).map((t) => dateIndici[t]).filter(Boolean);
+    if (!d.length) return "";
+    const uniche = [...new Set(d)].sort();
+    return uniche.length === 1
+      ? ` — misure del ${dataBreve(uniche[0])}`
+      : ` — misure di giorni diversi: ${uniche.map(dataBreve).join(" e ")}`;
+  };
   const righe = misure.map((m) => [
     etichette[m.tipo] || m.tipo,
     `${num(m.valore)} ${m.tipo === "peso" ? "kg" : "cm"}`,
@@ -243,7 +287,9 @@ export function bloccoCorpo({ misure, indici, etichette }) {
     "",
     tabella(["Misura", "Valore", "Data", "Nota"], righe),
     "",
-    ...indici.map((i) => `${i.nome}: ${num(i.valore, i.decimali)} (soglia ${num(i.soglia, i.decimali)})`),
+    ...indici.map(
+      (i) => `${i.nome}: ${num(i.valore, i.decimali)} (soglia ${num(i.soglia, i.decimali)})${quando(i.id)}`
+    ),
   ].join("\n");
 }
 

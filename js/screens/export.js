@@ -52,7 +52,21 @@ export async function render({ vaiA }) {
     // nuovo: si copierebbe un pacchetto che non corrisponde alle spunte.
     testoCorrente = "";
     anteprima.textContent = "Sto ricomponendo il pacchetto…";
-    const testo = await componi(stato);
+    let testo;
+    try {
+      testo = await componi(stato);
+    } catch (e) {
+      // Senza questo, un errore in un solo blocco lasciava la schermata ferma
+      // su «Sto ricomponendo…» per sempre, e non si capiva perché.
+      if (mia !== ultimaRichiesta) return;
+      inCorso = false;
+      testoCorrente = "";
+      anteprima.textContent =
+        `Il pacchetto non si è composto: ${e.message}\n\n` +
+        "Togli una delle sezioni qui sopra per capire quale dà problemi, " +
+        "oppure riprova. Nessun dato è stato toccato.";
+      return;
+    }
     if (mia !== ultimaRichiesta) return;
     testoCorrente = testo;
     inCorso = false;
@@ -193,7 +207,7 @@ async function componi(stato) {
 
     // Quelle già accettate cambiano l'obiettivo che l'app userà: il coach le
     // deve vedere anche se non deve più deciderle.
-    const accettate = (await store.proposte()).filter((p) => p.stato === "accettata");
+    const accettate = await store.proposteAccettate();
     const blocco = bloccoAccettate(accettate, store.esercizio);
     if (blocco) {
       pezzi.push(blocco);
@@ -215,6 +229,11 @@ async function componi(stato) {
         vitaOmbelico: perTipo.get("vitaOmbelico")?.valore,
         fianchi: perTipo.get("fianchi")?.valore,
       }),
+      dateIndici: {
+        peso: perTipo.get("peso")?.data,
+        vitaOmbelico: perTipo.get("vitaOmbelico")?.data,
+        fianchi: perTipo.get("fianchi")?.data,
+      },
     });
     if (blocco) {
       pezzi.push(blocco);

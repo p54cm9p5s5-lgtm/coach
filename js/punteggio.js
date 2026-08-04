@@ -223,7 +223,18 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
   const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];
   if (limite && totale > limite.tetto) totale = limite.tetto;
 
-  return { totale, voci, penalita: [], limite: limite && limite.tetto <= totale ? limite : null };
+  // `quanti` viaggia col punteggio: quando il punteggio è congelato, chi lo
+  // mostra deve poter scrivere «3 su 4» con lo stesso 4 che ha fatto il conto,
+  // non con quello dello split di oggi, che nel frattempo può essere cambiato.
+  return {
+    totale,
+    voci,
+    previsti: quanti,
+    svolti: punteggi.length,
+    saltati: saltati || 0,
+    penalita: [],
+    limite: limite && limite.tetto <= totale ? limite : null,
+  };
 }
 
 export function giudizio(totale) {

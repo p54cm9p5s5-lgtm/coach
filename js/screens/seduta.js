@@ -242,8 +242,11 @@ async function vistaRisultato(id, vaiA) {
   // il numero di esercizi, non con la qualità del lavoro.
   const comp = await store.completezzaSeduta(id);
   const completezza = comp?.totale ?? null;
-  const previsti = store.giornoSplit(sed.tipoId)?.esercizi?.length ?? logs.length;
-  const svolti = logs.filter((l) => !l.saltato).length;
+  // Con un punteggio congelato si usano i suoi numeri: altrimenti la scheda
+  // «Esercizi» diceva 4 e l'anello era stato calcolato su 3, perché nel
+  // frattempo il coach aveva cambiato lo split.
+  const previsti = comp?.previsti ?? store.giornoSplit(sed.tipoId)?.esercizi?.length ?? logs.length;
+  const svolti = comp?.svolti ?? logs.filter((l) => !l.saltato).length;
   const valutati = logs.filter((l) => !l.saltato && l.rpe != null);
   const rpeMedio = valutati.length ? valutati.reduce((a, b) => a + b.rpe, 0) / valutati.length : null;
   const tecMedia = valutati.length ? valutati.reduce((a, b) => a + (b.tecnica || 0), 0) / valutati.length : null;
@@ -761,7 +764,9 @@ async function vistaEsercizio(corpo, piede) {
     fatte.at(-1)?.carico ??
     obiettivo?.carico ??
     (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
-  S.caricoCorrente = S.caricoCorrente ?? caricoPrec;
+  // L'ordine conta: prima quello che c'è in memoria, poi quello salvato nella
+  // seduta (l'app è ripartita), infine il carico dedotto dallo storico.
+  S.caricoCorrente = S.caricoCorrente ?? S.sed.progresso?.caricoCorrente ?? caricoPrec;
 
   const bersaglio = v.aTempo
     ? `${v.serie} × ${v.durataSec}s`
@@ -1030,6 +1035,10 @@ async function modificaCarico(def, inv) {
 
   if (scelto === undefined || scelto === null) return;
   S.caricoCorrente = scelto;
+  // Il carico scelto va scritto subito: restava solo in memoria, e se l'app
+  // ripartiva fra una serie e l'altra la serie dopo veniva registrata con il
+  // carico vecchio, senza che niente lo dicesse.
+  await salvaProgresso({ caricoCorrente: scelto });
   await disegna();
 }
 
@@ -1128,10 +1137,16 @@ async function avanzaEsercizio() {
   S.recuperoFine = null;
   S.tsInizioSerie = null;
   S.obiettivo = null;
+  // Il carico appartiene all'esercizio che finisce qui: se restasse scritto,
+  // il prossimo partirebbe dal carico di quello precedente.
   if (prossimo >= S.esercizi.length) {
-    await salvaProgresso({ fase: S.sed.cardio?.previsto ? "cardio" : "stretching", indice: prossimo });
+    await salvaProgresso({
+      fase: S.sed.cardio?.previsto ? "cardio" : "stretching",
+      indice: prossimo,
+      caricoCorrente: null,
+    });
   } else {
-    await salvaProgresso({ fase: "esercizio", indice: prossimo, recuperoFine: null });
+    await salvaProgresso({ fase: "esercizio", indice: prossimo, recuperoFine: null, caricoCorrente: null });
   }
   await disegna();
 }
@@ -1285,7 +1300,17 @@ async function vistaQuestionario(corpo, piede) {
   const v = vocePrevista();
   const def = store.esercizio(v.esercizioId);
 
-  const stato = { rpe: null, tecnica: null, polso: null, quando: null, intensita: null };
+  // Se questo esercizio è già stato valutato (si torna indietro dal riepilogo,
+  // o l'app è ripartita), il questionario riparte da quello che avevi scritto:
+  // prima era vuoto, e confermarlo cancellava nota e risposte già date.
+  const gia = (await store.questionariDi(S.sed.id)).find((l) => l.esercizioId === v.esercizioId && !l.saltato) || null;
+  const stato = {
+    rpe: gia?.rpe ?? null,
+    tecnica: gia?.tecnica ?? null,
+    polso: gia?.dolorePolso ?? null,
+    quando: gia?.dolorePolsoQuando ?? null,
+    intensita: gia?.dolorePolsoIntensita ?? null,
+  };
 
   const RIR = {
     10: "non ne avevo più nessuna",
@@ -1310,13 +1335,13 @@ async function vistaQuestionario(corpo, piede) {
     avanti.disabled = !ok;
   };
 
-  const righello = (onPick, zona) => {
+  const righello = (onPick, zona, scelto = null) => {
     const box = h("div.scale");
     for (let i = 1; i <= 10; i++) {
       const b = h(
         "button",
         {
-          "aria-pressed": "false",
+          "aria-pressed": i === scelto ? "true" : "false",
           class: zona && i >= zona[0] && i <= zona[1] ? "target-zone" : "",
           onclick: () => {
             for (const x of box.children) x.setAttribute("aria-pressed", "false");
@@ -1449,34 +1474,51 @@ async function vistaQuestionario(corpo, piede) {
     correzione,
 
     h("p.footnote", { style: "margin:14px 16px 0" }, "Quanto è stata dura l'ultima serie?"),
-    righello((i) => {
-      stato.rpe = i;
-      hintRpe.textContent = RIR[i] || "molto lontano dal limite";
-    }, [zona.min, zona.max]),
+    righello(
+      (i) => {
+        stato.rpe = i;
+        hintRpe.textContent = RIR[i] || "molto lontano dal limite";
+      },
+      [zona.min, zona.max],
+      stato.rpe
+    ),
     hintRpe,
     h("p.footnote", { style: "margin:6px 16px 0;text-align:center" }, `Zona prevista dal programma: ${zona.min}-${zona.max}`),
 
     h("p.footnote", { style: "margin:22px 16px 0" }, "Com'è andata la tecnica?"),
-    righello((i) => {
-      stato.tecnica = i;
-      hintTec.textContent =
-        i >= 8 ? "pulita" : i >= 5 ? "qualche cedimento" : "tecnica insufficiente";
-    }),
+    righello(
+      (i) => {
+        stato.tecnica = i;
+        hintTec.textContent =
+          i >= 8 ? "pulita" : i >= 5 ? "qualche cedimento" : "tecnica insufficiente";
+      },
+      null,
+      stato.tecnica
+    ),
     hintTec,
 
     h("p.footnote", { style: "margin:22px 16px 0" }, `Dolore al polso destro?${def?.sollecitaPolso ? " (esercizio che lo sollecita)" : ""}`),
     h(
       "div.segmented.danger",
-      h("button", { "aria-pressed": "false", onclick: (e) => setPolso(e, false) }, "NO"),
-      h("button", { "aria-pressed": "false", onclick: (e) => setPolso(e, true) }, "SÌ")
+      h("button", { "aria-pressed": stato.polso === false ? "true" : "false", onclick: (e) => setPolso(e, false) }, "NO"),
+      h("button", { "aria-pressed": stato.polso === true ? "true" : "false", onclick: (e) => setPolso(e, true) }, "SÌ")
     ),
     dettaglioPolso,
 
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota (facoltativa — vuota significa nessun segnale)"),
-    h("textarea.note", { id: "nota-es", placeholder: "Solo se c'è qualcosa da segnalare" })
+    h("textarea.note", {
+      id: "nota-es",
+      placeholder: "Solo se c'è qualcosa da segnalare",
+      value: gia?.nota || "",
+    })
   );
 
+  // Se il polso era già segnato, i dettagli devono ricomparire senza toccare
+  // niente, altrimenti «Avanti» resterebbe spento con le risposte già date.
+  if (stato.polso === true) mostraDettaglioPolso();
+
   aggiungi(piede, avanti);
+  verifica();
   ridisegnaPunteggio();
 
   function setPolso(e, valore) {
@@ -1489,21 +1531,27 @@ async function vistaQuestionario(corpo, piede) {
     if (valore) {
       stato.quando = null;
       stato.intensita = null;
-      dettaglioPolso.append(
-        h(
-          "div.segmented",
-          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "quando", "durante") }, "Durante"),
-          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "quando", "dopo") }, "Dopo")
-        ),
-        h(
-          "div.segmented",
-          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "intensita", "lieve") }, "Lieve"),
-          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "intensita", "medio") }, "Medio"),
-          h("button", { "aria-pressed": "false", onclick: (ev) => pick(ev, "intensita", "forte") }, "Forte")
-        )
-      );
+      mostraDettaglioPolso();
     }
     verifica();
+  }
+
+  function mostraDettaglioPolso() {
+    const premuto = (campo, valore) => (stato[campo] === valore ? "true" : "false");
+    clear(dettaglioPolso);
+    dettaglioPolso.append(
+      h(
+        "div.segmented",
+        h("button", { "aria-pressed": premuto("quando", "durante"), onclick: (ev) => pick(ev, "quando", "durante") }, "Durante"),
+        h("button", { "aria-pressed": premuto("quando", "dopo"), onclick: (ev) => pick(ev, "quando", "dopo") }, "Dopo")
+      ),
+      h(
+        "div.segmented",
+        h("button", { "aria-pressed": premuto("intensita", "lieve"), onclick: (ev) => pick(ev, "intensita", "lieve") }, "Lieve"),
+        h("button", { "aria-pressed": premuto("intensita", "medio"), onclick: (ev) => pick(ev, "intensita", "medio") }, "Medio"),
+        h("button", { "aria-pressed": premuto("intensita", "forte"), onclick: (ev) => pick(ev, "intensita", "forte") }, "Forte")
+      )
+    );
   }
 
   function pick(ev, campo, valore) {
