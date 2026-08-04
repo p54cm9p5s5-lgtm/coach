@@ -16,6 +16,8 @@ let LETTURA_AGENDA = null;
 // Giorno dell'ULTIMA lettura: serve a sapere fin dove il calendario è stato
 // guardato, non solo da quando.
 let ULTIMA_LETTURA_AGENDA = null;
+// Fin dove il calendario è stato letto in assoluto: non arretra mai.
+let COPERTURA_AGENDA = null;
 
 // ---------- avvio ----------
 
@@ -1467,6 +1469,11 @@ export async function importaSalute(pacchetto) {
     if (!prima) await setImpostazione("primaLetturaAgenda", oggiLetto);
     LETTURA_AGENDA = (prima || oggiLetto).slice(0, 10);
     ULTIMA_LETTURA_AGENDA = oggiLetto;
+    const coperturaNuova = piuGiorni(oggiLetto, ORIZZONTE_AGENDA_GIORNI);
+    const coperturaVecchia = await impostazione("coperturaAgenda");
+    COPERTURA_AGENDA =
+      coperturaVecchia && coperturaVecchia > coperturaNuova ? coperturaVecchia : coperturaNuova;
+    await setImpostazione("coperturaAgenda", COPERTURA_AGENDA);
   }
 
   // «Ultimo import» dei dati salute si aggiorna solo se sono davvero arrivati
@@ -1520,6 +1527,7 @@ async function caricaAgenda() {
   const letta = prima || ultima;
   LETTURA_AGENDA = letta ? String(letta).slice(0, 10) : null;
   ULTIMA_LETTURA_AGENDA = ultima ? String(ultima).slice(0, 10) : LETTURA_AGENDA;
+  COPERTURA_AGENDA = (await impostazione("coperturaAgenda")) || null;
   return AGENDA;
 }
 
@@ -1548,9 +1556,14 @@ export function intervalloAgenda() {
   // comando legge sempre alcune settimane in avanti, e i giorni dopo l'ultimo
   // evento sono stati guardati e sono vuoti. Prima l'app chiedeva di
   // aggiornare un calendario appena letto, all'infinito.
-  const finestra = ULTIMA_LETTURA_AGENDA
+  // La copertura non si accorcia mai: una rilettura guarda in avanti, ma i
+  // giorni già letti restano letti. Senza questo, rileggendo il calendario i
+  // giorni fra la lettura vecchia e quella nuova tornavano «non letti».
+  const finestraOra = ULTIMA_LETTURA_AGENDA
     ? piuGiorni(ULTIMA_LETTURA_AGENDA, ORIZZONTE_AGENDA_GIORNI)
     : ultimoEvento;
+  const finestra =
+    COPERTURA_AGENDA && COPERTURA_AGENDA > finestraOra ? COPERTURA_AGENDA : finestraOra;
   return { da, a: finestra > ultimoEvento ? finestra : ultimoEvento, ultimoEvento };
 }
 
@@ -1605,9 +1618,11 @@ export async function svuotaAgenda() {
   // calendario comandasse ancora.
   await setImpostazione("ultimoImportAgenda", null);
   await setImpostazione("primaLetturaAgenda", null);
+  await setImpostazione("coperturaAgenda", null);
   AGENDA = new Map();
   LETTURA_AGENDA = null;
   ULTIMA_LETTURA_AGENDA = null;
+  COPERTURA_AGENDA = null;
 }
 
 /** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */
