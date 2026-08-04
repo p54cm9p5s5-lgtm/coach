@@ -1175,9 +1175,12 @@ async function vistaRecupero(corpo, piede) {
   const inv = await store.inventario();
   const bilanciere = def?.attrezzo === "bilanciere";
 
+  // Rileggere prima di scrivere: partendo dalla copia caricata al disegno, la
+  // seconda correzione riscriveva sopra la prima e la cancellava.
   const salva = async (patch) => {
     if (!ultima) return;
-    await store.db.put("serie", { ...ultima, ...patch });
+    const attuale = (await store.serieDi(S.sed.id)).find((x) => x.id === ultima.id) || ultima;
+    await store.db.put("serie", { ...attuale, ...patch });
   };
 
   const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
@@ -1357,9 +1360,89 @@ async function vistaQuestionario(corpo, piede) {
     );
   };
 
+  // L'ultima serie non passa dalla schermata di recupero: senza questi campi
+  // resterebbe registrata al bersaglio previsto qualunque cosa sia successo,
+  // e una serie su tre nel log del coach sarebbe inventata.
+  const ultimaSerie = serieFatteQui.at(-1) || null;
+  const correzione = h("div");
+  if (ultimaSerie) {
+    let rip = ultimaSerie.ripFatte ?? (v.aTempo ? v.durataSec : v.ripMax ?? v.ripMin);
+    let carico = ultimaSerie.carico ?? null;
+    const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
+    const valCar = h("span.val", carico != null ? `${num(carico)} kg` : "—");
+
+    const salvaUltima = async (patch) => {
+      const attuale = (await store.serieDi(S.sed.id)).find((x) => x.id === ultimaSerie.id) || ultimaSerie;
+      const nuova = { ...attuale, ...patch };
+      await store.db.put("serie", nuova);
+      Object.assign(ultimaSerie, patch);
+      const i = serieFatteQui.findIndex((x) => x.id === ultimaSerie.id);
+      if (i >= 0) serieFatteQui[i] = { ...serieFatteQui[i], ...patch };
+      ridisegnaPunteggio();
+    };
+
+    aggiungi(correzione,
+      h(
+        "div.group",
+        h("h2", `Serie ${ultimaSerie.numero} appena chiusa`),
+        h(
+          "div.list",
+          h(
+            "div.field",
+            h("label", v.aTempo ? "Secondi tenuti" : "Ripetizioni fatte"),
+            h(
+              "div.stepper",
+              h("button", {
+                onclick: async () => {
+                  rip = Math.max(0, rip - (v.aTempo ? 5 : 1));
+                  valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`;
+                  await salvaUltima({ ripFatte: rip });
+                },
+              }, "−"),
+              valRip,
+              h("button", {
+                onclick: async () => {
+                  rip += v.aTempo ? 5 : 1;
+                  valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`;
+                  await salvaUltima({ ripFatte: rip });
+                },
+              }, "+")
+            )
+          ),
+          carico != null
+            ? h(
+                "div.field",
+                h("label", "Carico usato"),
+                h(
+                  "div.stepper",
+                  h("button", {
+                    onclick: async () => {
+                      carico = Math.max(0, Math.round((carico - 0.5) * 10) / 10);
+                      valCar.textContent = `${num(carico)} kg`;
+                      await salvaUltima({ carico });
+                    },
+                  }, "−"),
+                  valCar,
+                  h("button", {
+                    onclick: async () => {
+                      carico = Math.round((carico + 0.5) * 10) / 10;
+                      valCar.textContent = `${num(carico)} kg`;
+                      await salvaUltima({ carico });
+                    },
+                  }, "+")
+                )
+              )
+            : null
+        ),
+        h("p.footnote", "Correggi solo se l'ultima serie è andata diversamente dal previsto.")
+      )
+    );
+  }
+
   aggiungi(corpo, 
     h("div.hero", { style: "padding-bottom:2px" }, h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
     zonaPunteggio,
+    correzione,
 
     h("p.footnote", { style: "margin:14px 16px 0" }, "Quanto è stata dura l'ultima serie?"),
     righello((i) => {

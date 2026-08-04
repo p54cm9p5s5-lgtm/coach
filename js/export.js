@@ -41,7 +41,21 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit }
     const nome = def?.nome || esId;
 
     if (log?.saltato) {
-      righe.push([nome, "—", "—", "—", `NON ESEGUITO (${log.saltato.motivo})${log.saltato.nota ? `: ${log.saltato.nota}` : ""}`]);
+      const motivo = `${log.saltato.motivo}${log.saltato.nota ? `: ${log.saltato.nota}` : ""}`;
+      if (!righeSerie.length) {
+        righe.push([nome, "—", "—", "—", `NON ESEGUITO (${motivo})`]);
+        continue;
+      }
+      // Interrotto a metà: le serie già fatte restano, altrimenti sparirebbe
+      // lavoro davvero svolto dal log che legge il coach.
+      const car = [...new Set(righeSerie.map((s) => s.carico).filter((c) => c != null))];
+      righe.push([
+        nome,
+        car.length ? car.map((c) => `${num(c)} kg`).join(" / ") : "corpo libero",
+        `${righeSerie.length}x${righeSerie.map((s) => s.ripFatte ?? "—").join("/")}`,
+        log?.rpe != null ? String(log.rpe) : "non registrato",
+        `INTERROTTO dopo ${righeSerie.length} ${righeSerie.length === 1 ? "serie" : "serie"} (${motivo})`,
+      ]);
       continue;
     }
 

@@ -39,8 +39,16 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
   const tetti = []; // regole rigide: nessuna media può aggirarle
 
   // --- ripetizioni: quanto del lavoro previsto è stato davvero fatto
-  const bersaglioUnita = variante.aTempo ? variante.durataSec : variante.ripMax ?? variante.ripMin;
-  const bersaglio = (variante.serie || 0) * (bersaglioUnita || 0);
+  // Il bersaglio è quello che l'app ha chiesto davvero serie per serie
+  // (ripTarget, che tiene conto di un'eventuale proposta accettata). Il tetto
+  // del range non è un obiettivo: chi lavora al fondo del range farebbe il suo
+  // lavoro e risulterebbe lo stesso «da rivedere».
+  const chiestoPerSerie = serie.map((s) => s.ripTarget).filter((x) => x != null);
+  const bersaglioUnita = variante.aTempo ? variante.durataSec : variante.ripMin ?? variante.ripMax;
+  const bersaglio = chiestoPerSerie.length
+    ? chiestoPerSerie.reduce((a, b) => a + b, 0) +
+      Math.max(0, (variante.serie || 0) - chiestoPerSerie.length) * (bersaglioUnita || 0)
+    : (variante.serie || 0) * (bersaglioUnita || 0);
   const fatte = serie.reduce((t, s) => t + (s.ripFatte || 0), 0);
   const rapportoRip = bersaglio ? fatte / bersaglio : serie.length ? 1 : 0;
   voci.push({
