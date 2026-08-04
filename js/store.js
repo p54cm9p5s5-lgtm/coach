@@ -431,6 +431,7 @@ export async function registraSerie({
   carico,
   ripFatte,
   ripTarget,
+  caricoTarget = null,
   aTempo = false,
   tsInizioSerie,
   recuperoTargetSec,
@@ -449,6 +450,11 @@ export async function registraSerie({
     carico: carico ?? null,
     ripFatte: ripFatte ?? null,
     ripTarget: ripTarget ?? null,
+    // Il carico che l'app ha chiesto DAVVERO per questa serie: dopo una
+    // riduzione accettata è più basso di quello scritto nel brief, e giudicare
+    // sul brief faceva risultare «carico sotto il programmato» chi aveva fatto
+    // esattamente quello che l'app gli aveva chiesto.
+    caricoTarget: caricoTarget ?? null,
     aTempo,
     tsInizioSerie: inizio,
     tsFineSerie: Date.now(),

@@ -163,11 +163,14 @@ export function graficoAttivita(dati, { altezza = 128 } = {}) {
     const data = `${giorno} ${dataBreve(d.data)}`;
     if (d.futuro) return `${data} · ${d.previsto ? "allenamento in programma" : "niente in programma"}`;
     if (!d.presente || d.kcal == null) {
-      return `${data} · nessun dato${d.allenamento ? " · allenamento registrato" : ""}`;
+      return `${data} · nessun dato${d.allenamento ? " · allenamento registrato" : d.previsto ? " · era previsto un allenamento" : ""}`;
     }
     const kcal = `${Math.round(d.kcal).toLocaleString("it-IT")} kcal`;
     const quota = d.obiettivo ? ` (${num((d.kcal / d.obiettivo) * 100)}% dell'obiettivo)` : "";
-    return `${data} · ${kcal}${quota} · ${d.allenamento ? "allenamento" : "riposo"}`;
+    // «Riposo» solo se il riposo era previsto: un allenamento in programma e
+    // non fatto è un'altra cosa, e chiamarlo riposo lo nascondeva.
+    const natura = d.allenamento ? "allenamento" : d.previsto ? "previsto ma non fatto" : "riposo";
+    return `${data} · ${kcal}${quota} · ${natura}`;
   };
 
   let selezionato = null;

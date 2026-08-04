@@ -70,7 +70,25 @@ export async function render({ ridisegna }) {
 
   // I giorni arrivano dal più recente: per il grafico servono in ordine di
   // calendario, e senza la coda di giorni vuoti che non racconta niente.
-  const perGrafico = (righe) => [...righe].sort((a, b) => (a.data < b.data ? -1 : 1));
+  const perGrafico = (righe) => {
+    const ordinate = [...righe].sort((a, b) => (a.data < b.data ? -1 : 1));
+    if (ordinate.length < 2) return ordinate;
+    // Un punto per ogni giorno, anche quelli senza dato: prima i punti erano
+    // messi in fila per posizione, così un buco di una settimana sembrava un
+    // giorno solo e la linea raccontava un andamento che non c'era.
+    const passo = (iso, n) => {
+      const d = new Date(iso + "T00:00:00");
+      d.setDate(d.getDate() + n);
+      const p = (x) => String(x).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    };
+    const per = new Map(ordinate.map((r) => [r.data, r]));
+    const out = [];
+    for (let g = ordinate[0].data; g <= ordinate[ordinate.length - 1].data; g = passo(g, 1)) {
+      out.push(per.get(g) || { data: g, presente: false });
+    }
+    return out;
+  };
 
   // Ogni scheda ha il suo periodo, ricordato separatamente: si può guardare i
   // passi sul mese e il sonno sugli ultimi sette giorni.
