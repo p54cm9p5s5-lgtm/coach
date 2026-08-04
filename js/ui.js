@@ -459,6 +459,45 @@ export function allarmeAttivo() {
   return alarmTimer !== null;
 }
 
+/**
+ * Versione che sta girando davvero sul telefono: la si chiede al service
+ * worker attivo, poi al nome della copia locale. Il file sul server dice cosa
+ * è stato pubblicato, non cosa hai installato: è la domanda sbagliata.
+ */
+export async function versioneInstallata() {
+  try {
+    const attivo = navigator.serviceWorker?.controller;
+    if (attivo) {
+      const risposta = await new Promise((ok) => {
+        const canale = new MessageChannel();
+        const scaduto = setTimeout(() => ok(null), 1200);
+        canale.port1.onmessage = (e) => {
+          clearTimeout(scaduto);
+          ok(e.data);
+        };
+        attivo.postMessage("VERSIONE", [canale.port2]);
+      });
+      if (risposta) return risposta;
+    }
+  } catch {
+    /* si prova col nome della copia locale */
+  }
+  try {
+    const nome = (await caches.keys()).find((k) => k.startsWith("coach-"));
+    if (nome) return nome.slice("coach-".length);
+  } catch {
+    /* niente cache: resta il server */
+  }
+  try {
+    const r = await fetch("sw.js", { cache: "no-store" });
+    const t = await r.text();
+    const v = t.match(/const VERSION = "([^"]+)"/)?.[1];
+    return v ? `${v} (sul server)` : "non verificabile";
+  } catch {
+    return "non verificabile";
+  }
+}
+
 export function tick() {
   beep(660, 0.05, 0.12);
 }
