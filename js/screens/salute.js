@@ -433,11 +433,11 @@ export async function apriImport(ridisegna, { titolo, testo, shortcut }) {
 }
 
 async function incolla(ridisegna) {
-  // Il riquadro si apre SUBITO e la lettura automatica lo riempie se iOS la
-  // concede. Prima si chiedeva prima agli appunti e poi si apriva il riquadro:
-  // ma a pannello chiuso il gesto dell'utente è finito, iOS mostrava il suo
-  // pulsante «Incolla» sopra una schermata che non aspettava più niente, e
-  // sembrava che il tocco non facesse nulla. Serviva toccare due volte.
+  // Niente lettura automatica degli appunti: quando la pagina la chiede, iOS
+  // mette il suo pulsante «Incolla» sopra a tutto e SMETTE DI DISEGNARE finché
+  // non lo tocchi — il riquadro c'era ma non si vedeva, e sembrava che il tocco
+  // non avesse fatto niente. Qui il riquadro appare subito e gli appunti si
+  // chiedono con un pulsante, cioè con un gesto tuo, quando li vuoi.
   const testo = await sheet((close) => {
     const area = h("textarea.note", {
       style: "min-height:160px",
@@ -446,21 +446,29 @@ async function incolla(ridisegna) {
     const nota = h(
       "p.footnote",
       { style: "margin:8px 16px 0" },
-      "Se compare il pulsante «Incolla» di iOS, toccalo: il riquadro si riempie da solo."
+      "Tieni premuto nel riquadro e scegli Incolla. Oppure usa il pulsante qui sotto."
     );
-    // Il tentativo parte adesso, mentre il pannello è già a schermo.
-    navigator.clipboard
-      ?.readText()
-      .then((t) => {
-        if (!t || area.value) return;
-        area.value = t;
-        const righe = t.split("\n").filter((r) => r.trim()).length;
-        nota.textContent = `Letto dagli appunti: ${righe} righe. Controlla e tocca Importa.`;
-      })
-      .catch(() => {
-        nota.textContent =
-          "iOS non ha concesso la lettura automatica: tieni premuto nel riquadro e scegli Incolla.";
-      });
+    const daAppunti = h(
+      "button.btn.secondary",
+      {
+        onclick: async () => {
+          try {
+            const t = await navigator.clipboard.readText();
+            if (!t) {
+              nota.textContent = "Gli appunti sono vuoti: hai eseguito il comando rapido?";
+              return;
+            }
+            area.value = t;
+            const righe = t.split("\n").filter((r) => r.trim()).length;
+            nota.textContent = `Letto dagli appunti: ${righe} righe. Controlla e tocca Importa.`;
+          } catch {
+            nota.textContent =
+              "iOS non ha concesso la lettura: tieni premuto nel riquadro e scegli Incolla.";
+          }
+        },
+      },
+      "Leggi dagli appunti"
+    );
     return h(
       "div",
       h("h2", "Incolla i dati"),
@@ -471,7 +479,12 @@ async function incolla(ridisegna) {
       ),
       area,
       nota,
-      h("div.btn-wrap", h("button.btn", { onclick: () => close(area.value) }, "Importa"))
+      h(
+        "div.btn-wrap",
+        daAppunti,
+        h("div", { style: "height:8px" }),
+        h("button.btn", { onclick: () => close(area.value) }, "Importa")
+      )
     );
   });
   if (!testo || !testo.trim()) return;
