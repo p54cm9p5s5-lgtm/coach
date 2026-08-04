@@ -447,8 +447,11 @@ async function bloccoCalendario(vaiA, ridisegna) {
     ultimaFoto: dateFoto[0] || null,
     ultimoExport: imp.ultimoExport,
     ultimoImportSalute: imp.ultimoImportSalute,
-    // Col calendario collegato le scadenze sono quelle scritte dal coach.
+    // Gli eventi del coach si aggiungono ai promemoria del protocollo: gli
+    // allenamenti li decide il calendario, ma pesata, misure e foto restano
+    // compito dell'app, che è l'unica a sapere quando li hai fatti davvero.
     eventi: store.agendaAttiva() ? await store.agenda() : null,
+    cadenze: store.regole().cadenze,
   });
 
   // il programma comincia dal primo allenamento registrato, o dal brief

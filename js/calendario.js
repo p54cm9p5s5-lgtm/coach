@@ -92,12 +92,53 @@ export function calcolaAttese({
   ultimoExport,
   ultimoImportSalute,
   eventi = null,
+  cadenze = null,
 }) {
+  const cad = {
+    misureGiornoSettimana: 4,
+    fotoGiornoSettimana: 3,
+    fotoOgniSettimane: 2,
+    fotoAncora: "2026-08-12",
+    ...(cadenze || {}),
+  };
   const attese = new Map();
   const aggiungiA = (data, tipo, testo) => {
     if (!attese.has(data)) attese.set(data, []);
     attese.get(data).push({ tipo, testo });
   };
+
+  // Le misure, le foto e il peso NON dipendono dal calendario: sono il
+  // protocollo dell'app, ed è l'app a registrarli. Prima, appena collegavi il
+  // calendario, sparivano tutti — restavano solo gli allenamenti scritti dal
+  // coach, e i giorni della pesata e delle foto non li ricordava più nessuno.
+  const periodiche = () => {
+    const d = parseIso(oggi);
+    for (let i = -21; i <= 21; i++) {
+      const g = new Date(d);
+      g.setDate(g.getDate() + i);
+      if (g.getDay() === cad.misureGiornoSettimana) {
+        const data = iso(g);
+        // L'evento chiede DUE misure: basta che una manchi perché sia arretrato.
+        const scaduto =
+          data <= oggi &&
+          (!ultimoPeso ||
+            !ultimaVita ||
+            giorniTra(ultimoPeso, data) >= 7 ||
+            giorniTra(ultimaVita, data) >= 7);
+        aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita");
+      }
+      if (g.getDay() === cad.fotoGiornoSettimana) {
+        const settimane = Math.round(giorniTra(cad.fotoAncora, iso(g)) / 7);
+        if (((settimane % cad.fotoOgniSettimane) + cad.fotoOgniSettimane) % cad.fotoOgniSettimane === 0) {
+          const data = iso(g);
+          const scaduto = data <= oggi && (!ultimaFoto || giorniTra(ultimaFoto, data) >= 7 * cad.fotoOgniSettimane);
+          aggiungiA(data, scaduto ? "scaduto" : "foto", "Set di foto");
+        }
+      }
+    }
+  };
+
+  periodiche();
 
   if (eventi) {
     // Calendario collegato: le cose da fare sono quelle che ci ha scritto il
@@ -135,34 +176,6 @@ export function calcolaAttese({
         const scaduto =
           e.data <= oggi && tipo !== "info" && (!fattoDa || giorniTra(fattoDa, e.data) >= 1);
         aggiungiA(e.data, scaduto ? "scaduto" : tipo, titolo);
-      }
-    }
-  } else {
-    // peso e vita: ogni giovedì
-    const d = parseIso(oggi);
-    for (let i = -21; i <= 21; i++) {
-      const g = new Date(d);
-      g.setDate(g.getDate() + i);
-      if (g.getDay() === 4) {
-        const data = iso(g);
-        // L'evento chiede DUE misure: basta che una manchi perché sia arretrato.
-        // Prima bastava essersi pesati per dare per fatta anche la vita.
-        const scaduto =
-          data <= oggi &&
-          (!ultimoPeso ||
-            !ultimaVita ||
-            giorniTra(ultimoPeso, data) >= 7 ||
-            giorniTra(ultimaVita, data) >= 7);
-        aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita");
-      }
-      // foto: mercoledì ogni 2 settimane, ancorate al 12/08/2026
-      if (g.getDay() === 3) {
-        const settimane = Math.round(giorniTra("2026-08-12", iso(g)) / 7);
-        if (settimane % 2 === 0) {
-          const data = iso(g);
-          const scaduto = data <= oggi && (!ultimaFoto || giorniTra(ultimaFoto, data) >= 14);
-          aggiungiA(data, scaduto ? "scaduto" : "foto", "Set di foto");
-        }
       }
     }
   }
