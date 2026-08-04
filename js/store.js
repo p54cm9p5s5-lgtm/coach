@@ -1467,8 +1467,58 @@ const CAMPI_A_RISCHIO_DOPPIO = {
   minutiInPiedi: "tempo in piedi",
 };
 
+/**
+ * Limiti di quello che un corpo umano fa in una giornata.
+ *
+ * Non sono soglie di merito: sono il confine del possibile. Un valore fuori di
+ * qui non è «un giorno strano», è un numero sbagliato — quasi sempre un comando
+ * rapido che somma una finestra intera in un giorno solo, o che mette un campo
+ * al posto di un altro. Lasciarlo entrare significa avvelenare in silenzio la
+ * media, il punteggio e il pacchetto per il coach, e ritrovarlo mesi dopo.
+ *
+ * Il massimo è largo apposta: deve fermare l'impossibile, non l'eccezionale.
+ */
+const LIMITI_GIORNO = {
+  kcalAttive: { min: 0, max: 5000, nome: "movimento", unita: "kcal" },
+  passi: { min: 0, max: 100000, nome: "passi", unita: "" },
+  minutiEsercizio: { min: 0, max: 1440, nome: "minuti di esercizio", unita: "min" },
+  minutiInPiedi: { min: 0, max: 1440, nome: "tempo in piedi", unita: "min" },
+  pianiSaliti: { min: 0, max: 500, nome: "piani", unita: "" },
+  distanzaKm: { min: 0, max: 200, nome: "distanza", unita: "km" },
+  fcRiposo: { min: 25, max: 120, nome: "frequenza a riposo", unita: "bpm" },
+  obiettivoKcal: { min: 50, max: 5000, nome: "obiettivo movimento", unita: "kcal" },
+};
+
+const LIMITI_NOTTE = {
+  durataMin: { min: 0, max: 1080, nome: "durata del sonno", unita: "min" },
+  profondoMin: { min: 0, max: 1080, nome: "sonno profondo", unita: "min" },
+  remMin: { min: 0, max: 1080, nome: "sonno REM", unita: "min" },
+  vegliaMin: { min: 0, max: 1080, nome: "veglia", unita: "min" },
+  risvegli: { min: 0, max: 100, nome: "risvegli", unita: "" },
+};
+
+/**
+ * Toglie dalla riga i valori impossibili e dice quali erano. Quello che resta
+ * viene importato lo stesso: un campo sbagliato non deve buttare via la
+ * giornata intera.
+ */
+function scartaImpossibili(riga, limiti, data, scartati) {
+  const pulita = { ...riga };
+  for (const [campo, L] of Object.entries(limiti)) {
+    const v = pulita[campo];
+    if (v == null) continue;
+    if (!Number.isFinite(v) || v < L.min || v > L.max) {
+      scartati.push(
+        `${dataBreve(data)} ${L.nome}: ${num(v, 0)}${L.unita ? ` ${L.unita}` : ""} — fuori da quello che una giornata può contenere`
+      );
+      pulita[campo] = null;
+    }
+  }
+  return pulita;
+}
+
 export async function importaSalute(pacchetto) {
-  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [] };
+  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [] };
 
   /**
    * Fonde solo i campi valorizzati: due righe per lo stesso giorno, una con le
@@ -1490,7 +1540,9 @@ export async function importaSalute(pacchetto) {
   // quando i giorni erano sette è un numero che non vuol dire niente.
   const giorniVisti = new Set();
   const nottiViste = new Set();
-  for (const g of pacchetto.giorni) {
+  for (const gGrezzo of pacchetto.giorni) {
+    // Prima di tutto il resto: quello che non può essere vero non entra.
+    const g = scartaImpossibili(gGrezzo, LIMITI_GIORNO, gGrezzo.data, conteggio.impossibili);
     const prec = await db.get("giorniSalute", g.data);
     if (prec?.presente && !giorniVisti.has(g.data)) conteggio.aggiornati++;
     // Un giorno già chiuso non cambia: se il valore nuovo è molto diverso da
@@ -1518,7 +1570,8 @@ export async function importaSalute(pacchetto) {
     conteggio.giorni = giorniVisti.size;
   }
 
-  for (const n of pacchetto.notti) {
+  for (const nGrezza of pacchetto.notti) {
+    const n = scartaImpossibili(nGrezza, LIMITI_NOTTE, nGrezza.data, conteggio.impossibili);
     const prec = await db.get("notti", n.data);
     nottiViste.add(n.data);
     await db.put("notti", {
