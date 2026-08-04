@@ -59,7 +59,14 @@ export function analizza(testo) {
 
   const risultato = { finestra: null, giorni: [], notti: [], allenamenti: [], agenda: [], avvisi: [] };
 
-  for (const riga of righe.slice(1)) {
+  for (const grezza of righe.slice(1)) {
+    // Tolleranza allo spazio perso: costruendo il comando rapido capita di
+    // attaccare la parola alla data («GIORNO2026-08-04»). È una sbavatura di
+    // battitura, non un dato sbagliato: si rimette lo spazio e si va avanti.
+    const riga = grezza.replace(
+      /^(FINESTRA|GIORNO|NOTTE|ALLENAMENTO|AGENDA)(?=\d{4}-\d{2}-\d{2})/i,
+      "$1 "
+    );
     const [parola, ...resto] = riga.split(/\s+/);
     const tipo = parola.toUpperCase();
     const coda = resto.join(" ");
@@ -74,11 +81,13 @@ export function analizza(testo) {
       continue;
     }
 
-    const data = resto[0];
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data || "")) {
+    const data = (resto[0] || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
       risultato.avvisi.push(`Riga senza data valida, ignorata: «${riga.slice(0, 40)}»`);
       continue;
     }
+    // `coda.slice(data.length)` toglie la data e lascia le coppie chiave=valore,
+    // anche quando la prima è attaccata alla data senza spazio.
     const c = coppie(coda.slice(data.length));
 
     if (tipo === "GIORNO") {
