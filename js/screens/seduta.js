@@ -108,7 +108,17 @@ async function vistaProgramma(vaiA, ridisegna) {
         h(
           "p",
           { style: "margin:0;font-size:24px;font-weight:700;letter-spacing:-0.5px;text-align:center" },
-          previsto ? previsto.nome : "Riposo"
+          previsto
+            ? previsto.nome
+            : origine.riposo
+              ? "Riposo"
+              : origine.sconosciuto
+                ? origine.titolo || "Da vedere sul calendario"
+                : origine.scaduta
+                  ? "Calendario da aggiornare"
+                  : origine.oltreProgrammato
+                    ? "Non ancora programmato"
+                    : "Riposo"
         ),
         previsto
           ? h(
@@ -126,7 +136,9 @@ async function vistaProgramma(vaiA, ridisegna) {
                   ? `Il calendario letto arriva al ${dataBreve(origine.fine)}: rileggilo con «Coach Calendario»`
                   : origine.sconosciuto
                     ? `«${origine.titolo}» non è un allenamento del programma`
-                    : origine.vuoto
+                    : origine.oltreProgrammato
+                      ? `Il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}`
+                      : origine.vuoto
                       ? "Niente sul calendario per oggi"
                       : "Lo split non prevede allenamenti oggi"
             ),
@@ -240,10 +252,14 @@ async function vistaRisultato(id, vaiA) {
   const serie = await store.serieDi(id);
   const logs = await store.questionariDi(id);
   const durataSec = sed.oraFine ? Math.round((sed.oraFine - sed.oraInizio) / 1000) : null;
-  const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
-  const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
-  const bersagli = serie.map((s) => s.recuperoTargetSec).filter((x) => x != null);
-  const recTarget = bersagli.length ? Math.round(bersagli.reduce((a, b) => a + b, 0) / bersagli.length) : null;
+  // Le due medie si calcolano sulle STESSE serie: prima il reale veniva da
+  // quelle cronometrate e il previsto da tutte, e il confronto «100s su 120»
+  // metteva a paragone due insiemi diversi.
+  const cronometrate = serie.filter((s) => s.recuperoRealeSec != null && s.recuperoTargetSec != null);
+  const media = (arr, campo) =>
+    arr.length ? Math.round(arr.reduce((t, x) => t + x[campo], 0) / arr.length) : null;
+  const recMedio = media(cronometrate, "recuperoRealeSec");
+  const recTarget = media(cronometrate, "recuperoTargetSec");
   // Completezza dell'allenamento intero: esercizi, cardio, riscaldamento e
   // stretching. Il volume totale in kg non guida nessuna decisione — cambia con
   // il numero di esercizi, non con la qualità del lavoro.
@@ -322,7 +338,7 @@ async function vistaRisultato(id, vaiA) {
   // Un esercizio con serie registrate ma senza questionario (uscito prima di
   // rispondere) non compariva da nessuna parte: né qui né fra i mancanti.
   const senzaQuestionario = [...new Set(serie.map((x) => x.esercizioId))].filter(
-    (id) => !logs.some((l) => l.esercizioId === id)
+    (esId) => !logs.some((l) => l.esercizioId === esId)
   );
   for (const id of senzaQuestionario) {
     const def = store.esercizio(id);
@@ -415,8 +431,9 @@ async function vistaRisultato(id, vaiA) {
   // Anche un cardio non previsto ma fatto va mostrato: era stato registrato e
   // poi sparito dal riepilogo, come se non l'avessi fatto.
   if (sed.cardio?.previsto || sed.cardio?.eseguito) {
-    const r = store.regole().cardio;
-    const fuori = sed.cardio.eseguito && sed.cardio.kmh > r.kmhMax;
+    // Le soglie di quel giorno: quelle di oggi possono essere altre.
+    const r = { ...store.regole().cardio, ...(sed.cardio.soglie || {}) };
+    const fuori = sed.cardio.eseguito && r.kmhMax != null && sed.cardio.kmh > r.kmhMax;
     const attesi = r.durataMin || sed.cardio.durataPrevistaMin || 0;
     const corto = sed.cardio.eseguito && attesi && (sed.cardio.durataMin || 0) < attesi * 0.9;
     aggiungi(wrap,
@@ -853,9 +870,13 @@ async function vistaEsercizio(corpo, piede) {
   const obiettivo = v.aTempo ? null : await store.obiettivoCorrente(v.esercizioId);
   S.obiettivo = obiettivo;
 
+  // L'ordine è: quello che hai già usato oggi, poi l'obiettivo accettato, poi
+  // il carico scritto nel brief, e solo alla fine quello dedotto dallo storico.
+  // Prima lo storico veniva prima del brief, e un brief nuovo non si vedeva.
   const caricoPrec =
     fatte.at(-1)?.carico ??
     obiettivo?.carico ??
+    (v.carico > 0 ? v.carico : null) ??
     (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
   // L'ordine conta: prima quello che c'è in memoria, poi quello salvato nella
   // seduta (l'app è ripartita), infine il carico dedotto dallo storico.
@@ -1781,11 +1802,31 @@ async function vistaCardio(corpo, piede) {
       "button.btn",
       {
         onclick: azione(async () => {
+          // Il cardio già registrato non si sovrascrive di nascosto.
+          if (S.sed.cardio?.eseguito) {
+            const ok = await chiedi({
+              titolo: "Rifare il cardio?",
+              testo: `Oggi è già registrato: ${num(S.sed.cardio.kmh)} km/h per ${S.sed.cardio.durataMin} min. Ricominciando, quel dato viene sostituito.`,
+              opzioni: [{ etichetta: "Ricomincia", valore: "si", stile: "destructive" }],
+            });
+            if (ok !== "si") return;
+          }
           sbloccaAudio();
           S.sed = await store.aggiornaSeduta(S.sed.id, {
             // durataPrevistaMin resta quella scelta alla partenza: serve per
-          // sapere quanto del cardio è stato davvero fatto.
-          cardio: { ...S.sed.cardio, kmh, durataMin: durata, durataPrevistaMin: durata, note: qs("#nota-cardio")?.value || null },
+            // sapere quanto del cardio è stato davvero fatto. `eseguito` torna
+            // falso finché non lo chiudi: prima restava «fatto» con la durata
+            // vecchia mentre il nuovo cardio era ancora in corso.
+            cardio: {
+              ...S.sed.cardio,
+              kmh,
+              durataMin: null,
+              durataPrevistaMin: durata,
+              eseguito: false,
+              finitoIl: null,
+              saltatoMotivo: null,
+              note: qs("#nota-cardio")?.value || null,
+            },
           });
           await salvaProgresso({ cardioInizio: Date.now(), cardioFine: Date.now() + durata * 60000 });
           await disegna();
@@ -2039,8 +2080,13 @@ async function vistaFine(corpo, piede) {
   for (const v of S.esercizi) {
     const log = logs.find((l) => l.esercizioId === v.esercizioId);
     const def = store.esercizio(v.esercizioId);
-    if (!log) mancanti.push(`${def?.nome || v.esercizioId}: nessun dato`);
-    else if (log.saltato) mancanti.push(`${def?.nome || v.esercizioId}: saltato (${log.saltato.motivo})`);
+    const fatte = serie.filter((x) => x.esercizioId === v.esercizioId);
+    const nome = def?.nome || v.esercizioId;
+    // «Nessun dato» solo se davvero non c'è niente: con le serie registrate e
+    // il questionario mancante il lavoro c'è, manca la valutazione.
+    if (!log && !fatte.length) mancanti.push(`${nome}: mai iniziato`);
+    else if (!log) mancanti.push(`${nome}: ${fatte.length} serie, questionario non compilato`);
+    else if (log.saltato) mancanti.push(`${nome}: saltato (${log.saltato.motivo})`);
   }
 
   const polso = logs.filter((l) => l.dolorePolso);

@@ -173,7 +173,13 @@ async function dettaglio(id) {
           h("div.main", h("span.title", "Proposta")),
           h("span.value", descriviBersaglio(p.a, v))
         ),
-        h("div.row", h("div.main", h("span.title", "Verifica")), h("span.value", dataBreve(p.dataVerifica)))
+        // Finché non l'hai accettata la verifica non è ancora partita: si dice
+        // fra quanto sarà, non una data calcolata quando la proposta è nata.
+        h(
+          "div.row",
+          h("div.main", h("span.title", "Verifica")),
+          h("span.value", p.stato === "accettata" ? dataBreve(p.dataVerifica) : "14 giorni dopo l'accettazione")
+        )
       )
     )
   );

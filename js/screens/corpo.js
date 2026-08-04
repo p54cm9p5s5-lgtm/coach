@@ -4,14 +4,17 @@ import {
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 
+// `caloBuono` dice da che parte è il miglioramento: scendere di vita è un
+// progresso, scendere di bicipite no. Senza, la pastiglia verde compariva
+// anche quando perdevi massa.
 const MISURE = [
-  { id: "peso", nome: "Peso", unita: "kg", passo: 0.1, primaria: true },
-  { id: "vitaOmbelico", nome: "Vita ombelico", unita: "cm", passo: 0.5, primaria: true },
-  { id: "vitaStretta", nome: "Vita punto stretto", unita: "cm", passo: 0.5 },
-  { id: "fianchi", nome: "Fianchi", unita: "cm", passo: 0.5 },
-  { id: "petto", nome: "Petto", unita: "cm", passo: 0.5 },
-  { id: "bicipiteRilassato", nome: "Bicipite rilassato", unita: "cm", passo: 0.5 },
-  { id: "coscia", nome: "Coscia", unita: "cm", passo: 0.5 },
+  { id: "peso", nome: "Peso", unita: "kg", passo: 0.1, primaria: true, caloBuono: true },
+  { id: "vitaOmbelico", nome: "Vita ombelico", unita: "cm", passo: 0.5, primaria: true, caloBuono: true },
+  { id: "vitaStretta", nome: "Vita punto stretto", unita: "cm", passo: 0.5, caloBuono: true },
+  { id: "fianchi", nome: "Fianchi", unita: "cm", passo: 0.5, caloBuono: true },
+  { id: "petto", nome: "Petto", unita: "cm", passo: 0.5, caloBuono: false },
+  { id: "bicipiteRilassato", nome: "Bicipite rilassato", unita: "cm", passo: 0.5, caloBuono: false },
+  { id: "coscia", nome: "Coscia", unita: "cm", passo: 0.5, caloBuono: false },
 ];
 
 const CONDIZIONI = [
@@ -92,6 +95,9 @@ export async function render({ ridisegna }) {
     const ultima = righe[0];
     const prec = righe[1];
     const delta = ultima && prec ? ultima.valore - prec.valore : null;
+    // Un confronto fra una misura a protocollo e una fuori protocollo non è un
+    // progresso: è rumore. Si mostra, ma senza colore e detto chiaramente.
+    const confrontabile = ultima?.condizioniStandard !== false && prec?.condizioniStandard !== false;
     aggiungi(lista,
       h(
         "div.row",
@@ -107,7 +113,17 @@ export async function render({ ridisegna }) {
         ),
         h("span.value", ultima ? `${num(ultima.valore)} ${def.unita}` : "—"),
         delta !== null && delta !== 0
-          ? h("span.pill", { class: delta < 0 ? "pill ok" : "pill" }, `${delta > 0 ? "+" : ""}${num(delta)}`)
+          ? h(
+              "span.pill",
+              {
+                class: !confrontabile
+                  ? "pill"
+                  : (delta < 0) === (def.caloBuono !== false)
+                    ? "pill ok"
+                    : "pill warn",
+              },
+              `${delta > 0 ? "+" : ""}${num(delta)}${confrontabile ? "" : " ?"}`
+            )
           : null
       )
     );
@@ -480,7 +496,11 @@ async function nuovoSet(ridisegna) {
   }
 
   if (fatte) {
-    await store.snapshotAutomatico("foto");
+    try {
+      await store.snapshotAutomatico("foto");
+    } catch {
+      // la copia interna è una comodità: le foto sono già salvate
+    }
     toast(fatte === store.POSE.length ? "Set completo." : `Set parziale: ${fatte} pose su ${store.POSE.length}.`);
   }
   await ridisegna();
@@ -596,7 +616,11 @@ async function importaSet(ridisegna) {
     await ridisegna();
     return;
   }
-  await store.snapshotAutomatico("foto importate");
+  try {
+    await store.snapshotAutomatico("foto importate");
+  } catch {
+    // idem: non si perde niente, la copia si rifà da sola alla prossima occasione
+  }
   toast(`${salvate} ${salvate === 1 ? "posa salvata" : "pose salvate"} come riferimento.`);
   await ridisegna();
 }
@@ -635,10 +659,11 @@ function cattura(posa, sagoma) {
       c.width = Math.round(video.videoWidth * scala);
       c.height = Math.round(video.videoHeight * scala);
       const ctx = c.getContext("2d");
-      if (frontale) {
-        ctx.translate(c.width, 0);
-        ctx.scale(-1, 1);
-      }
+      // La foto si salva nel verso reale, NON specchiata. Lo specchio serve
+      // solo all'anteprima, per posare come davanti a uno specchio: salvarlo
+      // faceva sì che le foto della fotocamera frontale risultassero ribaltate
+      // rispetto al set di riferimento preso dalla libreria, e la sagoma
+      // sovrapposta non combaciava mai.
       ctx.drawImage(video, 0, 0, c.width, c.height);
       const dataUrl = c.toDataURL("image/jpeg", 0.82);
       chiudi();

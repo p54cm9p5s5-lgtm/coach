@@ -13,6 +13,9 @@ let AGENDA = null;
 // Giorno in cui il calendario è stato letto l'ultima volta: serve a sapere da
 // quando l'app può dire «quel giorno non c'era niente».
 let LETTURA_AGENDA = null;
+// Giorno dell'ULTIMA lettura: serve a sapere fin dove il calendario è stato
+// guardato, non solo da quando.
+let ULTIMA_LETTURA_AGENDA = null;
 
 // ---------- avvio ----------
 
@@ -207,7 +210,14 @@ export function origineGiorno(iso = isoDate()) {
     // vecchio. Senza dirlo, chi smette di importare vede riposo per sempre e
     // crede che il coach non abbia previsto niente.
     const periodo = intervalloAgenda();
-    if (periodo?.a && periodo.a < iso) return { fonte: "calendario", scaduta: true, fine: periodo.a };
+    if (periodo?.a && periodo.a < iso) {
+      return { fonte: "calendario", scaduta: true, fine: periodo.a, ultimoEvento: periodo.ultimoEvento };
+    }
+    // Dentro la finestra letta ma oltre l'ultimo allenamento programmato: il
+    // calendario è aggiornato, è il coach che non ha ancora messo niente.
+    if (periodo?.ultimoEvento && iso > periodo.ultimoEvento) {
+      return { fonte: "calendario", vuoto: true, oltreProgrammato: true, ultimoEvento: periodo.ultimoEvento };
+    }
     // Prima dell'inizio della lettura non si può dire «niente sul calendario»:
     // quel giorno il calendario non è mai stato letto. Lì vale lo split.
     if (periodo?.da && iso < periodo.da) return { fonte: "split", nonLetta: true, da: periodo.da };
@@ -332,7 +342,26 @@ export async function iniziaSeduta({ data = isoDate(), giornoId }) {
     oraInizio: Date.now(),
     oraFine: null,
     riscaldamento: { fatto: false, modalita: null, note: null },
-    cardio: { previsto: Boolean(g.cardio), eseguito: false, kmh: null, durataMin: null, note: null },
+    // Le soglie del cardio si congelano qui: se il coach cambia il brief, il
+    // giudizio su un allenamento già fatto non deve cambiare da solo.
+    cardio: {
+      previsto: Boolean(g.cardio),
+      eseguito: false,
+      kmh: null,
+      durataMin: null,
+      note: null,
+      soglie: (() => {
+        const r = regole().cardio || {};
+        return {
+          durataMin: r.durataMin ?? null,
+          kmhMin: r.kmhMin ?? null,
+          kmhMax: r.kmhMax ?? null,
+          fcMin: r.fcMin ?? null,
+          fcMax: r.fcMax ?? null,
+          fcLimite: r.fcLimite ?? null,
+        };
+      })(),
+    },
     notaGenerale: null,
     progresso: { fase: "riscaldamento", indice: 0 },
     creatoIl: new Date().toISOString(),
@@ -381,7 +410,9 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
     ...s,
     stato: "completata",
     oraFine: fine,
-    notaGenerale: notaGenerale ?? s.notaGenerale,
+    // `?? ` avrebbe tenuto la nota vecchia anche quando la cancelli davvero:
+    // solo l'assenza del campo significa «non toccarla».
+    notaGenerale: notaGenerale !== undefined ? notaGenerale : s.notaGenerale,
     progresso: { fase: "fine", indice: 0 },
   };
   await db.put("sedute", agg);
@@ -460,7 +491,10 @@ export async function registraSerie({
     tsFineSerie: Date.now(),
     recuperoTargetSec: recuperoTargetSec ?? null,
     // il recupero che PRECEDE questa serie
-    recuperoRealeSec: ultima ? Math.round((inizio - ultima.tsFineSerie) / 1000) : null,
+    // Senza cronometro non c'è un recupero misurato: dedurlo dall'orario di
+    // partenza faceva risultare «recupero di 40 minuti» dopo una pausa in cui
+    // l'app era chiusa.
+    recuperoRealeSec: tsInizioSerie && ultima ? Math.round((inizio - ultima.tsFineSerie) / 1000) : null,
     creatoIl: new Date().toISOString(),
     fonte: "app",
   };
@@ -570,22 +604,25 @@ export async function completezzaSeduta(id) {
   let mancanti = 0;
   for (const v of giorno?.esercizi || []) {
     const log = logs.find((l) => l.esercizioId === v.esercizioId);
+    const sueSerie = serie.filter((x) => x.esercizioId === v.esercizioId);
     // Previsto e mai toccato: non è un esercizio "che non c'era", è lavoro che
-    // manca. Contarlo qui lo rende visibile nel dettaglio del punteggio.
-    if (!log) {
+    // manca. Se invece le serie ci sono ma manca il questionario (sei uscito
+    // prima di rispondere), l'esercizio è stato fatto e va valutato: prima
+    // spariva del tutto e il punteggio risultava più basso senza dirlo.
+    if (!log && !sueSerie.length) {
       mancanti++;
       continue;
     }
-    if (log.saltato) {
+    if (log?.saltato) {
       saltati++;
       continue;
     }
     const r = punteggioEsercizio({
       variante: v,
-      serie: serie.filter((s) => s.esercizioId === v.esercizioId),
-      rpe: log.rpe,
-      tecnica: log.tecnica,
-      dolorePolso: Boolean(log.dolorePolso),
+      serie: sueSerie,
+      rpe: log?.rpe,
+      tecnica: log?.tecnica,
+      dolorePolso: Boolean(log?.dolorePolso),
       regole: reg,
     });
     punteggi.push(r.totale);
@@ -594,6 +631,8 @@ export async function completezzaSeduta(id) {
 
   const totale = punteggioAllenamento({
     previsti: giorno?.esercizi?.length ?? logs.length,
+    // Le soglie di quel giorno, non quelle di oggi.
+    regoleCardio: sed.cardio?.soglie || null,
     punteggi,
     saltati,
     cardio: sed.cardio,
@@ -980,6 +1019,9 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
 export async function obiettivoCorrente(esercizioId) {
   const mie = (await db.byIndex("proposte", "esercizioId", esercizioId))
     .filter((p) => p.stato === "accettata")
+    // Una proposta nata prima del brief in vigore parlava di un programma che
+    // non c'è più: il coach ha appena riscritto i carichi, comanda lui.
+    .filter((p) => !PROGRAMMA?.caricatoIl || (p.creatoIl || "") > PROGRAMMA.caricatoIl)
     .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1));
   const p = mie[0];
   if (!p) return null;
@@ -990,7 +1032,12 @@ export async function obiettivoCorrente(esercizioId) {
   const rispostoIl = p.rispostoIl || null;
   if (rispostoIl) {
     const sedute = await seduteInMemoria();
+    // Conta quando hai fatto QUELL'esercizio, non quando hai chiuso la seduta:
+    // se accetti a metà allenamento, la chiusura arriva dopo e l'obiettivo
+    // risultava consumato senza che tu l'avessi mai usato.
     const dopo = esp.some((e) => {
+      const ultima = e.serie?.at(-1)?.tsFineSerie;
+      if (ultima) return new Date(ultima).toISOString() > rispostoIl;
       const sed = sedute.get(e.sedutaId);
       const fine = sed?.oraFine ? new Date(sed.oraFine).toISOString() : null;
       return fine ? fine > rispostoIl : false;
@@ -1022,12 +1069,23 @@ export async function proposteAccettate() {
     const esp = perEsercizio.get(p.esercizioId) || [];
     if (!p.rispostoIl) return esp.length !== (p.esposizioniAllaRisposta ?? p.esposizioniAllaData);
     return esp.some((e) => {
+      const ultima = e.serie?.at(-1)?.tsFineSerie;
+      if (ultima) return new Date(ultima).toISOString() > p.rispostoIl;
       const sed = sedute.get(e.sedutaId);
       const fine = sed?.oraFine ? new Date(sed.oraFine).toISOString() : null;
       return fine ? fine > p.rispostoIl : false;
     });
   };
-  return tutte.map((p) => ({ ...p, inVigore: !usata(p) }));
+  // Per un esercizio vale UNA proposta sola: la più recente ancora buona,
+  // esattamente quella che la seduta userà. Prima potevano risultare «in
+  // vigore» due carichi diversi per lo stesso esercizio.
+  const vinta = new Map();
+  for (const p of [...tutte].sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))) {
+    const vecchiaDiBrief = PROGRAMMA?.caricatoIl && (p.creatoIl || "") <= PROGRAMMA.caricatoIl;
+    if (vecchiaDiBrief || usata(p)) continue;
+    if (!vinta.has(p.esercizioId)) vinta.set(p.esercizioId, p.id);
+  }
+  return tutte.map((p) => ({ ...p, inVigore: vinta.get(p.esercizioId) === p.id }));
 }
 
 /** Proposte accettate arrivate alla data di verifica e ancora senza esito. */
@@ -1137,6 +1195,11 @@ async function mappaEsposizioni() {
 
 /** Un solo giro: proposte e segnali si ricalcolano insieme, sugli stessi dati. */
 let giroMotore = null;
+/** Ogni ricalcolo passa di qui: due giri in parallelo creavano doppioni. */
+export function inCoda(fn) {
+  giroMotore = (giroMotore || Promise.resolve()).catch(() => {}).then(fn);
+  return giroMotore;
+}
 /**
  * Un giro alla volta: due ricalcoli in parallelo (fine allenamento e apertura
  * della Home nello stesso istante) leggevano gli stessi dati e potevano creare
@@ -1356,8 +1419,14 @@ export async function importaSalute(pacchetto) {
     }
     for (const [data, voce] of perData) precedente[data] = voce;
     // Oltre le sei settimane non serve a niente e non deve crescere all'infinito.
+    // Il passato non si butta se contiene un allenamento: quello che il coach
+    // aveva previsto e tu non hai fatto è la cosa che gli serve di più, e
+    // cancellandolo il giorno diventava «non era previsto niente». Si tolgono
+    // solo i promemoria vecchi, che non raccontano nulla.
     const limite = new Date(Date.now() - 42 * 86400000).toISOString().slice(0, 10);
-    for (const d of Object.keys(precedente)) if (d < limite) delete precedente[d];
+    for (const [d, voce] of Object.entries(precedente)) {
+      if (d < limite && !voce.giornoId) delete precedente[d];
+    }
 
     await setImpostazione("agenda", precedente);
     AGENDA = new Map(Object.entries(precedente));
@@ -1369,6 +1438,7 @@ export async function importaSalute(pacchetto) {
     const prima = await impostazione("primaLetturaAgenda");
     if (!prima) await setImpostazione("primaLetturaAgenda", ora.slice(0, 10));
     LETTURA_AGENDA = (prima || ora.slice(0, 10)).slice(0, 10);
+    ULTIMA_LETTURA_AGENDA = ora.slice(0, 10);
   }
 
   // «Ultimo import» dei dati salute si aggiorna solo se sono davvero arrivati
@@ -1418,8 +1488,10 @@ export function abbinaAlloSplit(titolo) {
 async function caricaAgenda() {
   AGENDA = new Map(Object.entries((await impostazione("agenda")) || {}));
   const prima = await impostazione("primaLetturaAgenda");
-  const letta = prima || (await impostazione("ultimoImportAgenda"));
+  const ultima = await impostazione("ultimoImportAgenda");
+  const letta = prima || ultima;
   LETTURA_AGENDA = letta ? String(letta).slice(0, 10) : null;
+  ULTIMA_LETTURA_AGENDA = ultima ? String(ultima).slice(0, 10) : LETTURA_AGENDA;
   return AGENDA;
 }
 
@@ -1435,12 +1507,23 @@ export function agendaDi(iso) {
  * guardati e sono vuoti sul serio. Prima l'app li riempiva con lo split e
  * proponeva allenamenti che il coach non aveva messo.
  */
+/** Quante settimane in avanti guarda il comando «Coach Calendario». */
+const ORIZZONTE_AGENDA_GIORNI = 28;
+
 export function intervalloAgenda() {
   if (!agendaAttiva()) return null;
   const date = [...AGENDA.keys()].sort();
   const letta = LETTURA_AGENDA;
   const da = letta && letta < date[0] ? letta : date[0];
-  return { da, a: date[date.length - 1] };
+  const ultimoEvento = date[date.length - 1];
+  // La fine del periodo coperto NON è l'ultimo allenamento programmato: il
+  // comando legge sempre alcune settimane in avanti, e i giorni dopo l'ultimo
+  // evento sono stati guardati e sono vuoti. Prima l'app chiedeva di
+  // aggiornare un calendario appena letto, all'infinito.
+  const finestra = ULTIMA_LETTURA_AGENDA
+    ? piuGiorni(ULTIMA_LETTURA_AGENDA, ORIZZONTE_AGENDA_GIORNI)
+    : ultimoEvento;
+  return { da, a: finestra > ultimoEvento ? finestra : ultimoEvento, ultimoEvento };
 }
 
 export async function agenda() {
@@ -1496,6 +1579,7 @@ export async function svuotaAgenda() {
   await setImpostazione("primaLetturaAgenda", null);
   AGENDA = new Map();
   LETTURA_AGENDA = null;
+  ULTIMA_LETTURA_AGENDA = null;
 }
 
 /** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */

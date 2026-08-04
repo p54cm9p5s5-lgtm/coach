@@ -405,7 +405,11 @@ async function incolla(ridisegna) {
   }
 
   const conteggio = await store.importaSalute(pacchetto);
-  await store.snapshotAutomatico("import salute");
+  try {
+    await store.snapshotAutomatico("import salute");
+  } catch {
+    // i dati sono già entrati: la copia interna non deve far fallire l'import
+  }
 
   // Nel riepilogo compare solo quello che il pacchetto conteneva davvero: una
   // fila di zeri fa sembrare fallito un import riuscito.

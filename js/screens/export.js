@@ -198,10 +198,14 @@ async function componi(stato) {
     const tipoGiorno = (data) => {
       if (perData.has(data)) return `Allenamento (${perData.get(data)})`;
       const previsto = store.giornoPrevisto(data);
+      // Un giorno non ancora finito non è «non fatto»: il controllo di oggi
+      // deve venire PRIMA, altrimenti l'allenamento di stasera risulta saltato.
+      if (data >= isoDate()) return previsto ? `Oggi (previsto ${previsto.nome})` : "Oggi";
       if (previsto) return `Non fatto (era previsto ${previsto.nome})`;
       const org = store.origineGiorno(data);
       if (org.sconosciuto) return `Da calendario: «${org.titolo}»`;
       if (org.scaduta) return `Calendario non aggiornato (letto fino al ${dataBreve(org.fine)})`;
+      if (org.oltreProgrammato) return "Non ancora programmato dal coach";
       if (org.nonLetta) return "Calendario non letto per quel giorno";
       return "Riposo";
     };
@@ -230,7 +234,7 @@ async function componi(stato) {
   }
 
   if (stato.proposte) {
-    await store.aggiornaProposte();
+    await store.inCoda(() => store.aggiornaProposte());
     const sospese = await store.proposteInSospeso();
     pezzi.push(bloccoProposte(sospese, nomeLivello));
     contenuto.push(`${sospese.length} proposte`);
