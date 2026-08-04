@@ -168,6 +168,106 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
 }
 
 /**
+ * Punteggio Salute di una giornata: 0-100, con la stessa architettura del
+ * punteggio di allenamento — voci con un peso, tetti che nessuna media può
+ * aggirare, e niente inventato dove il dato non c'è.
+ *
+ * Le voci senza dato restano fuori dal conto invece di valere zero: una notte
+ * non registrata non è una notte insonne. Il peso si redistribuisce su quello
+ * che si sa davvero, e il dettaglio dice sempre perché.
+ *
+ * @param notte        { durataMin } della notte cominciata la sera prima
+ * @param allenamento  completezza 0-100 dell'allenamento chiuso quel giorno
+ * @param previsto     se quel giorno il programma prevedeva un allenamento
+ * @param giorno       riga dei dati salute: kcalAttive, obiettivoKcal
+ * @param sigarette    quante ne hai segnate (null = prima che tenessi il conto)
+ */
+export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, regole }) {
+  const R = (regole && regole.salute) || {};
+  const pesi = R.pesi || { sonno: 30, allenamento: 30, movimento: 20, fumo: 20 };
+  const oreBersaglio = R.sonnoOreBersaglio ?? 7.5;
+  const oreMinime = R.sonnoOreMinime ?? 6;
+  const tollerate = R.sigaretteTollerate ?? 10;
+  const voci = [];
+  const tetti = [];
+
+  // --- sonno: la notte cominciata la sera prima
+  if (notte?.durataMin != null) {
+    const ore = notte.durataMin / 60;
+    voci.push({
+      nome: "Sonno",
+      quota: sottoBersaglio(ore / oreBersaglio, 2),
+      peso: pesi.sonno,
+      dettaglio: `${num(ore, 1)}h su ${num(oreBersaglio, 1)}h`,
+    });
+    if (ore < oreMinime) tetti.push({ tetto: 70, perche: `meno di ${num(oreMinime, 0)} ore di sonno` });
+  } else {
+    voci.push({ nome: "Sonno", quota: null, peso: pesi.sonno, dettaglio: "non registrato" });
+  }
+
+  // --- allenamento: quello chiuso quel giorno, o l'assenza di quello previsto
+  if (allenamento != null) {
+    voci.push({
+      nome: "Allenamento",
+      quota: limita(allenamento / 100),
+      peso: pesi.allenamento,
+      dettaglio: `completezza ${Math.round(allenamento)}`,
+    });
+  } else if (previsto) {
+    voci.push({ nome: "Allenamento", quota: 0, peso: pesi.allenamento, dettaglio: "previsto, non fatto" });
+    tetti.push({ tetto: 60, perche: "allenamento previsto e non fatto" });
+  } else {
+    // Un giorno di riposo è parte del programma: non è un vuoto da punire.
+    voci.push({ nome: "Allenamento", quota: null, peso: pesi.allenamento, dettaglio: "riposo" });
+  }
+
+  // --- movimento: le calorie attive contro l'obiettivo dell'anello
+  const obiettivo = giorno?.obiettivoKcal || R.obiettivoMovimento || null;
+  if (giorno?.kcalAttive != null && obiettivo) {
+    voci.push({
+      nome: "Movimento",
+      quota: sottoBersaglio(giorno.kcalAttive / obiettivo, 1.5),
+      peso: pesi.movimento,
+      dettaglio: `${Math.round(giorno.kcalAttive)} su ${Math.round(obiettivo)} kcal`,
+    });
+  } else {
+    voci.push({ nome: "Movimento", quota: null, peso: pesi.movimento, dettaglio: "non registrato" });
+  }
+
+  // --- fumo: zero vale pieno, la soglia tollerata vale zero, oltre è un tetto
+  if (sigarette != null) {
+    voci.push({
+      nome: "Fumo",
+      quota: limita(1 - sigarette / tollerate),
+      peso: pesi.fumo,
+      dettaglio: sigarette === 0 ? "nessuna sigaretta" : `${sigarette} su ${tollerate} tollerate`,
+    });
+    if (sigarette > tollerate) {
+      tetti.push({ tetto: 50, perche: `oltre le ${tollerate} sigarette tollerate` });
+    } else if (sigarette === tollerate) {
+      tetti.push({ tetto: 70, perche: `al limite delle ${tollerate} sigarette` });
+    }
+  } else {
+    voci.push({ nome: "Fumo", quota: null, peso: pesi.fumo, dettaglio: "non ancora contate" });
+  }
+
+  const pesati = voci.filter((v) => v.quota != null);
+  if (!pesati.length) return { totale: null, voci, limite: null, completo: false };
+  const pesoTotale = pesati.reduce((t, v) => t + v.peso, 0) || 1;
+  let totale = Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100);
+
+  const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];
+  if (limite && totale > limite.tetto) totale = limite.tetto;
+
+  return {
+    totale,
+    voci,
+    limite: limite && limite.tetto <= totale ? limite : null,
+    completo: pesati.length === voci.length,
+  };
+}
+
+/**
  * Punteggio dell'allenamento intero. Non è la media degli esercizi: un
  * allenamento è anche il riscaldamento, il cardio e lo stretching, e un
  * esercizio saltato pesa quanto uno fatto male.

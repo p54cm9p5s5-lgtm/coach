@@ -2,7 +2,9 @@
    Tutti i dati restano sul dispositivo. */
 
 const DB_NAME = "coach";
-const DB_VERSION = 1;
+// Sale solo quando si aggiunge un archivio: l'aggiornamento qui sotto crea
+// quello che manca e non tocca niente di quello che c'è già.
+const DB_VERSION = 2;
 
 /** store -> { keyPath, indexes: { nome: keyPath } } */
 export const SCHEMA = {
@@ -23,6 +25,9 @@ export const SCHEMA = {
   proposte: { keyPath: "id", indexes: { stato: "stato", esercizioId: "esercizioId" } },
   decisioni: { keyPath: "id", indexes: { data: "data" } },
   segnali: { keyPath: "id", indexes: { data: "data" } },
+  // Una riga per sigaretta, non un totale al giorno: l'ora serve a vedere
+  // quando capitano, e disfare l'ultima diventa togliere una riga.
+  fumo: { keyPath: "id", indexes: { data: "data" } },
 };
 
 let dbPromise = null;

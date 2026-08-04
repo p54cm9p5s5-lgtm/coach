@@ -294,6 +294,17 @@ const REGOLE_BASE = {
   // Ogni quanto vanno prese le misure e rifatte le foto. Sono cadenze del
   // protocollo, non del calendario: l'app le tiene sempre, anche quando gli
   // allenamenti arrivano dal calendario del coach.
+  // Il punteggio Salute del giorno: quanto pesa ognuna delle parti e quali
+  // sono i bersagli. Sono numeri dichiarati, non inventati dentro al codice:
+  // il master brief può cambiarli come cambia tutto il resto.
+  salute: {
+    pesi: { sonno: 30, allenamento: 30, movimento: 20, fumo: 20 },
+    sonnoOreBersaglio: 7.5,
+    sonnoOreMinime: 6,
+    // Sopra questa soglia la giornata è comunque compromessa, per quanto bene
+    // sia andato tutto il resto: è il tetto, non una sottrazione.
+    sigaretteTollerate: 10,
+  },
   cadenze: {
     misureGiornoSettimana: 4, // giovedì
     fotoGiornoSettimana: 3, // mercoledì
@@ -1801,6 +1812,98 @@ async function riabbinaAgenda() {
  * verrebbero sovrascritti, perché un campo assente non azzera il precedente.
  * Allenamenti, misure, foto e programma non si toccano.
  */
+// ---------- punteggio Salute ----------
+
+/**
+ * Il punteggio Salute giorno per giorno, dal più recente al più vecchio.
+ * Mette insieme quello che l'app sa davvero di quella giornata: la notte
+ * cominciata la sera prima, l'allenamento chiuso, il movimento importato e le
+ * sigarette contate. Un giorno senza nessuno di questi dati non fa punteggio:
+ * resta `null`, e il grafico lo lascia vuoto invece di disegnare uno zero.
+ */
+export async function punteggiSalute(dal, al = isoDate()) {
+  const { punteggioSalute } = await import("./punteggio.js");
+  const reg = regole();
+  const perNotte = new Map((await notti()).map((n) => [n.data, n]));
+  const giorni = new Map((await giorniSalute()).map((g) => [g.data, g]));
+  const fumate = await conteggioFumo();
+  const primoFumo = await primoGiornoFumo();
+  const chiuse = (await allenamenti()).filter((s) => s.stato === "completata");
+  const perData = new Map();
+  for (const sed of chiuse) {
+    const comp = await completezzaSeduta(sed.id);
+    if (comp?.totale != null) perData.set(sed.data, Math.max(perData.get(sed.data) ?? 0, comp.totale));
+  }
+
+  const inizio = programma()?.aggiornatoIl || null;
+  const out = [];
+  const d = new Date(al + "T00:00:00");
+  const fine = new Date(dal + "T00:00:00");
+  while (d >= fine) {
+    const p = (n) => String(n).padStart(2, "0");
+    const data = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    const giorno = giorni.get(data);
+    const notte = perNotte.get(data);
+    const allen = perData.get(data) ?? null;
+    // Prima che il programma esistesse non era previsto niente: segnare quei
+    // giorni come «allenamento saltato» dipingerebbe di rosso un passato che
+    // non c'era.
+    const previsto = inizio && data >= inizio ? Boolean(giornoPrevisto(data)) : false;
+    const sigarette = primoFumo && data >= primoFumo ? fumate.get(data) ?? 0 : null;
+    const r = punteggioSalute({
+      notte: notte?.presente ? notte : null,
+      allenamento: allen,
+      previsto,
+      giorno: giorno?.presente ? giorno : null,
+      sigarette,
+      regole: reg,
+    });
+    out.push({ data, ...r, sigarette });
+    d.setDate(d.getDate() - 1);
+  }
+  return out;
+}
+
+// ---------- fumo ----------
+
+/** Una riga per sigaretta: l'ora serve, e disfare è togliere l'ultima. */
+export async function segnaSigaretta(data = isoDate()) {
+  const rec = { id: db.nuovoId("fum"), data, ts: Date.now(), creatoIl: new Date().toISOString() };
+  await db.put("fumo", rec);
+  return rec;
+}
+
+export async function sigaretteDi(data = isoDate()) {
+  return (await db.byIndex("fumo", "data", data)).sort((a, b) => a.ts - b.ts);
+}
+
+/** Toglie l'ultima segnata del giorno: il «−» è per quando sbagli a premere. */
+export async function togliSigaretta(data = isoDate()) {
+  const oggi = await sigaretteDi(data);
+  const ultima = oggi.at(-1);
+  if (!ultima) return false;
+  await db.del("fumo", ultima.id);
+  return true;
+}
+
+/**
+ * Il primo giorno in cui hai segnato qualcosa. Prima di quello il conteggio
+ * non esiste — e «nessuna riga» non vuol dire «non ho fumato», vuol dire che
+ * non lo stavi contando. Il punteggio lo tiene fuori invece di regalare punti.
+ */
+export async function primoGiornoFumo() {
+  const tutte = await db.all("fumo");
+  if (!tutte.length) return null;
+  return tutte.map((x) => x.data).sort()[0];
+}
+
+/** Conteggio giorno per giorno, per il grafico e per il punteggio. */
+export async function conteggioFumo() {
+  const per = new Map();
+  for (const x of await db.all("fumo")) per.set(x.data, (per.get(x.data) || 0) + 1);
+  return per;
+}
+
 export async function svuotaSalute() {
   await db.clearStore("giorniSalute");
   await db.clearStore("notti");
