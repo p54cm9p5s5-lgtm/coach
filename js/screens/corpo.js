@@ -325,6 +325,7 @@ async function registra(ridisegna) {
                   titolo: "Misure salvate solo in parte",
                   testo: `Ne sono entrate ${entrate} su ${scelte.size}: ${e.message}. Riapri «Registra» e reinserisci quelle che mancano.`,
                   opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+                  annulla: false,
                 });
               }
               salvato = entrate > 0;
@@ -523,6 +524,7 @@ async function nuovoSet(ridisegna) {
         titolo: "Foto non salvata",
         testo: `«${posa.nome}» non è entrata nell'archivio: ${e.message}. Di solito è lo spazio del telefono. Libera spazio e rifai il set: le pose già salvate restano.`,
         opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+        annulla: false,
       });
       break;
     }
@@ -641,6 +643,7 @@ async function importaSet(ridisegna) {
         titolo: "Foto non salvate",
         testo: `Ne sono entrate ${salvate} su ${scelte.size}: ${e.message}. Di solito è lo spazio del telefono. Libera spazio e ripeti solo le pose che mancano.`,
         opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+        annulla: false,
       });
       break;
     }

@@ -105,6 +105,7 @@ export async function render({ vaiA }) {
                 titolo: "Copia non riuscita",
                 testo: "iOS non ha concesso la scrittura negli appunti. Tieni premuto sull'anteprima e usa Seleziona tutto → Copia.",
                 opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+                annulla: false,
               });
             }
           },

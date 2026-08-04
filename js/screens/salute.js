@@ -581,6 +581,7 @@ async function incolla(ridisegna) {
       titolo: "Non importato",
       testo: `${e.message}${dettagli}`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
     });
     return;
   }
@@ -598,7 +599,7 @@ async function incolla(ridisegna) {
   if (conteggio.giorni) {
     righe.push(
       `${conteggio.giorni} ${conteggio.giorni === 1 ? "giorno" : "giorni"} di movimento` +
-        (conteggio.aggiornati ? ` (${conteggio.aggiornati} aggiornati)` : "")
+        (conteggio.aggiornati ? ` (${conteggio.aggiornati} ${conteggio.aggiornati === 1 ? "aggiornato" : "aggiornati"})` : "")
     );
   }
   if (conteggio.notti) righe.push(`${conteggio.notti} ${conteggio.notti === 1 ? "notte" : "notti"} di sonno`);
@@ -613,6 +614,7 @@ async function incolla(ridisegna) {
     titolo: righe.length ? "Importato" : "Niente da importare",
     testo: righe.length ? righe.join("\n") : "Il pacchetto era vuoto.",
     opzioni: [{ etichetta: "Bene", valore: "ok" }],
+    annulla: false,
   });
 
   await ridisegna();

@@ -234,7 +234,13 @@ export function sheet(build) {
   });
 }
 
-export function chiedi({ titolo, testo, opzioni }) {
+/**
+ * `annulla: false` toglie il pulsante «Annulla»: serve ai pannelli che danno
+ * solo una notizia («Ho capito», «Bene»), dove offrire di annullare fa pensare
+ * che ci sia qualcosa da disfare. Resta per tutte le conferme, dove è la via
+ * d'uscita. In ogni caso si può sempre chiudere toccando fuori dal pannello.
+ */
+export function chiedi({ titolo, testo, opzioni, annulla = true }) {
   return sheet((close) =>
     h(
       "div",
@@ -253,7 +259,7 @@ export function chiedi({ titolo, testo, opzioni }) {
             o.etichetta
           )
         ),
-        h("button.btn.secondary", { onclick: () => close(undefined) }, "Annulla")
+        annulla ? h("button.btn.secondary", { onclick: () => close(undefined) }, "Annulla") : null
       )
     )
   );
