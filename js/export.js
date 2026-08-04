@@ -239,6 +239,25 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
       ? tabella(["Data", "Giorno", "Tipo", "Movimento kcal", "% obiettivo", "Passi", "Note"], righeG)
       : "Nessun dato di movimento.",
     "",
+    // Il resto del movimento non entra nella tabella del §9-bis (le colonne
+    // sono fisse e il coach le legge a colpo d'occhio): sta sotto, in una riga.
+    (() => {
+      const conDati = giorni.slice(0, 7).filter((g) => g.presente);
+      const media = (campo, dec = 0) => {
+        const v = conDati.map((g) => g[campo]).filter((x) => x != null);
+        if (!v.length) return null;
+        return num(v.reduce((a, b) => a + b, 0) / v.length, dec);
+      };
+      const parti = [
+        media("oreInPiedi") ? `in piedi ${media("oreInPiedi")} h/giorno` : null,
+        media("pianiSaliti") ? `${media("pianiSaliti")} piani/giorno` : null,
+        media("distanzaKm", 1) ? `${media("distanzaKm", 1)} km/giorno` : null,
+        media("minutiEsercizio") ? `${media("minutiEsercizio")} min di esercizio/giorno` : null,
+        media("fcRiposo") ? `FC a riposo ${media("fcRiposo")} bpm` : null,
+      ].filter(Boolean);
+      return parti.length ? `Resto del movimento (media 7 giorni): ${parti.join(" · ")}` : null;
+    })(),
+    "",
     righeN.length
       ? tabella(
           ["Data (notte del)", "Ore sonno", "Punteggio", "Fase Profondo", "Fase REM", "Veglia", "Note"],

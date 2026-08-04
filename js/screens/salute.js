@@ -245,6 +245,55 @@ export async function render({ ridisegna }) {
     );
   }
 
+  // ---- il resto del movimento: in piedi, piani, distanza ----
+  // Non hanno un grafico ciascuno: sarebbero quattro schede quasi uguali. Qui
+  // stanno insieme, con la media del periodo e l'ultimo giorno registrato.
+  const fAltro = conPeriodo();
+  const giorniAltro = giorni.filter(fAltro.dentro);
+  const ALTRI = [
+    { campo: "oreInPiedi", nome: "Ore in piedi", unita: "h", dec: 0 },
+    { campo: "pianiSaliti", nome: "Piani saliti", unita: "", dec: 0 },
+    { campo: "distanzaKm", nome: "Distanza", unita: "km", dec: 1 },
+    { campo: "minutiEsercizio", nome: "Minuti di esercizio", unita: "min", dec: 0 },
+    { campo: "fcRiposo", nome: "Frequenza a riposo", unita: "bpm", dec: 0 },
+  ].filter((x) => giorniAltro.some((g) => g[x.campo] != null));
+
+  if (ALTRI.length) {
+    const righe = h("div.list");
+    for (const a of ALTRI) {
+      const m = media(giorniAltro, a.campo);
+      const ultimo = [...giorniAltro]
+        .sort((x, y) => (x.data < y.data ? 1 : -1))
+        .find((g) => g[a.campo] != null);
+      aggiungi(righe,
+        h(
+          "div.row",
+          h(
+            "div.main",
+            h("span.title", a.nome),
+            h(
+              "span.sub",
+              m ? `media su ${m.quanti} ${m.quanti === 1 ? "giorno" : "giorni"} · ${fAltro.etichetta}` : "nessun dato"
+            )
+          ),
+          h("span.value", m ? `${num(m.valore, a.dec)}${a.unita ? ` ${a.unita}` : ""}` : "—"),
+          ultimo
+            ? h("span.pill", `${dataBreve(ultimo.data)}: ${num(ultimo[a.campo], a.dec)}`)
+            : null
+        )
+      );
+    }
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h("h2", "Resto del movimento"),
+        fAltro.selettore,
+        righe,
+        h("p.footnote", "Arrivano dal comando rapido Salute. Non entrano nel punteggio: servono a leggere le giornate.")
+      )
+    );
+  }
+
   // ---- sonno ----
   const fSonno2 = conPeriodo();
   const nottiOrd = perGrafico(notti.filter(fSonno2.dentro));
