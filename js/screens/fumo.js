@@ -19,11 +19,14 @@ function colore(n) {
 }
 
 /**
- * La sigaretta accesa.
+ * Il segnale «vietato fumare».
  *
- * Il disegno resta sempre uguale — corpo bianco, filtro arancione, brace
- * accesa: è un'illustrazione, non un indicatore. A cambiare colore con le
- * soglie è il numero, che è il dato.
+ * Il disegno resta sempre uguale: è un'illustrazione, non un indicatore.
+ * A cambiare colore con le soglie è il numero, che è il dato.
+ *
+ * Sigaretta e fumo prendono il colore del testo invece del nero, se no su
+ * fondo scuro sparirebbero. Il cerchio resta rosso: è quello che rende il
+ * segnale riconoscibile a colpo d'occhio.
  */
 function sigarettaSvg() {
   const NS = "http://www.w3.org/2000/svg";
@@ -32,47 +35,40 @@ function sigarettaSvg() {
     for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
     return n;
   };
-  const svg = el("svg", { viewBox: "32 15 156 125", width: "232", height: "186", "aria-hidden": "true" });
+  const svg = el("svg", { viewBox: "0 0 200 200", width: "212", height: "212", "aria-hidden": "true" });
   svg.style.display = "block";
   svg.style.margin = "0 auto";
 
-  const TRATTO = "#1c1c1e";
+  const NERO = "var(--label)";
+  // il rosso del segnale, non quello della palette: deve essere quello pieno
+  // dei cartelli, se no sembra sbiadito.
+  const ROSSO = "#ed1c24";
 
-  // il filo di fumo che sale dalla brace
+  // la sigaretta: corpo pieno e i tre segmenti della parte che brucia
+  svg.append(
+    el("rect", { x: 36, y: 91, width: 90, height: 19, fill: NERO }),
+    el("rect", { x: 131, y: 91, width: 6, height: 19, fill: NERO }),
+    el("rect", { x: 142, y: 91, width: 6, height: 19, fill: NERO }),
+    el("rect", { x: 153, y: 91, width: 6, height: 19, fill: NERO })
+  );
+
+  // le due volute di fumo
   svg.append(
     el("path", {
-      d: "M176 50c-6-7 5-11 0-18s-9-5-6-13",
-      stroke: "#c7c7cc", "stroke-width": 6, "stroke-linecap": "round", fill: "none", opacity: "0.75",
+      d: "M136 88C136 75 121 75 121 62 121 49 136 49 136 36",
+      stroke: NERO, "stroke-width": 10, fill: "none", "stroke-linecap": "round",
+    }),
+    el("path", {
+      d: "M113 88C113 77 99 77 99 65 99 53 113 53 113 42",
+      stroke: NERO, "stroke-width": 10, fill: "none", "stroke-linecap": "round",
     })
   );
 
-  const sig = el("g", { transform: "rotate(-27 110 90)" });
-  sig.append(
-    // corpo
-    el("rect", { x: 34, y: 77, width: 144, height: 26, rx: 5, fill: "#f5f5f7", stroke: TRATTO, "stroke-width": 3.5 }),
-    // filtro
-    el("path", {
-      d: "M39 77h40v26H39a5 5 0 0 1-5-5V82a5 5 0 0 1 5-5z",
-      fill: "#dd9f3c", stroke: TRATTO, "stroke-width": 3.5,
-    }),
-    ...[[46, 84], [58, 82], [69, 85], [50, 96], [63, 97], [72, 92]].map(([cx, cy]) =>
-      el("circle", { cx, cy, r: 2, fill: TRATTO, opacity: "0.6" })
-    ),
-    // le pieghe della carta bruciata vicino alla brace
-    el("path", {
-      d: "M148 79v22M156 80v20M163 82v16",
-      stroke: TRATTO, "stroke-width": 2.8, "stroke-linecap": "round", fill: "none",
-    }),
-    // la brace
-    el("ellipse", { cx: 177, cy: 90, rx: 9.5, ry: 13, fill: "#f5f5f7", stroke: TRATTO, "stroke-width": 3.5 }),
-    el("ellipse", { cx: 178, cy: 90, rx: 5.5, ry: 9, fill: "#d2691e" }),
-    // la cenere: qualche fiocco scuro sul rosso, non due righe nere
-    el("ellipse", { cx: 177, cy: 87, rx: 2.6, ry: 3.4, fill: "#f5a623", opacity: "0.85" }),
-    ...[[176, 92], [180, 88], [179, 94], [175.5, 89]].map(([cx, cy]) =>
-      el("circle", { cx, cy, r: 1.35, fill: "#4a2a10", opacity: "0.85" })
-    )
+  // il cerchio e la sbarra
+  svg.append(
+    el("circle", { cx: 100, cy: 100, r: 80, stroke: ROSSO, "stroke-width": 22, fill: "none" }),
+    el("path", { d: "M51.2 51.2L148.8 148.8", stroke: ROSSO, "stroke-width": 22 })
   );
-  svg.append(sig);
   return svg;
 }
 
