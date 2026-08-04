@@ -117,12 +117,24 @@ export function analizza(testo) {
     } else if (tipo === "AGENDA") {
       // Un evento del calendario: dice quale allenamento tocca quel giorno.
       // Il contenuto (esercizi, carichi) resta quello del master brief.
-      const titolo = (c.titolo || "").trim();
+      // I titoli degli eventi hanno gli spazi («Full Body A», «Gambe e core»).
+      // Letti a coppie chiave=valore si fermavano alla prima parola, e il
+      // resto del titolo spariva: un evento poteva non essere più riconosciuto
+      // come allenamento. Qui il titolo è tutto quello che segue «titolo=»
+      // fino all'eventuale chiave dopo (nota=).
+      const grezzo = coda.slice(data.length).trim();
+      const intero = grezzo.match(/titolo\s*=\s*(?:"([^"]*)"|(.*?))(?=\s+[a-zA-Z]\w*\s*=|$)/);
+      const titolo = ((intero?.[1] ?? intero?.[2] ?? c.titolo) || "").trim();
       if (!titolo) {
         risultato.avvisi.push(`Evento senza titolo il ${data}: ignorato.`);
         continue;
       }
-      risultato.agenda.push({ data, titolo, nota: c.nota || null });
+      const notaIntera = grezzo.match(/nota\s*=\s*(?:"([^"]*)"|(.*?))(?=\s+[a-zA-Z]\w*\s*=|$)/);
+      risultato.agenda.push({
+        data,
+        titolo,
+        nota: ((notaIntera?.[1] ?? notaIntera?.[2] ?? c.nota) || "").trim() || null,
+      });
     } else {
       risultato.avvisi.push(`Riga di tipo sconosciuto, ignorata: «${tipo}»`);
     }

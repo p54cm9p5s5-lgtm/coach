@@ -50,7 +50,8 @@ async function elenco(vaiA, ridisegna) {
           h(
             "div.main",
             h("span.title", p.titolo),
-            h("span.sub", `Accettata il ${dataBreve(p.data)} · verifica prevista ${dataBreve(p.dataVerifica)}`)
+            // La data in cui hai risposto, non quella in cui la proposta è nata.
+            h("span.sub", `Accettata il ${dataBreve((p.rispostoIl || p.data).slice(0, 10))} · verifica prevista ${dataBreve(p.dataVerifica)}`)
           ),
           h("span.pill.warn", "da verificare"),
           h("span.chevron", "›")
@@ -289,7 +290,7 @@ function chiediNota(stato) {
 async function apriVerifica(p, ridisegna) {
   const esito = await chiedi({
     titolo: p.titolo,
-    testo: `Accettata il ${dataLunga(p.data)}. Il risultato atteso era: ${p.quattroDomande.atteso}`,
+    testo: `Accettata il ${dataLunga((p.rispostoIl || p.data).slice(0, 10))}. Il risultato atteso era: ${p.quattroDomande.atteso}`,
     opzioni: [
       { etichetta: "Confermata", valore: "confermata" },
       { etichetta: "Non confermata", valore: "nonConfermata" },

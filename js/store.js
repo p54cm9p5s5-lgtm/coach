@@ -187,8 +187,10 @@ export function giornoPrevisto(iso = isoDate()) {
   }
   // Calendario collegato: comanda lui anche sui giorni che non nomina. Un
   // giorno senza evento è un giorno senza allenamento, non un giorno da
-  // riempire con lo split.
-  if (agendaAttiva()) return null;
+  // riempire con lo split. Ma solo dentro il periodo che il calendario ha
+  // davvero letto: prima di quello (il passato, che il comando non guarda) il
+  // calendario non ha nulla da dire, e resta valido lo split del brief.
+  if (agendaAttiva() && iso >= (intervalloAgenda()?.da ?? iso)) return null;
   const wd = weekdayOf(iso);
   return (PROGRAMMA.split || []).find((g) => g.giorno === wd) || null;
 }
@@ -201,8 +203,11 @@ export function origineGiorno(iso = isoDate()) {
     // Un'agenda che finisce nel passato non è «oggi riposo»: è un pacchetto
     // vecchio. Senza dirlo, chi smette di importare vede riposo per sempre e
     // crede che il coach non abbia previsto niente.
-    const fine = intervalloAgenda()?.a;
-    if (fine && fine < iso) return { fonte: "calendario", scaduta: true, fine };
+    const periodo = intervalloAgenda();
+    if (periodo?.a && periodo.a < iso) return { fonte: "calendario", scaduta: true, fine: periodo.a };
+    // Prima dell'inizio della lettura non si può dire «niente sul calendario»:
+    // quel giorno il calendario non è mai stato letto. Lì vale lo split.
+    if (periodo?.da && iso < periodo.da) return { fonte: "split", nonLetta: true, da: periodo.da };
     return { fonte: "calendario", vuoto: true };
   }
   if (ev.giornoId === "riposo") return { fonte: "calendario", titolo: ev.titolo, riposo: true };
@@ -316,6 +321,10 @@ export async function iniziaSeduta({ data = isoDate(), giornoId }) {
     tipoId: g.id,
     tipoNome: g.nome,
     tipoProgrammatoId: giornoPrevisto(data)?.id || null,
+    // Cosa prevedeva il programma per questo allenamento, congelato adesso:
+    // se il coach cambia lo split domani, il punteggio e il riepilogo di oggi
+    // devono restare quelli di oggi.
+    previstiElenco: (g.esercizi || []).map((v) => ({ ...v })),
     stato: "inCorso",
     oraInizio: Date.now(),
     oraFine: null,
@@ -343,10 +352,19 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
   invalidaCacheSedute();
   const s = await db.get("sedute", id);
   if (!s) throw new Error("Questa seduta non esiste più: forse è stata eliminata altrove.");
+  // La durata è quella dell'allenamento, non quella del telefono acceso: se
+  // il riepilogo resta aperto un'ora, «Chiudi» segnava un'ora in più. Si usa
+  // l'ultima cosa che hai davvero fatto — l'ultima serie, o la fine del cardio.
+  const serieFatte = await db.byIndex("serie", "sedutaId", id);
+  const ultimoGesto = Math.max(0, ...serieFatte.map((x) => x.tsFineSerie || 0));
+  const adesso = Date.now();
+  // Un margine di dieci minuti copre stretching e questionario finale; oltre
+  // quello è tempo in cui l'allenamento era già finito.
+  const fine = ultimoGesto && adesso - ultimoGesto > 10 * 60000 ? ultimoGesto + 10 * 60000 : adesso;
   const agg = {
     ...s,
     stato: "completata",
-    oraFine: Date.now(),
+    oraFine: fine,
     notaGenerale: notaGenerale ?? s.notaGenerale,
     progresso: { fase: "fine", indice: 0 },
   };
@@ -515,7 +533,11 @@ export async function completezzaSeduta(id) {
   if (sed.completezza) {
     return { ...sed.completezza, perEsercizio: new Map(Object.entries(sed.completezza.perEsercizio || {})) };
   }
-  const giorno = giornoSplit(sed.tipoId);
+  // L'elenco congelato all'avvio vale più dello split di oggi: è quello che il
+  // programma chiedeva quando ti sei allenato.
+  const giorno = sed.previstiElenco?.length
+    ? { esercizi: sed.previstiElenco }
+    : giornoSplit(sed.tipoId);
   const serie = await serieDi(id);
   const logs = await questionariDi(id);
   const reg = regole();
@@ -609,6 +631,14 @@ async function seduteInMemoria() {
   }, 1500);
   return cacheSedute;
 }
+
+/**
+ * Quante volte quell'esercizio è stato DAVVERO fatto.
+ * Il motore delle proposte conta così (js/segnali.js: niente saltati, e almeno
+ * una serie): tutto il resto dell'app deve contare allo stesso modo, altrimenti
+ * un esercizio saltato «consumava» una proposta accettata senza portare dati.
+ */
+export const esposizioniSvolte = (esp) => (esp || []).filter((e) => !e.saltato && e.serie?.length);
 
 export async function esposizioni(esercizioId, { soloCompletate = true } = {}) {
   const serie = await db.byIndex("serie", "esercizioId", esercizioId);
@@ -758,6 +788,8 @@ export async function aggiornaProposte(cache = null) {
     if (!def || def.archiviato) continue;
 
     const esp = cache?.get(esercizioId) ?? (await esposizioni(esercizioId));
+    // Per i confronti con le risposte già date conta solo il lavoro vero.
+    const svolte = esposizioniSvolte(esp);
     const { proposta: nuova } = valutaProgressione({
       variante,
       def,
@@ -787,12 +819,12 @@ export async function aggiornaProposte(cache = null) {
       const allaRisposta = rispostaPrec.esposizioniAllaRisposta ?? rispostaPrec.esposizioniAllaData ?? 0;
       if (rispostaPrec.stato === "rimandata") {
         // rimandata: torna solo quando c'è un dato nuovo dopo la risposta
-        if (esp.length <= allaRisposta) continue;
+        if (svolte.length <= allaRisposta) continue;
       } else {
         // Accettata o rifiutata non si ripropone subito. Ma «mai più» è
         // sbagliato: dopo un ciclo intero di allenamenti la situazione è
         // un'altra, e la stessa proposta torna a essere una domanda sensata.
-        const nuoveEsposizioni = esp.length - allaRisposta;
+        const nuoveEsposizioni = svolte.length - allaRisposta;
         if (nuoveEsposizioni < (reg.progressione?.esposizioniPerRiproporre ?? 4)) continue;
       }
     }
@@ -808,7 +840,7 @@ export async function aggiornaProposte(cache = null) {
       data: oggi,
       stato: "inSospeso",
       firma,
-      esposizioniAllaData: esp.length,
+      esposizioniAllaData: svolte.length,
       esitoVerifica: null,
       rispostoIl: null,
       creatoIl: new Date().toISOString(),
@@ -878,7 +910,7 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
   // Prima si usava il conto di quando la proposta era nata: se ti allenavi
   // prima di rispondere, «Accetto» valeva già zero (l'obiettivo veniva scartato
   // subito) e «Rimando» faceva ricomparire la stessa proposta all'istante.
-  const espOra = await esposizioni(p.esercizioId);
+  const espOra = esposizioniSvolte(await esposizioni(p.esercizioId));
   const agg = {
     ...p,
     stato,
@@ -912,7 +944,7 @@ export async function obiettivoCorrente(esercizioId) {
     .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1));
   const p = mie[0];
   if (!p) return null;
-  const esp = await esposizioni(esercizioId);
+  const esp = esposizioniSvolte(await esposizioni(esercizioId));
   // Il conto giusto è quello del momento in cui hai risposto (le proposte
   // vecchie hanno solo quello di quando sono nate: si usa quello).
   const quando = p.esposizioniAllaRisposta ?? p.esposizioniAllaData;
@@ -930,7 +962,9 @@ export async function proposteAccettate() {
   const tutte = (await db.all("proposte")).filter((p) => p.stato === "accettata");
   const perEsercizio = new Map();
   for (const p of tutte) {
-    if (!perEsercizio.has(p.esercizioId)) perEsercizio.set(p.esercizioId, await esposizioni(p.esercizioId));
+    if (!perEsercizio.has(p.esercizioId)) {
+      perEsercizio.set(p.esercizioId, esposizioniSvolte(await esposizioni(p.esercizioId)));
+    }
   }
   return tutte.map((p) => ({
     ...p,
@@ -1061,8 +1095,13 @@ export async function misure(tipo = null) {
 }
 
 export async function registraMisura({ data = isoDate(), tipo, valore, condizioniStandard = true }) {
+  // Una misura per tipo e per giorno: rimisurarti nello stesso giorno
+  // correggeva il valore, invece ne salvava un secondo e i grafici mostravano
+  // due punti sulla stessa data.
+  const stesse = await db.byIndex("misure", "data", data);
+  const prec = stesse.find((m) => m.tipo === tipo);
   const rec = {
-    id: db.nuovoId("mis"),
+    id: prec?.id || db.nuovoId("mis"),
     data,
     tipo,
     valore,
@@ -1190,7 +1229,15 @@ export async function importaSalute(pacchetto) {
         altri: [],
         importatoIl: ora,
       };
-      if (giornoId && !scelto.giornoId) {
+      // Un allenamento vero batte sempre un «riposo» scritto lo stesso giorno:
+      // prima vinceva chi arrivava per primo, e un promemoria di riposo poteva
+      // nascondere l'allenamento previsto dal coach.
+      if (giornoId && giornoId !== "riposo" && scelto.giornoId === "riposo") {
+        scelto.altri.push(scelto.titolo);
+        scelto.titolo = e.titolo;
+        scelto.giornoId = giornoId;
+        scelto.nota = e.nota ?? null;
+      } else if (giornoId && !scelto.giornoId) {
         // l'allenamento prende il posto principale, l'eventuale titolo che
         // c'era prima scala fra i promemoria
         if (scelto.titolo) scelto.altri.push(scelto.titolo);
@@ -1212,6 +1259,17 @@ export async function importaSalute(pacchetto) {
     // Il pacchetto copre un intervallo continuo: dentro quell'intervallo è la
     // verità completa. Le date che il calendario non nomina più vanno svuotate,
     // altrimenti un allenamento cancellato dal coach resterebbe qui per sempre.
+    // Ogni lettura del calendario guarda sempre la stessa finestra in avanti.
+    // Quindi un giorno da oggi in poi che questa lettura NON nomina è un
+    // giorno che il coach ha cancellato: va tolto, anche se cade fuori
+    // dall'intervallo delle date lette (prima sopravviveva proprio quello in
+    // fondo, cioè l'ultimo allenamento cancellato).
+    const oggiIso = isoDate();
+    for (const [data, voce] of Object.entries(precedente)) {
+      if (data < oggiIso) continue; // il passato non viene riletto: non si tocca
+      if (perData.has(data)) continue;
+      if (voce.importatoIl && voce.importatoIl < ora) delete precedente[data];
+    }
     const lette = [...perData.keys()].sort();
     const da = lette[0];
     const a = lette[lette.length - 1];
@@ -1255,7 +1313,9 @@ const chiaveTitolo = (s) =>
 export function abbinaAlloSplit(titolo) {
   const t = chiaveTitolo(titolo);
   if (!t) return null;
-  if (t.includes("riposo")) return "riposo";
+  // Prima si cerca l'allenamento, poi il riposo: un evento come «Gambe/Core,
+  // poi riposo attivo» nomina un allenamento e vale come allenamento. Prima
+  // bastava la parola «riposo» in qualunque punto per cancellarlo.
   let migliore = null;
   for (const g of giorniSplit()) {
     const k = chiaveTitolo(g.nome);
@@ -1266,7 +1326,8 @@ export function abbinaAlloSplit(titolo) {
       if (!migliore || k.length > chiaveTitolo(migliore.nome).length) migliore = g;
     }
   }
-  return migliore?.id ?? null;
+  if (migliore) return migliore.id;
+  return t.includes("riposo") ? "riposo" : null;
 }
 
 async function caricaAgenda() {
@@ -1296,7 +1357,29 @@ async function riabbinaAgenda() {
   if (!Object.keys(salvata).length) return;
   let cambiato = false;
   for (const e of Object.values(salvata)) {
-    const id = abbinaAlloSplit(e.titolo);
+    // Si riprovano TUTTI i titoli del giorno, non solo il principale: un
+    // allenamento finito fra i promemoria perché il brief di allora non lo
+    // conosceva deve poter tornare al suo posto adesso.
+    const titoli = [e.titolo, ...(e.altri || [])].filter(Boolean);
+    let id = null;
+    let vincitore = null;
+    for (const t of titoli) {
+      const trovato = abbinaAlloSplit(t);
+      if (trovato && trovato !== "riposo") {
+        id = trovato;
+        vincitore = t;
+        break;
+      }
+      if (trovato && !id) {
+        id = trovato;
+        vincitore = t;
+      }
+    }
+    if (vincitore && vincitore !== e.titolo) {
+      e.altri = titoli.filter((t) => t !== vincitore);
+      e.titolo = vincitore;
+      cambiato = true;
+    }
     if (id !== e.giornoId) {
       e.giornoId = id;
       cambiato = true;
@@ -1309,6 +1392,10 @@ async function riabbinaAgenda() {
 /** Toglie tutto quello che è arrivato dal calendario e torna allo split del brief. */
 export async function svuotaAgenda() {
   await setImpostazione("agenda", {});
+  // Anche la data dell'ultima lettura se ne va: altrimenti le Impostazioni
+  // continuavano a dire «letto il …» e la Home a comportarsi come se il
+  // calendario comandasse ancora.
+  await setImpostazione("ultimoImportAgenda", null);
   AGENDA = new Map();
 }
 

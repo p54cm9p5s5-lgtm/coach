@@ -86,7 +86,7 @@ async function elenco(vaiA) {
     const lista = h("div.list");
     for (const id of usati) {
       const def = store.esercizio(id);
-      const esp = await store.esposizioni(id);
+      const esp = store.esposizioniSvolte(await store.esposizioni(id));
       aggiungi(lista, 
         h(
           "a.row",
