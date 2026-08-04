@@ -139,9 +139,12 @@ export function nuovoId(prefisso = "id") {
 
 // ---------- backup ----------
 
-export async function esportaTutto() {
+/** `salta` evita di leggere store pesanti quando non servono (le foto). */
+export async function esportaTutto({ salta = [] } = {}) {
   const dump = { formato: "coach-backup", versione: 1, creatoIl: new Date().toISOString(), dati: {} };
-  for (const store of Object.keys(SCHEMA)) dump.dati[store] = await all(store);
+  for (const store of Object.keys(SCHEMA)) {
+    dump.dati[store] = salta.includes(store) ? [] : await all(store);
+  }
   return dump;
 }
 
