@@ -323,13 +323,19 @@ async function avvia() {
   // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta
   // ieri finché non si ricarica, e la Home propone l'allenamento sbagliato.
   let giornoDisegnato = new Date().toDateString();
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") return;
+  const seCambiatoGiorno = () => {
     const adesso = new Date().toDateString();
     if (adesso === giornoDisegnato) return;
     giornoDisegnato = adesso;
     ridisegna();
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") seCambiatoGiorno();
   });
+  // Anche a schermo acceso: allenandoti a cavallo di mezzanotte l'app restava
+  // a ieri, e il tocco su «visibilitychange» non arrivava mai perché non
+  // uscivi mai dall'app.
+  setInterval(seCambiatoGiorno, 60000);
 
   // Toccare la scheda in cui sei già riporta in cima, come nelle app di
   // sistema. Se invece sei dentro un dettaglio, il tocco torna all'elenco:
