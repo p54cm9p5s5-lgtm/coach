@@ -48,6 +48,9 @@ export function vaiA(rotta) {
 }
 
 let modCorrente = null;
+/* Un aggiornamento arrivato durante l'allenamento resta in attesa: si applica
+   appena la seduta è chiusa. */
+let aggiornamentoInAttesa = false;
 
 let hashDisegnato = null;
 
@@ -70,7 +73,8 @@ export async function ridisegna() {
   const nome = nomeRotta();
   // Cambio di schermata: un pannello aperto non deve sopravvivere alla pagina
   // che l'ha aperto.
-  if (hashDisegnato !== null && hashDisegnato !== location.hash) chiudiFogli();
+  const cambioSchermata = hashDisegnato === null || hashDisegnato !== location.hash;
+  if (hashDisegnato !== null && cambioSchermata) chiudiFogli();
   hashDisegnato = location.hash;
   rottaCorrente = nome;
   const mod = await ROTTE[nome]();
@@ -87,11 +91,28 @@ export async function ridisegna() {
   }
   modCorrente = mod;
 
+  // Aggiornamento rimasto in attesa: si applica appena si esce dall'allenamento.
+  if (aggiornamentoInAttesa && nome !== "seduta") {
+    try {
+      if (!(await store.sedutaInCorso())) {
+        aggiornamentoInAttesa = false;
+        location.reload();
+        return;
+      }
+    } catch {
+      /* niente: si riproverà al prossimo disegno */
+    }
+  }
+
   const nodo = await mod.render({ vaiA, ridisegna });
 
+  const posizione = window.scrollY;
   clear(view);
   view.append(nodo);
-  window.scrollTo(0, 0);
+  // Ridisegnare la stessa schermata (freccia del mese, selettore del periodo)
+  // non è una navigazione: la pagina deve restare dov'era.
+  if (cambioSchermata) window.scrollTo(0, 0);
+  else window.scrollTo(0, posizione);
 
   for (const a of qsa(".tabbar a")) {
     a.classList.toggle("active", a.dataset.tab === nome);
@@ -184,8 +205,19 @@ async function registraServiceWorker() {
     // Quando la nuova versione prende il comando, la pagina si ricarica una
     // volta sola: così i moduli già in memoria non restano quelli vecchi.
     let ricaricato = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
+    navigator.serviceWorker.addEventListener("controllerchange", async () => {
       if (ricaricato) return;
+      // Mai ricaricare mentre un allenamento è aperto: si perderebbe la
+      // schermata in corso, il timer e il gesto che ha autorizzato l'audio.
+      // L'aggiornamento aspetta la fine.
+      try {
+        if (await store.sedutaInCorso()) {
+          aggiornamentoInAttesa = true;
+          return;
+        }
+      } catch {
+        /* se non si riesce a leggere l'archivio si ricarica come prima */
+      }
       ricaricato = true;
       location.reload();
     });
@@ -212,6 +244,17 @@ async function avvia() {
   }
 
   window.addEventListener("hashchange", ridisegna);
+
+  // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta
+  // ieri finché non si ricarica, e la Home propone l'allenamento sbagliato.
+  let giornoDisegnato = new Date().toDateString();
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    const adesso = new Date().toDateString();
+    if (adesso === giornoDisegnato) return;
+    giornoDisegnato = adesso;
+    ridisegna();
+  });
 
   // Toccare la scheda in cui sei già riporta in cima, come nelle app di
   // sistema. Se invece sei dentro un dettaglio, il tocco torna all'elenco:

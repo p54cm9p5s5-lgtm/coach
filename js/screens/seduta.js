@@ -1260,7 +1260,10 @@ async function vistaRecupero(corpo, piede) {
 
 function spostaTimer(sec) {
   if (!S.recuperoFine) return;
-  S.recuperoFine = Math.max(Date.now(), S.recuperoFine + sec * 1000);
+  // Se il tempo è già scaduto, «+15 s» deve dare quindici secondi da adesso:
+  // sommarli a un istante passato lasciava il pulsante morto.
+  const base = Math.max(S.recuperoFine, sec > 0 ? Date.now() : 0);
+  S.recuperoFine = Math.max(Date.now(), base + sec * 1000);
   if (S.recuperoFine > Date.now()) {
     fermaAllarme();
     }
@@ -1714,7 +1717,8 @@ async function vistaCardioInCorso(corpo, piede, r) {
 }
 
 function spostaCardio(min) {
-  S.cardioFine = Math.max(Date.now(), (S.cardioFine || Date.now()) + min * 60000);
+  const base = Math.max(S.cardioFine || Date.now(), min > 0 ? Date.now() : 0);
+  S.cardioFine = Math.max(Date.now(), base + min * 60000);
   if (S.cardioFine > Date.now()) fermaAllarme();
   salvaProgresso({ cardioFine: S.cardioFine });
 }
