@@ -167,46 +167,7 @@ export function sheet(build) {
       FOGLI_APERTI.delete(close);
       backdrop.remove();
       document.removeEventListener("keydown", onKey);
-      const vv = window.visualViewport;
-      if (vv) {
-        vv.removeEventListener("resize", adattaTastiera);
-        vv.removeEventListener("scroll", adattaTastiera);
-      }
       resolve(val);
-    };
-
-    /**
-     * Fa spazio alla tastiera. Su iOS la tastiera NON cambia né vh né dvh:
-     * l'unico che se ne accorge è visualViewport. Senza questo, il pannello
-     * resta alto quanto lo schermo e l'ultimo pulsante — «Importa», «Salva» —
-     * finisce sotto i tasti, dove non lo raggiungi.
-     */
-    const adattaTastiera = () => {
-      const vv = window.visualViewport;
-      if (!vv || chiuso) return;
-      const coperto = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      if (coperto > 60) {
-        // Sopra la tastiera iOS disegna la sua barra («Inserisci info», le
-        // frecce, la spunta) SOPRA la pagina: non compare in nessuna misura del
-        // browser, quindi va tenuta in conto a mano. Senza, il pannello finisce
-        // esattamente sotto di lei e l'ultimo pulsante sparisce.
-        const BARRA_IOS = 72;
-        const utile = Math.max(180, Math.round(vv.height - BARRA_IOS));
-        backdrop.style.top = `${Math.round(vv.offsetTop)}px`;
-        backdrop.style.height = `${utile}px`;
-        backdrop.style.bottom = "auto";
-        panel.style.maxHeight = `${Math.max(160, utile - 12)}px`;
-        // Con la tastiera aperta lo spazio è poco: i riquadri di testo alti si
-        // stringono, così i pulsanti restano visibili senza dover scorrere.
-        // Mentre scrivi non stai leggendo il testo, lo stai incollando.
-        panel.classList.add("con-tastiera");
-      } else {
-        backdrop.style.top = "";
-        backdrop.style.height = "";
-        backdrop.style.bottom = "";
-        panel.style.maxHeight = "";
-        panel.classList.remove("con-tastiera");
-      }
     };
     FOGLI_APERTI.add(close);
     const onKey = (e) => {
@@ -271,12 +232,6 @@ export function sheet(build) {
 
     panel.append(build(close));
     document.body.append(backdrop);
-    const vv = window.visualViewport;
-    if (vv) {
-      vv.addEventListener("resize", adattaTastiera);
-      vv.addEventListener("scroll", adattaTastiera);
-      adattaTastiera();
-    }
     document.addEventListener("keydown", onKey);
   });
 }
