@@ -54,7 +54,11 @@ export function graficoAttivita(dati, { altezza = 128 } = {}) {
   });
 
   const valori = dati.map((d) => d.kcal).filter((v) => v != null);
-  const obiettivo = dati.find((d) => d.obiettivo)?.obiettivo || 600;
+  // L'obiettivo di riferimento è quello più recente, non il primo dell'elenco:
+  // se lo cambi su Salute, la linea restava quella di settimane fa.
+  const obiettivo = [...dati].reverse().find((d) => !d.futuro && d.obiettivo)?.obiettivo
+    || dati.find((d) => d.obiettivo)?.obiettivo
+    || 600;
   const massimo = Math.max(obiettivo * 1.2, ...valori, 1);
   const passo = L / Math.max(dati.length, 1);
   const larghezza = Math.max(1.5, Math.min(9, passo * 0.42));
@@ -161,7 +165,11 @@ export function graficoAttivita(dati, { altezza = 128 } = {}) {
   const descrivi = (d) => {
     const giorno = GIORNI_ABBR[weekdayOf(d.data)];
     const data = `${giorno} ${dataBreve(d.data)}`;
-    if (d.futuro) return `${data} · ${d.previsto ? "allenamento in programma" : "niente in programma"}`;
+    if (d.futuro) {
+      if (d.origine?.scaduta) return `${data} · calendario non aggiornato`;
+      if (d.origine?.oltreProgrammato) return `${data} · non ancora programmato`;
+      return `${data} · ${d.previsto ? "allenamento in programma" : "niente in programma"}`;
+    }
     if (!d.presente || d.kcal == null) {
       return `${data} · nessun dato${d.allenamento ? " · allenamento registrato" : d.previsto ? " · era previsto un allenamento" : ""}`;
     }

@@ -185,7 +185,9 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
             testo: `Calendario da aggiornare — letto fino al ${dataBreve(origine.fine)}`,
             stato: "warn",
           }
-        : origine?.nonLetta
+        : origine?.oltreProgrammato
+          ? { testo: `Non ancora programmato (il coach arriva al ${dataBreve(origine.ultimoEvento)})`, stato: "info" }
+          : origine?.nonLetta
           ? { testo: "Giorno non letto dal calendario", stato: "info" }
           : {
               testo: origine?.fonte === "calendario" ? "Niente sul calendario" : "Riposo",
@@ -199,7 +201,7 @@ export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn,
     const gia = attese.findIndex((a) => a.testo === origine.titolo);
     // Se quella riga era segnata in ritardo, il ritardo va tenuto: toglierla e
     // basta faceva sparire l'avviso insieme al doppione.
-    const eraScaduta = gia >= 0 && attese[gia].stato === "scaduto";
+    const eraScaduta = gia >= 0 && attese[gia].tipo === "scaduto";
     if (gia >= 0) attese = attese.filter((_, i) => i !== gia);
     if (eraScaduta) righe.push({ testo: `${origine.titolo} — in ritardo`, stato: "warn" });
     righe.push({ testo: `«${origine.titolo}» non è un allenamento del programma`, stato: "info" });

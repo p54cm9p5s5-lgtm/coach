@@ -171,7 +171,7 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
  * @param punteggi   punteggi degli esercizi effettivamente svolti
  * @param cardio     { previsto, eseguito, durataMin, durataPrevistaMin, kmh }
  */
-export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, riscaldamento, stretching, regole }) {
+export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, riscaldamento, stretching, regole, regoleCardio = null }) {
   const voci = [];
   const tetti = [];
 
@@ -196,12 +196,14 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
   if (cardio?.previsto) {
     // Il riferimento è la durata del brief, non quella scelta al momento:
     // accorciare il cardio prima di partire non abbassa l'asticella.
-    const attesi = regole.cardio.durataMin || cardio.durataPrevistaMin;
+    // Le soglie congelate nella seduta vincono su quelle di oggi.
+    const soglie = regoleCardio || regole.cardio;
+    const attesi = soglie.durataMin || cardio.durataPrevistaMin;
     const fatti = cardio.eseguito ? cardio.durataMin || 0 : 0;
     const rapporto = attesi ? fatti / attesi : 0;
     let quota = sottoBersaglio(rapporto, 1.6);
     let dettaglio = cardio.eseguito ? `${fatti} min su ${attesi}` : "non eseguito";
-    if (cardio.eseguito && cardio.kmh > regole.cardio.kmhMax) {
+    if (cardio.eseguito && soglie.kmhMax != null && cardio.kmh > soglie.kmhMax) {
       quota = Math.min(quota, 0.7);
       dettaglio += ` · ${num(cardio.kmh)} km/h sopra protocollo`;
     }

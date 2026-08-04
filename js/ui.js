@@ -114,9 +114,11 @@ export function mmss(sec) {
 }
 
 export function durataUmana(sec) {
-  const s = Math.max(0, Math.round(sec));
-  const h = Math.floor(s / 3600);
-  const m = Math.round((s % 3600) / 60);
+  // Prima si arrotondano i minuti, POI si separano le ore: arrotondando dopo,
+  // 1h 59m 40s diventava «1h 60m».
+  const minuti = Math.round(Math.max(0, sec) / 60);
+  const h = Math.floor(minuti / 60);
+  const m = minuti % 60;
   return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${m} min`;
 }
 
@@ -215,6 +217,15 @@ export function sheet(build) {
       if (spostamento > 90) close(undefined);
       else panel.style.transform = "";
       y0 = null;
+    });
+    // Se il sistema annulla il tocco (una chiamata, la barra di iOS) il
+    // pannello torna al suo posto senza chiudersi: prima restava a metà strada
+    // e sembrava bloccato.
+    panel.addEventListener("touchcancel", () => {
+      y0 = null;
+      spostamento = 0;
+      panel.style.transition = "transform .2s ease-out";
+      panel.style.transform = "";
     });
 
     panel.append(build(close));

@@ -93,6 +93,7 @@ async function bloccoGrafico(ridisegna) {
       data,
       futuro: data > oggi,
       previsto: Boolean(store.giornoPrevisto(data)),
+      origine: store.origineGiorno(data),
       presente: Boolean(g?.presente),
       kcal: g?.presente ? g.kcalAttive : null,
       passi: g?.presente ? g.passi : null,
@@ -273,7 +274,9 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
       ? origine.titolo || "Da vedere sul calendario"
       : origine.scaduta
         ? "Calendario da aggiornare"
-        : "Riposo";
+        : origine.oltreProgrammato
+          ? "Non ancora programmato"
+          : "Riposo";
   const sotto = giaFatto
     ? "completato oggi"
     : previsto
@@ -282,9 +285,11 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         ? `«${origine.titolo}» non è un allenamento del programma`
         : origine.scaduta
           ? `il calendario importato arriva al ${dataBreve(origine.fine)}: aggiornalo con il comando Coach Calendario`
-          : origine.fonte === "calendario"
-            ? "niente sul calendario per oggi"
-            : "nessun allenamento previsto dallo split";
+          : origine.oltreProgrammato
+            ? `il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}`
+            : origine.fonte === "calendario"
+              ? "niente sul calendario per oggi"
+              : "nessun allenamento previsto dallo split";
 
   return h(
     "div.group",
@@ -333,6 +338,8 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
             { style: "margin:10px 0 0;font-size:12px;color:var(--label-tertiary)" },
             origine.riposo
               ? "Riposo, e lo dice il calendario del coach."
+              : origine.oltreProgrammato
+              ? `Il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}: oltre non c'è ancora niente.`
               : origine.scaduta
               ? "Il calendario letto è vecchio: rileggilo per sapere cosa tocca."
               : origine.sconosciuto
@@ -348,8 +355,12 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
 // ---------- proposte ----------
 
 async function bloccoProposte() {
-  await store.aggiornaProposte();
-  await store.aggiornaSegnali();
+  // In coda come tutti gli altri ricalcoli: aprendo la Home mentre l'app
+  // chiudeva un allenamento partivano due giri insieme sugli stessi dati.
+  await store.inCoda(async () => {
+    await store.aggiornaProposte();
+    await store.aggiornaSegnali();
+  });
   const sospese = await store.proposteInSospeso();
   const avvisi = await store.segnali();
   if (!sospese.length && !avvisi.length) return null;

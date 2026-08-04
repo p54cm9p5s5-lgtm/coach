@@ -269,7 +269,9 @@ export function bloccoProposte(proposte, nomeLivello) {
         `   Dati: ${p.quattroDomande.quali}`,
         `   Alternative: ${p.quattroDomande.alternative}`,
         `   Atteso: ${p.quattroDomande.atteso}`,
-        `   Verifica il ${dataBreve(p.dataVerifica)}`,
+        // In sospeso vuol dire non ancora accettata: la verifica parte da
+        // quando l'atleta risponde, non da quando la proposta è nata.
+        `   Verifica: 14 giorni dopo l'accettazione`,
       ].join("\n")
     ),
     "",
