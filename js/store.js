@@ -946,6 +946,7 @@ export async function aggiornaProposte(cache = null) {
   const reg = regole();
   const inv = await inventario();
   const esistenti = await db.all("proposte");
+  const sedute = await seduteInMemoria();
   let create = 0;
   let tolte = 0;
 
@@ -993,16 +994,29 @@ export async function aggiornaProposte(cache = null) {
       .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))[0];
 
     if (rispostaPrec) {
-      const allaRisposta = rispostaPrec.esposizioniAllaRisposta ?? rispostaPrec.esposizioniAllaData ?? 0;
+      // Si contano le esposizioni fatte DOPO la risposta, guardando l'orario:
+      // un conteggio può scendere (basta eliminare un allenamento vecchio dallo
+      // storico) e una proposta rimandata non sarebbe più tornata, contro
+      // quello che l'app aveva promesso a schermo.
+      const dopoRisposta = rispostaPrec.rispostoIl
+        ? svolte.filter((e) => {
+            const ultima = e.serie?.at(-1)?.tsFineSerie;
+            if (ultima) return new Date(ultima).toISOString() > rispostaPrec.rispostoIl;
+            const sed = sedute.get(e.sedutaId);
+            return sed?.oraFine ? new Date(sed.oraFine).toISOString() > rispostaPrec.rispostoIl : false;
+          }).length
+        : Math.max(
+            0,
+            svolte.length - (rispostaPrec.esposizioniAllaRisposta ?? rispostaPrec.esposizioniAllaData ?? 0)
+          );
       if (rispostaPrec.stato === "rimandata") {
         // rimandata: torna solo quando c'è un dato nuovo dopo la risposta
-        if (svolte.length <= allaRisposta) continue;
+        if (dopoRisposta < 1) continue;
       } else {
         // Accettata o rifiutata non si ripropone subito. Ma «mai più» è
         // sbagliato: dopo un ciclo intero di allenamenti la situazione è
         // un'altra, e la stessa proposta torna a essere una domanda sensata.
-        const nuoveEsposizioni = svolte.length - allaRisposta;
-        if (nuoveEsposizioni < (reg.progressione?.esposizioniPerRiproporre ?? 4)) continue;
+        if (dopoRisposta < (reg.progressione?.esposizioniPerRiproporre ?? 4)) continue;
       }
     }
 
@@ -1082,7 +1096,10 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
   // Prima si usava il conto di quando la proposta era nata: se ti allenavi
   // prima di rispondere, «Accetto» valeva già zero (l'obiettivo veniva scartato
   // subito) e «Rimando» faceva ricomparire la stessa proposta all'istante.
-  const espOra = esposizioniSvolte(await esposizioni(p.esercizioId));
+  // Anche l'allenamento ancora aperto conta: rispondendo a metà seduta, il
+  // lavoro già fatto oggi non deve valere come «fatto dopo la risposta»,
+  // altrimenti «Rimando» risultava consumato appena chiudevi.
+  const espOra = esposizioniSvolte(await esposizioni(p.esercizioId, { soloCompletate: false }));
   // La verifica si conta da quando accetti, non da quando la proposta è nata:
   // una proposta accettata dopo tre settimane risultava «da verificare» il
   // giorno stesso, e la verifica non voleva più dire niente.
@@ -1211,6 +1228,15 @@ export async function verificheDovute() {
   const r = await db.all("proposte");
   return r
     .filter((p) => p.stato === "accettata" && !p.esitoVerifica && p.dataVerifica && p.dataVerifica <= oggi)
+    // Una proposta che il brief nuovo ha annullato non ha niente da
+    // verificare: l'app non l'ha mai usata, e chiederne l'esito significava
+    // far confermare al coach una modifica mai applicata.
+    .filter((p) => !PROGRAMMA?.caricatoIl || (p.rispostoIl || p.creatoIl || "") > PROGRAMMA.caricatoIl)
+    // Nemmeno un esercizio che il coach ha tolto dal programma.
+    .filter((p) => {
+      const def = esercizio(p.esercizioId);
+      return def && !def.archiviato;
+    })
     .sort((a, b) => (a.dataVerifica < b.dataVerifica ? -1 : 1));
 }
 

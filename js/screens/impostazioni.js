@@ -604,7 +604,20 @@ async function azzera(ridisegna) {
   });
   if (due !== "si") return;
 
-  for (const s of Object.keys(store.db.SCHEMA)) await store.db.clearStore(s);
+  // Solo gli archivi che questo telefono ha davvero, e in un colpo solo: uno
+  // svuotamento a pezzi che si ferma a metà lasciava l'app con dati parziali
+  // e nessun messaggio, e nominare un archivio inesistente lo faceva fallire
+  // proprio all'inizio.
+  try {
+    await store.db.svuotaTutto();
+  } catch (e) {
+    await chiedi({
+      titolo: "Eliminazione non riuscita",
+      testo: `${e.message}\n\nL'archivio è rimasto com'era: non è stato cancellato niente a metà.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+    });
+    return;
+  }
   location.reload();
 }
 
