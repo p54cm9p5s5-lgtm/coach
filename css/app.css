@@ -173,7 +173,13 @@ textarea {
   border: 0;
   color: var(--accent);
   font-size: 17px;
-  padding: 6px 0;
+  /* Area toccabile piena: il testo resta dov'è, ma il dito ha 44 punti. */
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
   cursor: pointer;
 }
 
@@ -936,8 +942,12 @@ textarea.note {
 
 .sheet {
   width: 100%;
+  /* dvh segue la tastiera di iOS: con vh il pannello restava alto quanto lo
+     schermo intero e i pulsanti finivano sotto i tasti, irraggiungibili. */
   max-height: 86vh;
+  max-height: 86dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bg);
   border-radius: 14px 14px 0 0;
   padding: 8px 0 calc(env(safe-area-inset-bottom) + 16px);
@@ -1133,8 +1143,11 @@ textarea.note {
 }
 
 .cal-barra button {
-  width: 34px;
-  height: 30px;
+  /* flex-shrink: 0 perché il contenitore è flex e senza questo il pulsante
+     veniva compresso a 19 px, sotto la soglia del dito. */
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 8px;
   background: var(--fill-tertiary);
@@ -1219,6 +1232,12 @@ textarea.note {
 
 .cal-punti .p-allenamento {
   background: var(--accent);
+}
+
+.cal-giorno.saltato .n {
+  /* Prima il numero restava a contrasto 1,7:1: illeggibile proprio nei giorni
+     che meritano attenzione. */
+  color: var(--label-secondary);
 }
 
 .cal-giorno.saltato .p-allenamento {

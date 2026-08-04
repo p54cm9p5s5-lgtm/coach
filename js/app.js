@@ -69,7 +69,10 @@ export function inCima() {
   }, 400);
 }
 
+let turnoCorrente = 0;
+
 export async function ridisegna() {
+  const mioTurno = ++turnoCorrente;
   const nome = nomeRotta();
   // Cambio di schermata: un pannello aperto non deve sopravvivere alla pagina
   // che l'ha aperto.
@@ -104,7 +107,33 @@ export async function ridisegna() {
     }
   }
 
-  const nodo = await mod.render({ vaiA, ridisegna });
+  let nodo;
+  try {
+    nodo = await mod.render({ vaiA, ridisegna });
+  } catch (e) {
+    // Una schermata che va in errore non deve lasciare la pagina precedente:
+    // sembrerebbe che il tocco non abbia funzionato, e quella sezione
+    // resterebbe irraggiungibile finché non si riavvia l'app.
+    console.error("disegno di", nome, e);
+    nodo = h(
+      "div.screen",
+      intestazione(nome === "oggi" ? "Home" : nome[0].toUpperCase() + nome.slice(1)),
+      h(
+        "div.empty",
+        h("h3", "Questa schermata non si è aperta"),
+        h("p", e?.message || "Errore sconosciuto."),
+        h(
+          "div.btn-wrap",
+          h("button.btn", { onclick: () => ridisegna() }, "Riprova"),
+          h("div", { style: "height:8px" }),
+          h("button.btn.secondary", { onclick: () => vaiA("oggi") }, "Torna alla Home")
+        )
+      )
+    );
+  }
+
+  // Un disegno più lento non deve coprire quello partito dopo.
+  if (mioTurno !== turnoCorrente) return;
 
   const posizione = window.scrollY;
   clear(view);

@@ -248,6 +248,27 @@ export function chiedi({ titolo, testo, opzioni }) {
   );
 }
 
+/**
+ * Avvolge un gestore perché non possa partire due volte: il secondo tocco su
+ * un pulsante che apre un pannello o scrive sul database creava dati doppi
+ * (due allenamenti aperti, due misure, due set di foto).
+ */
+export function unaVoltaSola(fn) {
+  let occupato = false;
+  return async (...args) => {
+    if (occupato) return;
+    occupato = true;
+    const bottone = args[0]?.currentTarget;
+    if (bottone && "disabled" in bottone) bottone.disabled = true;
+    try {
+      return await fn(...args);
+    } finally {
+      occupato = false;
+      if (bottone && "disabled" in bottone) bottone.disabled = false;
+    }
+  };
+}
+
 // ---------- suoni ----------
 
 let audioCtx = null;

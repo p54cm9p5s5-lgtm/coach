@@ -15,6 +15,7 @@ let AGENDA = null;
 
 export async function init() {
   await db.open();
+  db.rendiPersistente();
   await caricaLibreria();
   await caricaRiscaldamento();
   PROGRAMMA = (await db.get("programma", "corrente")) || null;
@@ -258,6 +259,10 @@ export async function sedutaInCorso() {
 }
 
 export async function iniziaSeduta({ data = isoDate(), giornoId }) {
+  // Ultima rete contro il doppio avvio: due allenamenti aperti insieme
+  // renderebbero impossibile capire dove finisce l'uno e comincia l'altro.
+  const gia = await sedutaInCorso();
+  if (gia) return gia;
   const g = giornoSplit(giornoId);
   if (!g) throw new Error("Giorno dello split non trovato.");
   const rec = {
