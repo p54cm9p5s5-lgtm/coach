@@ -474,11 +474,18 @@ async function bloccoCalendario(vaiA, ridisegna) {
   // Solo le date: caricare tutte le immagini per sapere quando è stato
   // l'ultimo set costava decine di megabyte a ogni disegno della Home.
   const dateFoto = await store.dateFoto();
+  // Anche le date precedenti, non solo l'ultima: servono a dire se un giorno
+  // già passato era in regola quando è passato.
+  const datePeso = (await store.misure("peso")).map((m) => m.data);
+  const dateVita = (await store.misure("vitaOmbelico")).map((m) => m.data);
   const attese = calcolaAttese({
     oggi,
-    ultimoPeso: (await store.ultimaMisura("peso"))?.data || null,
-    ultimaVita: (await store.ultimaMisura("vitaOmbelico"))?.data || null,
+    ultimoPeso: datePeso[0] || null,
+    ultimaVita: dateVita[0] || null,
     ultimaFoto: dateFoto[0] || null,
+    datePeso,
+    dateVita,
+    dateFoto,
     ultimoExport: imp.ultimoExport,
     ultimoImportSalute: imp.ultimoImportSalute,
     // Gli eventi del coach si aggiungono ai promemoria del protocollo: gli
@@ -555,9 +562,20 @@ async function bloccoCalendario(vaiA, ridisegna) {
     },
   });
 
-  const inRitardo = [...new Set(
-    [...attese.values()].flat().filter((a) => a.tipo === "scaduto").map((a) => a.testo)
-  )];
+  // «In ritardo» è quello che manca ADESSO. Gli arretrati vecchi restano
+  // segnati sul calendario, dove servono a vedere la costanza, ma non si
+  // rinfacciano: una pesata saltata a luglio e poi rifatta non è un arretrato.
+  const ultimaVolta = new Map();
+  for (const [data, voci] of attese) {
+    if (data > oggi) continue;
+    for (const a of voci) {
+      const prec = ultimaVolta.get(a.testo);
+      if (!prec || data > prec.data) ultimaVolta.set(a.testo, { data, tipo: a.tipo });
+    }
+  }
+  const inRitardo = [...ultimaVolta]
+    .filter(([, v]) => v.tipo === "scaduto")
+    .map(([testo]) => testo);
 
   return h(
     "div.group",

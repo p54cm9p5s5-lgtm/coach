@@ -945,7 +945,16 @@ async function vistaEsercizio(corpo, piede) {
       h(
         "div.plates",
         h("span.etichetta", "Da montare"),
-        d ? h("b", d) : h("span", "carico non componibile con i dischi disponibili")
+        // Dire solo «non componibile» lascia in mano al palestrato il conto dei
+        // dischi: i due carichi vicini l'app li sa già, tanto vale scriverli.
+        d
+          ? h("b", d)
+          : h(
+              "span",
+              `carico non componibile: con i tuoi dischi i più vicini sono ` +
+                `${num(carichoPiuVicino(S.caricoCorrente, -1, inv))} e ` +
+                `${num(carichoPiuVicino(S.caricoCorrente, 1, inv))} kg`
+            )
       )
     );
   }

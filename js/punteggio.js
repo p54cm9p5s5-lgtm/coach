@@ -193,9 +193,9 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
     // errore di conto.
     dettaglio:
       `${punteggi.length} su ${quanti}` +
-      (saltati ? ` · ${saltati} saltati` : "") +
+      (saltati ? ` · ${saltati} ${saltati === 1 ? "saltato" : "saltati"}` : "") +
       (quanti - punteggi.length - saltati > 0
-        ? ` · ${quanti - punteggi.length - saltati} mai iniziati`
+        ? ` · ${quanti - punteggi.length - saltati} mai ${quanti - punteggi.length - saltati === 1 ? "iniziato" : "iniziati"}`
         : ""),
   });
   if (saltati) tetti.push({ tetto: 75, perche: saltati === 1 ? "un esercizio saltato" : "esercizi saltati" });
