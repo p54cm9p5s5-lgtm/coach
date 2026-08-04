@@ -251,7 +251,9 @@ async function vistaRisultato(id, vaiA) {
 
   const serie = await store.serieDi(id);
   const logs = await store.questionariDi(id);
-  const durataSec = sed.oraFine ? Math.round((sed.oraFine - sed.oraInizio) / 1000) : null;
+  const durataSec = sed.oraFine
+    ? Math.round((sed.oraFine - (sed.oraInizioLavoro || sed.oraInizio)) / 1000)
+    : null;
   // Le due medie si calcolano sulle STESSE serie: prima il reale veniva da
   // quelle cronometrate e il previsto da tutte, e il confronto «100s su 120»
   // metteva a paragone due insiemi diversi.
@@ -472,7 +474,10 @@ async function vistaRisultato(id, vaiA) {
             // «A protocollo» dipende anche dalla durata, non solo dalla
             // velocità: un cardio di 5 minuti su 30 non è a protocollo.
             fuori
-              ? h("span.pill.warn", "sopra protocollo")
+              ? h(
+                  "span.pill.warn",
+                  r.kmhMin != null && sed.cardio.kmh < r.kmhMin ? "sotto protocollo" : "sopra protocollo"
+                )
               : corto
                 ? h("span.pill.warn", "più corto del previsto")
                 : sed.cardio.eseguito
@@ -1450,7 +1455,9 @@ async function chiudiRecupero() {
         { etichetta: "Registra il tempo davvero passato", valore: "reale" },
       ],
     });
-    if (scelta !== "reale") {
+    // Solo una scelta esplicita cambia il dato: annullando la domanda (tocco
+    // fuori dal pannello) non si tocca niente e la si rifà alla prossima.
+    if (scelta === "previsto") {
       await store.db.put("serie", { ...ultima, tsFineSerie: Date.now() - target });
     }
   }
@@ -1769,6 +1776,13 @@ async function vistaCardio(corpo, piede) {
   const notaPrec = S.sed.cardio?.note || "";
 
   const controlla = () => {
+    // Anche la durata scelta conta: partire con 10 minuti su 30 previsti è già
+    // fuori protocollo, e dirlo dopo servirebbe a poco.
+    if (r.durataMin && durata < r.durataMin * 0.9) {
+      avviso.textContent = `Più corto del previsto: ${durata} min invece di ${r.durataMin}.`;
+      avviso.style.color = "var(--orange)";
+      return;
+    }
     if (kmh > r.kmhMax) {
       avviso.textContent = `Sopra protocollo: previsto ${num(r.kmhMin)}-${num(r.kmhMax)} km/h. Il cardio non deve essere il lavoro più duro della giornata.`;
       avviso.style.color = "var(--orange)";
@@ -1821,9 +1835,9 @@ async function vistaCardio(corpo, piede) {
           h("label", "Durata"),
           h(
             "div.stepper",
-            h("button", { onclick: () => { durata = Math.max(5, durata - 5); valD.textContent = `${durata} min`; } }, "−"),
+            h("button", { onclick: () => { durata = Math.max(5, durata - 5); valD.textContent = `${durata} min`; controlla(); } }, "−"),
             valD,
-            h("button", { onclick: () => { durata += 5; valD.textContent = `${durata} min`; } }, "+")
+            h("button", { onclick: () => { durata += 5; valD.textContent = `${durata} min`; controlla(); } }, "+")
           )
         )
       ),
@@ -2126,7 +2140,7 @@ async function vistaFine(corpo, piede) {
   // in cui il riepilogo restava aperto, e il numero qui non corrispondeva a
   // quello che poi finiva in archivio.
   const durataSec = Math.round(
-    ((S.sed.oraFine || store.fineStimata(S.sed, serie)) - S.sed.oraInizio) / 1000
+    ((S.sed.oraFine || store.fineStimata(S.sed, serie)) - store.inizioStimato(S.sed, serie)) / 1000
   );
   const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
   const recMedio = recuperi.length ? Math.round(recuperi.reduce((a, b) => a + b, 0) / recuperi.length) : null;
@@ -2223,9 +2237,19 @@ async function vistaFine(corpo, piede) {
         S.caricoCorrente = null;
         S.obiettivo = null;
         S.tsInizioSerie = Date.now();
+        // Si torna al primo esercizio ANCORA da fare, non al primo in assoluto:
+        // ricominciare da uno già chiuso significava rifare il questionario di
+        // un esercizio finito.
+        const serieOra = await store.serieDi(S.sed.id);
+        const logsOra = await store.questionariDi(S.sed.id);
+        const primoAperto = S.esercizi.findIndex(
+          (v) =>
+            !logsOra.some((l) => l.esercizioId === v.esercizioId) &&
+            serieOra.filter((x) => x.esercizioId === v.esercizioId).length < (v.serie || 1)
+        );
         await salvaProgresso({
           fase: "esercizio",
-          indice: 0,
+          indice: primoAperto >= 0 ? primoAperto : 0,
           recuperoFine: null,
           caricoCorrente: null,
           tsInizioSerie: S.tsInizioSerie,

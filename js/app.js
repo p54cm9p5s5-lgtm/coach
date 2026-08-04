@@ -282,10 +282,15 @@ async function registraServiceWorker() {
     // Al primissimo avvio non c'è nessuna versione vecchia da sostituire: il
     // service worker prende il comando per la prima volta e ricaricare
     // sarebbe solo un lampo bianco all'apertura dell'app.
-    const avevaControllore = Boolean(navigator.serviceWorker.controller);
+    let avevaControllore = Boolean(navigator.serviceWorker.controller);
     let ricaricato = false;
     navigator.serviceWorker.addEventListener("controllerchange", async () => {
-      if (!avevaControllore) return;
+      // Vale solo per il PRIMO passaggio di comando (la prima installazione):
+      // da lì in poi ogni cambio è un aggiornamento vero e va ricaricato.
+      if (!avevaControllore) {
+        avevaControllore = true;
+        return;
+      }
       if (ricaricato) return;
       // Mai ricaricare mentre un allenamento è aperto: si perderebbe la
       // schermata in corso, il timer e il gesto che ha autorizzato l'audio.

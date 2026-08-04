@@ -146,7 +146,11 @@ export function analizza(testo) {
     !risultato.allenamenti.length &&
     !risultato.agenda.length
   ) {
-    throw new Error("Pacchetto riconosciuto ma vuoto: nessun giorno, notte, allenamento o evento.");
+    // Gli avvisi (righe scartate, date non valide) viaggiano con l'errore: senza,
+    // chi incolla un pacchetto sbagliato leggeva solo «vuoto» e non capiva perché.
+    const err = new Error("Pacchetto riconosciuto ma vuoto: nessun giorno, notte, allenamento o evento.");
+    err.avvisi = risultato.avvisi;
+    throw err;
   }
   return risultato;
 }
