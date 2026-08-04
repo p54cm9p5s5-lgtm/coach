@@ -93,6 +93,13 @@ export function calcolaAttese({
   ultimoImportSalute,
   eventi = null,
   cadenze = null,
+  // Tutte le date registrate, non solo l'ultima: per dire se un giovedì di due
+  // settimane fa è stato rispettato serve sapere cosa c'era ALLORA, non cosa
+  // c'è adesso. Con la sola ultima misura, una pesata fatta dopo faceva
+  // risultare «in ordine» tutti i giovedì saltati prima.
+  datePeso = null,
+  dateVita = null,
+  dateFoto = null,
 }) {
   const cad = {
     misureGiornoSettimana: 4,
@@ -111,6 +118,15 @@ export function calcolaAttese({
   // protocollo dell'app, ed è l'app a registrarli. Prima, appena collegavi il
   // calendario, sparivano tutti — restavano solo gli allenamenti scritti dal
   // coach, e i giorni della pesata e delle foto non li ricordava più nessuno.
+  // L'ultima data registrata che non sia successiva al giorno guardato: è
+  // quella che conta per sapere se in quel giorno eri in regola.
+  const ultimaEntro = (elenco, unica, data) => {
+    const tutte = Array.isArray(elenco) && elenco.length ? elenco : unica ? [unica] : [];
+    let migliore = null;
+    for (const x of tutte) if (x && x <= data && (!migliore || x > migliore)) migliore = x;
+    return migliore;
+  };
+
   const periodiche = () => {
     const d = parseIso(oggi);
     for (let i = -21; i <= 21; i++) {
@@ -118,20 +134,19 @@ export function calcolaAttese({
       g.setDate(g.getDate() + i);
       if (g.getDay() === cad.misureGiornoSettimana) {
         const data = iso(g);
+        const peso = ultimaEntro(datePeso, ultimoPeso, data);
+        const vita = ultimaEntro(dateVita, ultimaVita, data);
         // L'evento chiede DUE misure: basta che una manchi perché sia arretrato.
         const scaduto =
-          data <= oggi &&
-          (!ultimoPeso ||
-            !ultimaVita ||
-            giorniTra(ultimoPeso, data) >= 7 ||
-            giorniTra(ultimaVita, data) >= 7);
+          data <= oggi && (!peso || !vita || giorniTra(peso, data) >= 7 || giorniTra(vita, data) >= 7);
         aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita");
       }
       if (g.getDay() === cad.fotoGiornoSettimana) {
         const settimane = Math.round(giorniTra(cad.fotoAncora, iso(g)) / 7);
         if (((settimane % cad.fotoOgniSettimane) + cad.fotoOgniSettimane) % cad.fotoOgniSettimane === 0) {
           const data = iso(g);
-          const scaduto = data <= oggi && (!ultimaFoto || giorniTra(ultimaFoto, data) >= 7 * cad.fotoOgniSettimane);
+          const foto = ultimaEntro(dateFoto, ultimaFoto, data);
+          const scaduto = data <= oggi && (!foto || giorniTra(foto, data) >= 7 * cad.fotoOgniSettimane);
           aggiungiA(data, scaduto ? "scaduto" : "foto", "Set di foto");
         }
       }
