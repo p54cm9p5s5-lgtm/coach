@@ -288,6 +288,15 @@ const REGOLE_BASE = {
     esposizioniPerRiproporre: 4,
   },
   finestra: { settimane: 3, minimoSettimana: 5, soglia: 0.2 },
+  // Ogni quanto vanno prese le misure e rifatte le foto. Sono cadenze del
+  // protocollo, non del calendario: l'app le tiene sempre, anche quando gli
+  // allenamenti arrivano dal calendario del coach.
+  cadenze: {
+    misureGiornoSettimana: 4, // giovedì
+    fotoGiornoSettimana: 3, // mercoledì
+    fotoOgniSettimane: 2,
+    fotoAncora: "2026-08-12",
+  },
 };
 
 /**
