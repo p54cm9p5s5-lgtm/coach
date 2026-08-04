@@ -670,6 +670,7 @@ async function incolla(ridisegna) {
       testo:
         `${conteggio.sospetti.slice(0, 6).join("\n")}` +
         `\n\nGiorni finiti non cambiano da soli. Di solito succede quando il comando rapido somma i campioni di iPhone e Watch: i passi, la distanza e i piani li registrano tutti e due, e i periodi in cui li avevi entrambi addosso vengono contati due volte. Le calorie attive no, le scrive solo l'orologio: se quelle restano identiche e i passi crescono, è questo.` +
+        `\n\nHo tenuto i numeri nuovi, perché di solito si reimporta proprio per correggere. Se invece quelli giusti erano i vecchi: Impostazioni › «Cancella i dati importati da Salute», poi reimporta col comando sistemato.` +
         `\n\nControlla su Salute il numero vero di uno di questi giorni e, se serve, filtra l'origine dentro il comando rapido.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
       annulla: false,

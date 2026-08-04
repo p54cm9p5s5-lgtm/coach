@@ -232,6 +232,25 @@ export async function importaTutto(dump, modo = "sostituisci") {
       `Il file è danneggiato: ${rotte.length === 1 ? "la sezione" : "le sezioni"} «${rotte.join("», «")}» non ${rotte.length === 1 ? "è leggibile" : "sono leggibili"}. Non ho toccato niente.`
     );
   }
+  // Righe che non sono nemmeno oggetti, o senza la chiave del loro archivio:
+  // IndexedDB le rifiuta con un errore in inglese che finiva dritto sullo
+  // schermo, in mezzo a una frase italiana. Meglio accorgersene prima e dirlo
+  // con le stesse parole delle altre sezioni rotte.
+  const conRigheRotte = [];
+  for (const [nome, righe] of Object.entries(dump.dati || {})) {
+    if (!(nome in SCHEMA) || !Array.isArray(righe)) continue;
+    const chiave = SCHEMA[nome].keyPath;
+    const rotte = righe.filter(
+      (r) => !r || typeof r !== "object" || Array.isArray(r) || r[chiave] === undefined || r[chiave] === null
+    ).length;
+    if (rotte) conRigheRotte.push(`«${nome}» (${rotte} ${rotte === 1 ? "riga" : "righe"})`);
+  }
+  if (conRigheRotte.length) {
+    throw new Error(
+      `Il file è danneggiato: ${conRigheRotte.join(", ")} non ${conRigheRotte.length === 1 ? "ha una forma" : "hanno una forma"} leggibile. Non ho toccato niente.`
+    );
+  }
+
   // Si scrive solo negli archivi che questo telefono ha davvero: nominarne uno
   // inesistente farebbe fallire tutto il ripristino, dati validi compresi.
   const mancanti = await archiviMancanti();

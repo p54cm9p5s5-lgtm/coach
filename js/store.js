@@ -1640,7 +1640,12 @@ export async function importaSalute(pacchetto) {
     // aveva previsto e tu non hai fatto è la cosa che gli serve di più, e
     // cancellandolo il giorno diventava «non era previsto niente». Si tolgono
     // solo i promemoria vecchi, che non raccontano nulla.
-    const limite = new Date(Date.now() - 42 * 86400000).toISOString().slice(0, 10);
+    // Data locale, non UTC: `toISOString()` in Italia dopo le 22 segna già
+    // domani, e il limite scivolava di un giorno. È lo stesso inciampo
+    // corretto poco più sotto per la finestra di lettura.
+    const scadenza = new Date();
+    scadenza.setDate(scadenza.getDate() - 42);
+    const limite = isoDate(scadenza);
     for (const [d, voce] of Object.entries(precedente)) {
       if (d < limite && !voce.giornoId) delete precedente[d];
     }
