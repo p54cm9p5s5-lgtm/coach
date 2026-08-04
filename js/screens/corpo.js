@@ -633,13 +633,12 @@ function cattura(posa, sagoma) {
 
     const video = h("video", { autoplay: true, playsinline: true, muted: true });
     const conto = h("div.conto", { style: "display:none" });
-    const scena = h(
-      "div.scena",
-      video,
-      sagoma ? h("img.sagoma", { src: sagoma.immagine, alt: "" }) : null,
-      h("div.reticolo"),
-      conto
-    );
+    // La sagoma deve stare nello stesso verso dell'anteprima: l'anteprima è
+    // specchiata (si posa come davanti a uno specchio) mentre le foto sono
+    // salvate nel verso reale. Senza specchiare anche la sagoma, allinearsi era
+    // impossibile: la foto vecchia guardava dalla parte opposta.
+    const imgSagoma = sagoma ? h("img.sagoma", { src: sagoma.immagine, alt: "" }) : null;
+    const scena = h("div.scena", video, imgSagoma, h("div.reticolo"), conto);
 
     const chiudi = () => {
       stream?.getTracks().forEach((t) => t.stop());
@@ -701,6 +700,7 @@ function cattura(posa, sagoma) {
         });
         video.srcObject = stream;
         video.style.transform = frontale ? "scaleX(-1)" : "";
+        if (imgSagoma) imgSagoma.style.transform = frontale ? "scaleX(-1)" : "";
       } catch (e) {
         // Niente accesso diretto: si può comunque scattare con la fotocamera di
         // sistema. Dirlo invece di cambiare strada in silenzio, altrimenti

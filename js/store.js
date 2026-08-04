@@ -1816,7 +1816,12 @@ export async function snapshotSalvato() {
   const raw = await impostazione("snapshotAutomatico");
   if (!raw) return null;
   try {
-    return JSON.parse(raw);
+    const dump = JSON.parse(raw);
+    // Le copie interne non hanno MAI contenuto le foto. Quelle salvate prima
+    // che esistesse l'etichetta non lo dicevano, e ripristinarle cancellava
+    // tutte le foto del corpo: qui l'etichetta viene rimessa.
+    if (dump && !Array.isArray(dump.parziale)) dump.parziale = ["foto"];
+    return dump;
   } catch {
     return null;
   }
