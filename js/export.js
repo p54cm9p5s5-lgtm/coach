@@ -194,11 +194,23 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     riga("Durata allenamento", durata ? durataUmana(durata) : null),
     // La densità si misura sul tempo di lavoro, non sul tempo passato: con una
     // seduta ripresa il giorno dopo veniva «0,01 serie/min».
+    // E si misura sui PESI: contando dentro anche i trenta minuti di cardio, i
+    // giorni con cardio risultavano sempre meno densi degli altri e i due
+    // numeri non erano confrontabili fra loro.
     riga(
-      "Densità",
+      "Densità sui pesi",
       (() => {
-        const netto = seduta.durataLavoroSec || durata;
-        return netto ? `${(serie.length / (netto / 60)).toFixed(2).replace(".", ",")} serie/min` : null;
+        const gesti = serie
+          .map((x) => ({ da: x.tsInizioSerie || x.tsFineSerie, a: x.tsFineSerie }))
+          .filter((x) => x.da && x.a);
+        const inizio = Math.min(...gesti.map((x) => x.da));
+        const fine = Math.max(...gesti.map((x) => x.a));
+        const secondi = gesti.length > 1 ? Math.round((fine - inizio) / 1000) : null;
+        const netto = secondi || seduta.durataLavoroSec || durata;
+        return netto
+          ? `${(serie.length / (netto / 60)).toFixed(2).replace(".", ",")} serie/min` +
+              (secondi ? ` (dalla prima all'ultima serie, ${durataUmana(secondi)})` : "")
+          : null;
       })()
     ),
     // Ad allenamento chiuso «non registrato» è una scusa: o l'hai fatto o l'hai
@@ -252,7 +264,9 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
       g.kcalAttive != null ? `${Math.round(g.kcalAttive)}/${obb}` : "—",
       g.kcalAttive != null && obb ? `${num((g.kcalAttive / obb) * 100)}%` : "—",
       g.passi != null ? g.passi.toLocaleString("it-IT") : "—",
-      "",
+      // La giornata in corso è a metà: senza dirlo, il coach legge «34% dell'
+      // obiettivo» e pensa a una giornata fiacca invece che a una non finita.
+      g.data === isoDate() ? "giornata in corso, non finita" : "",
     ];
   });
 
@@ -473,10 +487,11 @@ export function bloccoCorpo({ misure, indici, etichette, dateIndici = {} }) {
 export function intestazionePacchetto(cosa) {
   // Con l'archivio ancora vuoto l'elenco diceva «Contenuto: 0 proposte.», che
   // sembra un guasto invece di quello che è: non c'è ancora niente da mandare.
-  const vuoto = !cosa.length || cosa.every((c) => /^0\b/.test(c));
+  // Le voci a zero non si elencano: «0 proposte» è rumore, non contenuto.
+  const utili = cosa.filter((c) => !/^0\b/.test(c));
   return [
     `COACH — pacchetto del ${dataLunga(isoDate())}`,
-    vuoto ? "Contenuto: ancora niente da mandare." : `Contenuto: ${cosa.join(", ")}.`,
+    utili.length ? `Contenuto: ${utili.join(", ")}.` : "Contenuto: ancora niente da mandare.",
     "Generato dall'app: i numeri non sono trascritti a mano.",
   ].join("\n");
 }
