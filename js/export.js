@@ -4,7 +4,13 @@
 
 import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate } from "./ui.js";
 
-const riga = (etichetta, valore) => (valore == null || valore === "" ? null : `${etichetta}: ${valore}`);
+// Il pacchetto si legge per righe: una nota scritta con l'invio ne produceva
+// una senza etichetta, e il coach leggeva una frase sospesa senza sapere di chi
+// fosse. Gli a capo diventano separatori, come già nelle tabelle.
+const riga = (etichetta, valore) =>
+  valore == null || valore === ""
+    ? null
+    : `${etichetta}: ${String(valore).replace(/\s*\n+\s*/g, " · ")}`;
 
 const GIORNI_ABBR = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
 

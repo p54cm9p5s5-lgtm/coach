@@ -7,14 +7,18 @@ import * as store from "../store.js";
 // `caloBuono` dice da che parte è il miglioramento: scendere di vita è un
 // progresso, scendere di bicipite no. Senza, la pastiglia verde compariva
 // anche quando perdevi massa.
+// `min` e `max` non sono un limite: sono la soglia oltre la quale l'app chiede
+// conferma. Un peso di 818 kg è quasi sempre 81,8 battuto male, e un numero
+// così sballato non si ferma dove l'hai scritto — sporca la media, gli indici,
+// il grafico e il pacchetto per il coach, e ritrovarlo dopo è un lavoro.
 const MISURE = [
-  { id: "peso", nome: "Peso", unita: "kg", passo: 0.1, primaria: true, caloBuono: true },
-  { id: "vitaOmbelico", nome: "Vita ombelico", unita: "cm", passo: 0.5, primaria: true, caloBuono: true },
-  { id: "vitaStretta", nome: "Vita punto stretto", unita: "cm", passo: 0.5, caloBuono: true },
-  { id: "fianchi", nome: "Fianchi", unita: "cm", passo: 0.5, caloBuono: true },
-  { id: "petto", nome: "Petto", unita: "cm", passo: 0.5, caloBuono: false },
-  { id: "bicipiteRilassato", nome: "Bicipite rilassato", unita: "cm", passo: 0.5, caloBuono: false },
-  { id: "coscia", nome: "Coscia", unita: "cm", passo: 0.5, caloBuono: false },
+  { id: "peso", nome: "Peso", unita: "kg", passo: 0.1, primaria: true, caloBuono: true, min: 30, max: 250 },
+  { id: "vitaOmbelico", nome: "Vita ombelico", unita: "cm", passo: 0.5, primaria: true, caloBuono: true, min: 40, max: 200 },
+  { id: "vitaStretta", nome: "Vita punto stretto", unita: "cm", passo: 0.5, caloBuono: true, min: 40, max: 200 },
+  { id: "fianchi", nome: "Fianchi", unita: "cm", passo: 0.5, caloBuono: true, min: 40, max: 200 },
+  { id: "petto", nome: "Petto", unita: "cm", passo: 0.5, caloBuono: false, min: 50, max: 200 },
+  { id: "bicipiteRilassato", nome: "Bicipite rilassato", unita: "cm", passo: 0.5, caloBuono: false, min: 15, max: 70 },
+  { id: "coscia", nome: "Coscia", unita: "cm", passo: 0.5, caloBuono: false, min: 25, max: 110 },
 ];
 
 const CONDIZIONI = [
@@ -309,6 +313,26 @@ async function registra(ridisegna) {
               if (!scelte.size) {
                 toast("Non hai modificato nessuna misura.");
                 return;
+              }
+              // Fuori scala non vuol dire sbagliato: chiede e basta, la
+              // decisione resta di chi misura.
+              const fuoriScala = [...scelte]
+                .map((id) => ({ def: MISURE.find((m) => m.id === id), valore: valori[id] }))
+                .filter(({ def, valore }) => def && (valore < def.min || valore > def.max));
+              if (fuoriScala.length) {
+                const elenco = fuoriScala
+                  .map(({ def, valore }) => `${def.nome} ${num(valore)} ${def.unita}`)
+                  .join(", ");
+                const scelta = await chiedi({
+                  titolo: fuoriScala.length === 1 ? "Numero fuori scala" : "Numeri fuori scala",
+                  testo: `${elenco}. È molto lontano da una misura del corpo: di solito è un tocco di troppo sulla tastiera. Se è giusto lo salvo, ma prima te lo chiedo.`,
+                  opzioni: [
+                    { etichetta: "È giusto, salva", valore: "salva" },
+                    { etichetta: "Torno a correggere", valore: "correggi" },
+                  ],
+                  annulla: false,
+                });
+                if (scelta !== "salva") return;
               }
               const standard = Object.values(stato).every(Boolean);
               let entrate = 0;

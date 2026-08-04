@@ -151,7 +151,14 @@ export async function render({ vaiA, ridisegna }) {
         ...Object.entries(inv.dischi || {})
           .sort((a, b) => Number(b[0]) - Number(a[0]))
           .map(([peso, q]) =>
-            h("div.row", h("div.main", h("span.title", `Dischi da ${num(Number(peso))} kg`)), h("span.value", `×${q}`))
+            h(
+              "div.row",
+              // Non `num()`: arrotonda a un decimale e i dischi da 1,25 kg
+              // diventavano «1,3 kg», un peso che non esiste. In allenamento
+              // sono già scritti giusti, qui devono leggersi uguale.
+              h("div.main", h("span.title", `Dischi da ${String(Number(peso)).replace(".", ",")} kg`)),
+              h("span.value", `×${q}`)
+            )
           )
       ),
       h("p.footnote", "L'inventario arriva dal master brief e serve a calcolare i dischi da montare.")
