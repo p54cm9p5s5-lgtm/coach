@@ -118,13 +118,15 @@ async function vistaProgramma(vaiA, ridisegna) {
                   ? "Calendario da aggiornare"
                   : origine.oltreProgrammato
                     ? "Non ancora programmato"
-                    : "Riposo"
+                    : origine.nonLetta
+                      ? "Giorno non letto"
+                      : "Riposo"
         ),
         previsto
           ? h(
               "p",
               { style: "margin:6px 0 0;font-size:13px;opacity:.72;text-align:center" },
-              `${previsto.esercizi.length} esercizi${previsto.cardio ? " + cardio" : ""}` +
+              `${previsto.esercizi.length} ${previsto.esercizi.length === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}` +
                 (fatteOggi.some((s) => s.tipoId === previsto.id) ? " · già completato oggi" : "")
             )
           : h(
@@ -138,6 +140,8 @@ async function vistaProgramma(vaiA, ridisegna) {
                     ? `«${origine.titolo}» non è un allenamento del programma`
                     : origine.oltreProgrammato
                       ? `Il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}`
+                      : origine.nonLetta
+                      ? "Nessuna lettura del calendario copre questo giorno"
                       : origine.vuoto
                       ? "Niente sul calendario per oggi"
                       : "Lo split non prevede allenamenti oggi"

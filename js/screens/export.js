@@ -243,7 +243,7 @@ async function componi(stato) {
     await store.inCoda(() => store.aggiornaProposte());
     const sospese = await store.proposteInSospeso();
     pezzi.push(bloccoProposte(sospese, nomeLivello));
-    contenuto.push(`${sospese.length} proposte`);
+    contenuto.push(`${sospese.length} ${sospese.length === 1 ? "proposta" : "proposte"}`);
 
     // Quelle già accettate cambiano l'obiettivo che l'app userà: il coach le
     // deve vedere anche se non deve più deciderle.

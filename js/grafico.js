@@ -170,6 +170,7 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
     if (d.futuro) {
       if (d.origine?.scaduta) return `${data} · calendario non aggiornato`;
       if (d.origine?.oltreProgrammato) return `${data} · non ancora programmato`;
+      if (d.origine?.nonLetta) return `${data} · calendario non letto`;
       return `${data} · ${d.previsto ? "allenamento in programma" : "niente in programma"}`;
     }
     if (!d.presente || d.kcal == null) {
@@ -414,15 +415,19 @@ export function graficoBarre({
     );
   });
 
-  // estremi sull'asse: prima e ultima data
+  // estremi sull'asse: prima e ultima data. Con un solo giorno i due estremi
+  // sono lo stesso giorno: scriverlo due volte sembrava un intervallo.
   if (punti.length) {
     const primo = el("text", { x: 0, y: A - 5, "font-size": 8, fill: "currentColor", opacity: 0.4 });
     primo.textContent = dataBreve(punti[0].data);
-    const ultimo = el("text", {
-      x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
-    });
-    ultimo.textContent = dataBreve(punti[punti.length - 1].data);
-    svg.append(primo, ultimo);
+    svg.append(primo);
+    if (punti.length > 1 && punti[0].data !== punti[punti.length - 1].data) {
+      const ultimo = el("text", {
+        x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
+      });
+      ultimo.textContent = dataBreve(punti[punti.length - 1].data);
+      svg.append(ultimo);
+    }
   }
 
   const lettura = h("p", {
@@ -577,11 +582,15 @@ export function graficoLinea({
   if (punti.length) {
     const primo = el("text", { x: 0, y: A - 5, "font-size": 8, fill: "currentColor", opacity: 0.4 });
     primo.textContent = dataBreve(punti[0].data);
-    const ultimo = el("text", {
-      x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
-    });
-    ultimo.textContent = dataBreve(punti[punti.length - 1].data);
-    svg.append(primo, ultimo);
+    svg.append(primo);
+    // Un solo giorno: la stessa data ai due estremi sembrava un intervallo.
+    if (punti.length > 1 && punti[0].data !== punti[punti.length - 1].data) {
+      const ultimo = el("text", {
+        x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
+      });
+      ultimo.textContent = dataBreve(punti[punti.length - 1].data);
+      svg.append(ultimo);
+    }
   }
 
   const lettura = h("p", {

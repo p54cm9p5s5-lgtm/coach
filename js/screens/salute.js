@@ -114,12 +114,31 @@ export async function render({ ridisegna }) {
   // e farebbe sembrare che stai peggiorando. Resta nel grafico — e ovviamente
   // resta anche col periodo «1 gg», che è fatto apposta per guardare oggi.
   const soloOggi = periodoSalvato().id === "1";
+  // La media non viene arrotondata qui: la distanza si mostra con un decimale,
+  // e arrotondando prima «5,8 km» diventava «6,0 km», cioè un numero che non è
+  // mai stato vero. Arrotonda chi disegna, che sa quante cifre servono.
   const media = (righe, campo) => {
     const v = righe
       .filter((r) => r.presente && (soloOggi || r.data < oggiIso))
       .map((r) => r[campo])
       .filter((x) => x != null);
-    return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
+    return v.length ? { valore: v.reduce((a, b) => a + b, 0) / v.length, quanti: v.length } : null;
+  };
+
+  // Col periodo «1 gg» i dati di movimento quasi sempre non ci sono ancora:
+  // arrivano col comando delle 5 del mattino, che porta i giorni già finiti.
+  // Invece di lasciare le schede vuote per sempre si mostra l'ultimo giorno che
+  // quel dato ce l'ha davvero, scrivendo di quale giorno si tratta.
+  const ultimoCon = (campo) =>
+    [...giorni]
+      .filter((g) => g.presente && g.data <= oggiIso && g[campo] != null)
+      .sort((a, b) => (a.data < b.data ? 1 : -1))[0] || null;
+  const conRipiego = (righeDelPeriodo, campo) => {
+    if (!soloOggi || righeDelPeriodo.some((r) => r.presente && r[campo] != null)) {
+      return { righe: righeDelPeriodo, etichetta: null };
+    }
+    const u = ultimoCon(campo);
+    return u ? { righe: [u], etichetta: `giorno del ${dataBreve(u.data)}` } : { righe: [], etichetta: null };
   };
 
   const allenati = new Set(
@@ -203,7 +222,8 @@ export async function render({ ridisegna }) {
 
   // ---- movimento ----
   const fMov2 = conPeriodo();
-  const giorniMov = perGrafico(giorni.filter(fMov2.dentro));
+  const ripKcal = conRipiego(giorni.filter(fMov2.dentro), "kcalAttive");
+  const giorniMov = perGrafico(ripKcal.righe);
   const mKcal = media(giorniMov, "kcalAttive");
   // La scheda c'è se il dato esiste in archivio, non solo dentro il periodo
   // scelto: cambiando periodo le schede sparivano e sembrava un guasto.
@@ -212,9 +232,11 @@ export async function render({ ridisegna }) {
       schedaGrafico({
         selettore: fMov2.selettore,
         titolo: "Movimento",
-        valore: mKcal ? String(mKcal.valore) : "—",
+        valore: mKcal ? String(Math.round(mKcal.valore)) : "—",
         unita: "kcal",
-        nota: mKcal ? `${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"} con dati · ${fMov2.etichetta}` : `nessun dato · ${fMov2.etichetta}`,
+        nota: mKcal
+          ? `${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"} con dati · ${ripKcal.etichetta || fMov2.etichetta}`
+          : `nessun dato · ${fMov2.etichetta}`,
         grafico: graficoLinea({
           punti: giorniMov.map((g) => ({
             data: g.data,
@@ -235,15 +257,18 @@ export async function render({ ridisegna }) {
 
   // ---- passi ----
   const fPassi = conPeriodo();
-  const giorniPassi = perGrafico(giorni.filter(fPassi.dentro));
+  const ripPassi = conRipiego(giorni.filter(fPassi.dentro), "passi");
+  const giorniPassi = perGrafico(ripPassi.righe);
   const mPassi = media(giorniPassi, "passi");
   if (giorni.some((g) => g.presente && g.passi != null)) {
     aggiungi(wrap,
       schedaGrafico({
         selettore: fPassi.selettore,
         titolo: "Passi",
-        valore: mPassi ? mPassi.valore.toLocaleString("it-IT") : "—",
-        nota: mPassi ? `${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"} con dati · ${fPassi.etichetta}` : `nessun dato · ${fPassi.etichetta}`,
+        valore: mPassi ? Math.round(mPassi.valore).toLocaleString("it-IT") : "—",
+        nota: mPassi
+          ? `${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"} con dati · ${ripPassi.etichetta || fPassi.etichetta}`
+          : `nessun dato · ${fPassi.etichetta}`,
         grafico: graficoLinea({
           punti: giorniPassi.map((g) => ({
             data: g.data,
@@ -328,8 +353,9 @@ export async function render({ ridisegna }) {
   if (ALTRI.length) {
     const righe = h("div.list");
     for (const a of ALTRI) {
-      const m = media(giorniAltro, a.campo);
-      const ultimo = [...giorniAltro]
+      const rip = conRipiego(giorniAltro, a.campo);
+      const m = media(rip.righe, a.campo);
+      const ultimo = [...rip.righe]
         .sort((x, y) => (x.data < y.data ? 1 : -1))
         .find((g) => g[a.campo] != null);
       aggiungi(righe,
@@ -340,7 +366,9 @@ export async function render({ ridisegna }) {
             h("span.title", a.nome),
             h(
               "span.sub",
-              m ? `media su ${m.quanti} ${m.quanti === 1 ? "giorno" : "giorni"} · ${fAltro.etichetta}` : "nessun dato"
+              m
+                ? `media su ${m.quanti} ${m.quanti === 1 ? "giorno" : "giorni"} · ${rip.etichetta || fAltro.etichetta}`
+                : "nessun dato"
             )
           ),
           h(
@@ -574,11 +602,11 @@ async function incolla(ridisegna) {
     );
   }
   if (conteggio.notti) righe.push(`${conteggio.notti} ${conteggio.notti === 1 ? "notte" : "notti"} di sonno`);
-  if (conteggio.allenamenti) righe.push(`${conteggio.allenamenti} allenamenti dal Watch`);
+  if (conteggio.allenamenti) righe.push(`${conteggio.allenamenti} ${conteggio.allenamenti === 1 ? "allenamento" : "allenamenti"} dal Watch`);
   if (conteggio.agenda) {
     righe.push(`${conteggio.agenda} ${conteggio.agenda === 1 ? "giorno" : "giorni"} dal calendario`);
   }
-  if (conteggio.vuoti) righe.push(`${conteggio.vuoti} giorni senza dati, segnati come non registrati`);
+  if (conteggio.vuoti) righe.push(`${conteggio.vuoti} ${conteggio.vuoti === 1 ? "giorno" : "giorni"} senza dati, ${conteggio.vuoti === 1 ? "segnato" : "segnati"} come non ${conteggio.vuoti === 1 ? "registrato" : "registrati"}`);
   if (pacchetto.avvisi.length) righe.push(`Avvisi: ${pacchetto.avvisi.slice(0, 3).join(" · ")}`);
 
   await chiedi({

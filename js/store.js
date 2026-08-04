@@ -247,7 +247,10 @@ export function origineGiorno(iso = isoDate()) {
     const maiLetto = FINESTRE_AGENDA.length ? !dentroUnaFinestra(iso) : periodo?.da && iso < periodo.da;
     if (maiLetto) {
       if (periodo?.da && iso < periodo.da) return { fonte: "split", nonLetta: true, da: periodo.da };
-      return { fonte: "calendario", scaduta: true, fine: periodo?.a, nonLetta: true, ultimoEvento: periodo?.ultimoEvento };
+      // Non è «calendario scaduto»: quello vuol dire che le letture si fermano
+      // prima di oggi, e a schermo diventerebbe «letto fino al …» con una data
+      // nel futuro, cioè una frase falsa. È solo un giorno mai guardato.
+      return { fonte: "calendario", nonLetta: true, da: periodo?.da, a: periodo?.a };
     }
     return { fonte: "calendario", vuoto: true };
   }

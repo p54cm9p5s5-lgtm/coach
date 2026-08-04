@@ -107,7 +107,10 @@ export async function render({ ridisegna }) {
           h(
             "span.sub",
             ultima
-              ? `${dataBreve(ultima.data)}${ultima.condizioniStandard === false ? " · fuori protocollo" : ""}`
+              ? `${dataBreve(ultima.data)}${ultima.condizioniStandard === false ? " · fuori protocollo" : ""}` +
+                // Un punto interrogativo accanto alla differenza non spiega
+                // niente: se il confronto non vale, va detto con le parole.
+                (delta !== null && delta !== 0 && !confrontabile ? " · confronto non valido" : "")
               : "mai registrata"
           )
         ),
@@ -122,7 +125,7 @@ export async function render({ ridisegna }) {
                     ? "pill ok"
                     : "pill warn",
               },
-              `${delta > 0 ? "+" : ""}${num(delta)}${confrontabile ? "" : " ?"}`
+              `${delta > 0 ? "+" : ""}${num(delta)}`
             )
           : null
       )
@@ -193,6 +196,10 @@ async function registra(ridisegna) {
   }
 
   const scelte = new Set();
+  // Quello che è scritto nei campi ma non è un numero: veniva ignorato in
+  // silenzio, e chi aveva sbagliato a scrivere leggeva «Misure registrate»
+  // credendo che ci fosse anche quella.
+  const nonValidi = new Map();
   let salvato = false;
 
   await sheet((close) => {
@@ -233,9 +240,16 @@ async function registra(ridisegna) {
         if (val.value.trim() === "") {
           valori[def.id] = null;
           scelte.delete(def.id);
+          nonValidi.delete(def.id);
+          val.style.color = "";
           return;
         }
-        if (!Number.isFinite(n) || n < 0) return;
+        if (!Number.isFinite(n) || n < 0) {
+          nonValidi.set(def.id, def.nome);
+          val.style.color = "var(--orange)";
+          return;
+        }
+        nonValidi.delete(def.id);
         valori[def.id] = Math.round(n * 10) / 10;
         scelte.add(def.id);
         val.style.color = "var(--accent)";
@@ -286,6 +300,12 @@ async function registra(ridisegna) {
           "button.btn",
           {
             onclick: async () => {
+              // Prima di salvare: quello che non è un numero non entra, e va
+              // detto adesso, non scoperto dopo guardando l'elenco.
+              if (nonValidi.size) {
+                toast(`Non è un numero: ${[...nonValidi.values()].join(", ")}. Correggi o svuota il campo.`);
+                return;
+              }
               if (!scelte.size) {
                 toast("Non hai modificato nessuna misura.");
                 return;
