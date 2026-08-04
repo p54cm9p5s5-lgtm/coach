@@ -57,7 +57,7 @@ export function analizza(testo) {
     throw new Error(`Pacchetto in versione v${intestazione[1]}, l'app legge la v${VERSIONE}.`);
   }
 
-  const risultato = { finestra: null, giorni: [], notti: [], allenamenti: [], agenda: [], avvisi: [] };
+  const risultato = { finestra: null, giorni: [], notti: [], allenamenti: [], agenda: [], fasi: [], avvisi: [] };
 
   for (const grezza of righe.slice(1)) {
     // Tolleranza allo spazio perso: costruendo il comando rapido capita di
@@ -78,6 +78,26 @@ export function analizza(testo) {
       } else {
         risultato.avvisi.push("Riga FINESTRA con date non valide: ignorata.");
       }
+      continue;
+    }
+
+    if (tipo === "FASE") {
+      // Una fase del sonno grezza, come la registra l'orologio:
+      //   FASE 2026-08-03 23:14 2026-08-04 00:02 Core
+      // Sono due istanti (data e ora separate da uno spazio) più il nome della
+      // fase. I minuti e le notti li calcola l'app: dentro il comando rapido
+      // servirebbero date, condizioni e dizionari, e sarebbe fragile.
+      const [d1, o1, d2, o2, ...resto2] = resto;
+      const valida = (d, o) => /^\d{4}-\d{2}-\d{2}$/.test(d || "") && /^\d{1,2}:\d{2}/.test(o || "");
+      if (!valida(d1, o1) || !valida(d2, o2)) {
+        risultato.avvisi.push(`Riga FASE con orari non validi, ignorata: «${riga.slice(0, 44)}»`);
+        continue;
+      }
+      risultato.fasi.push({
+        inizio: `${d1}T${o1.padStart(5, "0")}`,
+        fine: `${d2}T${o2.padStart(5, "0")}`,
+        fase: (resto2.join(" ") || "").trim(),
+      });
       continue;
     }
 
@@ -163,6 +183,50 @@ export function analizza(testo) {
     } else {
       risultato.avvisi.push(`Riga di tipo sconosciuto, ignorata: «${tipo}»`);
     }
+  }
+
+  // Le fasi diventano notti: una notte è etichettata con la sera in cui
+  // comincia, quindi tutto quello che parte prima di mezzogiorno appartiene
+  // alla notte del giorno prima.
+  if (risultato.fasi.length) {
+    const perNotte = new Map();
+    for (const f of risultato.fasi) {
+      const inizio = new Date(f.inizio);
+      const fine = new Date(f.fine);
+      if (Number.isNaN(inizio) || Number.isNaN(fine)) continue;
+      let minuti = Math.round((fine - inizio) / 60000);
+      // Una fase che scavalca la mezzanotte con la data di fine sbagliata
+      // darebbe minuti negativi: si assume il giorno dopo.
+      if (minuti < 0) minuti += 24 * 60;
+      if (minuti <= 0 || minuti > 12 * 60) continue;
+
+      const notte = new Date(inizio);
+      if (notte.getHours() < 12) notte.setDate(notte.getDate() - 1);
+      const p = (n) => String(n).padStart(2, "0");
+      const chiave = `${notte.getFullYear()}-${p(notte.getMonth() + 1)}-${p(notte.getDate())}`;
+
+      if (!perNotte.has(chiave)) {
+        perNotte.set(chiave, { data: chiave, presente: true, durataMin: 0, profondoMin: 0, remMin: 0, vegliaMin: 0, risvegli: 0 });
+      }
+      const n = perNotte.get(chiave);
+      const nome = f.fase.toLowerCase();
+      if (/awake|sveglio|veglia/.test(nome)) {
+        n.vegliaMin += minuti;
+        // Un risveglio è un tratto sveglio di almeno cinque minuti: i micro
+        // risvegli di pochi secondi li ha chiunque e non dicono niente.
+        if (minuti >= 5) n.risvegli += 1;
+      } else if (/inbed|a letto/.test(nome)) {
+        // «A letto» non è sonno: non entra nella durata.
+      } else {
+        n.durataMin += minuti;
+        if (/deep|profondo/.test(nome)) n.profondoMin += minuti;
+        else if (/rem/.test(nome)) n.remMin += minuti;
+      }
+    }
+    // Le notti scritte a mano (righe NOTTE) hanno la precedenza: se ci sono
+    // tutte e due, quella esplicita vince.
+    const gia = new Set(risultato.notti.map((n) => n.data));
+    for (const n of perNotte.values()) if (!gia.has(n.data)) risultato.notti.push(n);
   }
 
   if (
