@@ -249,7 +249,9 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
         return num(v.reduce((a, b) => a + b, 0) / v.length, dec);
       };
       const parti = [
-        media("oreInPiedi") ? `in piedi ${media("oreInPiedi")} h/giorno` : null,
+        media("minutiInPiedi")
+          ? `in piedi ${durataUmana(Number(String(media("minutiInPiedi")).replace(",", ".")) * 60)}/giorno`
+          : null,
         media("pianiSaliti") ? `${media("pianiSaliti")} piani/giorno` : null,
         media("distanzaKm", 1) ? `${media("distanzaKm", 1)} km/giorno` : null,
         media("minutiEsercizio") ? `${media("minutiEsercizio")} min di esercizio/giorno` : null,

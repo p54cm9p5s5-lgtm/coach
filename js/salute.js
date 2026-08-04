@@ -103,7 +103,15 @@ export function analizza(testo) {
         obiettivoKcal: NUMERO(c.obiettivo),
         passi: NUMERO(c.passi),
         minutiEsercizio: NUMERO(c.esercizio),
-        oreInPiedi: NUMERO(c.inpiedi),
+        // «inpiedi» sono MINUTI: è quello che l'iPhone espone (tempo in piedi,
+        // non il conteggio delle ore dell'anello). Chi avesse le ore può usare
+        // «inpiediore» e vengono convertite.
+        minutiInPiedi:
+          NUMERO(c.inpiedi) != null
+            ? NUMERO(c.inpiedi)
+            : NUMERO(c.inpiediore) != null
+              ? Math.round(NUMERO(c.inpiediore) * 60)
+              : null,
         pianiSaliti: NUMERO(c.piani),
         distanzaKm: km != null ? km : metri != null ? Math.round((metri / 1000) * 100) / 100 : null,
         fcRiposo: NUMERO(c.fc),
