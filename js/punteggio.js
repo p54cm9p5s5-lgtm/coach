@@ -190,9 +190,9 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const oreBersaglio = R.sonnoOreBersaglio ?? 7.5;
   const oreMinime = R.sonnoOreMinime ?? 6;
   const tollerate = R.sigaretteTollerate ?? 10;
-  const passiBersaglio = R.passiBersaglio ?? 8000;
-  const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 30;
-  const inPiediBersaglio = R.minutiInPiediBersaglio ?? 150;
+  const passiBersaglio = R.passiBersaglio ?? 10000;
+  const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 60;
+  const inPiediBersaglio = R.minutiInPiediBersaglio ?? 240;
   const voci = [];
   const tetti = [];
 
@@ -227,7 +227,9 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   }
 
   // --- movimento: le calorie attive contro l'obiettivo dell'anello
-  const obiettivo = giorno?.obiettivoKcal || R.obiettivoMovimento || null;
+  // Il bersaglio del punteggio viene dalle regole, non dall'anello: quello che
+  // conta qui è l'asticella che ti sei dato, non quella predefinita del Watch.
+  const obiettivo = R.movimentoBersaglio || R.obiettivoMovimento || giorno?.obiettivoKcal || null;
   if (giorno?.kcalAttive != null && obiettivo) {
     voci.push({
       nome: "Movimento",
