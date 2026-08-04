@@ -73,8 +73,15 @@ function tx(db, stores, mode) {
     t,
     done: new Promise((res, rej) => {
       t.oncomplete = () => res();
-      t.onerror = () => rej(t.error);
-      t.onabort = () => rej(t.error);
+      // Un'operazione annullata NON porta sempre con sé il motivo: t.error può
+      // essere vuoto, e allora l'errore arrivava senza messaggio — l'app
+      // sembrava non fare niente invece di dire che non aveva salvato.
+      t.onerror = () => rej(t.error || new Error("Scrittura non riuscita nell'archivio del telefono."));
+      t.onabort = () =>
+        rej(
+          t.error ||
+            new Error("Scrittura annullata dal telefono: di solito è lo spazio finito.")
+        );
     }),
   };
 }
@@ -84,6 +91,18 @@ const wrap = (req) =>
     req.onsuccess = () => res(req.result);
     req.onerror = () => rej(req.error);
   });
+
+/**
+ * Gli archivi che il telefono non ha ancora.
+ * La versione del database resta 1 per scelta: un aggiornamento di schema che
+ * va storto sul telefono farebbe più danni di quanti ne eviti. Quindi qui non
+ * si creano archivi nuovi — si controlla che ci siano tutti, così backup e
+ * ripristino non falliscono in silenzio su un archivio inesistente.
+ */
+export async function archiviMancanti() {
+  const db = await open();
+  return Object.keys(SCHEMA).filter((s) => !db.objectStoreNames.contains(s));
+}
 
 export async function get(store, key) {
   const db = await open();
@@ -149,9 +168,14 @@ export function nuovoId(prefisso = "id") {
 /** `salta` evita di leggere store pesanti quando non servono (le foto). */
 export async function esportaTutto({ salta = [] } = {}) {
   const dump = { formato: "coach-backup", versione: 1, creatoIl: new Date().toISOString(), dati: {} };
+  const mancanti = await archiviMancanti();
   for (const store of Object.keys(SCHEMA)) {
+    // Un archivio che su questo telefono non esiste non è un errore: si salta,
+    // e si dice che manca. Prima l'intero backup falliva.
+    if (mancanti.includes(store)) continue;
     dump.dati[store] = salta.includes(store) ? [] : await all(store);
   }
+  if (mancanti.length) dump.archiviAssenti = mancanti;
   return dump;
 }
 
@@ -167,7 +191,12 @@ export async function importaTutto(dump, modo = "sostituisci") {
   if (!dump || dump.formato !== "coach-backup") {
     throw new Error("File non riconosciuto: manca l'intestazione coach-backup.");
   }
-  const presenti = Object.keys(SCHEMA).filter((s) => Array.isArray(dump.dati?.[s]));
+  // Si scrive solo negli archivi che questo telefono ha davvero: nominarne uno
+  // inesistente farebbe fallire tutto il ripristino, dati validi compresi.
+  const mancanti = await archiviMancanti();
+  const presenti = Object.keys(SCHEMA).filter(
+    (s) => !mancanti.includes(s) && Array.isArray(dump.dati?.[s])
+  );
   if (!presenti.length) throw new Error("Il file non contiene nessun dato riconoscibile.");
 
   // Una copia può dichiararsi parziale: la copia interna, per esempio, non

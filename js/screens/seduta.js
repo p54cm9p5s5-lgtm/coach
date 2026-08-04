@@ -316,6 +316,30 @@ async function vistaRisultato(id, vaiA) {
 
   // confronto con l'esposizione precedente, esercizio per esercizio
   const righe = h("div.list");
+  // Un esercizio con serie registrate ma senza questionario (uscito prima di
+  // rispondere) non compariva da nessuna parte: né qui né fra i mancanti.
+  const senzaQuestionario = [...new Set(serie.map((x) => x.esercizioId))].filter(
+    (id) => !logs.some((l) => l.esercizioId === id)
+  );
+  for (const id of senzaQuestionario) {
+    const def = store.esercizio(id);
+    const mie = serie.filter((x) => x.esercizioId === id);
+    aggiungi(righe,
+      h(
+        "div.row",
+        h(
+          "div.main",
+          h("span.title", def?.nome || id),
+          h("span.sub", `${mie.length} ${mie.length === 1 ? "serie" : "serie"} · questionario non compilato`),
+          h(
+            "span.sub",
+            `${mie.at(-1)?.carico != null ? `${num(mie.at(-1).carico)} kg · ` : ""}${mie.map((x) => x.ripFatte ?? "—").join("/")}`
+          )
+        ),
+        h("span.pill.warn", "senza valutazione")
+      )
+    );
+  }
   for (const l of logs) {
     const def = store.esercizio(l.esercizioId);
     if (l.saltato) {
@@ -1822,7 +1846,10 @@ async function vistaCardioInCorso(corpo, piede, r) {
       if (scelta !== "trascorsi") trascorsi = previsti;
     }
     S.sed = await store.aggiornaSeduta(S.sed.id, {
-      cardio: { ...S.sed.cardio, eseguito: true, durataMin: trascorsi },
+      // Quando è finito il cardio resta scritto nella seduta: il progresso
+      // viene azzerato subito dopo, e senza questo la durata dell'allenamento
+      // perdeva mezz'ora di tapis.
+      cardio: { ...S.sed.cardio, eseguito: true, durataMin: trascorsi, finitoIl: Date.now() },
     });
     S.cardioFine = null;
     await salvaProgresso({ fase: "stretching", cardioInizio: null, cardioFine: null });
