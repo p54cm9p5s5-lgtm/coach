@@ -784,14 +784,15 @@ export async function aggiornaProposte(cache = null) {
       .sort((a, b) => (a.creatoIl < b.creatoIl ? 1 : -1))[0];
 
     if (rispostaPrec) {
+      const allaRisposta = rispostaPrec.esposizioniAllaRisposta ?? rispostaPrec.esposizioniAllaData ?? 0;
       if (rispostaPrec.stato === "rimandata") {
-        // rimandata: torna solo quando c'è un dato nuovo
-        if (esp.length <= (rispostaPrec.esposizioniAllaData ?? 0)) continue;
+        // rimandata: torna solo quando c'è un dato nuovo dopo la risposta
+        if (esp.length <= allaRisposta) continue;
       } else {
         // Accettata o rifiutata non si ripropone subito. Ma «mai più» è
         // sbagliato: dopo un ciclo intero di allenamenti la situazione è
         // un'altra, e la stessa proposta torna a essere una domanda sensata.
-        const nuoveEsposizioni = esp.length - (rispostaPrec.esposizioniAllaData ?? 0);
+        const nuoveEsposizioni = esp.length - allaRisposta;
         if (nuoveEsposizioni < (reg.progressione?.esposizioniPerRiproporre ?? 4)) continue;
       }
     }
@@ -873,7 +874,18 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
   if (!p) throw new Error("Questa proposta non esiste più.");
   if (!ETICHETTA_ESITO[stato]) throw new Error(`Esito non previsto: ${stato}.`);
 
-  const agg = { ...p, stato, rispostoIl: new Date().toISOString(), notaRisposta: nota };
+  // Quante volte avevi fatto quell'esercizio NEL MOMENTO in cui hai risposto.
+  // Prima si usava il conto di quando la proposta era nata: se ti allenavi
+  // prima di rispondere, «Accetto» valeva già zero (l'obiettivo veniva scartato
+  // subito) e «Rimando» faceva ricomparire la stessa proposta all'istante.
+  const espOra = await esposizioni(p.esercizioId);
+  const agg = {
+    ...p,
+    stato,
+    rispostoIl: new Date().toISOString(),
+    esposizioniAllaRisposta: espOra.length,
+    notaRisposta: nota,
+  };
   await db.put("proposte", agg);
 
   await registraDecisione({
@@ -901,7 +913,10 @@ export async function obiettivoCorrente(esercizioId) {
   const p = mie[0];
   if (!p) return null;
   const esp = await esposizioni(esercizioId);
-  if (esp.length !== p.esposizioniAllaData) return null; // già consumato da una nuova esposizione
+  // Il conto giusto è quello del momento in cui hai risposto (le proposte
+  // vecchie hanno solo quello di quando sono nate: si usa quello).
+  const quando = p.esposizioniAllaRisposta ?? p.esposizioniAllaData;
+  if (esp.length !== quando) return null; // già consumato da una nuova esposizione
   return { carico: p.a.carico, rip: p.a.rip, tipo: p.tipo, propostaId: p.id, titolo: p.titolo };
 }
 
@@ -919,7 +934,8 @@ export async function proposteAccettate() {
   }
   return tutte.map((p) => ({
     ...p,
-    inVigore: (perEsercizio.get(p.esercizioId) || []).length === p.esposizioniAllaData,
+    inVigore:
+      (perEsercizio.get(p.esercizioId) || []).length === (p.esposizioniAllaRisposta ?? p.esposizioniAllaData),
   }));
 }
 

@@ -170,10 +170,17 @@ export async function importaTutto(dump, modo = "sostituisci") {
   const presenti = Object.keys(SCHEMA).filter((s) => Array.isArray(dump.dati?.[s]));
   if (!presenti.length) throw new Error("Il file non contiene nessun dato riconoscibile.");
 
+  // Una copia può dichiararsi parziale: la copia interna, per esempio, non
+  // contiene le foto (pesano troppo per rifarla ogni volta). Un elenco vuoto
+  // NON significa «cancella tutto»: significa «di questo non so niente».
+  // Prima ripristinare la copia interna cancellava tutte le foto del corpo.
+  const senzaOpinione = new Set(Array.isArray(dump.parziale) ? dump.parziale : []);
+  const daScrivere = presenti.filter((s) => !senzaOpinione.has(s));
+
   const db = await open();
-  const { t, done } = tx(db, presenti, "readwrite");
+  const { t, done } = tx(db, daScrivere, "readwrite");
   try {
-    for (const store of presenti) {
+    for (const store of daScrivere) {
       const os = t.objectStore(store);
       if (modo === "sostituisci") os.clear();
       for (const riga of dump.dati[store]) os.put(riga);

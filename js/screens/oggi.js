@@ -284,8 +284,17 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
     );
   }
 
-  const titolo = previsto ? previsto.nome : "Riposo";
   const origine = store.origineGiorno(oggi);
+  // «Riposo» va scritto solo quando è davvero riposo. Se il calendario dice
+  // qualcosa che l'app non riconosce, o se il pacchetto è vecchio, l'app non
+  // sa cosa tocca oggi: dirlo è l'unica risposta onesta.
+  const titolo = previsto
+    ? previsto.nome
+    : origine.sconosciuto
+      ? origine.titolo || "Da vedere sul calendario"
+      : origine.scaduta
+        ? "Calendario da aggiornare"
+        : "Riposo";
   const sotto = giaFatto
     ? "completato oggi"
     : previsto
@@ -400,6 +409,11 @@ async function bloccoCalendario(vaiA, ridisegna) {
   const tutte = await store.allenamenti();
   const allenamenti = new Map();
   for (const s of tutte) {
+    // Due allenamenti nello stesso giorno: sul calendarietto ci sta un segno
+    // solo, e deve essere quello finito. Prima vinceva l'ultimo letto, così un
+    // allenamento appena aperto cancellava dal calendario quello già chiuso.
+    const gia = allenamenti.get(s.data);
+    if (gia?.completato && s.stato !== "completata") continue;
     allenamenti.set(s.data, { id: s.id, nome: s.tipoNome, completato: s.stato === "completata" });
   }
 

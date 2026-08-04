@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260804-041604";
+const VERSION = "20260804-043543";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -71,6 +71,11 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("message", (e) => {
   if (e.data === "SKIP_WAITING") self.skipWaiting();
+  // Chi sta girando davvero risponde da sé. Prima la schermata Impostazioni
+  // leggeva sw.js dal server: mostrava la versione pubblicata, non quella
+  // installata sul telefono, cioè proprio il numero che serve per capire se
+  // l'app è rimasta indietro.
+  if (e.data === "VERSIONE" && e.ports && e.ports[0]) e.ports[0].postMessage(VERSION);
 });
 
 self.addEventListener("fetch", (e) => {
@@ -80,7 +85,19 @@ self.addEventListener("fetch", (e) => {
   if (url.origin !== self.location.origin) return;
 
   if (req.mode === "navigate") {
+    // Con la rete lenta (o un wifi che non porta da nessuna parte) l'attesa
+    // non deve essere infinita: dopo tre secondi si apre la copia salvata e
+    // l'allenamento comincia lo stesso. Il download continua per suo conto e
+    // aggiorna la copia per la volta dopo.
+    const conAttesaMassima = (promessa) =>
+      Promise.race([
+        promessa,
+        new Promise((ok) =>
+          setTimeout(() => ok(caches.match("./index.html").then((s) => s || promessa)), 3000)
+        ),
+      ]);
     e.respondWith(
+      conAttesaMassima(
       fetch(new Request(req.url, { cache: "no-cache" }))
         .then((r) => {
           // Solo una risposta valida diventa la pagina dell'app. Senza questo
@@ -94,6 +111,7 @@ self.addEventListener("fetch", (e) => {
           return caches.match("./index.html").then((salvata) => salvata || r);
         })
         .catch(() => caches.match("./index.html"))
+      )
     );
     return;
   }

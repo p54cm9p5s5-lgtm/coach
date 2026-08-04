@@ -91,6 +91,18 @@ export async function render({ vaiA, ridisegna }) {
           { onclick: forzaAggiornamento },
           h("div.main", h("span.title", "Scarica l'ultima versione"), h("span.sub", "svuota la copia locale e ricarica")),
           h("span.chevron", "›")
+        ),
+        // L'obiettivo di movimento lo decidi su Salute: l'app non lo sa leggere,
+        // e finora ne dava per scontato uno solo. Adesso si può allineare.
+        h(
+          "button.row.accent",
+          { onclick: () => cambiaObiettivoMovimento(ridisegna) },
+          h(
+            "div.main",
+            h("span.title", "Obiettivo movimento"),
+            h("span.sub", "il numero che vedi su Salute: serve alle percentuali")
+          ),
+          h("span.value", `${imp.obiettivoMovimentoKcal} kcal`)
         )
       ),
       h("p.footnote", "Normalmente l'app si aggiorna da sola alla riapertura. Questo serve solo se resta indietro.")
@@ -302,6 +314,46 @@ export async function render({ vaiA, ridisegna }) {
   return wrap;
 }
 
+/**
+ * L'obiettivo di movimento è quello che hai impostato sull'anello di Salute.
+ * L'app non può leggerlo (nessun accesso ai dati di Salute se non da te), e
+ * dava per scontato 600: tutte le percentuali erano sbagliate se il tuo era
+ * un altro numero.
+ */
+async function cambiaObiettivoMovimento(ridisegna) {
+  const attuale = await store.impostazione("obiettivoMovimentoKcal");
+  let scelto = Number(attuale) || 600;
+  const val = h("span.val", `${scelto} kcal`);
+  const esito = await sheet((close) =>
+    h(
+      "div",
+      h("div.hero", h("p.kicker", "Salute"), h("h2", "Obiettivo movimento"), h("p.target", "kcal attive al giorno")),
+      h(
+        "div.group",
+        h(
+          "div.list",
+          h(
+            "div.field",
+            h("label", "Obiettivo giornaliero"),
+            h(
+              "div.stepper",
+              h("button", { onclick: () => { scelto = Math.max(100, scelto - 50); val.textContent = `${scelto} kcal`; } }, "−"),
+              val,
+              h("button", { onclick: () => { scelto = Math.min(3000, scelto + 50); val.textContent = `${scelto} kcal`; } }, "+")
+            )
+          )
+        ),
+        h("p.footnote", "Su iPhone: Salute › Sfoglia › Attività › Movimento. Copia qui lo stesso numero.")
+      ),
+      h("div.btn-wrap", h("button.btn", { onclick: () => close(scelto) }, "Salva"))
+    )
+  );
+  if (!esito) return;
+  await store.setImpostazione("obiettivoMovimentoKcal", esito);
+  toast(`Obiettivo movimento: ${esito} kcal.`);
+  await ridisegna();
+}
+
 async function caricaBrief(ridisegna) {
   const file = await scegliFile(".md,.markdown,.txt,text/markdown,text/plain");
   if (!file) return;
@@ -412,7 +464,7 @@ async function ripristinaSnapshot() {
   }
   const scelta = await chiedi({
     titolo: "Ripristinare la copia interna?",
-    testo: `Copia del ${dump.creatoIl ? new Date(dump.creatoIl).toLocaleString("it-IT") : "?"}. Le foto non sono incluse e andrebbero perse.`,
+    testo: `Copia del ${dump.creatoIl ? new Date(dump.creatoIl).toLocaleString("it-IT") : "?"}. Tutto il resto torna a com'era in quel momento. Le foto del corpo non sono nella copia e restano dove sono: non vengono né toccate né perse.`,
     opzioni: [{ etichetta: "Ripristina", valore: "si", stile: "destructive" }],
   });
   if (scelta !== "si") return;
@@ -515,12 +567,41 @@ async function azzera(ridisegna) {
 }
 
 
-/** Versione del service worker attivo: dice quale copia sta girando davvero. */
+/**
+ * Versione che sta girando davvero sul telefono.
+ * Si chiede a chi la conosce: prima al service worker attivo, poi al nome
+ * della copia locale dei file. Solo se non c'è né l'uno né l'altra si guarda
+ * il server — che però dice cosa è stato pubblicato, non cosa hai installato.
+ */
 async function versioneInstallata() {
+  try {
+    const attivo = navigator.serviceWorker?.controller;
+    if (attivo) {
+      const risposta = await new Promise((ok) => {
+        const canale = new MessageChannel();
+        const scaduto = setTimeout(() => ok(null), 1200);
+        canale.port1.onmessage = (e) => {
+          clearTimeout(scaduto);
+          ok(e.data);
+        };
+        attivo.postMessage("VERSIONE", [canale.port2]);
+      });
+      if (risposta) return risposta;
+    }
+  } catch {
+    /* si prova col nome della copia locale */
+  }
+  try {
+    const nome = (await caches.keys()).find((k) => k.startsWith("coach-"));
+    if (nome) return nome.slice("coach-".length);
+  } catch {
+    /* niente cache: resta il server */
+  }
   try {
     const r = await fetch("sw.js", { cache: "no-store" });
     const t = await r.text();
-    return t.match(/const VERSION = "([^"]+)"/)?.[1] || null;
+    const v = t.match(/const VERSION = "([^"]+)"/)?.[1];
+    return v ? `${v} (sul server)` : null;
   } catch {
     return null;
   }
@@ -533,6 +614,27 @@ async function forzaAggiornamento() {
     opzioni: [{ etichetta: "Aggiorna adesso", valore: "si" }],
   });
   if (scelta !== "si") return;
+
+  // Prima si controlla che i file si scarichino davvero, POI si buttano quelli
+  // che hai. Al contrario, senza rete (o con il wifi che chiede il login)
+  // l'app restava senza niente: schermata bianca e nessun modo di rimediare
+  // finché non tornava la linea.
+  const daControllare = ["index.html", "js/app.js", "css/app.css"];
+  try {
+    const risposte = await Promise.all(
+      daControllare.map((f) => fetch(`${f}?prova=${Date.now()}`, { cache: "no-store" }))
+    );
+    const rotta = risposte.find((r) => !r.ok);
+    if (rotta) throw new Error(`il server ha risposto ${rotta.status}`);
+  } catch (e) {
+    await chiedi({
+      titolo: "Aggiornamento non fatto",
+      testo: `I file dell'app non si scaricano (${e.message}). Non ho toccato niente: l'app resta quella che hai, e funziona anche senza rete. Riprova quando sei connesso.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+    });
+    return;
+  }
+
   try {
     for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
     for (const k of await caches.keys()) await caches.delete(k);
