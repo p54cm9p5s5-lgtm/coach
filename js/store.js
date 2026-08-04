@@ -1795,6 +1795,18 @@ async function riabbinaAgenda() {
 }
 
 /** Toglie tutto quello che è arrivato dal calendario e torna allo split del brief. */
+/**
+ * Cancella SOLO quello che arriva dal comando rapido Salute: giorni di
+ * movimento e notti. Serve quando un comando cambia e i valori vecchi non
+ * verrebbero sovrascritti, perché un campo assente non azzera il precedente.
+ * Allenamenti, misure, foto e programma non si toccano.
+ */
+export async function svuotaSalute() {
+  await db.clearStore("giorniSalute");
+  await db.clearStore("notti");
+  await setImpostazione("ultimoImportSalute", null);
+}
+
 export async function svuotaAgenda() {
   await setImpostazione("agenda", {});
   // Anche la data dell'ultima lettura se ne va: altrimenti le Impostazioni
