@@ -312,9 +312,14 @@ const REGOLE_BASE = {
     },
     sonnoOreBersaglio: 7.5,
     sonnoOreMinime: 6,
-    passiBersaglio: 8000,
-    minutiEsercizioBersaglio: 30,
-    minutiInPiediBersaglio: 150,
+    // Bersagli del punteggio Salute, decisi da te. Non sono gli obiettivi
+    // dell'orologio: quello del movimento sull'anello resta quello che hai
+    // impostato in Salute (serve al coach per leggere le percentuali vere),
+    // questo è l'asticella che ti dai.
+    movimentoBersaglio: 1000,
+    passiBersaglio: 10000,
+    minutiEsercizioBersaglio: 60,
+    minutiInPiediBersaglio: 240,
     // Sopra questa soglia la giornata è comunque compromessa, per quanto bene
     // sia andato tutto il resto: è il tetto, non una sottrazione.
     sigaretteTollerate: 10,
@@ -1841,7 +1846,13 @@ export async function punteggiSalute(dal, al = isoDate()) {
   // passarlo, la voce «movimento» risultava non registrata anche con le kcal
   // in archivio.
   const reg = { ...regole() };
-  reg.salute = { ...(reg.salute || {}), obiettivoMovimento: await impostazione("obiettivoMovimentoKcal") };
+  // Il bersaglio del punteggio è quello dichiarato nelle regole; l'obiettivo
+  // dell'anello resta un ripiego per quando il brief non dice niente.
+  reg.salute = {
+    ...(reg.salute || {}),
+    obiettivoMovimento:
+      reg.salute?.movimentoBersaglio ?? (await impostazione("obiettivoMovimentoKcal")),
+  };
   const perNotte = new Map((await notti()).map((n) => [n.data, n]));
   const giorni = new Map((await giorniSalute()).map((g) => [g.data, g]));
   const fumate = await conteggioFumo();

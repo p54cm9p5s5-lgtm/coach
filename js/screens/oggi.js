@@ -165,8 +165,33 @@ async function bloccoGrafico(ridisegna) {
 
   // Un anello come quello della completezza degli allenamenti: un punteggio è
   // una quota di qualcosa, e il cerchio lo dice meglio di una linea.
-  const mostrato = oggiSalute?.totale ?? mediaSalute;
-  const voci = (oggiSalute?.voci || []).filter((v) => v.quota != null);
+  //
+  // Il numero segue il bottone premuto: «1 gg» è oggi, gli altri periodi sono
+  // la media dei giorni che contengono. Prima mostrava sempre oggi e i quattro
+  // bottoni non cambiavano niente, cioè mentivano.
+  const mostrato = soloOggi ? oggiSalute?.totale ?? null : mediaSalute;
+
+  // Anche la scomposizione segue il periodo: su più giorni ogni voce è la
+  // media dei giorni in cui quel dato c'era davvero.
+  const voci = (() => {
+    if (soloOggi) return (oggiSalute?.voci || []).filter((v) => v.quota != null);
+    const per = new Map();
+    for (const p of conPunteggio) {
+      for (const v of p.voci || []) {
+        if (v.quota == null) continue;
+        const acc = per.get(v.nome) || { nome: v.nome, peso: v.peso, somma: 0, quanti: 0 };
+        acc.somma += v.quota;
+        acc.quanti++;
+        per.set(v.nome, acc);
+      }
+    }
+    return [...per.values()].map((a) => ({
+      nome: a.nome,
+      peso: a.peso,
+      quota: a.somma / a.quanti,
+      dettaglio: `media su ${a.quanti} ${a.quanti === 1 ? "giorno" : "giorni"}`,
+    }));
+  })();
 
   const bloccoSalute = h(
     "div.group",
@@ -181,16 +206,20 @@ async function bloccoGrafico(ridisegna) {
             dimensione: 168,
             sottotitolo: giudizio(mostrato).testo,
           })
-        : h("p", { style: "margin:0;text-align:center;color:var(--label-secondary)" }, "Nessun dato ancora"),
-      mostrato != null
-        ? h(
+        : h(
             "p",
-            { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
-            oggiSalute?.totale != null
-              ? `oggi · media ${mediaSalute ?? "—"} su ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`
-              : `media di ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`
-          )
-        : null,
+            { style: "margin:0;text-align:center;color:var(--label-secondary)" },
+            soloOggi ? "Oggi non ci sono ancora dati" : "Nessun dato in questo periodo"
+          ),
+      h(
+        "p",
+        { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
+        soloOggi
+          ? mostrato != null
+            ? "oggi"
+            : "oggi · nessun dato ancora"
+          : `media di ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`
+      ),
       // Da cosa viene, voce per voce: un punteggio che non si sa spiegare non
       // serve a niente.
       voci.length
