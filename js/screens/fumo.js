@@ -18,24 +18,50 @@ function colore(n) {
   return "var(--label)";
 }
 
+/**
+ * Una sigaretta disegnata come si deve: corpo bianco, filtro pieno, brace
+ * accesa e due volute di fumo che salgono. Prende il colore della soglia.
+ */
 function sigarettaSvg(tinta) {
   const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("width", "56");
-  svg.setAttribute("height", "56");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", tinta);
-  svg.setAttribute("stroke-width", "1.6");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
+  const el = (tag, attrs) => {
+    const n = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    return n;
+  };
+  const svg = el("svg", {
+    viewBox: "0 0 120 64",
+    width: "150",
+    height: "80",
+    "aria-hidden": "true",
+    fill: "none",
+  });
   svg.style.display = "block";
   svg.style.margin = "0 auto";
-  const p = document.createElementNS(NS, "path");
-  // il corpo della sigaretta, il filtro e il fumo che sale
-  p.setAttribute("d", "M3 17h13M18 17h3M18 14.5v5M16 11c2-1.2 2-3.3 0-4.5s-2-3.3 0-4.5");
-  svg.append(p);
+
+  // il corpo: un rettangolo arrotondato, contorno del colore della soglia
+  svg.append(
+    el("rect", {
+      x: 8, y: 40, width: 74, height: 16, rx: 8,
+      fill: "none", stroke: tinta, "stroke-width": 3,
+    }),
+    // il filtro, pieno
+    el("rect", { x: 62, y: 40, width: 20, height: 16, rx: 8, fill: tinta, opacity: 0.55 }),
+    // la riga che separa filtro e tabacco
+    el("path", { d: "M62 40v16", stroke: tinta, "stroke-width": 3, "stroke-linecap": "round" }),
+    // la brace accesa in punta
+    el("circle", { cx: 92, cy: 48, r: 5, fill: tinta }),
+    el("circle", { cx: 92, cy: 48, r: 9, fill: tinta, opacity: 0.18 }),
+    // due volute di fumo
+    el("path", {
+      d: "M22 32c0-7 7-7 7-14s-7-7-7-13",
+      stroke: tinta, "stroke-width": 3, "stroke-linecap": "round", opacity: 0.75, fill: "none",
+    }),
+    el("path", {
+      d: "M40 32c0-6 6-6 6-12s-6-6-6-11",
+      stroke: tinta, "stroke-width": 3, "stroke-linecap": "round", opacity: 0.45, fill: "none",
+    })
+  );
   return svg;
 }
 
