@@ -261,7 +261,7 @@ export async function render({ vaiA, ridisegna }) {
         ),
         h(
           "button.row.accent",
-          { onclick: esportaBackup },
+          { onclick: () => esportaBackup(ridisegna) },
           h("div.main", h("span.title", "Esporta backup su file")),
           h("span.chevron", "›")
         ),
@@ -372,11 +372,36 @@ async function caricaBrief(ridisegna) {
   await ridisegna();
 }
 
-async function esportaBackup() {
-  const dump = await store.esportaCompleto();
+async function esportaBackup(ridisegna) {
+  let dump;
+  try {
+    dump = await store.esportaCompleto();
+  } catch (e) {
+    await chiedi({
+      titolo: "Backup non riuscito",
+      testo: `Non sono riuscito a leggere l'archivio: ${e.message}`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+    });
+    return;
+  }
   const oggi = new Date().toISOString().slice(0, 10);
-  scarica(`coach-backup-${oggi}.json`, JSON.stringify(dump, null, 2));
-  toast("Backup esportato.");
+  scarica(`coach-backup-${oggi}.json`, JSON.stringify(dump));
+
+  // Il browser non dice se il file è stato davvero salvato: lo chiediamo a te,
+  // invece di segnare «fatto» e lasciarti credere di avere una copia.
+  const esito = await chiedi({
+    titolo: "Hai salvato il file?",
+    testo: `Dovrebbe chiamarsi coach-backup-${oggi}.json. Salvalo in File o iCloud Drive: è l'unica copia che sopravvive alla perdita del telefono.`,
+    opzioni: [
+      { etichetta: "Sì, l'ho salvato", valore: "si" },
+      { etichetta: "No, riprovo", valore: "no" },
+    ],
+  });
+  if (esito === "si") {
+    await store.setImpostazione("ultimoExport", new Date().toISOString());
+    toast("Backup registrato.");
+    if (ridisegna) await ridisegna();
+  }
 }
 
 async function ripristinaSnapshot() {

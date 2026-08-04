@@ -1,5 +1,5 @@
 import {
-  h, toast, sheet, chiedi, clear, num, dataBreve, dataLunga, isoDate, giorniTra, aggiungi,
+  h, toast, sheet, chiedi, clear, num, dataBreve, dataLunga, isoDate, giorniTra, aggiungi, unaVoltaSola,
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
@@ -31,7 +31,7 @@ const CONDIZIONI_FOTO = [
 
 export async function render({ ridisegna }) {
   const wrap = h("div.screen");
-  aggiungi(wrap, intestazione("Corpo", { etichetta: "Registra", onclick: () => registra(ridisegna) }));
+  aggiungi(wrap, intestazione("Corpo", { etichetta: "Registra", onclick: unaVoltaSola(() => registra(ridisegna)) }));
 
   const tutte = await store.misure();
   const perTipo = new Map();
@@ -318,9 +318,9 @@ async function bloccoFoto(ridisegna) {
     h(
       "div.btn-wrap",
       { style: "margin-left:0;margin-right:0" },
-      h("button.btn", { onclick: () => nuovoSet(ridisegna) }, ultimo ? "Nuovo set di foto" : "Primo set di foto"),
+      h("button.btn", { onclick: unaVoltaSola(() => nuovoSet(ridisegna)) }, ultimo ? "Nuovo set di foto" : "Primo set di foto"),
       h("div", { style: "height:8px" }),
-      h("button.btn.secondary", { onclick: () => importaSet(ridisegna) }, "Usa foto che hai già")
+      h("button.btn.secondary", { onclick: unaVoltaSola(() => importaSet(ridisegna)) }, "Usa foto che hai già")
     ),
     h(
       "p.footnote",
@@ -636,19 +636,44 @@ function catturaDaFile(posa) {
     // l'app Fotocamera usando l'autoscatto — che per la posa di schiena è
     // l'unico modo sensato.
     const input = h("input", { type: "file", accept: "image/*", style: "display:none" });
+    let concluso = false;
+    const finisci = (valore) => {
+      if (concluso) return;
+      concluso = true;
+      input.remove();
+      document.removeEventListener("focus", alRitorno, true);
+      resolve(valore);
+    };
+
+    // Annullare il selettore non produce nessun evento: senza questo la
+    // sequenza delle quattro pose restava appesa per sempre.
+    const alRitorno = () => {
+      setTimeout(() => {
+        if (!concluso && !input.files?.length) finisci(null);
+      }, 800);
+    };
+
     input.addEventListener("change", async () => {
       const file = input.files?.[0];
-      input.remove();
-      if (!file) return resolve(null);
-      const bitmap = await createImageBitmap(file);
-      const c = document.createElement("canvas");
-      const scala = Math.min(1, 1440 / Math.max(bitmap.width, bitmap.height));
-      c.width = Math.round(bitmap.width * scala);
-      c.height = Math.round(bitmap.height * scala);
-      c.getContext("2d").drawImage(bitmap, 0, 0, c.width, c.height);
-      resolve(c.toDataURL("image/jpeg", 0.82));
+      if (!file) return finisci(null);
+      try {
+        const bitmap = await createImageBitmap(file);
+        const c = document.createElement("canvas");
+        const scala = Math.min(1, 1440 / Math.max(bitmap.width, bitmap.height));
+        c.width = Math.round(bitmap.width * scala);
+        c.height = Math.round(bitmap.height * scala);
+        c.getContext("2d").drawImage(bitmap, 0, 0, c.width, c.height);
+        bitmap.close?.();
+        finisci(c.toDataURL("image/jpeg", 0.82));
+      } catch (e) {
+        // Un file che il telefono non riesce a leggere non deve bloccare tutto.
+        toast("Questa immagine non si riesce a leggere: provane un'altra.", 4000);
+        finisci(null);
+      }
     });
+
     document.body.append(input);
+    document.addEventListener("focus", alRitorno, true);
     toast(`Posa: ${posa.nome} — scatta o scegli dalla libreria`);
     input.click();
   });

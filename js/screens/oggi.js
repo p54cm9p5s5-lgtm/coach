@@ -6,14 +6,27 @@ import * as store from "../store.js";
 import { graficoAttivita, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 import { anello, giudizio } from "../punteggio.js";
-import { sbloccaAudio } from "../ui.js";
+import { sbloccaAudio, unaVoltaSola } from "../ui.js";
 
 let meseMostrato = null;
 
+/**
+ * La versione si legge dal service worker che sta girando davvero, non da
+ * quello sul server: erano due cose diverse e la Home mostrava la versione
+ * pubblicata anche quando il telefono ne aveva una vecchia. Con un limite di
+ * tempo, perché il disegno della Home non deve dipendere dalla rete.
+ */
 async function versioneApp() {
   try {
-    const r = await fetch("sw.js", { cache: "no-store" });
-    return (await r.text()).match(/const VERSION = "([^"]+)"/)?.[1] || "sconosciuta";
+    const conTempo = (p, ms) =>
+      Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]);
+    const risposta = await conTempo(
+      caches.match("./sw.js").then((c) => c || fetch("sw.js", { cache: "no-store" })),
+      1500
+    );
+    if (!risposta) return "non verificabile";
+    const testo = await risposta.text();
+    return testo.match(/const VERSION = "([^"]+)"/)?.[1] || "sconosciuta";
   } catch {
     return "non verificabile";
   }
@@ -251,13 +264,16 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
             "button.btn",
             {
               class: giaFatto ? "btn secondary" : "btn",
-              onclick: async () => {
+              onclick: unaVoltaSola(async () => {
                 // Il tocco che avvia l'allenamento è anche quello che autorizza
                 // il suono del recupero: dopo non ci sono più occasioni utili.
                 sbloccaAudio();
-                await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
+                // Se una seduta è già aperta non se ne crea una seconda: il
+                // doppio tocco lasciava due allenamenti aperti insieme.
+                const gia = await store.sedutaInCorso();
+                if (!gia) await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
                 vaiA("seduta");
-              },
+              }),
             },
             giaFatto ? "Rifai questo allenamento" : "Inizia allenamento"
           )

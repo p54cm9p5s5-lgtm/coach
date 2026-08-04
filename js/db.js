@@ -145,15 +145,54 @@ export async function esportaTutto() {
   return dump;
 }
 
-/** modo: 'sostituisci' svuota tutto, 'unisci' sovrascrive solo le chiavi presenti. */
+/**
+ * modo: 'sostituisci' svuota tutto, 'unisci' sovrascrive le chiavi presenti.
+ *
+ * Tutto avviene in UNA transazione sola: prima si svuota e poi si riscrive
+ * dentro lo stesso blocco, così se qualcosa va storto a metà il database torna
+ * com'era. Prima erano decine di transazioni separate: un'interruzione
+ * lasciava l'archivio mezzo cancellato, senza modo di tornare indietro.
+ */
 export async function importaTutto(dump, modo = "sostituisci") {
   if (!dump || dump.formato !== "coach-backup") {
     throw new Error("File non riconosciuto: manca l'intestazione coach-backup.");
   }
-  for (const store of Object.keys(SCHEMA)) {
-    const righe = dump.dati?.[store];
-    if (!Array.isArray(righe)) continue;
-    if (modo === "sostituisci") await clearStore(store);
-    await putMany(store, righe);
+  const presenti = Object.keys(SCHEMA).filter((s) => Array.isArray(dump.dati?.[s]));
+  if (!presenti.length) throw new Error("Il file non contiene nessun dato riconoscibile.");
+
+  const db = await open();
+  const { t, done } = tx(db, presenti, "readwrite");
+  try {
+    for (const store of presenti) {
+      const os = t.objectStore(store);
+      if (modo === "sostituisci") os.clear();
+      for (const riga of dump.dati[store]) os.put(riga);
+    }
+  } catch (e) {
+    // Una riga malformata solleva subito: senza abort esplicito la transazione
+    // si chiuderebbe da sola con lo svuotamento già applicato, cioè il caso
+    // peggiore — archivio vuoto e dati nuovi mai scritti.
+    try {
+      t.abort();
+    } catch {
+      /* già abortita */
+    }
+    throw new Error(`Ripristino annullato, archivio invariato: ${e.message}`);
+  }
+  await done;
+}
+
+/**
+ * Chiede a iOS di non buttare via l'archivio quando lo spazio scarseggia.
+ * Senza, i dati di un'app installata dalla schermata Home sono considerati
+ * cancellabili: mesi di allenamenti possono sparire senza preavviso.
+ */
+export async function rendiPersistente() {
+  try {
+    if (!navigator.storage?.persist) return null;
+    if (await navigator.storage.persisted?.()) return true;
+    return await navigator.storage.persist();
+  } catch {
+    return null;
   }
 }

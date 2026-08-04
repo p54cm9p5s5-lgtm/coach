@@ -1,6 +1,6 @@
 import {
   h, qs, clear, toast, mmss, num, chiedi, sheet,
-  avviaAllarme, fermaAllarme, allarmeAttivo, sbloccaAudio, tick,
+  avviaAllarme, fermaAllarme, allarmeAttivo, sbloccaAudio, unaVoltaSola, tick,
   tieniSchermoAcceso, rilasciaSchermo, durataUmana, isoDate, dataLunga, aggiungi } from "../ui.js";
 import { intestazione, ridisegna } from "../app.js";
 import * as store from "../store.js";
@@ -194,11 +194,12 @@ async function vistaProgramma(vaiA, ridisegna) {
         ? h(
             "button.btn",
             {
-              onclick: async () => {
+              onclick: unaVoltaSola(async () => {
                 sbloccaAudio();
-                await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
+                const gia = await store.sedutaInCorso();
+                if (!gia) await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
                 await ridisegna();
-              },
+              }),
             },
             "Inizia allenamento"
           )
