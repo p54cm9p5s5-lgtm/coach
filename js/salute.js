@@ -91,6 +91,11 @@ export function analizza(testo) {
     const c = coppie(coda.slice(data.length));
 
     if (tipo === "GIORNO") {
+      // La distanza può arrivare in chilometri o in metri, a seconda di come è
+      // impostata l'unità nel comando rapido: si accettano tutte e due invece
+      // di far dipendere il dato da un'impostazione che si dimentica.
+      const km = NUMERO(c.km);
+      const metri = NUMERO(c.metri);
       risultato.giorni.push({
         data,
         presente: true,
@@ -98,6 +103,9 @@ export function analizza(testo) {
         obiettivoKcal: NUMERO(c.obiettivo),
         passi: NUMERO(c.passi),
         minutiEsercizio: NUMERO(c.esercizio),
+        oreInPiedi: NUMERO(c.inpiedi),
+        pianiSaliti: NUMERO(c.piani),
+        distanzaKm: km != null ? km : metri != null ? Math.round((metri / 1000) * 100) / 100 : null,
         fcRiposo: NUMERO(c.fc),
       });
     } else if (tipo === "NOTTE") {
