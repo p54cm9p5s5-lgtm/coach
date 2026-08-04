@@ -664,6 +664,22 @@ async function incolla(ridisegna) {
   // Un giorno già passato che cambia di molto vuol dire che uno dei due
   // conteggi è sbagliato — quasi sempre il comando rapido che somma iPhone e
   // Watch insieme. Sovrascrivere in silenzio sarebbe scegliere al posto tuo.
+  // Valori impossibili: non sono entrati, e va detto prima di ogni altra cosa.
+  // Un numero che l'app ha rifiutato è un numero che manca, e chi legge deve
+  // sapere che manca e perché.
+  if (conteggio.impossibili?.length) {
+    await chiedi({
+      titolo: conteggio.impossibili.length === 1 ? "Un numero non l'ho registrato" : "Alcuni numeri non li ho registrati",
+      testo:
+        `${conteggio.impossibili.slice(0, 8).join("\n")}` +
+        (conteggio.impossibili.length > 8 ? `\n…e altri ${conteggio.impossibili.length - 8}.` : "") +
+        `\n\nSono fuori da quello che una giornata umana può contenere: quasi sempre vuol dire che il comando rapido ha sommato una finestra intera in un giorno solo, oppure ha messo un campo al posto di un altro. Il resto della giornata è stato importato normalmente.` +
+        `\n\nControlla su Salute il valore vero di quel giorno e come è impostato il comando rapido. Finché il numero non torna, quel campo resta vuoto invece che sbagliato.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
+    });
+  }
+
   if (conteggio.sospetti?.length) {
     await chiedi({
       titolo: "Numeri cambiati su giorni già registrati",

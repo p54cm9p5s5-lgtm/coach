@@ -15,8 +15,17 @@ const NUMERO = (v) => {
   if (t.includes(",")) {
     // virgola decimale: i punti che restano sono separatori di migliaia
     t = t.replace(/\./g, "").replace(",", ".");
-  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) {
-    // solo punti, e a gruppi di tre: sono migliaia
+  } else if (/^-?\d{1,3}(\.\d{3}){2,}$/.test(t)) {
+    // Due o più gruppi da tre cifre («1.234.567»): nessun numero decimale si
+    // scrive così, quindi sono migliaia. Con UN gruppo solo, no.
+    //
+    // Prima bastava un gruppo, e «12.836» diventava dodicimilaottocento-
+    // trentasei. Ma il comando rapido scrive numeri grezzi col punto decimale
+    // — passi=13123 senza separatori, km=7.204671401863114 — e a inizio
+    // giornata le calorie attive sono proprio numeri come «12.836», cioè
+    // dodici virgola otto. Il risultato era un movimento da 12.836 kcal in una
+    // giornata appena cominciata: mille volte tanto, in silenzio, e da lì
+    // dentro il punteggio, le medie e il pacchetto per il coach.
     t = t.replace(/\./g, "");
   }
   const n = Number(t);
