@@ -327,6 +327,62 @@ export async function render({ ridisegna }) {
     );
   }
 
+  // ---- sigarette ----
+  const primoFumo = await store.primoGiornoFumo();
+  if (primoFumo) {
+    const conteggi = await store.conteggioFumo();
+    const tollerate = store.regole().salute?.sigaretteTollerate ?? 10;
+    const fFumo = conPeriodo();
+    // Dal giorno in cui hai cominciato a contare in poi, «nessuna riga» vuol
+    // dire zero: è un dato, non un buco. Prima di quel giorno il conteggio non
+    // esisteva e il grafico non deve inventarlo.
+    const giorniFumo = perGrafico(
+      giorni
+        .filter(fFumo.dentro)
+        .filter((g) => g.data >= primoFumo)
+        .map((g) => ({ data: g.data, presente: true, sigarette: conteggi.get(g.data) || 0 }))
+    );
+    // I giorni senza riga di movimento esistono lo stesso per il fumo: si
+    // ricostruisce l'intervallo da sé invece di dipendere dall'import.
+    const daFumo = fFumo.dentro({ data: primoFumo }) ? primoFumo : inizioPeriodo(fFumo.periodo, oggiIso) || primoFumo;
+    const serieFumo = [];
+    const passo = (iso, n) => {
+      const d = new Date(iso + "T00:00:00");
+      d.setDate(d.getDate() + n);
+      const p = (x) => String(x).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    };
+    for (let g = daFumo > primoFumo ? daFumo : primoFumo; g <= oggiIso; g = passo(g, 1)) {
+      serieFumo.push({ data: g, presente: true, sigarette: conteggi.get(g) || 0 });
+    }
+    const valori = serieFumo.map((x) => x.sigarette);
+    const mediaFumo = valori.length
+      ? Math.round((valori.reduce((a, b) => a + b, 0) / valori.length) * 10) / 10
+      : null;
+    aggiungi(wrap,
+      schedaGrafico({
+        selettore: fFumo.selettore,
+        titolo: "Sigarette",
+        valore: mediaFumo != null ? num(mediaFumo, 1) : "—",
+        unita: "al giorno",
+        nota: `${serieFumo.length} ${serieFumo.length === 1 ? "giorno" : "giorni"} · ${fFumo.etichetta}`,
+        grafico: graficoLinea({
+          punti: serieFumo.map((x) => ({
+            data: x.data,
+            valore: x.sigarette,
+            evidenza: x.sigarette === 0,
+            nota: x.sigarette > tollerate ? `${x.sigarette - tollerate} oltre le ${tollerate}` : null,
+          })),
+          obiettivo: tollerate,
+          etichettaObiettivo: `tollerate ${tollerate}`,
+          formatta: (v) => `${Math.round(v)} ${Math.round(v) === 1 ? "sigaretta" : "sigarette"}`,
+          invito: "Tocca un giorno per vedere quante",
+        }),
+        piede: `Da quando conti (${dataBreve(primoFumo)}). I punti più grandi sono i giorni a zero. Le sigarette pesano sul punteggio Salute: oltre ${tollerate} la giornata non supera 50.`,
+      })
+    );
+  }
+
   // ---- il resto del movimento: in piedi, piani, distanza ----
   // Non hanno un grafico ciascuno: sarebbero quattro schede quasi uguali. Qui
   // stanno insieme, con la media del periodo e l'ultimo giorno registrato.

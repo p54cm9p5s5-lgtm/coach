@@ -6,6 +6,8 @@ import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate } from "./ui.js";
 
 const riga = (etichetta, valore) => (valore == null || valore === "" ? null : `${etichetta}: ${valore}`);
 
+const GIORNI_ABBR = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+
 /**
  * I motivi vengono salvati con una parola sola («attrezzo»), che è comoda per
  * il codice e oscura per chi legge: al coach arrivava «cardio non eseguito
@@ -243,7 +245,6 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
 }
 
 /** Dati di salute recenti e stato delle finestre. */
-const GIORNI_ABBR = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
 const ore = (min) => (min == null ? "—" : `${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}`);
 
 /**
@@ -419,6 +420,36 @@ export function bloccoProposte(proposte, nomeLivello) {
     "",
     "Materiale per la valutazione, non decisioni: l'app non tocca il programma scritto.",
     "Le soglie usate sono quelle del blocco tecnico del master brief; la decisione resta al coach.",
+  ].join("\n");
+}
+
+/**
+ * Il fumo. È un dato clinico che cambia la lettura di tutto il resto — sonno,
+ * recupero, frequenza a riposo — e tenerlo dentro l'app significherebbe far
+ * commentare al coach dei numeri senza sapere una delle cause.
+ */
+export function bloccoFumo({ perGiorno, tollerate, primoGiorno }) {
+  if (!primoGiorno || !perGiorno.length) return null;
+  const valori = perGiorno.map((g) => g.quante);
+  const media = valori.reduce((a, b) => a + b, 0) / valori.length;
+  const zero = valori.filter((v) => v === 0).length;
+  const oltre = perGiorno.filter((g) => g.quante > tollerate);
+  return [
+    "FUMO",
+    "",
+    tabella(
+      ["Data", "Giorno", "Sigarette", "Note"],
+      perGiorno.map((g) => [
+        dataBreve(g.data),
+        GIORNI_ABBR[new Date(g.data + "T00:00:00").getDay()],
+        String(g.quante),
+        g.quante > tollerate ? `${g.quante - tollerate} oltre la soglia` : g.quante === 0 ? "nessuna" : "",
+      ])
+    ),
+    "",
+    `Media ${num(media, 1)} al giorno su ${perGiorno.length} ${perGiorno.length === 1 ? "giorno" : "giorni"} contati (dal ${dataBreve(primoGiorno)}).`,
+    `Giorni a zero: ${zero} su ${perGiorno.length}. Soglia tollerata concordata: ${tollerate} al giorno${oltre.length ? `, superata ${oltre.length} ${oltre.length === 1 ? "volta" : "volte"}` : ""}.`,
+    "Il conteggio è manuale: vale quello che è stato segnato, non c'è modo di verificarlo.",
   ].join("\n");
 }
 

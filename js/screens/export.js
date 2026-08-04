@@ -4,7 +4,7 @@ import * as store from "../store.js";
 import { nomeLivello } from "../segnali.js";
 import {
   logSeduta, bloccoSalute, bloccoProposte, bloccoAccettate, bloccoCorpo, bloccoSegnali,
-  intestazionePacchetto,
+  bloccoFumo, intestazionePacchetto,
 } from "../export.js";
 
 const ETICHETTE_MISURE = {
@@ -22,6 +22,7 @@ const SCELTE = [
   { id: "salute", nome: "Dati salute e finestre", sub: "movimento, sonno, stato delle 3 settimane" },
   { id: "proposte", nome: "Proposte in sospeso", sub: "con le quattro domande già compilate" },
   { id: "segnali", nome: "Segnali aperti", sub: "quello che l'app ha notato e non è una proposta" },
+  { id: "fumo", nome: "Fumo", sub: "sigarette al giorno, se le stai contando" },
   { id: "corpo", nome: "Misure e indici", sub: "solo se registrate" },
 ];
 
@@ -29,7 +30,7 @@ export async function render({ vaiA }) {
   const wrap = h("div.screen");
   aggiungi(wrap, intestazione("Pacchetto", { etichetta: "Home", onclick: () => vaiA("oggi") }));
 
-  const stato = { seduta: true, salute: true, proposte: true, segnali: true, corpo: false };
+  const stato = { seduta: true, salute: true, proposte: true, segnali: true, fumo: true, corpo: false };
   const anteprima = h("pre", {
     style:
       "margin:0;padding:14px;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;" +
@@ -265,6 +266,34 @@ async function componi(stato) {
     if (blocco) {
       pezzi.push(blocco);
       contenuto.push(`${avvisi.length} ${avvisi.length === 1 ? "segnale" : "segnali"}`);
+    }
+  }
+
+  if (stato.fumo) {
+    const primoGiorno = await store.primoGiornoFumo();
+    if (primoGiorno) {
+      const conteggi = await store.conteggioFumo();
+      const oggi = isoDate();
+      const perGiorno = [];
+      const d = new Date(oggi + "T00:00:00");
+      // Gli stessi sette giorni della tabella salute: il coach li legge insieme.
+      for (let i = 0; i < 7; i++) {
+        const p = (n) => String(n).padStart(2, "0");
+        const data = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+        if (data < primoGiorno) break;
+        perGiorno.push({ data, quante: conteggi.get(data) || 0 });
+        d.setDate(d.getDate() - 1);
+      }
+      const blocco = bloccoFumo({
+        perGiorno,
+        tollerate: store.regole().salute?.sigaretteTollerate ?? 10,
+        primoGiorno,
+      });
+      if (blocco) {
+        pezzi.push(blocco);
+        const tot = perGiorno.reduce((t, g) => t + g.quante, 0);
+        contenuto.push(`${tot} ${tot === 1 ? "sigaretta" : "sigarette"} in ${perGiorno.length} ${perGiorno.length === 1 ? "giorno" : "giorni"}`);
+      }
     }
   }
 

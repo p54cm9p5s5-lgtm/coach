@@ -4,7 +4,7 @@ import {
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
-import { graficoAttivita, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
+import { graficoAttivita, graficoLinea, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 import { anello, giudizio } from "../punteggio.js";
 import { sbloccaAudio, unaVoltaSola } from "../ui.js";
@@ -146,7 +146,76 @@ async function bloccoGrafico(ridisegna) {
 
   const selettore = selettorePeriodo(periodo, ridisegna);
 
-  return h(
+  // Il punteggio Salute della giornata: sonno, allenamento, movimento e fumo
+  // messi insieme con le stesse regole rigide del punteggio di allenamento.
+  // Sta in cima perché è la domanda a cui l'app deve rispondere per prima:
+  // com'è andata oggi, tutto compreso.
+  const daQuandoP = inizioPeriodo(periodo, oggi) || primeDate[0] || oggi;
+  const punteggi = await store.punteggiSalute(daQuandoP, oggi);
+  const perPunteggio = new Map(punteggi.map((p) => [p.data, p]));
+  const conPunteggio = punteggi.filter((p) => p.totale != null);
+  const mediaSalute = conPunteggio.length
+    ? Math.round(conPunteggio.reduce((t, p) => t + p.totale, 0) / conPunteggio.length)
+    : null;
+  const oggiSalute = perPunteggio.get(oggi);
+
+  const graficoSalute = graficoLinea({
+    punti: serie
+      .filter((r) => !r.futuro)
+      .map((r) => {
+        const p = perPunteggio.get(r.data);
+        return {
+          data: r.data,
+          valore: p?.totale ?? null,
+          evidenza: r.allenamento,
+          nota: p?.voci
+            ?.filter((v) => v.quota != null)
+            .map((v) => `${v.nome.toLowerCase()} ${Math.round(v.quota * 100)}%`)
+            .join(" · ") || null,
+        };
+      }),
+    obiettivo: 80,
+    etichettaObiettivo: "buono 80",
+    formatta: (v) => `${Math.round(v)} su 100`,
+    invito: "Tocca un giorno per vedere da cosa viene",
+  });
+
+  const bloccoSalute = h(
+    "div.group",
+    h("h2", "Salute"),
+    h(
+      "div",
+      { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
+      selettorePeriodo(periodo, ridisegna),
+      fascia([
+        {
+          etichetta: "Oggi",
+          valore: oggiSalute?.totale != null ? String(oggiSalute.totale) : "—",
+          nota: oggiSalute?.totale != null ? giudizio(oggiSalute.totale).testo : "dati non ancora arrivati",
+        },
+        {
+          etichetta: "Media",
+          valore: mediaSalute != null ? String(mediaSalute) : "—",
+          nota: `${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`,
+        },
+        {
+          etichetta: "Sigarette",
+          valore: oggiSalute?.sigarette != null ? String(oggiSalute.sigarette) : "—",
+          nota: oggiSalute?.sigarette != null ? "oggi" : "non contate",
+        },
+      ]),
+      graficoSalute,
+      h(
+        "p.footnote",
+        { style: "margin:10px 0 0" },
+        oggiSalute?.limite
+          ? `Oggi il punteggio è fermo a ${oggiSalute.totale}: ${oggiSalute.limite.perche}.`
+          : "Sonno, allenamento, movimento e fumo. Le voci senza dato restano fuori dal conto invece di valere zero."
+      )
+    )
+  );
+
+  const bloccoAndamento = h(
     "div.group",
     h("h2", "Andamento"),
     h(
@@ -177,6 +246,8 @@ async function bloccoGrafico(ridisegna) {
       legenda()
     )
   );
+
+  return h("div", bloccoSalute, bloccoAndamento);
 }
 
 // ---------- allenamento di oggi ----------

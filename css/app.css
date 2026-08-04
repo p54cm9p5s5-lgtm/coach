@@ -343,7 +343,10 @@ a.row:active {
   bottom: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* Le colonne si contano da sole: aggiungere una sezione non deve mandare la
+     barra a capo, e con sei voci su uno schermo da 375 px lo faceva. */
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   background: var(--bar-bg);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -354,8 +357,11 @@ a.row:active {
 .tabbar a {
   display: flex;
   min-width: 0;
-  padding: 0 2px;
+  padding: 0 1px;
   text-align: center;
+  /* Il nome non deve spezzarsi né allargare la colonna: se non ci sta, si
+     accorcia con i puntini invece di rompere la fila. */
+  overflow: hidden;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -363,9 +369,10 @@ a.row:active {
   height: var(--tabbar-h);
   text-decoration: none;
   color: var(--label-secondary);
-  font-size: 9.5px;
-  letter-spacing: 0;
+  font-size: 9px;
+  letter-spacing: -0.1px;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .tabbar a.active {

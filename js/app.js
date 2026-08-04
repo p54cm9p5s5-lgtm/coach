@@ -8,6 +8,7 @@ const ROTTE = {
   seduta: () => import("./screens/seduta.js"),
   corpo: () => import("./screens/corpo.js"),
   salute: () => import("./screens/salute.js"),
+  fumo: () => import("./screens/fumo.js"),
   storico: () => import("./screens/storico.js"),
   proposte: () => import("./screens/proposte.js"),
   export: () => import("./screens/export.js"),
