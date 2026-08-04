@@ -291,10 +291,23 @@ async function registra(ridisegna) {
                 return;
               }
               const standard = Object.values(stato).every(Boolean);
-              for (const id of scelte) {
-                await store.registraMisura({ tipo: id, valore: valori[id], condizioniStandard: standard });
+              let entrate = 0;
+              try {
+                for (const id of scelte) {
+                  await store.registraMisura({ tipo: id, valore: valori[id], condizioniStandard: standard });
+                  entrate++;
+                }
+              } catch (e) {
+                // Se l'archivio rifiuta una misura bisogna sapere quali sono
+                // entrate: prima il pannello si chiudeva come se fosse andato
+                // tutto bene e mancavano dei numeri senza spiegazione.
+                await chiedi({
+                  titolo: "Misure salvate solo in parte",
+                  testo: `Ne sono entrate ${entrate} su ${scelte.size}: ${e.message}. Riapri «Registra» e reinserisci quelle che mancano.`,
+                  opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+                });
               }
-              salvato = true;
+              salvato = entrate > 0;
               close();
             },
           },

@@ -44,7 +44,12 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
   // del range non è un obiettivo: chi lavora al fondo del range farebbe il suo
   // lavoro e risulterebbe lo stesso «da rivedere».
   const chiestoPerSerie = serie.map((s) => s.ripTarget).filter((x) => x != null);
-  const bersaglioUnita = variante.aTempo ? variante.durataSec : variante.ripMin ?? variante.ripMax;
+  // Per le serie che non hai fatto si usa lo stesso bersaglio delle altre:
+  // l'ultimo target chiesto quel giorno, non quello del brief. Se l'app ti
+  // aveva chiesto 8 e ne mancano due, mancano 8+8, non 10+10.
+  const bersaglioUnita = variante.aTempo
+    ? variante.durataSec
+    : chiestoPerSerie.at(-1) ?? variante.ripMin ?? variante.ripMax;
   const bersaglio = chiestoPerSerie.length
     ? chiestoPerSerie.reduce((a, b) => a + b, 0) +
       Math.max(0, (variante.serie || 0) - chiestoPerSerie.length) * (bersaglioUnita || 0)
@@ -383,7 +388,11 @@ export function commento(risultato, nomeEsercizio) {
   }
   const validi = risultato.voci.filter((v) => v.quota != null);
   const peggiore = [...validi].sort((a, b) => a.quota - b.quota)[0];
-  if (risultato.totale >= 90) return "Esecuzione piena: nessun criterio resta indietro.";
+  // «Nessun criterio resta indietro» va detto solo se è vero: con 92 di media
+  // e il recupero al 40% c'era eccome un criterio indietro.
+  if (risultato.totale >= 90 && peggiore && peggiore.quota >= 0.9) {
+    return "Esecuzione piena: nessun criterio resta indietro.";
+  }
   if (peggiore && peggiore.quota >= 0.9) return "Manca poco al pieno, e non c'è un punto debole singolo.";
   return peggiore ? `Il punto debole è ${peggiore.nome.toLowerCase()}: ${peggiore.dettaglio}.` : "";
 }

@@ -252,7 +252,7 @@ async function dettaglio(id) {
     h(
       "p.footnote",
       { style: "margin:14px 16px 0" },
-      "Rimando: la proposta torna dopo la prossima esposizione. Rifiuto: non torna finché i dati restano questi."
+      `Rimando: la proposta torna dopo la prossima esposizione. Rifiuto: non torna per le prossime ${store.regole().progressione?.esposizioniPerRiproporre ?? 4} esposizioni di questo esercizio.`
     )
   );
 

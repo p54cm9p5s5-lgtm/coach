@@ -242,7 +242,13 @@ export function bloccoAccettate(accettate, esercizio) {
       : p.dataVerifica
         ? `, verifica prevista il ${dataBreve(p.dataVerifica)}`
         : "";
-    return `- ${nome}: ${parti.join(" · ") || "—"}${prima} (accettata il ${dataBreve(quando)}${verifica})`;
+    const MOTIVO = {
+      usata: "già allenata dopo l'accettazione",
+      annullataDalBrief: "annullata dal brief nuovo",
+      superata: "sostituita da una accettata più recente",
+    };
+    const perche = p.inVigore ? "" : ` — ${MOTIVO[p.motivoScarto] || "non più in vigore"}`;
+    return `- ${nome}: ${parti.join(" · ") || "—"}${prima} (accettata il ${dataBreve(quando)}${verifica})${perche}`;
   };
   // `inVigore` manca quando la lista arriva da una versione vecchia: in quel
   // caso si stampa tutto insieme, come prima, invece di dichiarare il falso.
@@ -257,7 +263,7 @@ export function bloccoAccettate(accettate, esercizio) {
     ...attive.map(riga),
     attive.length ? "" : null,
     consumate.length
-      ? "Già consumate — accettate e poi allenate: l'app non le usa più, il motore\nrivaluta sui dati nuovi. Restano qui perché spiegano i carichi registrati:"
+      ? "Non più in vigore — restano qui perché spiegano i carichi registrati:"
       : null,
     ...consumate.map(riga),
     consumate.length ? "" : null,

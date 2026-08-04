@@ -294,11 +294,17 @@ async function vistaRisultato(id, vaiA) {
         h(
           "p",
           { style: "margin:14px 16px 0;text-align:center;font-size:13px;color:var(--label-secondary);line-height:1.4" },
-          comp.limite
-            ? `Fermo a ${comp.totale}: ${comp.limite.perche}.`
-            : comp.totale >= 90
-              ? "Allenamento pieno: niente resta indietro."
-              : `Il punto debole è ${[...comp.voci].sort((a, b) => a.quota - b.quota)[0].nome.toLowerCase()}.`
+          // «Pieno» solo se lo è davvero: con 90 di media ma il cardio a metà,
+          // dire «niente resta indietro» è falso. Se c'è una voce debole si
+          // nomina quella, qualunque sia il totale.
+          (() => {
+            if (comp.limite) return `Fermo a ${comp.totale}: ${comp.limite.perche}.`;
+            const peggiore = [...comp.voci].filter((v) => v.quota != null).sort((a, b) => a.quota - b.quota)[0];
+            if (comp.totale >= 90 && (!peggiore || peggiore.quota >= 0.9)) {
+              return "Allenamento pieno: niente resta indietro.";
+            }
+            return peggiore ? `Il punto debole è ${peggiore.nome.toLowerCase()}.` : "";
+          })()
         )
       ),
       h("div.group", h("h2", "Da cosa viene il punteggio"), scomposizione(comp))
@@ -1921,7 +1927,14 @@ async function vistaCardioInCorso(corpo, piede, r) {
       // Quando è finito il cardio resta scritto nella seduta: il progresso
       // viene azzerato subito dopo, e senza questo la durata dell'allenamento
       // perdeva mezz'ora di tapis.
-      cardio: { ...S.sed.cardio, eseguito: true, durataMin: trascorsi, finitoIl: Date.now() },
+      cardio: {
+        ...S.sed.cardio,
+        eseguito: true,
+        durataMin: trascorsi,
+        // Coerente con i minuti dichiarati: se correggi la durata verso il
+        // basso, l'ora di fine non può restare quella del tocco.
+        finitoIl: Math.min(Date.now(), inizio + trascorsi * 60000),
+      },
     });
     S.cardioFine = null;
     await salvaProgresso({ fase: "stretching", cardioInizio: null, cardioFine: null });
