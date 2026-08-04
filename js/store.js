@@ -112,6 +112,7 @@ const DEFAULT_IMPOSTAZIONI = {
   ultimoExport: null,
   snapshotAutomatico: null,
   ultimoImportSalute: null,
+  fumoContatoDal: null,
 };
 
 export async function impostazione(chiave) {
@@ -1856,7 +1857,7 @@ export async function punteggiSalute(dal, al = isoDate()) {
   const perNotte = new Map((await notti()).map((n) => [n.data, n]));
   const giorni = new Map((await giorniSalute()).map((g) => [g.data, g]));
   const fumate = await conteggioFumo();
-  const primoFumo = await primoGiornoFumo();
+  const primoFumo = await fumoContatoDal();
   const chiuse = (await allenamenti()).filter((s) => s.stato === "completata");
   const perData = new Map();
   for (const sed of chiuse) {
@@ -1924,6 +1925,33 @@ export async function primoGiornoFumo() {
   const tutte = await db.all("fumo");
   if (!tutte.length) return null;
   return tutte.map((x) => x.data).sort()[0];
+}
+
+/**
+ * Il giorno da cui il conteggio vale, che è un'altra cosa dal giorno della
+ * prima sigaretta.
+ *
+ * Serviva perché con la sola prima sigaretta una giornata da zero non valeva
+ * niente: chi non fuma per niente non aveva righe, quindi nessun giorno
+ * contato, quindi nessun punto — l'esatto contrario di quello che merita. Da
+ * quando apri la sezione Fumo il conteggio è acceso, e «nessuna riga» vuol
+ * dire zero sigarette, che è un dato pieno.
+ *
+ * Prende sempre il più vecchio dei due, così accendere il conteggio oggi non
+ * cancella le sigarette segnate ieri.
+ */
+export async function fumoContatoDal() {
+  const dichiarato = await impostazione("fumoContatoDal");
+  const prima = await primoGiornoFumo();
+  const validi = [dichiarato, prima].filter(Boolean).sort();
+  return validi[0] || null;
+}
+
+/** Accende il conteggio, se non era già acceso da prima. */
+export async function accendiConteggioFumo(data = isoDate()) {
+  const dichiarato = await impostazione("fumoContatoDal");
+  if (!dichiarato || data < dichiarato) await setImpostazione("fumoContatoDal", data);
+  return fumoContatoDal();
 }
 
 /** Conteggio giorno per giorno, per il grafico e per il punteggio. */
