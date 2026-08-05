@@ -80,6 +80,13 @@ resta.
 - `regole` — tutte le soglie del §4, che si fondono voce per voce con quelle di
   base: scrivere una soglia non azzera le altre della stessa famiglia
 
+**Un vincolo da conoscere prima di scrivere il brief**: `esercizioId` deve
+esistere nella libreria dell'app, che contiene per ogni esercizio guida completa
+(setup, esecuzione, errori, cue, sicurezza) e video. Un esercizio nuovo va prima
+aggiunto alla libreria, altrimenti il brief viene **rifiutato in blocco** e non
+viene applicato niente — non «tutto tranne quella riga». Se serve un esercizio
+che non c'è, va chiesto prima di mandare il brief.
+
 ---
 
 ## 4. Le regole e le soglie
@@ -330,8 +337,34 @@ contati due volte. Le calorie attive no, le scrive solo l'orologio. Se le kcal
 restano identiche e i passi crescono, è quello.
 
 L'app se ne accorge: quando un giorno **già registrato** cambia di oltre il 40%,
-lo segnala, dice quali numeri ha tenuto e come fare il contrario. Esiste anche un
-comando apposito per cancellare i dati importati da Salute e rileggerli da zero.
+lo segnala, dice quali numeri ha tenuto e come fare il contrario.
+
+**Il sonno arriva come fasi, non come totali.** Il comando rapido manda le righe
+grezze dell'orologio — `FASE 2026-08-04 03:15 2026-08-04 03:40 Principale` — e i
+minuti, le fasi e i risvegli li calcola l'app. Una notte porta **la data del
+giorno in cui ci si sveglia**: chi va a letto all'una di notte del 4 agosto ha
+dormito la notte del 4, non quella del 3. «Veglia» non entra nella durata; un
+risveglio è un tratto sveglio di almeno cinque minuti.
+
+Le righe `FASE` portano solo ore e minuti: i secondi vengono troncati dal comando
+rapido prima che l'app li veda, e il totale può risultare **1-5 minuti sotto**
+quello di Salute — sempre in difetto, proporzionale al numero di fasi, mai oltre
+l'1%.
+
+**Quello che non può essere vero non entra.** Sopra 5000 kcal, 100.000 passi,
+1440 minuti in una giornata, 200 km, 500 piani, o una frequenza a riposo fuori
+da 25-120: il campo resta vuoto invece che sbagliato, il resto della giornata
+viene importato normalmente, e l'app dice cosa ha rifiutato e perché. Un numero
+assurdo che entra in silenzio si ritrova mesi dopo dentro una media, ed è
+troppo tardi.
+
+**Reimportare ripara: non serve mai cancellare.** Le fasi raccontano per intero
+le notti che coprono, quindi una notte archiviata sotto una data sbagliata da una
+versione precedente viene sostituita dal pacchetto nuovo. Quello che viene
+rimosso è sempre dichiarato. Le notti scritte a mano non si toccano, e fuori dal
+periodo coperto dalle fasi non si tocca niente. Esiste comunque un comando per
+cancellare i dati importati da Salute e rileggerli da zero, ma è una scelta, non
+una via obbligata per correggere un errore.
 
 ---
 
