@@ -325,10 +325,10 @@ const REGOLE_BASE = {
     // dichiarati come tutti gli altri — il master brief può cambiarli.
     sonnoOraLimite: 0, // mezzanotte
     sonnoCostoOraTardi: 0.12, // quanto pesa ogni ora dopo il limite
-    // Quanto può valere una voce che supera il bersaglio: 1.5 = fino al 150%.
-    // Superare conta, ma una giornata fuori norma non deve coprire da sola
-    // tutto il resto. Metterlo a 1 riporta al comportamento di prima.
-    tettoSuperamento: 1.5,
+    // Quanto può scendere sotto zero la voce Fumo: −0,5 = fino a −50%. Tutte le
+    // altre voci si fermano al 100%, questa no — fumare oltre il tollerato non
+    // è «non aver fatto abbastanza», è aver fatto un danno.
+    fumoQuotaMinima: -0.5,
     // Bersagli del punteggio Salute, decisi da te. Non sono gli obiettivi
     // dell'orologio: quello del movimento sull'anello resta quello che hai
     // impostato in Salute (serve al coach per leggere le percentuali vere),
