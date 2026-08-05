@@ -54,6 +54,14 @@ Il master brief è un documento `.md` con in coda un blocco tecnico:
 <!-- /COACH-DATA -->
 ```
 
+**Attenzione a come viaggia il brief.** Una chat che interpreta il markdown non
+mostra i commenti HTML: chi copia quello che vede si porta via un documento
+senza marcatori, e l'app non trova più il blocco su un file che a schermo
+sembrava completo. Per questo l'app accetta anche la forma senza commenti — una
+riga con solo `COACH-DATA v1` e più sotto una con solo `/COACH-DATA` — ma la via
+sicura resta **allegare il file `.md`**, oppure scrivere il blocco dentro un
+riquadro di codice, dove i commenti restano visibili.
+
 L'app legge **solo quel blocco** e ignora tutto il resto del documento. Il file
 non viene conservato: ne estrae il blocco e lo scarta.
 
