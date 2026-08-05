@@ -202,14 +202,16 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
  * @param giorno       riga dei dati salute: kcalAttive, obiettivoKcal
  * @param sigarette    quante ne hai segnate (null = prima che tenessi il conto)
  */
-export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, regole }) {
+export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, sigaretteTollerate = null, regole }) {
   const R = (regole && regole.salute) || {};
   const pesi = R.pesi || {
     sonno: 22, allenamento: 22, fumo: 20, movimento: 12, passi: 10, esercizio: 8, inPiedi: 6,
   };
   const oreBersaglio = R.sonnoOreBersaglio ?? 8;
   const oreMinime = R.sonnoOreMinime ?? 6;
-  const tollerate = R.sigaretteTollerate ?? 10;
+  // Il limite può essere quello del giorno — scende man mano che si raggiungono
+  // nuovi minimi — e in quel caso vince su quello dichiarato nel brief.
+  const tollerate = sigaretteTollerate ?? R.sigaretteTollerate ?? 10;
   const passiBersaglio = R.passiBersaglio ?? 10000;
   const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 60;
   const inPiediBersaglio = R.minutiInPiediBersaglio ?? 180;
@@ -331,15 +333,29 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   // tollerato è aver fatto un danno. Con la quota fermata a zero, venti
   // sigarette e dieci pesavano uguale — e non è vero.
   if (sigarette != null) {
+    // Col limite a zero non si può dividere, e non serve: qualunque sigaretta è
+    // già oltre. È il capolinea della tacca che scende — quando il massimo è
+    // zero, l'unico modo di non sforare è non fumare.
+    const quotaFumo =
+      tollerate > 0
+        ? Math.max(fondoFumo, 1 - sigarette / tollerate)
+        : sigarette === 0
+          ? 1
+          : fondoFumo;
     voci.push({
       nome: "Fumo",
-      quota: Math.max(fondoFumo, 1 - sigarette / tollerate),
+      quota: quotaFumo,
       peso: pesi.fumo,
       dettaglio: sigarette === 0 ? "nessuna sigaretta" : `${sigarette} su ${tollerate} tollerate`,
     });
     if (sigarette > tollerate) {
-      tetti.push({ tetto: 50, perche: `oltre le ${tollerate} sigarette tollerate` });
-    } else if (sigarette === tollerate) {
+      tetti.push({
+        tetto: 50,
+        perche: tollerate > 0 ? `oltre le ${tollerate} sigarette tollerate` : "il limite ormai è zero",
+      });
+    } else if (sigarette > 0 && sigarette === tollerate) {
+      // «Zero su zero» non è essere al limite: è il giorno perfetto, e mettergli
+      // un tetto del 70 sarebbe punire proprio il risultato che si cercava.
       tetti.push({ tetto: 70, perche: `al limite delle ${tollerate} sigarette` });
     }
   } else {

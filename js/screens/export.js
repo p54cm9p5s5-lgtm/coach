@@ -280,6 +280,9 @@ async function componi(stato) {
     if (primoGiorno) {
       const conteggi = await store.conteggioFumo();
       const oggi = isoDate();
+      // La soglia scende a ogni nuovo minimo: serve quella di ogni giorno, non
+      // una sola per tutti.
+      const { limiti: limitiFumo } = await store.limitiFumo(oggi);
       const perGiorno = [];
       const d = new Date(oggi + "T00:00:00");
       // Gli stessi sette giorni della tabella salute: il coach li legge insieme.
@@ -287,12 +290,12 @@ async function componi(stato) {
         const p = (n) => String(n).padStart(2, "0");
         const data = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
         if (data < primoGiorno) break;
-        perGiorno.push({ data, quante: conteggi.get(data) || 0 });
+        perGiorno.push({ data, quante: conteggi.get(data) || 0, tollerate: limitiFumo.get(data) });
         d.setDate(d.getDate() - 1);
       }
       const blocco = bloccoFumo({
         perGiorno,
-        tollerate: store.regole().salute?.sigaretteTollerate ?? 10,
+        tollerate: limitiFumo.get(oggi) ?? store.regole().salute?.sigaretteTollerate ?? 10,
         primoGiorno,
       });
       if (blocco) {

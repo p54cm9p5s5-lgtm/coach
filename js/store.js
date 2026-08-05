@@ -2014,6 +2014,7 @@ export async function punteggiSalute(dal, al = isoDate()) {
   const giorni = new Map((await giorniSalute()).map((g) => [g.data, g]));
   const fumate = await conteggioFumo();
   const primoFumo = await fumoContatoDal();
+  const { limiti: limitiSigarette } = await limitiFumo(al);
   const chiuse = (await allenamenti()).filter((s) => s.stato === "completata");
   const perData = new Map();
   for (const sed of chiuse) {
@@ -2042,6 +2043,7 @@ export async function punteggiSalute(dal, al = isoDate()) {
       previsto,
       giorno: giorno?.presente ? giorno : null,
       sigarette,
+      sigaretteTollerate: limitiSigarette.get(data),
       regole: reg,
     });
     out.push({ data, ...r, sigarette });
@@ -2131,6 +2133,43 @@ export async function riparteConteggioFumo(data = isoDate()) {
   for (const x of vecchie) await db.del("fumo", x.id);
   await setImpostazione("fumoContatoDal", data);
   return { rimosse: vecchie.length, dal: data };
+}
+
+/**
+ * Il massimo di sigarette tollerato, giorno per giorno.
+ *
+ * Parte da quello dichiarato nel brief e **scende soltanto**: appena una
+ * giornata chiude sotto il limite in vigore, dal giorno dopo quel numero
+ * diventa il nuovo massimo. È una tacca che non torna indietro — se un giorno
+ * ne hai fumate sei, sei è il tetto da lì in avanti, anche se il giorno dopo
+ * ne fumi nove.
+ *
+ * Il record del giorno stesso non vale per il giorno stesso: quel giorno viene
+ * giudicato col limite che aveva quando è cominciato. Abbassare l'asticella a
+ * cose fatte sarebbe cambiare le regole a metà partita.
+ *
+ * Solo i giorni contati partecipano: prima dell'inizio del conteggio non si sa
+ * quante ne siano state fumate, e uno zero che non è mai stato misurato non è
+ * un record.
+ */
+export async function limitiFumo(al = isoDate(), base = null) {
+  const partenza = base ?? regole().salute?.sigaretteTollerate ?? 10;
+  const limiti = new Map();
+  const dal = await fumoContatoDal();
+  if (!dal) return { limiti, corrente: partenza, partenza };
+  const conteggi = await conteggioFumo();
+  const p = (n) => String(n).padStart(2, "0");
+  const d = new Date(dal + "T00:00:00");
+  const fine = new Date(al + "T00:00:00");
+  let limite = partenza;
+  while (d <= fine) {
+    const g = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    limiti.set(g, limite);
+    limite = Math.min(limite, conteggi.get(g) ?? 0);
+    d.setDate(d.getDate() + 1);
+  }
+  // `corrente` è il limite che varrà DOMANI: quello di oggi sta già in `limiti`.
+  return { limiti, corrente: limite, partenza };
 }
 
 /** Conteggio giorno per giorno, per il grafico e per il punteggio. */
