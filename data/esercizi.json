@@ -1,6 +1,6 @@
 {
   "versione": 1,
-  "nota": "Contenuto generico, nessun dato personale. I video sono riferimenti esterni a YouTube, verificati esistenti il 3/08/2026. Lingua inglese ammessa. Sostituibili dall'app.",
+  "nota": "Contenuto generico, nessun dato personale. I video sono riferimenti esterni a YouTube, verificati esistenti il 5/08/2026. Lingua inglese ammessa. Sostituibili dall'app.",
   "esercizi": [
     {
       "id": "panca-piana",
@@ -216,10 +216,42 @@
       "cue": "Bilanciere incollato alle gambe, il petto scende perché i fianchi vanno indietro."
     },
     {
+      "id": "ponte-glutei",
+      "nome": "Ponte per glutei",
+      "pattern": "femorali",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 90,
+      "video": {
+        "id": "nuapk_-Q2BI",
+        "titolo": "How To Do A Glute Bridge | Step By Step Instruction For Beginners",
+        "canale": "Dr. Carl Baird"
+      },
+      "setup": [
+        "A terra sulla schiena, ginocchia piegate, piedi appoggiati a larghezza anche.",
+        "Talloni vicini ai glutei: la punta del dito deve quasi sfiorarli.",
+        "Braccia lungo i fianchi, palmi a terra. Mento leggermente raccolto."
+      ],
+      "esecuzione": [
+        "Spingi con i talloni e stacca il bacino da terra fino ad allineare ginocchia, anche e spalle.",
+        "Stringi i glutei in cima e resta un secondo: è lì che l'esercizio lavora.",
+        "Scendi lentamente senza appoggiare del tutto, e riparti.",
+        "Il movimento è dell'anca: la schiena resta neutra, non si inarca."
+      ],
+      "erroriComuni": [
+        "Salire inarcando la zona lombare invece di spingere coi glutei: se senti la schiena, sei troppo in alto.",
+        "Spingere sulle punte dei piedi invece che sui talloni.",
+        "Piedi troppo lontani: il lavoro si sposta sui femorali e si perde il glutei.",
+        "Salire e scendere di slancio senza la pausa in cima."
+      ],
+      "cue": "Spingi coi talloni e stringi i glutei: il bacino sale per quello, non per la schiena.",
+      "sicurezza": "Sostituisce lo stacco rumeno con lo stesso bersaglio (catena posteriore) ma senza carico sulla colonna: se senti tirare la lombare, abbassa l'altezza del ponte invece di forzare."
+    },
+    {
       "id": "calf",
       "nome": "Calf raise (polpacci)",
       "pattern": "polpacci",
-      "attrezzo": "corpo libero",
+      "attrezzo": "manubri",
       "sollecitaPolso": false,
       "recuperoDefaultSec": 60,
       "video": {
