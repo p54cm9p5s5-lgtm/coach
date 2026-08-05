@@ -24,6 +24,21 @@ const limita = (v) => Math.max(0, Math.min(1, v));
 const sottoBersaglio = (rapporto, durezza = 2.5) =>
   rapporto >= 1 ? 1 : limita(1 - (1 - rapporto) * durezza);
 
+/**
+ * Quante ore dopo il limite sei andato a letto. `null` se non lo sappiamo.
+ *
+ * Un orario dalle 12 in poi è la sera prima: quello è andare a letto in orario,
+ * e il ritardo è zero. Dopo mezzanotte il ritardo sono le ore passate.
+ */
+function ritardoAndataALetto(inizio, oraLimite = 0) {
+  if (!inizio) return null;
+  const orario = String(inizio).slice(11, 16);
+  const [h, m] = orario.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  if (h >= 12) return 0; // a letto prima di mezzanotte
+  return Math.max(0, h + m / 60 - oraLimite);
+}
+
 /* La tecnica è il primo criterio del brief: sotto il 9 non è "quasi buona",
    è una tecnica da correggere prima di pensare al carico. */
 const CURVA_TECNICA = { 10: 1, 9: 0.75, 8: 0.45, 7: 0.2, 6: 0.08 };
@@ -196,14 +211,31 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const voci = [];
   const tetti = [];
 
-  // --- sonno: la notte cominciata la sera prima
+  // --- sonno: quanto hai dormito, e a che ora sei andato a letto
+  //
+  // La durata è proporzionale, non a curva: quattro ore su otto sono metà del
+  // sonno, e valgono metà. La curva ripida serve per il lavoro in palestra, dove
+  // metà allenamento non produce metà adattamento; il sonno non funziona così,
+  // e con quella curva quattro ore finivano al 3%, un numero che non voleva
+  // dire niente.
+  //
+  // L'orario pesa da solo: a letto entro mezzanotte nessuna penalità, e da lì
+  // in poi ogni ora di ritardo costa. Due notti da sei ore non sono la stessa
+  // notte se una comincia alle 23 e l'altra alle 4.
   if (notte?.durataMin != null) {
     const ore = notte.durataMin / 60;
+    const quotaDurata = limita(ore / oreBersaglio);
+    const ritardo = ritardoAndataALetto(notte.inizio, R.sonnoOraLimite ?? 0);
+    const quotaOrario =
+      ritardo == null ? null : limita(1 - ritardo * (R.sonnoCostoOraTardi ?? 0.12));
+    const pesoOrario = quotaOrario == null ? 0 : R.sonnoPesoOrario ?? 0.25;
     voci.push({
       nome: "Sonno",
-      quota: sottoBersaglio(ore / oreBersaglio, 2),
+      quota: quotaDurata * (1 - pesoOrario) + (quotaOrario ?? 0) * pesoOrario,
       peso: pesi.sonno,
-      dettaglio: `${num(ore, 1)}h su ${num(oreBersaglio, 1)}h`,
+      dettaglio:
+        `${num(ore, 1)}h su ${num(oreBersaglio, 1)}h` +
+        (notte.inizio ? ` · a letto ${String(notte.inizio).slice(11, 16)}` : ""),
     });
     if (ore < oreMinime) tetti.push({ tetto: 70, perche: `meno di ${num(oreMinime, 0)} ore di sonno` });
   } else {
