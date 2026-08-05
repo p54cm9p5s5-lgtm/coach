@@ -159,9 +159,17 @@ export async function render({ vaiA, ridisegna }) {
               h("div.main", h("span.title", `Dischi da ${String(Number(peso)).replace(".", ",")} kg`)),
               h("span.value", `×${q}`)
             )
-          )
+          ),
+        // I manubri fanno parte dell'inventario quanto i dischi: senza vederli
+        // qui non c'è modo di accorgersi che il brief non li dichiara, e le
+        // istruzioni di montaggio sui manubri sparirebbero in silenzio.
+        ...righeManubri(inv.manubri)
       ),
-      h("p.footnote", "L'inventario arriva dal master brief e serve a calcolare i dischi da montare.")
+      h(
+        "p.footnote",
+        "L'inventario arriva dal master brief e serve a calcolare i dischi da montare." +
+          (inv.manubri ? " I manubri regolabili usano gli stessi dischi del bilanciere." : "")
+      )
     )
   );
 
@@ -375,6 +383,43 @@ async function cambiaObiettivoMovimento(ridisegna) {
   await store.setImpostazione("obiettivoMovimentoKcal", esito);
   toast(`Obiettivo movimento: ${esito} kcal.`);
   await ridisegna();
+}
+
+/**
+ * Le righe dei manubri, se il brief li dichiara. Un elenco di fissi si
+ * raggruppa per peso: «×2» dice che ce ne sono due uguali, ed è proprio quello
+ * che serve sapere per un esercizio a due manubri.
+ */
+function righeManubri(manubri) {
+  if (!manubri) return [];
+  const righe = [];
+  const reg = manubri.regolabili;
+  if (reg && reg.quantita > 0) {
+    righe.push(
+      h(
+        "div.row",
+        h(
+          "div.main",
+          h("span.title", "Manubri regolabili"),
+          h("span.sub", `a vuoto ${String(reg.scaricoKg ?? 0).replace(".", ",")} kg ciascuno`)
+        ),
+        h("span.value", `×${reg.quantita}`)
+      )
+    );
+  }
+  const fissi = Array.isArray(manubri.fissi) ? manubri.fissi : [];
+  const perPeso = new Map();
+  for (const f of fissi) perPeso.set(f, (perPeso.get(f) || 0) + 1);
+  for (const [peso, quanti] of [...perPeso.entries()].sort((a, b) => b[0] - a[0])) {
+    righe.push(
+      h(
+        "div.row",
+        h("div.main", h("span.title", `Manubrio fisso da ${String(peso).replace(".", ",")} kg`)),
+        h("span.value", `×${quanti}`)
+      )
+    );
+  }
+  return righe;
 }
 
 async function caricaBrief(ridisegna) {
