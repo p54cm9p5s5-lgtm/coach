@@ -22,17 +22,12 @@ const limita = (v) => Math.max(0, Math.min(1, v));
 
 /**
  * Manca poco al bersaglio ≠ ci siamo quasi: sotto il previsto si scende in
- * fretta. Sopra il previsto si sale invece piano, e il valore può superare il
- * 100%: aver camminato il doppio è un fatto, e nasconderlo dietro un 100% secco
- * significherebbe dire che dodicimila passi e diecimila sono la stessa cosa.
- *
- * La salita è il rapporto vero, senza moltiplicatori: la durezza serve a punire
- * quello che manca, non ad amplificare un merito. Il tetto (`tetto`) evita che
- * una singola giornata fuori norma — un trekking, una camminata lunghissima —
- * copra da sola tutto il resto della giornata.
+ * fretta. Raggiunto il bersaglio la voce vale pieno e si ferma lì: il bersaglio
+ * è quello che il programma chiede, e farne di più non è una cosa che alza il
+ * voto — è semplicemente averlo fatto.
  */
-const sottoBersaglio = (rapporto, durezza = 2.5, tetto = 1) =>
-  rapporto >= 1 ? Math.min(tetto, rapporto) : limita(1 - (1 - rapporto) * durezza);
+const sottoBersaglio = (rapporto, durezza = 2.5) =>
+  rapporto >= 1 ? 1 : limita(1 - (1 - rapporto) * durezza);
 
 /**
  * Quante ore dopo il limite sei andato a letto. `null` se non lo sappiamo.
@@ -218,9 +213,9 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const passiBersaglio = R.passiBersaglio ?? 10000;
   const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 60;
   const inPiediBersaglio = R.minutiInPiediBersaglio ?? 180;
-  // Quanto può valere una voce che supera il bersaglio. È un numero dichiarato
-  // come tutti gli altri: il master brief può alzarlo o toglierlo.
-  const tetto = R.tettoSuperamento ?? 1.5;
+  // Quanto può scendere sotto zero la voce Fumo: fumare oltre il tollerato non
+  // si ferma a «zero punti», toglie punti. È dichiarato come tutto il resto.
+  const fondoFumo = R.fumoQuotaMinima ?? -0.5;
   const voci = [];
   const tetti = [];
 
@@ -237,7 +232,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   // notte se una comincia alle 23 e l'altra alle 4.
   if (notte?.durataMin != null) {
     const ore = notte.durataMin / 60;
-    const quotaDurata = Math.min(tetto, ore / oreBersaglio);
+    const quotaDurata = limita(ore / oreBersaglio);
     const ritardo = ritardoAndataALetto(notte.inizio, R.sonnoOraLimite ?? 0);
     const quotaOrario =
       ritardo == null ? 1 : limita(1 - ritardo * (R.sonnoCostoOraTardi ?? 0.12));
@@ -285,7 +280,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.kcalAttive != null && obiettivo) {
     voci.push({
       nome: "Movimento",
-      quota: sottoBersaglio(giorno.kcalAttive / obiettivo, 1.5, tetto),
+      quota: sottoBersaglio(giorno.kcalAttive / obiettivo, 1.5),
       peso: pesi.movimento,
       dettaglio: `${Math.round(giorno.kcalAttive)} su ${Math.round(obiettivo)} kcal`,
     });
@@ -297,7 +292,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.passi != null) {
     voci.push({
       nome: "Passi",
-      quota: sottoBersaglio(giorno.passi / passiBersaglio, 1.2, tetto),
+      quota: sottoBersaglio(giorno.passi / passiBersaglio, 1.2),
       peso: pesi.passi,
       dettaglio: `${Math.round(giorno.passi).toLocaleString("it-IT")} su ${passiBersaglio.toLocaleString("it-IT")}`,
     });
@@ -309,7 +304,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.minutiEsercizio != null) {
     voci.push({
       nome: "Minuti di esercizio",
-      quota: sottoBersaglio(giorno.minutiEsercizio / esercizioBersaglio, 1.2, tetto),
+      quota: sottoBersaglio(giorno.minutiEsercizio / esercizioBersaglio, 1.2),
       peso: pesi.esercizio,
       dettaglio: `${Math.round(giorno.minutiEsercizio)} su ${esercizioBersaglio} min`,
     });
@@ -321,7 +316,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.minutiInPiedi != null) {
     voci.push({
       nome: "Tempo in piedi",
-      quota: sottoBersaglio(giorno.minutiInPiedi / inPiediBersaglio, 1.2, tetto),
+      quota: sottoBersaglio(giorno.minutiInPiedi / inPiediBersaglio, 1.2),
       peso: pesi.inPiedi,
       dettaglio: `${Math.round(giorno.minutiInPiedi)} su ${inPiediBersaglio} min`,
     });
@@ -331,16 +326,14 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
 
   // --- fumo: zero vale pieno, la soglia tollerata vale zero, oltre va sotto zero
   //
-  // È lo stesso principio del superamento, girato: se camminare il doppio vale
-  // più di cento, fumare il doppio del tollerato deve valere meno di zero. Con
-  // la quota fermata a zero, venti sigarette e dieci pesavano uguale — e non è
-  // vero. Lo scarto massimo è lo stesso dichiarato per il superamento: se una
-  // voce può salire di mezzo punto sopra il pieno, può scendere di mezzo punto
-  // sotto lo zero. Un numero solo, non due inventati.
+  // È l'unica voce che scende sotto lo zero, e per un motivo che le altre non
+  // hanno: mancare un bersaglio è non aver fatto abbastanza, fumare oltre il
+  // tollerato è aver fatto un danno. Con la quota fermata a zero, venti
+  // sigarette e dieci pesavano uguale — e non è vero.
   if (sigarette != null) {
     voci.push({
       nome: "Fumo",
-      quota: Math.max(-(tetto - 1), 1 - sigarette / tollerate),
+      quota: Math.max(fondoFumo, 1 - sigarette / tollerate),
       peso: pesi.fumo,
       dettaglio: sigarette === 0 ? "nessuna sigaretta" : `${sigarette} su ${tollerate} tollerate`,
     });
@@ -356,14 +349,9 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const pesati = voci.filter((v) => v.quota != null);
   if (!pesati.length) return { totale: null, voci, limite: null, completo: false };
   const pesoTotale = pesati.reduce((t, v) => t + v.peso, 0) || 1;
-  // Una voce sopra il bersaglio alza la media e compensa quelle rimaste
-  // indietro: è il modo in cui «ho camminato il doppio» si vede nel totale.
-  // Il punteggio resta però su cento — meglio di tutto quello che il programma
-  // chiedeva non è una cosa che esiste, e l'anello disegna una frazione di
-  // cerchio, non due giri.
-  // Il totale sta fra zero e cento: una voce sotto zero tira giù la media come
-  // deve, ma un punteggio negativo non vuol dire niente e l'anello non lo sa
-  // disegnare.
+  // Il totale sta fra zero e cento: la voce Fumo sotto zero tira giù la media
+  // come deve, ma un punteggio negativo non vuol dire niente e l'anello non lo
+  // sa disegnare.
   let totale = Math.max(
     0,
     Math.min(100, Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100))
