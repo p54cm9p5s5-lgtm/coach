@@ -457,6 +457,13 @@ Da quando la sezione viene aperta la prima volta, **un giorno senza righe vale
 zero sigarette**, cioè punteggio pieno — non «dato mancante». Prima di quel
 giorno il conteggio non esisteva e l'app non lo inventa.
 
+**«Il conteggio riparte da oggi»** serve quando si è fumato senza segnare. Un
+giorno segnato a metà è peggio di un giorno non segnato: il primo entra nel
+punteggio come dato vero e lo gonfia, il secondo resta fuori e si vede che
+manca. L'azione sposta l'inizio del conteggio a oggi e cancella le righe
+precedenti — quei giorni tornano «non contati» e restano fuori dal punteggio
+Salute. È una scelta esplicita, con conferma, e dice quante righe rimuove.
+
 ---
 
 ## 11. Corpo: misure, indici, foto

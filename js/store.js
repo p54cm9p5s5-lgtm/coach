@@ -2043,6 +2043,9 @@ export async function primoGiornoFumo() {
 export async function fumoContatoDal() {
   const dichiarato = await impostazione("fumoContatoDal");
   const prima = await primoGiornoFumo();
+  // Il più vecchio dei due: accendere il conteggio oggi non deve cancellare le
+  // sigarette segnate ieri. Dopo una ripartenza esplicita le righe vecchie non
+  // ci sono più, quindi resta la data dichiarata — che è il punto.
   const validi = [dichiarato, prima].filter(Boolean).sort();
   return validi[0] || null;
 }
@@ -2052,6 +2055,26 @@ export async function accendiConteggioFumo(data = isoDate()) {
   const dichiarato = await impostazione("fumoContatoDal");
   if (!dichiarato || data < dichiarato) await setImpostazione("fumoContatoDal", data);
   return fumoContatoDal();
+}
+
+/**
+ * Il conteggio riparte da una certa data: i giorni prima non sono «zero
+ * sigarette», sono «non contati», e devono sparire dal conto invece di valere
+ * punteggio pieno.
+ *
+ * Serve perché fumare senza segnare capita, e un giorno segnato a metà è
+ * peggio di un giorno non segnato: il primo entra nel punteggio come un dato
+ * vero e lo gonfia, il secondo resta fuori e si vede che manca. Questa è una
+ * scelta esplicita, quindi può buttare via le righe vecchie — al contrario di
+ * `accendiConteggioFumo`, che è automatica e non tocca mai niente.
+ *
+ * Restituisce quante righe ha rimosso, perché una cancellazione va detta.
+ */
+export async function riparteConteggioFumo(data = isoDate()) {
+  const vecchie = (await db.all("fumo")).filter((x) => x.data < data);
+  for (const x of vecchie) await db.del("fumo", x.id);
+  await setImpostazione("fumoContatoDal", data);
+  return { rimosse: vecchie.length, dal: data };
 }
 
 /** Conteggio giorno per giorno, per il grafico e per il punteggio. */
