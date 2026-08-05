@@ -216,6 +216,10 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     if (!righeSerie.length) continue;
     const v = (previsti || []).find((x) => x.esercizioId === esId);
     if (!v) continue;
+    // Un esercizio a tempo non ha un range di ripetizioni da confrontare: il
+    // bersaglio è la durata, e le proposte accettate non lo toccano mai.
+    // Confrontarlo lo stesso scriveva «45 rip (brief undefined-undefined)».
+    if (v.aTempo) continue;
     const ripChiesta = righeSerie.map((x) => x.ripTarget).filter((x) => x != null).at(-1);
     const carChiesto = righeSerie.map((x) => x.caricoTarget).filter((x) => x != null).at(-1);
     const parti = [];
