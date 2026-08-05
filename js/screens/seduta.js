@@ -55,6 +55,9 @@ export async function render({ vaiA, ridisegna }) {
     vaiA,
     contenitore: h("div.session"),
     recuperoFine: sed.progresso?.recuperoFine || null,
+    // Il cronometro di un esercizio a tempo vive nel progresso salvato come il
+    // recupero: bloccare lo schermo o riaprire l'app non deve azzerarlo.
+    cronoFine: sed.progresso?.cronoFine || null,
     tsInizioSerie: sed.progresso?.tsInizioSerie || null,
     timerHandle: null,
   };
@@ -929,17 +932,23 @@ async function vistaEsercizio(corpo, piede) {
       ? `${v.serie} × ${obiettivo.rip}`
       : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
 
-  aggiungi(corpo, 
-    h(
-      "div.hero",
-      h("p.kicker", `Serie ${n} di ${v.serie}`),
-      h("h2", def?.nome || v.esercizioId),
-      S.caricoCorrente != null
-        ? h("p.load", `${num(S.caricoCorrente)} kg`)
-        : h("p.load", "corpo libero"),
-      h("p.target", `Obiettivo ${bersaglio}`)
-    )
-  );
+  // Col cronometro in corso il numero grande è il tempo che scorre, non il
+  // carico: è l'unica cosa che serve guardare mentre tieni la posizione.
+  if (v.aTempo && S.cronoFine) {
+    aggiungi(corpo, quadranteCronometro(v, n));
+  } else {
+    aggiungi(corpo, 
+      h(
+        "div.hero",
+        h("p.kicker", `Serie ${n} di ${v.serie}`),
+        h("h2", def?.nome || v.esercizioId),
+        S.caricoCorrente != null
+          ? h("p.load", `${num(S.caricoCorrente)} kg`)
+          : h("p.load", "corpo libero"),
+        h("p.target", `Obiettivo ${bersaglio}`)
+      )
+    );
+  }
 
   if (obiettivo) {
     aggiungi(
@@ -999,24 +1008,127 @@ async function vistaEsercizio(corpo, piede) {
     )
   );
 
-  aggiungi(piede, 
-    h(
-      "button.btn",
-      {
-        onclick: azione(async () => {
-          sbloccaAudio();
-          await completaSerie(v, def, n);
-        }),
-      },
-      "Serie completata"
-    ),
-    h(
-      "div",
-      { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
-      h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, inv)) }, "Cambia carico"),
-      h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
-    )
+  // Su un esercizio a tempo la serie non è una cosa che «completi»: è una cosa
+  // che tieni, e quanto la tieni è il dato. Il cronometro parte con «Avvia» e
+  // «Fine» registra i secondi davvero fatti — perché mollare a 38 su 45 va
+  // scritto, non arrotondato al previsto.
+  if (v.aTempo) {
+    aggiungi(piede, ...piedeCronometro(v, def, n));
+  } else {
+    aggiungi(piede,
+      h(
+        "button.btn",
+        {
+          onclick: azione(async () => {
+            sbloccaAudio();
+            await completaSerie(v, def, n);
+          }),
+        },
+        "Serie completata"
+      ),
+      h(
+        "div",
+        { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, inv)) }, "Cambia carico"),
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
+      )
+    );
+  }
+}
+
+/**
+ * Il cronometro degli esercizi a tempo.
+ *
+ * Conta alla rovescia dal previsto. Se arrivi in fondo suona e la serie vale
+ * quello che chiedeva il programma; se molli prima, «Fine» registra i secondi
+ * che hai davvero tenuto. L'istante di fine sta nel progresso salvato, quindi
+ * bloccare lo schermo o riaprire l'app non falsa il conto: il tempo si misura
+ * sull'orologio, non su un contatore che gira solo mentre guardi.
+ */
+function quadranteCronometro(v, n) {
+  const testo = h("p.timer", `${v.durataSec}`);
+  const CIRC = 2 * Math.PI * 100;
+  const anello = h("circle.prog", {
+    cx: 108, cy: 108, r: 100,
+    style: `stroke-dasharray:${CIRC};stroke-dashoffset:0`,
+  });
+  const quadrante = h(
+    "div.timer-wrap",
+    h("svg.timer-ring", { viewBox: "0 0 216 216" }, h("circle.track", { cx: 108, cy: 108, r: 100 }), anello),
+    testo
   );
+  const totale = (v.durataSec || 1) * 1000;
+  let preavvisoFatto = false;
+  const aggiorna = () => {
+    if (!S.cronoFine) return;
+    const restanti = (S.cronoFine - Date.now()) / 1000;
+    const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
+    anello.style.strokeDashoffset = String(CIRC * (1 - quota));
+    if (restanti > 0) {
+      testo.textContent = String(Math.ceil(restanti));
+      quadrante.classList.remove("done");
+      testo.classList.remove("done");
+      if (restanti <= 3 && !preavvisoFatto) {
+        preavvisoFatto = true;
+        tick();
+      }
+    } else {
+      // Arrivato a zero: la posizione l'hai tenuta tutta. Suona, e resta lì
+      // finché non tocchi «Fine» — il tempo in più non viene contato.
+      testo.textContent = "0";
+      quadrante.classList.add("done");
+      testo.classList.add("done");
+      if (!allarmeAttivo()) avviaAllarme();
+    }
+  };
+  aggiorna();
+  fermaTimer();
+  S.timerHandle = setInterval(aggiorna, 200);
+  return h(
+    "div.hero",
+    h("p.kicker", `Serie ${n} di ${v.serie} · tieni la posizione`),
+    quadrante,
+    h("p.target", `Previsti ${v.durataSec}s · «Fine» se molli prima`)
+  );
+}
+
+function piedeCronometro(v, def, n) {
+  const inCorso = Boolean(S.cronoFine);
+  if (!inCorso) {
+    return [
+      h(
+        "button.btn",
+        {
+          onclick: azione(async () => {
+            sbloccaAudio();
+            S.cronoFine = Date.now() + (v.durataSec || 0) * 1000;
+            S.tsInizioSerie = S.tsInizioSerie || Date.now();
+            await salvaProgresso({ cronoFine: S.cronoFine, tsInizioSerie: S.tsInizioSerie });
+            await disegna();
+          }),
+        },
+        `Avvia · ${v.durataSec}s`
+      ),
+      h(
+        "div",
+        { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, null)) }, "Cambia carico"),
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
+      ),
+    ];
+  }
+
+  const fine = h("button.btn", {}, "Fine");
+  fine.onclick = azione(async () => {
+    const restanti = Math.max(0, (S.cronoFine - Date.now()) / 1000);
+    const tenuti = Math.max(0, (v.durataSec || 0) - restanti);
+    fermaAllarme();
+    fermaTimer();
+    S.cronoFine = null;
+    await salvaProgresso({ cronoFine: null });
+    await completaSerie(v, def, n, tenuti);
+  });
+  return [fine];
 }
 
 function sezione(titolo, voci, tag = "ul") {
@@ -1220,19 +1332,23 @@ async function impostaCarico(carico) {
   await salvaProgresso({ caricoCorrente: carico });
 }
 
-async function completaSerie(v, def, numero) {
+async function completaSerie(v, def, numero, secondiTenuti = null) {
   // Il bersaglio è il fondo del range, non il tetto: «8-10» chiede 8, e chi ne
   // fa 8 ha fatto il suo lavoro. Prima veniva registrato 10 — cioè il massimo,
   // che non avevi detto di aver fatto — e il punteggio ti giudicava contro
   // quello: fare il compito risultava «da rivedere».
   const target = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMin ?? v.ripMax;
+  // Su un esercizio a tempo i secondi arrivano dal cronometro: quelli tenuti
+  // davvero, non quelli previsti. Se il cronometro non c'è stato (serie chiusa
+  // a mano) resta il bersaglio, come per le ripetizioni.
+  const fatte = secondiTenuti != null ? Math.max(0, Math.round(secondiTenuti)) : target;
   const rec = await store.registraSerie({
     sedutaId: S.sed.id,
     esercizioId: v.esercizioId,
     numero,
     carico: S.caricoCorrente ?? null,
     caricoTarget: S.obiettivo?.carico ?? (v.carico > 0 ? v.carico : null),
-    ripFatte: target,
+    ripFatte: fatte,
     ripTarget: target,
     aTempo: Boolean(v.aTempo),
     tsInizioSerie: S.tsInizioSerie,
@@ -1435,17 +1551,12 @@ async function vistaRecupero(corpo, piede) {
   const sottotitolo = h(
     "p.target",
     fatte.length >= v.serie
-      ? "Ultima serie fatta: dopo il recupero c'è la valutazione"
+      ? "Ultima serie: rispondi qui sotto mentre recuperi"
       : `Prossima: serie ${fatte.length + 1} di ${v.serie}`
   );
   aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo));
 
-  // Dopo l'ultima serie il recupero è il tempo per prepararsi a quello dopo:
-  // nome, carico da montare e video del prossimo esercizio stanno qui, così ci
-  // si arriva pronti invece di scoprirlo quando il timer è già finito.
-  if (fatte.length >= v.serie) {
-    aggiungi(corpo, await bloccoProssimo(inv));
-  }
+  const ultimaSerie = fatte.length >= v.serie;
 
   // campi della serie appena chiusa
   let rip = ultima?.ripFatte ?? bersaglio;
@@ -1496,7 +1607,25 @@ async function vistaRecupero(corpo, piede) {
     )
   );
 
-  const pulsante = h("button.btn", { onclick: azione(chiudiRecupero) }, "Pronto");
+  // Dopo l'ultima serie il recupero è il momento buono per due cose: rispondere
+  // sull'esercizio appena finito, mentre ce l'hai ancora nelle braccia, e
+  // prepararsi al prossimo. In quest'ordine — prima le domande, poi il
+  // prossimo esercizio — perché la seconda cosa serve quando ti alzi, la prima
+  // adesso. Prima le domande arrivavano in una schermata a parte, dopo il
+  // recupero: un passaggio in più e il tempo del riposo buttato.
+  let quiz = null;
+  if (ultimaSerie) {
+    quiz = await vistaQuestionario(corpo, piede, true);
+    aggiungi(corpo, await bloccoProssimo(inv));
+  }
+
+  const pulsante = h(
+    "button.btn",
+    ultimaSerie
+      ? { disabled: true, onclick: azione(async () => { fermaTimer(); await quiz.conferma(); }) }
+      : { onclick: azione(chiudiRecupero) },
+    ultimaSerie ? "Avanti" : "Pronto"
+  );
   aggiungi(piede, 
     h(
       "div",
@@ -1510,10 +1639,17 @@ async function vistaRecupero(corpo, piede) {
   const totale = (ultima?.recuperoTargetSec || def?.recuperoDefaultSec || 120) * 1000;
 
   let preavvisoFatto = false;
+  // Una volta zittito, il suono non riparte da solo: il controllo gira ogni
+  // 250 ms e senza questa memoria lo farebbe ripartire subito dopo averlo
+  // spento, cioè renderebbe il bottone inutile.
+  let suonoSpento = false;
   const aggiorna = () => {
     if (!S.recuperoFine) return;
     const restanti = (S.recuperoFine - Date.now()) / 1000;
-    if (restanti > 3.5) preavvisoFatto = false; // il timer è stato allungato
+    if (restanti > 3.5) {
+      preavvisoFatto = false; // il timer è stato allungato
+      suonoSpento = false;
+    }
     const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
     anello.style.strokeDashoffset = String(CIRC * (1 - quota));
 
@@ -1528,15 +1664,37 @@ async function vistaRecupero(corpo, piede) {
         preavvisoFatto = true;
         tick();
       }
-      pulsante.textContent = "Pronto";
+      if (ultimaSerie) {
+        pulsante.textContent = "Avanti";
+        pulsante.disabled = !quiz?.completo();
+      } else {
+        pulsante.textContent = "Pronto";
+      }
     } else {
       testoTimer.textContent = "00:00";
       quadrante.classList.add("done");
       testoTimer.classList.add("done");
-      if (!allarmeAttivo()) {
+      if (!allarmeAttivo() && !suonoSpento) {
         avviaAllarme();
       }
-      pulsante.textContent = "Pronto · ferma il suono";
+      // Col suono acceso il bottone deve poterlo spegnere anche se le domande
+      // non sono finite: un allarme che non si zittisce finché non compili un
+      // questionario è una trappola.
+      if (ultimaSerie && !quiz?.completo()) {
+        pulsante.disabled = false;
+        pulsante.textContent = "Ferma il suono";
+        pulsante.onclick = () => {
+          suonoSpento = true;
+          fermaAllarme();
+          aggiorna();
+        };
+      } else if (ultimaSerie) {
+        pulsante.disabled = false;
+        pulsante.textContent = "Avanti · ferma il suono";
+        pulsante.onclick = azione(async () => { fermaAllarme(); fermaTimer(); await quiz.conferma(); });
+      } else {
+        pulsante.textContent = "Pronto · ferma il suono";
+      }
     }
   };
   aggiorna();
@@ -1586,7 +1744,7 @@ async function chiudiRecupero() {
 
 // ---------- questionario ----------
 
-async function vistaQuestionario(corpo, piede) {
+async function vistaQuestionario(corpo, piede, dentroRecupero = false) {
   const v = vocePrevista();
   const def = store.esercizio(v.esercizioId);
   // Servono alla correzione dell'ultima serie: i passi del carico devono
@@ -1791,9 +1949,14 @@ async function vistaQuestionario(corpo, piede) {
   }
 
   aggiungi(corpo, 
-    h("div.hero", { style: "padding-bottom:2px" }, h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
-    zonaPunteggio,
-    correzione,
+    // Dentro al recupero l'intestazione e la correzione dell'ultima serie ci
+    // sono già: qui si aggiungono solo le domande, altrimenti la stessa cosa
+    // comparirebbe due volte nella stessa schermata.
+    dentroRecupero
+      ? h("h2", { style: "margin:22px 16px 0" }, "Come è andato l'esercizio")
+      : h("div.hero", { style: "padding-bottom:2px" }, h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
+    dentroRecupero ? null : zonaPunteggio,
+    dentroRecupero ? null : correzione,
 
     h("p.footnote", { style: "margin:14px 16px 0" }, "Quanto è stata dura l'ultima serie?"),
     righello(
@@ -1840,6 +2003,17 @@ async function vistaQuestionario(corpo, piede) {
   // niente, altrimenti «Avanti» resterebbe spento con le risposte già date.
   if (stato.polso === true) mostraDettaglioPolso();
 
+  if (dentroRecupero) {
+    // Il punteggio dell'esercizio va comunque mostrato, ma sotto le domande:
+    // in cima c'è già il timer del recupero. E la riga che dice cosa manca
+    // deve stare qui accanto alle domande, non nel piede: nel piede il bottone
+    // è quello del recupero e la riga sparirebbe.
+    aggiungi(corpo, mancano, zonaPunteggio);
+    verifica();
+    ridisegnaPunteggio();
+    // Il recupero ha bisogno di sapere se può far avanzare e come salvare.
+    return { completo: () => !avanti.disabled, mancano, conferma, verifica };
+  }
   aggiungi(piede, mancano, avanti);
   verifica();
   ridisegnaPunteggio();
