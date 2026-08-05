@@ -240,11 +240,18 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
     const quotaDurata = Math.min(tetto, ore / oreBersaglio);
     const ritardo = ritardoAndataALetto(notte.inizio, R.sonnoOraLimite ?? 0);
     const quotaOrario =
-      ritardo == null ? null : limita(1 - ritardo * (R.sonnoCostoOraTardi ?? 0.12));
-    const pesoOrario = quotaOrario == null ? 0 : R.sonnoPesoOrario ?? 0.25;
+      ritardo == null ? 1 : limita(1 - ritardo * (R.sonnoCostoOraTardi ?? 0.12));
+    // L'orario MOLTIPLICA la durata, non si somma a lei.
+    //
+    // Con la media pesata le due cose si compensavano: dormire un'ora più del
+    // bersaglio produceva un bonus che annullava esattamente la penalità di
+    // essere andati a letto dopo mezzanotte, e una notte cominciata all'una
+    // risultava al 100%. Ma andare a letto tardi non è una cosa che si ripaga
+    // dormendo di più: sposta tutta la notte, e la penalità deve restare
+    // addosso a qualunque durata.
     voci.push({
       nome: "Sonno",
-      quota: quotaDurata * (1 - pesoOrario) + (quotaOrario ?? 0) * pesoOrario,
+      quota: quotaDurata * quotaOrario,
       peso: pesi.sonno,
       dettaglio:
         `${num(ore, 1)}h su ${num(oreBersaglio, 1)}h` +
