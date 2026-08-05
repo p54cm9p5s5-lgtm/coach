@@ -84,7 +84,21 @@ resta.
   `cardio` (sì/no), `esercizi[]`
 - ogni esercizio: `esercizioId`, `serie`, `ripMin`, `ripMax`, `carico`, oppure
   `aTempo: true` + `durataSec`
-- `inventario` — `barra` e `dischi` (peso → quantità, a coppie)
+- `inventario` — `barra`, `dischi` (peso → quantità totale posseduta, in numero
+  pari perché si montano a coppie) e, facoltativo, `manubri`:
+
+  ```json
+  "manubri": {
+    "regolabili": { "scaricoKg": 2, "quantita": 2 },
+    "fissi": [10]
+  }
+  ```
+
+  I manubri regolabili usano **gli stessi dischi del bilanciere**: non è un
+  secondo magazzino. `fissi` è un elenco con un peso per ogni manubrio non
+  modulabile posseduto. Il campo è facoltativo: un brief che non lo dichiara
+  continua a funzionare, l'app torna al passo da un chilo e non dà istruzioni
+  di montaggio sui manubri.
 - `regole` — tutte le soglie del §4, che si fondono voce per voce con quelle di
   base: scrivere una soglia non azzera le altre della stessa famiglia
 
@@ -146,6 +160,14 @@ Include la serie di avvicinamento sul primo esercizio (non viene registrata).
 **2. Esercizi, uno alla volta.** Per ognuno mostra carico, obiettivo, **i dischi
 esatti da montare per lato**, il video e la guida (esecuzione, setup, errori,
 cue, sicurezza).
+
+I dischi vengono calcolati anche **per i manubri regolabili**, e il conto tiene
+di quanti manubri servono: la libreria distingue «manubri» (due, uno per mano)
+da «manubrio» (uno solo), e per una coppia ogni disco va montato quattro volte
+invece di due. Se un peso corrisponde a un manubrio fisso posseduto, l'app lo
+dice invece di far caricare dischi inutilmente. Il selettore del carico e le
+proposte di progressione si muovono sui pesi **davvero montabili**, non a passi
+di un chilo.
 
 Per ogni serie: «Serie completata» → parte il **recupero cronometrato**. Nella
 schermata di recupero si correggono ripetizioni e carico davvero fatti,
