@@ -322,11 +322,18 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
     voci.push({ nome: "Tempo in piedi", quota: null, peso: pesi.inPiedi, dettaglio: "non registrato" });
   }
 
-  // --- fumo: zero vale pieno, la soglia tollerata vale zero, oltre è un tetto
+  // --- fumo: zero vale pieno, la soglia tollerata vale zero, oltre va sotto zero
+  //
+  // È lo stesso principio del superamento, girato: se camminare il doppio vale
+  // più di cento, fumare il doppio del tollerato deve valere meno di zero. Con
+  // la quota fermata a zero, venti sigarette e dieci pesavano uguale — e non è
+  // vero. Lo scarto massimo è lo stesso dichiarato per il superamento: se una
+  // voce può salire di mezzo punto sopra il pieno, può scendere di mezzo punto
+  // sotto lo zero. Un numero solo, non due inventati.
   if (sigarette != null) {
     voci.push({
       nome: "Fumo",
-      quota: limita(1 - sigarette / tollerate),
+      quota: Math.max(-(tetto - 1), 1 - sigarette / tollerate),
       peso: pesi.fumo,
       dettaglio: sigarette === 0 ? "nessuna sigaretta" : `${sigarette} su ${tollerate} tollerate`,
     });
@@ -347,9 +354,12 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   // Il punteggio resta però su cento — meglio di tutto quello che il programma
   // chiedeva non è una cosa che esiste, e l'anello disegna una frazione di
   // cerchio, non due giri.
-  let totale = Math.min(
-    100,
-    Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100)
+  // Il totale sta fra zero e cento: una voce sotto zero tira giù la media come
+  // deve, ma un punteggio negativo non vuol dire niente e l'anello non lo sa
+  // disegnare.
+  let totale = Math.max(
+    0,
+    Math.min(100, Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100))
   );
 
   const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];

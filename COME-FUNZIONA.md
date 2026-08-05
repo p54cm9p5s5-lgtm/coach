@@ -182,8 +182,10 @@ ritardo costa il **12%**, e l'orario vale il **25%** della voce Sonno (la durata
 il restante 75%).
 
 **Superamento del bersaglio**: una voce che supera l'obiettivo vale fino al
-**150%** (`tettoSuperamento`), e l'eccedenza compensa le voci sotto. Portarlo a
-1 riporta al vecchio comportamento, dove superare non contava.
+**150%** (`tettoSuperamento`), e l'eccedenza compensa le voci sotto. Lo stesso
+numero, girato, dà il fondo delle sigarette: oltre le tollerate la voce scende
+sotto zero, fino a **−50%**. Portarlo a 1 riporta al vecchio comportamento, dove
+né superare né sforare contavano.
 
 **Cadenze**: misure il **giovedì**; foto il **mercoledì**, **ogni 2 settimane**.
 
@@ -320,14 +322,33 @@ max 60; **10 sigarette esatte → max 70; oltre 10 → max 50**.
 Un **giorno di riposo non è un vuoto da punire**: la voce allenamento resta
 fuori dal conto, non vale zero.
 
+**Sforare vale meno di zero.** Le sigarette oltre le tollerate portano la voce
+in negativo — 15 su 10 valgono −50% — e quel negativo tira giù la media come
+l'eccedenza la tira su. Con la quota ferma a zero, venti sigarette e dieci
+pesavano uguale, e non è vero. Lo scarto massimo è **lo stesso numero** del
+superamento: se una voce può salire di mezzo punto sopra il pieno, può scendere
+di mezzo punto sotto lo zero.
+
+Resta anche il tetto sulla giornata (oltre le tollerate il totale non supera
+50): sono due meccanismi diversi che convivono. Il tetto è un soffitto, il
+negativo abbassa la media. Su una giornata perfetta comanda il soffitto; su una
+giornata normale comanda la media, e lì la differenza fra dodici e trenta
+sigarette si vede tutta.
+
 **Superare il bersaglio vale più del 100%.** Movimento, passi, minuti di
 esercizio, tempo in piedi e durata del sonno possono andare oltre: 14.000 passi
 su un bersaglio di 10.000 valgono 140%, e quella eccedenza **alza il totale**
 compensando le voci rimaste indietro. La salita è il rapporto vero, senza
 moltiplicatori — la curva ripida serve a punire quello che manca, non ad
 amplificare un merito — e si ferma al **150%**, perché una giornata fuori norma
-non deve coprire da sola tutto il resto. Il totale resta comunque su cento:
-meglio di tutto quello che il programma chiedeva non è una cosa che esiste.
+non deve coprire da sola tutto il resto. Il totale resta comunque fra zero e cento:
+meglio di tutto quello che il programma chiedeva non è una cosa che esiste, e un
+punteggio negativo non vuol dire niente.
+
+**Tutto è espresso come rapporto al bersaglio, mai come numero fisso.** Se il
+brief cambia un obiettivo, le percentuali si riadattano da sole: con il sonno a
+7 h una notte da 8 h vale 111%, con le sigarette tollerate a 5 fumarne 10 vale
+−100% se il tetto è 2. Non c'è nessuna soglia scritta a mano da aggiornare.
 
 **Il sonno si misura in due parti.** La durata è proporzionale — quattro ore su
 otto sono metà del sonno e valgono metà — perché la curva ripida usata in
