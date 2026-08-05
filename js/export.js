@@ -621,22 +621,34 @@ export function bloccoFumo({ perGiorno, tollerate, primoGiorno }) {
   const valori = perGiorno.map((g) => g.quante);
   const media = valori.reduce((a, b) => a + b, 0) / valori.length;
   const zero = valori.filter((v) => v === 0).length;
-  const oltre = perGiorno.filter((g) => g.quante > tollerate);
+  // Ogni giorno va giudicato con la soglia che aveva LUI: quella scende nel
+  // tempo, e usare quella di oggi farebbe risultare «oltre» giornate che
+  // quando sono state vissute erano dentro il limite.
+  const sogliaDi = (g) => g.tollerate ?? tollerate;
+  const oltre = perGiorno.filter((g) => g.quante > sogliaDi(g));
   return [
     "FUMO",
     "",
     tabella(
-      ["Data", "Giorno", "Sigarette", "Note"],
+      ["Data", "Giorno", "Sigarette", "Soglia", "Note"],
       perGiorno.map((g) => [
         dataBreve(g.data),
         GIORNI_ABBR[new Date(g.data + "T00:00:00").getDay()],
         String(g.quante),
-        g.quante > tollerate ? `${g.quante - tollerate} oltre la soglia` : g.quante === 0 ? "nessuna" : "",
+        String(sogliaDi(g)),
+        g.quante > sogliaDi(g)
+          ? `${g.quante - sogliaDi(g)} oltre la soglia`
+          : g.quante === 0
+            ? "nessuna"
+            : g.quante < sogliaDi(g)
+              ? "nuovo minimo"
+              : "",
       ])
     ),
     "",
     `Media ${num(media, 1)} al giorno su ${perGiorno.length} ${perGiorno.length === 1 ? "giorno" : "giorni"} contati (dal ${dataBreve(primoGiorno)}).`,
-    `Giorni a zero: ${zero} su ${perGiorno.length}. Soglia tollerata concordata: ${tollerate} al giorno${oltre.length ? `, superata ${oltre.length} ${oltre.length === 1 ? "volta" : "volte"}` : ""}.`,
+    `Giorni a zero: ${zero} su ${perGiorno.length}. Soglia tollerata oggi: ${tollerate} al giorno${oltre.length ? `, superata ${oltre.length} ${oltre.length === 1 ? "volta" : "volte"}` : ""}.`,
+    `La soglia parte da quella concordata e scende da sé: ogni giornata chiusa sotto il limite diventa il limite dal giorno dopo, e non risale più.`,
     "Il conteggio è manuale: vale quello che è stato segnato, non c'è modo di verificarlo.",
   ].join("\n");
 }

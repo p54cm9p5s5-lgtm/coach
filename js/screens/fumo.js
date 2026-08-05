@@ -75,7 +75,10 @@ export async function render({ ridisegna }) {
   // Aprire questa sezione accende il conteggio: da oggi «nessuna riga» vuol
   // dire zero sigarette, non «non lo stavo contando».
   await store.accendiConteggioFumo(oggi);
-  const tollerate = store.regole().salute?.sigaretteTollerate ?? 10;
+  // Il limite non è più fisso: scende ogni volta che una giornata chiude sotto
+  // di lui, e da lì non risale. Serve quello di OGGI, non quello del brief.
+  const {limiti, corrente: limiteDomani, partenza} = await store.limitiFumo(oggi);
+  const tollerate = limiti.get(oggi) ?? partenza;
   const dOggi = await store.sigaretteDi(oggi);
   const quante = dOggi.length;
   const tinta = colore(quante);
@@ -184,7 +187,14 @@ export async function render({ ridisegna }) {
             "div.row",
             h("div.main", h("span.title", dataLunga(data))),
             h("span.value", { style: `color:${colore(n)}` }, String(n)),
-            n === 0 ? h("span.pill.ok", "zero") : n > tollerate ? h("span.pill.warn", "oltre") : null
+            // Ogni giorno va giudicato col limite che aveva lui, non con quello di oggi.
+            (() => {
+              const suo = limiti.get(data) ?? partenza;
+              if (n === 0) return h("span.pill.ok", "zero");
+              if (n > suo) return h("span.pill.warn", "oltre");
+              if (n < suo) return h("span.pill.ok", "nuovo minimo");
+              return null;
+            })()
           )
         );
         mostrati++;
@@ -200,7 +210,10 @@ export async function render({ ridisegna }) {
           h(
             "p.footnote",
             `Media ${(totale / Math.max(1, contati)).toFixed(1).replace(".", ",")} al giorno da quando conti (${dataBreve(primo)}). ` +
-              `Le sigarette pesano sul punteggio Salute: zero vale pieno, ${tollerate} vale zero, oltre ${tollerate} la giornata non supera 50.`
+              `Le sigarette pesano sul punteggio Salute: zero vale pieno, ${tollerate} vale zero, oltre ${tollerate} la giornata non supera 50.` +
+              (limiteDomani < tollerate
+                ? ` Oggi hai abbassato l'asticella: da domani il massimo è ${limiteDomani}.`
+                : "")
           ),
           // Fumare senza segnare capita. Un giorno segnato a metà è peggio di un
           // giorno non segnato: il primo entra nel punteggio come dato vero e lo

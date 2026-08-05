@@ -480,6 +480,20 @@ sbagliati. Il numero cambia colore: bianco fino a 3, giallo 4-6, arancione 7-9,
 Il conteggio è **manuale**: vale quello che è stato segnato, non c'è modo di
 verificarlo, e nel pacchetto è scritto esplicitamente.
 
+**La soglia scende da sé, e non risale.** Parte da quella concordata nel brief e
+funziona come una tacca: appena una giornata chiude sotto il limite in vigore,
+dal **giorno dopo** quel numero diventa il nuovo massimo. Se un giorno ne fumi
+sei, sei è il tetto da lì in avanti — anche se il giorno dopo ne fumi nove, che
+a quel punto risulta *oltre*.
+
+Il record del giorno stesso non vale per il giorno stesso: quella giornata viene
+giudicata col limite che aveva quando è cominciata. Abbassare l'asticella a cose
+fatte sarebbe cambiare le regole a metà partita.
+
+Il capolinea è **zero**: arrivati a zero il massimo è zero, e da lì una sola
+sigaretta è già oltre. Una giornata a zero contro un limite di zero resta però
+il giorno perfetto — 100%, senza tetti.
+
 Da quando la sezione viene aperta la prima volta, **un giorno senza righe vale
 zero sigarette**, cioè punteggio pieno — non «dato mancante». Prima di quel
 giorno il conteggio non esisteva e l'app non lo inventa.
