@@ -6,7 +6,7 @@
    usare. Un conteggio smesso è peggio di nessun conteggio, perché fa sembrare
    buone delle giornate che non lo sono state. */
 
-import { h, aggiungi, dataBreve, dataLunga, isoDate, unaVoltaSola } from "../ui.js";
+import { h, aggiungi, chiedi, dataBreve, dataLunga, isoDate, toast, unaVoltaSola } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 
@@ -201,6 +201,40 @@ export async function render({ ridisegna }) {
             "p.footnote",
             `Media ${(totale / Math.max(1, contati)).toFixed(1).replace(".", ",")} al giorno da quando conti (${dataBreve(primo)}). ` +
               `Le sigarette pesano sul punteggio Salute: zero vale pieno, ${tollerate} vale zero, oltre ${tollerate} la giornata non supera 50.`
+          ),
+          // Fumare senza segnare capita. Un giorno segnato a metà è peggio di un
+          // giorno non segnato: il primo entra nel punteggio come dato vero e lo
+          // gonfia, il secondo resta fuori e si vede che manca.
+          h(
+            "div.btn-wrap",
+            h(
+              "button.btn.secondary",
+              {
+                onclick: unaVoltaSola(async () => {
+                  const conta = await store.conteggioFumo();
+                  let quante = 0;
+                  for (const [g, n] of conta) if (g < oggi) quante += n;
+                  const scelta = await chiedi({
+                    titolo: "Far ripartire il conteggio da oggi?",
+                    testo:
+                      `I giorni prima di oggi smettono di contare: non valgono «zero sigarette», valgono «non contati», e restano fuori dal punteggio Salute invece di regalare punti.` +
+                      (quante
+                        ? `\n\nLe ${quante} ${quante === 1 ? "sigaretta segnata" : "sigarette segnate"} prima di oggi ${quante === 1 ? "viene cancellata" : "vengono cancellate"}. Non si torna indietro.`
+                        : "\n\nPrima di oggi non c'è niente di segnato."),
+                    opzioni: [{ etichetta: "Riparti da oggi", valore: "si" }],
+                  });
+                  if (scelta !== "si") return;
+                  const esito = await store.riparteConteggioFumo(oggi);
+                  toast(
+                    esito.rimosse
+                      ? `Conteggio da oggi. ${esito.rimosse} ${esito.rimosse === 1 ? "riga rimossa" : "righe rimosse"}.`
+                      : "Conteggio da oggi."
+                  );
+                  await ridisegna();
+                }),
+              },
+              "Il conteggio riparte da oggi"
+            )
           )
         )
       );
