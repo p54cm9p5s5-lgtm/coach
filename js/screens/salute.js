@@ -664,6 +664,13 @@ async function incolla(ridisegna) {
   // Un giorno già passato che cambia di molto vuol dire che uno dei due
   // conteggi è sbagliato — quasi sempre il comando rapido che somma iPhone e
   // Watch insieme. Sovrascrivere in silenzio sarebbe scegliere al posto tuo.
+  // Notti rimosse perché rimpiazzate: va detto, non fatto di nascosto.
+  if (conteggio.nottiTolte?.length) {
+    righe.push(
+      `${conteggio.nottiTolte.length} ${conteggio.nottiTolte.length === 1 ? "notte doppia rimossa" : "notti doppie rimosse"} (${conteggio.nottiTolte.slice(0, 6).join(", ")}${conteggio.nottiTolte.length > 6 ? "…" : ""})`
+    );
+  }
+
   // Valori impossibili: non sono entrati, e va detto prima di ogni altra cosa.
   // Un numero che l'app ha rifiutato è un numero che manca, e chi legge deve
   // sapere che manca e perché.

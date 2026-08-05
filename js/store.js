@@ -311,7 +311,7 @@ const REGOLE_BASE = {
       esercizio: 8,
       inPiedi: 6,
     },
-    sonnoOreBersaglio: 7.5,
+    sonnoOreBersaglio: 8,
     sonnoOreMinime: 6,
     // Bersagli del punteggio Salute, decisi da te. Non sono gli obiettivi
     // dell'orologio: quello del movimento sull'anello resta quello che hai
@@ -1518,7 +1518,7 @@ function scartaImpossibili(riga, limiti, data, scartati) {
 }
 
 export async function importaSalute(pacchetto) {
-  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [] };
+  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [] };
 
   /**
    * Fonde solo i campi valorizzati: due righe per lo stesso giorno, una con le
@@ -1580,6 +1580,42 @@ export async function importaSalute(pacchetto) {
       importatoIl: new Date().toISOString(),
     });
     conteggio.notti = nottiViste.size;
+  }
+
+  // ---- riconciliazione delle notti ----
+  //
+  // Le fasi del sonno raccontano per intero le notti che coprono: se dentro
+  // quel periodo l'archivio ha una notte che questo pacchetto non conferma,
+  // quella notte è un residuo — tipicamente la stessa dormita, archiviata sotto
+  // una data sbagliata da una versione precedente dell'app.
+  //
+  // Prima l'unico modo di toglierla era «Cancella i dati importati da Salute»,
+  // cioè buttare via tutto lo storico per correggere un giorno. Un'app che per
+  // ripararsi ti chiede di perdere dati non è riparabile: fra sei mesi il costo
+  // sarebbe insostenibile e il difetto resterebbe lì. Reimportare deve bastare.
+  //
+  // Tre reti di sicurezza: si tocca solo dentro il periodo davvero coperto
+  // dalle fasi, solo quello che era stato importato (mai una notte scritta a
+  // mano), e quello che si toglie viene detto, mai fatto in silenzio.
+  if (pacchetto.fasi?.length) {
+    const inizi = pacchetto.fasi.map((f) => f.inizio.slice(0, 10)).sort();
+    const fini = pacchetto.fasi.map((f) => f.fine.slice(0, 10)).sort();
+    // Un giorno di margine all'indietro: una notte spostata di un giorno cade
+    // appena fuori dal periodo delle sue stesse fasi, ed è proprio quella da
+    // ripulire.
+    const primo = new Date(inizi[0] + "T00:00:00");
+    primo.setDate(primo.getDate() - 1);
+    const dal = isoDate(primo);
+    const al = fini[fini.length - 1];
+    for (const vecchia of await db.all("notti")) {
+      if (vecchia.data < dal || vecchia.data > al) continue;
+      if (nottiViste.has(vecchia.data)) continue;
+      // Una notte scritta a mano (riga NOTTE, o inserita da te) non si tocca:
+      // il pacchetto delle fasi non ha voce in capitolo su quella.
+      if (vecchia.fonte !== "salute") continue;
+      await db.del("notti", vecchia.data);
+      conteggio.nottiTolte.push(dataBreve(vecchia.data));
+    }
   }
 
   for (const a of pacchetto.allenamenti) {
