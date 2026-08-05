@@ -19,7 +19,13 @@ async function schedaSigarette({ conPeriodo, oggiIso }) {
   const primoFumo = await store.fumoContatoDal();
   if (!primoFumo) return null;
   const conteggi = await store.conteggioFumo();
-  const tollerate = store.regole().salute?.sigaretteTollerate ?? 10;
+  // Il massimo non è più un numero fisso: scende ogni volta che tocchi un nuovo
+  // minimo e da lì non risale. Quindi ogni giorno va giudicato con la soglia che
+  // aveva quel giorno, non con quella di oggi, altrimenti il grafico riscrive il
+  // passato ogni volta che scendi.
+  const { limiti, corrente: limiteDomani, partenza } = await store.limitiFumo(oggiIso);
+  const sogliaDi = (g) => limiti.get(g) ?? partenza;
+  const tollerate = sogliaDi(oggiIso);
   const fFumo = conPeriodo();
   // Dal giorno in cui hai cominciato a contare in poi, «nessuna riga» vuol
   // dire zero: è un dato, non un buco. Prima di quel giorno il conteggio non
@@ -49,14 +55,17 @@ async function schedaSigarette({ conPeriodo, oggiIso }) {
         data: x.data,
         valore: x.sigarette,
         evidenza: x.sigarette === 0,
-        nota: x.sigarette > tollerate ? `${x.sigarette - tollerate} oltre le ${tollerate}` : null,
+        nota:
+          x.sigarette > sogliaDi(x.data)
+            ? `${x.sigarette - sogliaDi(x.data)} oltre il massimo di quel giorno (${sogliaDi(x.data)})`
+            : `massimo di quel giorno ${sogliaDi(x.data)}`,
       })),
       obiettivo: tollerate,
-      etichettaObiettivo: `tollerate ${tollerate}`,
+      etichettaObiettivo: `massimo oggi ${tollerate}`,
       formatta: (v) => `${Math.round(v)} ${Math.round(v) === 1 ? "sigaretta" : "sigarette"}`,
       invito: "Tocca un giorno per vedere quante",
     }),
-    piede: `Da quando conti (${dataBreve(primoFumo)}). I punti più grandi sono i giorni a zero. Le sigarette pesano sul punteggio Salute: oltre ${tollerate} la giornata non supera 50.`,
+    piede: `Da quando conti (${dataBreve(primoFumo)}). I punti più grandi sono i giorni a zero. Il massimo scende da solo: quando tocchi un nuovo minimo, dal giorno dopo quello diventa il tetto e non risale più. Oggi il massimo è ${tollerate}, domani ${limiteDomani}. Oltre il massimo la giornata non supera 50.`,
   });
 }
 
@@ -453,7 +462,13 @@ export async function render({ ridisegna }) {
           ultimo
             ? h(
                 "span.pill",
-                `${dataBreve(ultimo.data)}: ${a.tempo ? durataUmana(ultimo[a.campo] * 60) : num(ultimo[a.campo], a.dec)}`
+                // Con l'unità anche qui: «05/08: 6» sotto una media in km non
+                // si capisce se sono chilometri o piani.
+                `${dataBreve(ultimo.data)}: ${
+                  a.tempo
+                    ? durataUmana(ultimo[a.campo] * 60)
+                    : `${num(ultimo[a.campo], a.dec)}${a.unita ? ` ${a.unita}` : ""}`
+                }`
               )
             : null
         )
