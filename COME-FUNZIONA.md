@@ -99,7 +99,7 @@ fa scattare la riduzione; una proposta rifiutata torna dopo **4 esposizioni**.
 significativo oltre il **20%**.
 
 **Punteggio Salute** — pesi: sonno 22, allenamento 22, fumo 20, movimento 12,
-passi 10, minuti di esercizio 8, tempo in piedi 6. Bersagli: sonno **7,5 h**
+passi 10, minuti di esercizio 8, tempo in piedi 6. Bersagli: sonno **8 h**
 (minimo **6 h**), movimento **1000 kcal**, passi **10.000**, esercizio **60 min**,
 tempo in piedi **180 min**, sigarette tollerate **10 al giorno**.
 
@@ -207,7 +207,7 @@ Sette voci, nessuna capace di decidere da sola:
 
 | Voce | Peso | Bersaglio |
 |---|---|---|
-| Sonno | 22 | 7,5 h |
+| Sonno | 22 | 8 h |
 | Allenamento | 22 | completezza della seduta chiusa |
 | Fumo | 20 | 0 sigarette = pieno, 10 = zero |
 | Movimento | 12 | 1000 kcal attive |
@@ -434,6 +434,13 @@ Due copie, con ruoli diversi:
   cancellazioni accidentali, resta nel telefono, **non contiene le foto**.
 - **Backup su file**, da salvare in File o iCloud Drive: è l'unico che sopravvive
   alla perdita del telefono.
+
+**Reimportare ripara, non serve cancellare.** Le fasi del sonno raccontano per
+intero le notti che coprono: se dentro quel periodo l'archivio ha una notte che
+il pacchetto nuovo non conferma, viene sostituita. Correggere un dato sbagliato
+non costa mai la perdita dello storico — e quello che viene rimosso è sempre
+dichiarato, mai fatto in silenzio. Le notti scritte a mano non si toccano, e
+fuori dal periodo coperto non si tocca niente.
 
 Il ripristino è stato verificato: esportazione, archivio svuotato, ripristino →
 **identico byte a byte** su tutti e 15 gli archivi. Un file rovinato viene

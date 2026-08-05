@@ -187,7 +187,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const pesi = R.pesi || {
     sonno: 22, allenamento: 22, fumo: 20, movimento: 12, passi: 10, esercizio: 8, inPiedi: 6,
   };
-  const oreBersaglio = R.sonnoOreBersaglio ?? 7.5;
+  const oreBersaglio = R.sonnoOreBersaglio ?? 8;
   const oreMinime = R.sonnoOreMinime ?? 6;
   const tollerate = R.sigaretteTollerate ?? 10;
   const passiBersaglio = R.passiBersaglio ?? 10000;
