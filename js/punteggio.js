@@ -20,9 +20,19 @@ const el = (tag, attrs = {}) => {
 
 const limita = (v) => Math.max(0, Math.min(1, v));
 
-/** Manca poco al bersaglio ≠ ci siamo quasi: sotto il previsto si scende in fretta. */
-const sottoBersaglio = (rapporto, durezza = 2.5) =>
-  rapporto >= 1 ? 1 : limita(1 - (1 - rapporto) * durezza);
+/**
+ * Manca poco al bersaglio ≠ ci siamo quasi: sotto il previsto si scende in
+ * fretta. Sopra il previsto si sale invece piano, e il valore può superare il
+ * 100%: aver camminato il doppio è un fatto, e nasconderlo dietro un 100% secco
+ * significherebbe dire che dodicimila passi e diecimila sono la stessa cosa.
+ *
+ * La salita è il rapporto vero, senza moltiplicatori: la durezza serve a punire
+ * quello che manca, non ad amplificare un merito. Il tetto (`tetto`) evita che
+ * una singola giornata fuori norma — un trekking, una camminata lunghissima —
+ * copra da sola tutto il resto della giornata.
+ */
+const sottoBersaglio = (rapporto, durezza = 2.5, tetto = 1) =>
+  rapporto >= 1 ? Math.min(tetto, rapporto) : limita(1 - (1 - rapporto) * durezza);
 
 /**
  * Quante ore dopo il limite sei andato a letto. `null` se non lo sappiamo.
@@ -208,6 +218,9 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const passiBersaglio = R.passiBersaglio ?? 10000;
   const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 60;
   const inPiediBersaglio = R.minutiInPiediBersaglio ?? 180;
+  // Quanto può valere una voce che supera il bersaglio. È un numero dichiarato
+  // come tutti gli altri: il master brief può alzarlo o toglierlo.
+  const tetto = R.tettoSuperamento ?? 1.5;
   const voci = [];
   const tetti = [];
 
@@ -224,7 +237,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   // notte se una comincia alle 23 e l'altra alle 4.
   if (notte?.durataMin != null) {
     const ore = notte.durataMin / 60;
-    const quotaDurata = limita(ore / oreBersaglio);
+    const quotaDurata = Math.min(tetto, ore / oreBersaglio);
     const ritardo = ritardoAndataALetto(notte.inizio, R.sonnoOraLimite ?? 0);
     const quotaOrario =
       ritardo == null ? null : limita(1 - ritardo * (R.sonnoCostoOraTardi ?? 0.12));
@@ -265,7 +278,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.kcalAttive != null && obiettivo) {
     voci.push({
       nome: "Movimento",
-      quota: sottoBersaglio(giorno.kcalAttive / obiettivo, 1.5),
+      quota: sottoBersaglio(giorno.kcalAttive / obiettivo, 1.5, tetto),
       peso: pesi.movimento,
       dettaglio: `${Math.round(giorno.kcalAttive)} su ${Math.round(obiettivo)} kcal`,
     });
@@ -277,7 +290,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.passi != null) {
     voci.push({
       nome: "Passi",
-      quota: sottoBersaglio(giorno.passi / passiBersaglio, 1.2),
+      quota: sottoBersaglio(giorno.passi / passiBersaglio, 1.2, tetto),
       peso: pesi.passi,
       dettaglio: `${Math.round(giorno.passi).toLocaleString("it-IT")} su ${passiBersaglio.toLocaleString("it-IT")}`,
     });
@@ -289,7 +302,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.minutiEsercizio != null) {
     voci.push({
       nome: "Minuti di esercizio",
-      quota: sottoBersaglio(giorno.minutiEsercizio / esercizioBersaglio, 1.2),
+      quota: sottoBersaglio(giorno.minutiEsercizio / esercizioBersaglio, 1.2, tetto),
       peso: pesi.esercizio,
       dettaglio: `${Math.round(giorno.minutiEsercizio)} su ${esercizioBersaglio} min`,
     });
@@ -301,7 +314,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   if (giorno?.minutiInPiedi != null) {
     voci.push({
       nome: "Tempo in piedi",
-      quota: sottoBersaglio(giorno.minutiInPiedi / inPiediBersaglio, 1.2),
+      quota: sottoBersaglio(giorno.minutiInPiedi / inPiediBersaglio, 1.2, tetto),
       peso: pesi.inPiedi,
       dettaglio: `${Math.round(giorno.minutiInPiedi)} su ${inPiediBersaglio} min`,
     });
@@ -329,7 +342,15 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   const pesati = voci.filter((v) => v.quota != null);
   if (!pesati.length) return { totale: null, voci, limite: null, completo: false };
   const pesoTotale = pesati.reduce((t, v) => t + v.peso, 0) || 1;
-  let totale = Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100);
+  // Una voce sopra il bersaglio alza la media e compensa quelle rimaste
+  // indietro: è il modo in cui «ho camminato il doppio» si vede nel totale.
+  // Il punteggio resta però su cento — meglio di tutto quello che il programma
+  // chiedeva non è una cosa che esiste, e l'anello disegna una frazione di
+  // cerchio, non due giri.
+  let totale = Math.min(
+    100,
+    Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100)
+  );
 
   const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];
   if (limite && totale > limite.tetto) totale = limite.tetto;

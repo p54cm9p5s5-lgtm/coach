@@ -181,6 +181,10 @@ tempo in piedi **180 min**, sigarette tollerate **10 al giorno**.
 ritardo costa il **12%**, e l'orario vale il **25%** della voce Sonno (la durata
 il restante 75%).
 
+**Superamento del bersaglio**: una voce che supera l'obiettivo vale fino al
+**150%** (`tettoSuperamento`), e l'eccedenza compensa le voci sotto. Portarlo a
+1 riporta al vecchio comportamento, dove superare non contava.
+
 **Cadenze**: misure il **giovedì**; foto il **mercoledì**, **ogni 2 settimane**.
 
 ---
@@ -315,6 +319,15 @@ max 60; **10 sigarette esatte → max 70; oltre 10 → max 50**.
 
 Un **giorno di riposo non è un vuoto da punire**: la voce allenamento resta
 fuori dal conto, non vale zero.
+
+**Superare il bersaglio vale più del 100%.** Movimento, passi, minuti di
+esercizio, tempo in piedi e durata del sonno possono andare oltre: 14.000 passi
+su un bersaglio di 10.000 valgono 140%, e quella eccedenza **alza il totale**
+compensando le voci rimaste indietro. La salita è il rapporto vero, senza
+moltiplicatori — la curva ripida serve a punire quello che manca, non ad
+amplificare un merito — e si ferma al **150%**, perché una giornata fuori norma
+non deve coprire da sola tutto il resto. Il totale resta comunque su cento:
+meglio di tutto quello che il programma chiedeva non è una cosa che esiste.
 
 **Il sonno si misura in due parti.** La durata è proporzionale — quattro ore su
 otto sono metà del sonno e valgono metà — perché la curva ripida usata in
