@@ -9,7 +9,15 @@ function parametri() {
 
 export async function render({ vaiA }) {
   const p = parametri();
-  if (p.seduta) return dettaglioSeduta(p.seduta);
+  // Un allenamento passato si guarda nella STESSA schermata di uno appena
+  // chiuso: anello, punteggio scomposto, esercizio per esercizio, numeri
+  // dall'orologio. Prima lo Storico ne disegnava una versione ridotta, e lo
+  // stesso allenamento aveva due facce diverse secondo da dove lo aprivi.
+  // I collegamenti vecchi continuano a funzionare: portano lì anche loro.
+  if (p.seduta) {
+    location.replace(`#/seduta?riepilogo=${p.seduta}&da=storico`);
+    return h("div.screen");
+  }
   if (p.esercizio) return dettaglioEsercizio(p.esercizio);
   return elenco(vaiA);
 }
@@ -47,7 +55,7 @@ async function elenco(vaiA) {
         : "—";
       return h(
         "a.row",
-        { href: `#/storico?seduta=${s.id}` },
+        { href: `#/seduta?riepilogo=${s.id}&da=storico` },
         h(
           "div.main",
           h("span.title", `${dataBreve(s.data)} · ${s.tipoNome}`),
@@ -208,132 +216,6 @@ async function elenco(vaiA) {
           h("span.chevron", "›")
         )
       )
-    )
-  );
-
-  return wrap;
-}
-
-async function dettaglioSeduta(id) {
-  const wrap = h("div.screen");
-  const s = await store.seduta(id);
-  aggiungi(wrap, intestazione(s ? s.tipoNome : "Allenamento", { etichetta: "Indietro", onclick: () => (location.hash = "#/storico") }));
-  if (!s) {
-    aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
-    return wrap;
-  }
-
-  const serie = await store.serieDi(id);
-  const logs = await store.questionariDi(id);
-  const perEs = new Map();
-  for (const x of serie) {
-    if (!perEs.has(x.esercizioId)) perEs.set(x.esercizioId, []);
-    perEs.get(x.esercizioId).push(x);
-  }
-  for (const l of logs) if (!perEs.has(l.esercizioId)) perEs.set(l.esercizioId, []);
-
-  aggiungi(wrap, 
-    h(
-      "div.group",
-      h("div.list",
-        h("div.row", h("div.main", h("span.title", "Data")), h("span.value", dataLunga(s.data))),
-        h("div.row", h("div.main", h("span.title", "Orario")), h("span.value", `${oraDi(s.oraInizioLavoro || s.oraInizio)}${s.oraFine ? `–${oraDi(s.oraFine)}` : ""}`)),
-        s.tipoProgrammatoId && s.tipoProgrammatoId !== s.tipoId
-          ? h("div.row", h("div.main", h("span.title", "In programma era")), h("span.value", store.giornoSplit(s.tipoProgrammatoId)?.nome || s.tipoProgrammatoId))
-          : null,
-        s.riscaldamento?.fatto
-          ? h("div.row", h("div.main", h("span.title", "Riscaldamento")), h("span.value", s.riscaldamento.modalita === "senzaTapis" ? "senza tapis" : "con tapis"))
-          : null,
-        ...["pesi", "cardio"].map((quale) => {
-          const o = s.orologio?.[quale] || (quale === "pesi" && s.orologio?.fcMedia != null ? s.orologio : null);
-          if (!o) return null;
-          const testo = [
-            o.durata || null,
-            o.km != null ? `${num(o.km, 2)} km` : null,
-            o.kcalAttive != null ? `${num(o.kcalAttive, 0)} kcal` : o.kcal != null ? `${num(o.kcal, 0)} kcal` : null,
-            o.fcMedia != null ? `FC ${num(o.fcMedia, 0)}` : null,
-            o.fcMax != null ? `max ${num(o.fcMax, 0)}` : null,
-            o.sforzo != null ? `sforzo ${num(o.sforzo, 0)}/10` : null,
-          ]
-            .filter(Boolean)
-            .join(" · ");
-          if (!testo) return null;
-          return h(
-            "div.row",
-            h("div.main", h("span.title", quale === "pesi" ? "Orologio — pesi" : "Orologio — cardio")),
-            h("span.value", testo)
-          );
-        }),
-        s.cardio?.previsto
-          ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", s.cardio.eseguito ? `${num(s.cardio.kmh)} km/h · ${s.cardio.durataMin} min` : s.cardio.saltatoMotivo ? `non eseguito — ${s.cardio.saltatoMotivo}` : "non eseguito"))
-          : null
-      )
-    )
-  );
-
-  for (const [esId, righe] of perEs) {
-    const def = store.esercizio(esId);
-    const log = logs.find((l) => l.esercizioId === esId);
-    const corpo = h("div.list");
-
-    // Anche un esercizio saltato può avere serie già registrate (interrotto a
-    // metà): nasconderle faceva sparire dallo storico lavoro davvero fatto.
-    if (log?.saltato) {
-      aggiungi(corpo, h("div.row", h("div.main",
-        h("span.title", righe.length ? `Interrotto dopo ${righe.length} ${righe.length === 1 ? "serie" : "serie"}: ${log.saltato.motivo}` : `Saltato: ${log.saltato.motivo}`),
-        log.saltato.nota ? h("span.sub", log.saltato.nota) : null)));
-    }
-    {
-      for (const r of righe) {
-        aggiungi(corpo, 
-          h(
-            "div.row",
-            h("div.main", h("span.title", `Serie ${r.numero}`), r.recuperoRealeSec != null ? h("span.sub", `recupero ${mmss(r.recuperoRealeSec)}`) : null),
-            h("span.value", `${r.carico != null ? num(r.carico) + " kg · " : ""}${r.ripFatte ?? "—"}${r.aTempo ? "s" : " rip"}`)
-          )
-        );
-      }
-      if (log && !log.saltato) {
-        aggiungi(corpo, 
-          h("div.row", h("div.main", h("span.title", "RPE ultima serie")), h("span.value", String(log.rpe ?? "—"))),
-          h("div.row", h("div.main", h("span.title", "Tecnica")), h("span.value", log.tecnica == null ? "—" : num(log.tecnica))),
-          h("div.row", h("div.main", h("span.title", "Polso destro")), h("span.value", log.dolorePolso ? `${log.dolorePolsoIntensita} · ${log.dolorePolsoQuando}` : "nessun dolore"))
-        );
-        if (log.nota) aggiungi(corpo, h("div.row", h("div.main", h("span.sub", log.nota))));
-      }
-    }
-
-    aggiungi(wrap, h("div.group", h("h2", def?.nome || esId), corpo));
-  }
-
-  if (s.notaGenerale) {
-    aggiungi(wrap, h("div.group", h("h2", "Nota generale"), h("div.list", h("div.row", h("div.main", h("span.title", s.notaGenerale))))));
-  }
-
-  aggiungi(wrap,
-    h(
-      "div.btn-wrap",
-      { style: "margin-top:26px" },
-      h(
-        "button.btn.secondary",
-        {
-          style: "color:var(--red)",
-          onclick: async () => {
-            const conferma = await chiedi({
-              titolo: "Eliminare l'allenamento?",
-              testo: `${s.tipoNome} del ${dataLunga(s.data)}. Spariscono anche serie e questionari, e le proposte vengono ricalcolate senza di esso.`,
-              opzioni: [{ etichetta: "Elimina", valore: "si", stile: "danger" }],
-            });
-            if (conferma !== "si") return;
-            await store.annullaSeduta(s.id);
-            await store.aggiornaMotore();
-            toast("Allenamento eliminato.");
-            location.hash = "#/storico";
-          },
-        },
-        "Elimina questo allenamento"
-      ),
-      h("p.footnote", { style: "margin:8px 0 0" }, "Non si recupera.")
     )
   );
 

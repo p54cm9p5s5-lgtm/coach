@@ -560,6 +560,13 @@ classificazione della giornata.
 
 ---
 
+Un allenamento passato si apre nella **stessa identica schermata** di uno appena
+chiuso: anello della completezza, punteggio scomposto voce per voce, esercizio
+per esercizio, numeri dall'orologio. Lo stesso allenamento non ha due facce
+diverse secondo da dove lo apri.
+
+---
+
 ## 13. Il calendario
 
 Lo split del brief disegna i giorni per default. Se il coach mette un evento sul
