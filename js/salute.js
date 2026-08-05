@@ -194,9 +194,17 @@ export function analizza(testo) {
     }
   }
 
-  // Le fasi diventano notti: una notte è etichettata con la sera in cui
-  // comincia, quindi tutto quello che parte prima di mezzogiorno appartiene
-  // alla notte del giorno prima.
+  // Le fasi diventano notti, e una notte porta la data del giorno in cui ci si
+  // SVEGLIA: è la convenzione che usa tutto il resto dell'app — il punteggio
+  // Salute del giorno X cerca la notte X, cioè quella cominciata la sera prima
+  // e finita quella mattina.
+  //
+  // Prima qui si faceva l'opposto (etichettare con la sera in cui la notte
+  // comincia) e le due convenzioni si davano battaglia: ogni notte finiva
+  // archiviata con un giorno di anticipo, quella dell'ultima nottata non
+  // compariva mai, e il sonno risultava semplicemente assente dal grafico.
+  // Chi va a letto dopo mezzanotte lo vedeva peggio di tutti: addormentandosi
+  // alle 3, la notte finiva sul giorno prima ancora.
   if (risultato.fasi.length) {
     const perNotte = new Map();
     for (const f of risultato.fasi) {
@@ -209,8 +217,11 @@ export function analizza(testo) {
       if (minuti < 0) minuti += 24 * 60;
       if (minuti <= 0 || minuti > 12 * 60) continue;
 
+      // Una fase che comincia di sera (dalle 12 in poi) finisce il giorno
+      // dopo: la notte è quella del risveglio. Una che comincia dopo
+      // mezzanotte finisce nello stesso giorno in cui è cominciata.
       const notte = new Date(inizio);
-      if (notte.getHours() < 12) notte.setDate(notte.getDate() - 1);
+      if (notte.getHours() >= 12) notte.setDate(notte.getDate() + 1);
       const p = (n) => String(n).padStart(2, "0");
       const chiave = `${notte.getFullYear()}-${p(notte.getMonth() + 1)}-${p(notte.getDate())}`;
 
