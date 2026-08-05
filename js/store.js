@@ -325,7 +325,6 @@ const REGOLE_BASE = {
     // dichiarati come tutti gli altri — il master brief può cambiarli.
     sonnoOraLimite: 0, // mezzanotte
     sonnoCostoOraTardi: 0.12, // quanto pesa ogni ora dopo il limite
-    sonnoPesoOrario: 0.25, // quanto vale l'orario dentro la voce Sonno
     // Quanto può valere una voce che supera il bersaglio: 1.5 = fino al 150%.
     // Superare conta, ma una giornata fuori norma non deve coprire da sola
     // tutto il resto. Metterlo a 1 riporta al comportamento di prima.

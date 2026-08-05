@@ -178,8 +178,9 @@ passi 10, minuti di esercizio 8, tempo in piedi 6. Bersagli: sonno **8 h**
 tempo in piedi **180 min**, sigarette tollerate **10 al giorno**.
 
 **Orario del sonno**: a letto entro **mezzanotte** nessuna penalità; ogni ora di
-ritardo costa il **12%**, e l'orario vale il **25%** della voce Sonno (la durata
-il restante 75%).
+ritardo costa il **12%**, e quel fattore **moltiplica** la durata invece di
+sommarsi a lei. Andare a letto tardi non è una cosa che si ripaga dormendo di
+più: sposta tutta la notte, e la penalità resta addosso a qualunque durata.
 
 **Superamento del bersaglio**: una voce che supera l'obiettivo vale fino al
 **150%** (`tettoSuperamento`), e l'eccedenza compensa le voci sotto. Lo stesso
@@ -353,10 +354,10 @@ brief cambia un obiettivo, le percentuali si riadattano da sole: con il sonno a
 **Il sonno si misura in due parti.** La durata è proporzionale — quattro ore su
 otto sono metà del sonno e valgono metà — perché la curva ripida usata in
 palestra qui non ha senso: metà allenamento non produce metà adattamento, ma
-metà notte è metà notte. All'ora in cui vai a letto va il 25% della voce: due
+metà notte è metà notte. L'ora in cui vai a letto moltiplica il risultato: due
 notti da sei ore e mezza non sono la stessa notte se una comincia alle 23 e
-l'altra alle 3 del mattino. Nel dettaglio compaiono tutte e due — «6,7h su 8h ·
-a letto 23:01».
+l'altra alle 3 del mattino — 84% contro 50%. Nel dettaglio compaiono tutte e due
+— «6,7h su 8h · a letto 23:01».
 
 Il sonno di una notte porta la data del giorno in cui ci si sveglia: comincia la
 sera prima e finisce la mattina.
