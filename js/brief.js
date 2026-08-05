@@ -5,12 +5,32 @@ export const VERSIONE_SUPPORTATA = 1;
 
 const APERTURA = /<!--\s*COACH-DATA\s+v(\d+)\s*-->/i;
 const CHIUSURA = /<!--\s*\/COACH-DATA\s*-->/i;
+// Forma di riserva, senza il commento HTML: una riga che contiene soltanto
+// «COACH-DATA v1» e più sotto una che contiene soltanto «/COACH-DATA».
+//
+// Serve perché il brief viaggia per chat, e una chat che interpreta il markdown
+// i commenti HTML NON LI MOSTRA: chi copia quello che vede si porta via un file
+// senza marcatori, e l'app rispondeva «non c'è il blocco» su un file che a
+// schermo sembrava completo. La forma col commento resta quella giusta, questa
+// è una rete.
+const APERTURA_NUDA = /^[ \t]*COACH-DATA\s+v(\d+)[ \t]*$/im;
+const CHIUSURA_NUDA = /^[ \t]*\/COACH-DATA[ \t]*$/im;
 
 export function estraiBlocco(testo) {
-  const apre = testo.match(APERTURA);
+  let apre = testo.match(APERTURA);
+  let nuda = false;
   if (!apre) {
+    apre = testo.match(APERTURA_NUDA);
+    nuda = Boolean(apre);
+  }
+  if (!apre) {
+    // Dire «manca il blocco» e basta lascia a indovinare cosa cercare. Se la
+    // scritta c'è ma in una forma diversa, quello è l'indizio che serve.
+    const traccia = /COACH-?DATA/i.test(testo);
     throw new Error(
-      "Nel file non c'è il blocco COACH-DATA. Serve la versione del master brief che lo contiene in coda."
+      traccia
+        ? "Nel file la scritta COACH-DATA c'è, ma non nella forma che apre il blocco. Serve una riga fatta esattamente così:\n\n<!-- COACH-DATA v1 -->\n\ne più sotto una che chiude:\n\n<!-- /COACH-DATA -->\n\nSe il brief è stato copiato da una chat, i commenti HTML possono essere spariti nella copia: sono invisibili a schermo. Chiedi il file .md allegato, oppure il blocco dentro un riquadro di codice."
+        : "Nel file non c'è il blocco COACH-DATA. Deve stare in coda al master brief, aperto da una riga «<!-- COACH-DATA v1 -->» e chiuso da «<!-- /COACH-DATA -->»."
     );
   }
   const versione = Number(apre[1]);
@@ -20,8 +40,12 @@ export function estraiBlocco(testo) {
     );
   }
   const dopo = testo.slice(apre.index + apre[0].length);
-  const chiude = dopo.match(CHIUSURA);
-  if (!chiude) throw new Error("Il blocco COACH-DATA è aperto ma non chiuso.");
+  const chiude = nuda ? dopo.match(CHIUSURA_NUDA) : dopo.match(CHIUSURA);
+  if (!chiude) {
+    throw new Error(
+      `Il blocco COACH-DATA è aperto ma non chiuso: manca la riga «${nuda ? "/COACH-DATA" : "<!-- /COACH-DATA -->"}» in fondo al blocco.`
+    );
+  }
 
   let corpo = dopo.slice(0, chiude.index);
   // Dentro al blocco possono esserci commenti HTML e un recinto ```json: si tolgono entrambi.
