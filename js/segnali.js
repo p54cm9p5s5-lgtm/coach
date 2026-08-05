@@ -6,7 +6,7 @@
    Regola non negoziabile (SPEC §4.6): propone, non applica mai. Ogni uscita è
    una proposta con le quattro domande già compilate, oppure un segnale. */
 
-import { carichoPiuVicino } from "./plates.js";
+import { carichoPiuVicino, manubrioPiuVicino, aPaio, conosceManubri } from "./plates.js";
 import { dataBreve, giorniTra, parseIso, isoDate, num } from "./ui.js";
 
 /**
@@ -69,15 +69,25 @@ export function datiCompleti(esp) {
 
 function incrementaCarico(carico, def, inventario) {
   if (carico == null) return null;
-  if (def?.attrezzo === "bilanciere") return carichoPiuVicino(carico, 1, inventario);
-  // Manubri e macchine: stesso passo del selettore carico in Modalità Seduta.
+  const attrezzo = (def?.attrezzo || "").toLowerCase();
+  if (attrezzo === "bilanciere") return carichoPiuVicino(carico, 1, inventario);
+  // I manubri regolabili hanno anche loro un passo minimo reale: proporre
+  // «+1 kg» dove il disco più piccolo ne aggiunge due è proporre un carico
+  // che poi non si riesce a montare.
+  if (attrezzo.includes("manubri") && conosceManubri(inventario, aPaio(def))) {
+    return manubrioPiuVicino(carico, 1, inventario, aPaio(def));
+  }
   return arrotonda(carico + 1);
 }
 
 function riduciCarico(carico, def, inventario) {
   if (carico == null) return null;
   const bersaglio = carico * 0.9; // scarico del 10%: serve a rifare il gesto, non ad allenare
-  if (def?.attrezzo === "bilanciere") return carichoPiuVicino(bersaglio, -1, inventario);
+  const attrezzo = (def?.attrezzo || "").toLowerCase();
+  if (attrezzo === "bilanciere") return carichoPiuVicino(bersaglio, -1, inventario);
+  if (attrezzo.includes("manubri") && conosceManubri(inventario, aPaio(def))) {
+    return manubrioPiuVicino(bersaglio, -1, inventario, aPaio(def));
+  }
   return Math.max(0, arrotonda(carico - Math.max(1, Math.round(carico * 0.1))));
 }
 

@@ -104,6 +104,31 @@ export function valida(dati, libreria) {
       if (!(Number(peso) > 0) || !(q >= 0)) problemi.push(`Disco non valido: ${peso} kg ×${q}.`);
       if (q % 2 !== 0) problemi.push(`Disco ${peso} kg in numero dispari (${q}): non è montabile a coppie.`);
     }
+    // I manubri sono facoltativi: se ci sono, devono avere una forma sensata,
+    // altrimenti l'app calcolerebbe carichi che non si possono montare.
+    const m = inv.manubri;
+    if (m != null) {
+      if (typeof m !== "object" || Array.isArray(m)) {
+        problemi.push("«inventario.manubri» deve essere un oggetto con «regolabili» e/o «fissi».");
+      } else {
+        const reg = m.regolabili;
+        if (reg != null) {
+          if (!(reg.scaricoKg >= 0)) problemi.push("Peso a vuoto dei manubri regolabili non valido.");
+          if (!Number.isInteger(reg.quantita) || reg.quantita < 0) {
+            problemi.push("Quantità dei manubri regolabili non valida: serve un numero intero.");
+          }
+        }
+        if (m.fissi != null) {
+          if (!Array.isArray(m.fissi)) {
+            problemi.push("«inventario.manubri.fissi» deve essere un elenco di pesi, uno per manubrio.");
+          } else {
+            for (const f of m.fissi) {
+              if (!(Number(f) > 0)) problemi.push(`Manubrio fisso non valido: ${f}.`);
+            }
+          }
+        }
+      }
+    }
   }
 
   return problemi;

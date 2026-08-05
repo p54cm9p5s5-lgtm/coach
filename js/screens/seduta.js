@@ -4,7 +4,7 @@ import {
   tieniSchermoAcceso, rilasciaSchermo, durataUmana, isoDate, dataLunga, dataBreve, aggiungi } from "../ui.js";
 import { intestazione, ridisegna } from "../app.js";
 import * as store from "../store.js";
-import { descriviDischi, carichoPiuVicino } from "../plates.js";
+import { descriviDischi, carichoPiuVicino, descriviManubri, manubrioPiuVicino, aPaio, conosceManubri } from "../plates.js";
 import { punteggioEsercizio, anello, scomposizione, legenda as legendaPunteggio, commento, giudizio } from "../punteggio.js";
 
 export let nascondiTabBar = true;
@@ -957,6 +957,27 @@ async function vistaEsercizio(corpo, piede) {
     );
   }
 
+  // Anche i manubri regolabili si montano: dire quali dischi mettere vale per
+  // loro esattamente come per il bilanciere. Prima l'app lo diceva solo per il
+  // bilanciere e sui manubri lasciava fare il conto a mente.
+  if (S.caricoCorrente != null && (def?.attrezzo || "").includes("manubri") && conosceManubri(inv, aPaio(def))) {
+    const d = descriviManubri(S.caricoCorrente, inv, aPaio(def));
+    aggiungi(corpo,
+      h(
+        "div.plates",
+        h("span.etichetta", "Da montare"),
+        d
+          ? h("b", d)
+          : h(
+              "span",
+              `${num(S.caricoCorrente)} kg per manubrio non si compone con quello che hai: i più vicini sono ` +
+                `${num(manubrioPiuVicino(S.caricoCorrente, -1, inv, aPaio(def)))} e ` +
+                `${num(manubrioPiuVicino(S.caricoCorrente, 1, inv, aPaio(def)))} kg`
+            )
+      )
+    );
+  }
+
   if (S.caricoCorrente != null && def?.attrezzo === "bilanciere") {
     const d = descriviDischi(S.caricoCorrente, inv);
     aggiungi(corpo, 
@@ -1332,6 +1353,21 @@ async function impostaCarico(carico) {
   await salvaProgresso({ caricoCorrente: carico });
 }
 
+/**
+ * Il passo del selettore del carico, secondo l'attrezzo: il bilanciere e i
+ * manubri regolabili si muovono sui pesi davvero montabili, tutto il resto di
+ * un chilo alla volta. Serviva in tre punti diversi e in due erano rimasti
+ * passi da un chilo anche sul bilanciere.
+ */
+function passoCarico(carico, verso, def, inv) {
+  const attrezzo = (def?.attrezzo || "").toLowerCase();
+  if (attrezzo === "bilanciere") return carichoPiuVicino(carico, verso, inv);
+  if (attrezzo.includes("manubri") && conosceManubri(inv, aPaio(def))) {
+    return manubrioPiuVicino(carico, verso, inv, aPaio(def));
+  }
+  return verso > 0 ? carico + 1 : Math.max(0, carico - 1);
+}
+
 async function completaSerie(v, def, numero, secondiTenuti = null) {
   // Il bersaglio è il fondo del range, non il tetto: «8-10» chiede 8, e chi ne
   // fa 8 ha fatto il suo lavoro. Prima veniva registrato 10 — cioè il massimo,
@@ -1596,9 +1632,9 @@ async function vistaRecupero(corpo, piede) {
               h("label", "Carico usato"),
               h(
                 "div.stepper",
-                h("button", { "aria-label": "carico più basso", onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, -1, inv) : Math.max(0, carico - 1); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "−"),
+                h("button", { "aria-label": "carico più basso", onclick: async () => { carico = passoCarico(carico, -1, def, inv); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "−"),
                 valCar,
-                h("button", { "aria-label": "carico più alto", onclick: async () => { carico = bilanciere ? carichoPiuVicino(carico, 1, inv) : carico + 1; valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "+")
+                h("button", { "aria-label": "carico più alto", onclick: async () => { carico = passoCarico(carico, 1, def, inv); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "+")
               )
             )
           : null
@@ -1925,7 +1961,7 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false) {
                   h("button", {
                     "aria-label": "carico più basso",
                     onclick: async () => {
-                      carico = bilanciereQui ? carichoPiuVicino(carico, -1, invQui) : Math.max(0, carico - 1);
+                      carico = passoCarico(carico, -1, def, invQui);
                       valCar.textContent = `${num(carico)} kg`;
                       await salvaUltima({ carico });
                     },
@@ -1934,7 +1970,7 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false) {
                   h("button", {
                     "aria-label": "carico più alto",
                     onclick: async () => {
-                      carico = bilanciereQui ? carichoPiuVicino(carico, 1, invQui) : carico + 1;
+                      carico = passoCarico(carico, 1, def, invQui);
                       valCar.textContent = `${num(carico)} kg`;
                       await salvaUltima({ carico });
                     },
