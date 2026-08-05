@@ -226,9 +226,13 @@ export function analizza(testo) {
       const chiave = `${notte.getFullYear()}-${p(notte.getMonth() + 1)}-${p(notte.getDate())}`;
 
       if (!perNotte.has(chiave)) {
-        perNotte.set(chiave, { data: chiave, presente: true, durataMin: 0, profondoMin: 0, remMin: 0, vegliaMin: 0, risvegli: 0 });
+        perNotte.set(chiave, { data: chiave, presente: true, durataMin: 0, profondoMin: 0, remMin: 0, vegliaMin: 0, risvegli: 0, inizio: null });
       }
       const n = perNotte.get(chiave);
+      // L'ora in cui la notte comincia: non è un dettaglio di contorno, entra
+      // nel punteggio. Si tiene la fase più antica della notte, non la prima
+      // che capita nel pacchetto, che non è detto sia in ordine.
+      if (!n.inizio || f.inizio < n.inizio) n.inizio = f.inizio;
       const nome = f.fase.toLowerCase();
       if (/awake|sveglio|veglia/.test(nome)) {
         n.vegliaMin += minuti;

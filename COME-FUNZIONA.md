@@ -103,6 +103,10 @@ passi 10, minuti di esercizio 8, tempo in piedi 6. Bersagli: sonno **8 h**
 (minimo **6 h**), movimento **1000 kcal**, passi **10.000**, esercizio **60 min**,
 tempo in piedi **180 min**, sigarette tollerate **10 al giorno**.
 
+**Orario del sonno**: a letto entro **mezzanotte** nessuna penalità; ogni ora di
+ritardo costa il **12%**, e l'orario vale il **25%** della voce Sonno (la durata
+il restante 75%).
+
 **Cadenze**: misure il **giovedì**; foto il **mercoledì**, **ogni 2 settimane**.
 
 ---
@@ -207,7 +211,7 @@ Sette voci, nessuna capace di decidere da sola:
 
 | Voce | Peso | Bersaglio |
 |---|---|---|
-| Sonno | 22 | 8 h |
+| Sonno | 22 | 8 h, **più l'ora in cui vai a letto** |
 | Allenamento | 22 | completezza della seduta chiusa |
 | Fumo | 20 | 0 sigarette = pieno, 10 = zero |
 | Movimento | 12 | 1000 kcal attive |
@@ -220,6 +224,14 @@ max 60; **10 sigarette esatte → max 70; oltre 10 → max 50**.
 
 Un **giorno di riposo non è un vuoto da punire**: la voce allenamento resta
 fuori dal conto, non vale zero.
+
+**Il sonno si misura in due parti.** La durata è proporzionale — quattro ore su
+otto sono metà del sonno e valgono metà — perché la curva ripida usata in
+palestra qui non ha senso: metà allenamento non produce metà adattamento, ma
+metà notte è metà notte. All'ora in cui vai a letto va il 25% della voce: due
+notti da sei ore e mezza non sono la stessa notte se una comincia alle 23 e
+l'altra alle 3 del mattino. Nel dettaglio compaiono tutte e due — «6,7h su 8h ·
+a letto 23:01».
 
 Il sonno di una notte porta la data del giorno in cui ci si sveglia: comincia la
 sera prima e finisce la mattina.

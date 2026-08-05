@@ -313,6 +313,12 @@ const REGOLE_BASE = {
     },
     sonnoOreBersaglio: 8,
     sonnoOreMinime: 6,
+    // L'ora in cui vai a letto conta quanto la durata, e da sola: a letto entro
+    // mezzanotte non c'è penalità, dopo ogni ora di ritardo costa. Sono numeri
+    // dichiarati come tutti gli altri — il master brief può cambiarli.
+    sonnoOraLimite: 0, // mezzanotte
+    sonnoCostoOraTardi: 0.12, // quanto pesa ogni ora dopo il limite
+    sonnoPesoOrario: 0.25, // quanto vale l'orario dentro la voce Sonno
     // Bersagli del punteggio Salute, decisi da te. Non sono gli obiettivi
     // dell'orologio: quello del movimento sull'anello resta quello che hai
     // impostato in Salute (serve al coach per leggere le percentuali vere),
