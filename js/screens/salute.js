@@ -210,6 +210,29 @@ export async function render({ ridisegna }) {
       ? Math.round(validi.reduce((a, b) => a + b, 0) / validi.length)
       : null;
 
+    // Una riga per TIPO di allenamento, non per singola seduta. L'elenco delle
+    // sedute diceva soprattutto quante ne hai fatte; la media per tipo dice
+    // un'altra cosa, che è quella che serve qui: quale giorno dello split
+    // regge e quale no. Le sedute una per una restano nello Storico.
+    //
+    // Il raggruppamento è per `tipoId`, non per nome: rinominare un giorno nel
+    // brief non deve spezzare in due lo stesso allenamento. Il nome mostrato è
+    // il più recente, così si legge come lo chiami adesso.
+    const gruppi = new Map();
+    for (const v of voci) {
+      if (v.totale == null) continue;
+      const chiave = v.sed.tipoId || v.sed.tipoNome;
+      if (!gruppi.has(chiave)) gruppi.set(chiave, { nome: v.sed.tipoNome, totali: [] });
+      gruppi.get(chiave).totali.push(v.totale);
+    }
+    const perTipo = [...gruppi.values()]
+      .map((g) => ({
+        nome: g.nome,
+        quanti: g.totali.length,
+        media: Math.round(g.totali.reduce((a, b) => a + b, 0) / g.totali.length),
+      }))
+      .sort((a, b) => a.media - b.media);
+
     // Stessa scala di colori del punteggio Salute: lime acceso da 95 in su,
     // rosso acceso da 20 in giù, e in mezzo il passaggio graduale.
     const pillola = (n) => {
@@ -247,20 +270,22 @@ export async function render({ ridisegna }) {
           h(
             "div.list",
             { style: "margin-top:16px;background:none" },
-            ...voci.slice(0, 8).map((v) =>
+            ...perTipo.map((t) =>
               h(
-                "a.row",
-                { href: `#/seduta?riepilogo=${v.sed.id}` },
-                h("div.main", h("span.title", v.sed.tipoNome), h("span.sub", dataLunga(v.sed.data))),
-                v.totale != null ? pillola(v.totale) : h("span.value", "—"),
-                h("span.chevron", "›")
+                "div.row",
+                h(
+                  "div.main",
+                  h("span.title", t.nome),
+                  h("span.sub", `media di ${t.quanti} ${t.quanti === 1 ? "allenamento" : "allenamenti"}`)
+                ),
+                pillola(t.media)
               )
             )
           )
         ),
         h(
           "p.footnote",
-          "Quanto ogni allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching. Tocca un allenamento per aprirne il risultato."
+          "Quanto ogni tipo di allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching. Ogni riga è la media delle sedute di quel tipo nel periodo scelto — il singolo allenamento si apre dallo Storico."
         )
       )
     );
