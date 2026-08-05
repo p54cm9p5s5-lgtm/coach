@@ -36,6 +36,13 @@ export async function init() {
   await caricaRiscaldamento();
   PROGRAMMA = (await db.get("programma", "corrente")) || null;
   await caricaAgenda();
+  // Gli abbinamenti fra eventi del calendario e giorni dello split si rifanno a
+  // ogni avvio. Costa un giro sulla lista già in memoria e scrive solo se
+  // qualcosa cambia davvero, ma vale l'unico caso che conta: quando l'app
+  // impara a riconoscere un titolo che prima le sfuggiva, il calendario si
+  // sistema da sé alla riapertura, senza che tu debba sapere di dover
+  // rileggere il calendario per correggere un difetto che non era tuo.
+  if (PROGRAMMA) await riabbinaAgenda();
   return { libreria: LIBRERIA, programma: PROGRAMMA };
 }
 
@@ -1803,18 +1810,64 @@ const chiaveTitolo = (s) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "");
 
+// Parole che non identificano un allenamento: se restassero dentro, «Gambe e
+// core» non riconoscerebbe più un evento intitolato «Gambe/Core».
+const PAROLE_VUOTE = new Set([
+  "e", "ed", "il", "lo", "la", "i", "gli", "le", "di", "del", "della", "dei",
+  "con", "a", "al", "coach", "allenamento", "workout", "palestra", "gym", "giorno",
+]);
+
+/** Le parole che contano di un titolo, senza accenti, punteggiatura e riempitivi. */
+const paroleDi = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter((p) => p && !PAROLE_VUOTE.has(p));
+
 /**
  * Trova il giorno dello split che corrisponde al titolo di un evento.
- * Il confronto è per contenimento nei due sensi: «Coach — Petto/Tricipiti» e
- * «Petto e tricipiti» trovano entrambi il giorno «Petto/Tricipiti».
+ *
+ * Il confronto è per PAROLE, non per contenimento della stringa intera. Il
+ * motivo è concreto: il brief ha rinominato «Gambe/Core» in «Gambe e core», e
+ * gli eventi sul calendario portano ancora il nome vecchio. Confrontando le
+ * stringhe appiccicate — «gambecore» contro «gambeecore» — non combaciavano più
+ * per via di una «e», e mezzo calendario risultava «non è un allenamento del
+ * programma». Per parole invece [gambe, core] sta dentro [gambe, core] e il
+ * giorno si riconosce, comunque lo si scriva.
+ *
+ * Basta che TUTTE le parole del nome (o dell'id) del giorno siano nel titolo:
+ * parole in più nell'evento non danno fastidio, così «Coach — Gambe/Core (ore
+ * 18)» funziona. Vince il giorno che ne azzecca di più.
  */
 export function abbinaAlloSplit(titolo) {
   const t = chiaveTitolo(titolo);
   if (!t) return null;
+  const parole = new Set(paroleDi(titolo));
+
   // Prima si cerca l'allenamento, poi il riposo: un evento come «Gambe/Core,
   // poi riposo attivo» nomina un allenamento e vale come allenamento. Prima
   // bastava la parola «riposo» in qualunque punto per cancellarlo.
   let migliore = null;
+  let quantePiu = 0;
+  if (parole.size) {
+    for (const g of giorniSplit()) {
+      for (const insieme of [paroleDi(g.nome), paroleDi(g.id)]) {
+        if (!insieme.length) continue;
+        if (!insieme.every((p) => parole.has(p))) continue;
+        if (insieme.length > quantePiu) {
+          quantePiu = insieme.length;
+          migliore = g;
+        }
+      }
+    }
+  }
+  if (migliore) return migliore.id;
+
+  // Rete di sicurezza: il vecchio confronto per contenimento, per i titoli che
+  // funzionavano prima e che le parole non prendono (abbreviazioni attaccate,
+  // «FullBody» scritto tutto unito).
   for (const g of giorniSplit()) {
     const k = chiaveTitolo(g.nome);
     if (!k) continue;
