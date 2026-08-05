@@ -23,7 +23,9 @@ export async function render({ vaiA, ridisegna }) {
   const p = parametri();
   if (p.riepilogo) {
     nascondiTabBar = false;
-    return vistaRisultato(p.riepilogo, vaiA);
+    // `da` dice da dove si è arrivati, così il tasto per tornare indietro
+    // riporta dove ci si aspetta invece che sempre al programma di oggi.
+    return vistaRisultato(p.riepilogo, vaiA, p.da || null);
   }
 
   const sed = await store.sedutaInCorso();
@@ -255,10 +257,17 @@ async function vistaProgramma(vaiA, ridisegna) {
 
 // ---------- risultato dell'allenamento appena chiuso ----------
 
-async function vistaRisultato(id, vaiA) {
+async function vistaRisultato(id, vaiA, da = null) {
   const wrap = h("div.screen");
   const sed = await store.seduta(id);
-  aggiungi(wrap, intestazione("Risultato", { etichetta: "Programma", onclick: () => vaiAlProgramma() }));
+  const daStorico = da === "storico";
+  aggiungi(wrap, 
+    intestazione("Risultato", 
+      daStorico
+        ? { etichetta: "Indietro", onclick: () => (location.hash = "#/storico") }
+        : { etichetta: "Programma", onclick: () => vaiAlProgramma() }
+    )
+  );
 
   if (!sed) {
     aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
@@ -550,7 +559,9 @@ async function vistaRisultato(id, vaiA) {
       "div.btn-wrap",
       h("button.btn", { onclick: () => vaiA("export") }, "Claude"),
       h("div", { style: "height:8px" }),
-      h("button.btn.secondary", { onclick: () => vaiAlProgramma() }, "Programma del giorno"),
+      daStorico
+        ? h("button.btn.secondary", { onclick: () => (location.hash = "#/storico") }, "Torna allo storico")
+        : h("button.btn.secondary", { onclick: () => vaiAlProgramma() }, "Programma del giorno"),
       h("div", { style: "height:8px" }),
       h("button.btn.secondary", { onclick: () => (location.hash = "#/oggi") }, "Torna alla Home")
     ),
