@@ -102,8 +102,18 @@ Questi sono i valori attualmente in vigore.
 condizioni; RPE ≤ **7** per salire; tecnica ≥ **8** per salire; tecnica ≤ **5**
 fa scattare la riduzione; una proposta rifiutata torna dopo **4 esposizioni**.
 
-**Finestre dati**: **3 settimane**, almeno **5 giorni** a settimana, scostamento
-significativo oltre il **20%**.
+**Finestre dati**: **3 settimane**, almeno **5 giorni** a settimana.
+
+**Soglia di scostamento** (movimento e sonno, identica per tutti e due): il
+segnale scatta solo se lo scostamento supera il **20%** rispetto alla baseline
+delle **prime 3 settimane** ed è **sostenuto per 2 settimane consecutive nello
+stesso verso**. Servono almeno 5 settimane con dati sufficienti (3 di baseline +
+2 recenti), e ogni settimana conta solo se ha almeno 5 giorni registrati.
+
+Un giorno anomalo non produce nessun segnale, e nemmeno una settimana isolata
+fuori soglia: l'eccezione è pensata per un trend lungo, non per reagire a un
+trekking imprevisto. È una regola che l'app applica dal principio, non
+un'aggiunta.
 
 **Punteggio Salute** — pesi: sonno 22, allenamento 22, fumo 20, movimento 12,
 passi 10, minuti di esercizio 8, tempo in piedi 6. Bersagli: sonno **8 h**
@@ -306,7 +316,8 @@ una dimenticanza.
 
 Osservazioni che non sono proposte. Attualmente l'app sa riconoscere: cardio
 fuori protocollo, inversione dell'intensità, pattern di dolore al polso,
-finestra dati completa, scostamento sul movimento, scostamento sul sonno,
+finestra dati completa, scostamento sul movimento e sul sonno (solo se
+**sostenuto per due settimane consecutive**, §4),
 taratura dell'RPE (RPE dichiarato basso ma serie chiuse sotto il range), buchi
 nei dati, tecnica sotto soglia, lavoro sotto il range, esercizio saltato più
 volte, tetto del tempo raggiunto, tetto del range raggiunto.
