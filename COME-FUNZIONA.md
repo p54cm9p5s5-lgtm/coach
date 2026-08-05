@@ -127,14 +127,23 @@ schermata di recupero si correggono ripetizioni e carico davvero fatti,
 precompilati con l'obiettivo. Il carico si muove **a passi di dischi montabili
 davvero** e non supera l'inventario.
 
-Dopo l'**ultima** serie c'è comunque il recupero — e durante quel recupero
-compare **il prossimo esercizio** (nome, obiettivo, carico, video), per
-prepararsi.
+**Esercizi a tempo** (plank e simili): non si «completa» una serie, la si
+tiene. «Avvia» fa partire un **cronometro alla rovescia** dal previsto; se
+arrivi in fondo suona e la serie vale quello che chiedeva il programma, se molli
+prima **«Fine» registra i secondi davvero tenuti** — 38 su 45 restano 38, non
+vengono arrotondati al previsto. Il cronometro sta su un istante salvato, quindi
+bloccare lo schermo o riaprire l'app non falsa il conto.
 
-**3. Valutazione dell'esercizio.** Due domande obbligatorie: **quanto è stata
-dura** (RPE 1-10, con la zona prevista evidenziata) e **com'è andata la tecnica**
-(1-10). Più il **dolore al polso** (sì/no; se sì: quando e quanto). Nota
-facoltativa. Finché manca una risposta l'app scrive quale.
+**3. Valutazione dell'esercizio, dentro il recupero.** Dopo l'ultima serie il
+recupero contiene, in quest'ordine: la correzione della serie appena chiusa, **le
+domande sull'esercizio**, il punteggio, e infine **il prossimo esercizio** (nome,
+obiettivo, carico, video) per prepararsi. Le domande stanno prima perché si
+rispondono adesso, il prossimo esercizio serve quando ti alzi.
+
+Due domande obbligatorie: **quanto è stata dura** (RPE 1-10, con la zona prevista
+evidenziata) e **com'è andata la tecnica** (1-10). Più il **dolore al polso**
+(sì/no; se sì: quando e quanto). Nota facoltativa. Finché manca una risposta
+l'app scrive quale, e «Avanti» resta spento.
 
 **4. Cardio**, se previsto: si può eseguire o dichiarare non eseguito, **con
 motivo obbligatorio**.
