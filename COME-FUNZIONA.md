@@ -109,6 +109,41 @@ aggiunto alla libreria, altrimenti il brief viene **rifiutato in blocco** e non
 viene applicato niente — non «tutto tranne quella riga». Se serve un esercizio
 che non c'è, va chiesto prima di mandare il brief.
 
+### Se l'attrezzatura cambia
+
+L'inventario non è un dato decorativo: da lì l'app calcola i dischi da montare a
+ogni serie, i passi del selettore del carico e gli incrementi che propone. Un
+inventario sbagliato produce istruzioni di montaggio sbagliate, in silenzio.
+
+**Cose che si aggiornano cambiando un numero nel blocco:**
+
+| Cosa compri | Cosa cambia nel blocco |
+|---|---|
+| Altri dischi di un peso già posseduto | la quantità in `dischi` — deve restare **pari** |
+| Dischi di un peso nuovo | una chiave in più in `dischi`, per esempio `"15": 2` |
+| Un bilanciere diverso | `barra` |
+| Un altro manubrio regolabile | `manubri.regolabili.quantita` |
+| Un manubrio fisso | un elemento in più in `manubri.fissi` — **un peso per ogni manubrio**: due da 12 kg si scrivono `[12, 12]`, non `[12]` |
+
+Le quantità dei dischi sono sempre **il totale posseduto**, non quelli per lato.
+Devono essere pari perché un disco solo non si monta: va su tutti e due i lati.
+I manubri regolabili attingono agli stessi dischi del bilanciere, quindi i
+dischi non vanno mai dichiarati due volte.
+
+**Cose che richiedono lavoro sull'app, non solo una riga nel brief:**
+
+- **Un attrezzo di tipo nuovo** — kettlebell, elastici, una macchina, una sbarra
+  per trazioni. L'inventario oggi modella bilanciere, dischi e manubri: per il
+  resto non c'è un posto, e non ci sono conti di montaggio da fare. Un esercizio
+  con attrezzatura del genere funziona lo stesso — carico scritto in chiaro,
+  selettore a passi di un chilo — ma **senza istruzioni di montaggio**. Se
+  servono anche quelle, va chiesto prima: è una modifica all'app.
+- **Un esercizio nuovo**, con qualunque attrezzo. Va aggiunto alla libreria con
+  la sua guida completa e il video, altrimenti il brief viene respinto in blocco.
+
+In tutti e due i casi la regola è la stessa: **chiedere prima di mandare il
+brief**, non dopo che è stato rifiutato.
+
 ---
 
 ## 4. Le regole e le soglie
