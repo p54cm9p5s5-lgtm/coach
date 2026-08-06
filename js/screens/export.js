@@ -64,6 +64,7 @@ export async function render({ vaiA }) {
       if (mia !== ultimaRichiesta) return;
       inCorso = false;
       testoCorrente = "";
+      aggiornaTasti();
       anteprima.textContent =
         `Il pacchetto non si è composto: ${e.message}\n\n` +
         "Togli una delle sezioni qui sopra per capire quale dà problemi, " +
@@ -74,6 +75,17 @@ export async function render({ vaiA }) {
     testoCorrente = testo;
     inCorso = false;
     anteprima.textContent = testoCorrente || "Non hai selezionato niente.";
+    aggiornaTasti();
+  };
+
+  // I due tasti di invio si spengono quando non c'è niente da mandare: prima
+  // restavano accesi con l'anteprima che diceva «non hai selezionato niente», e
+  // un tasto acceso che poi non fa niente è peggio di un tasto spento.
+  const tastiInvio = [];
+  const registra = (b) => { tastiInvio.push(b); return b; };
+  const aggiornaTasti = () => {
+    const pronto = Boolean(testoCorrente) && !inCorso;
+    for (const b of tastiInvio) b.disabled = !pronto;
   };
 
   const lista = h("div.list");
@@ -94,9 +106,10 @@ export async function render({ vaiA }) {
     h("div.group", h("h2", "Anteprima"), contenitoreAnteprima),
     h(
       "div.btn-wrap",
-      h(
+      registra(h(
         "button.btn",
         {
+          disabled: true,
           onclick: async () => {
             if (inCorso) return toast("Aspetta un istante: sto ricomponendo il pacchetto.");
             if (!testoCorrente) return toast("Non c'è niente da copiare.");
@@ -114,11 +127,12 @@ export async function render({ vaiA }) {
           },
         },
         "Copia il pacchetto"
-      ),
+      )),
       h("div", { style: "height:8px" }),
-      h(
+      registra(h(
         "button.btn.secondary",
         {
+          disabled: true,
           onclick: () => {
             if (inCorso) return toast("Aspetta un istante: sto ricomponendo il pacchetto.");
             if (!testoCorrente) return toast("Non c'è niente da salvare.");
@@ -134,7 +148,7 @@ export async function render({ vaiA }) {
           },
         },
         "Salva come file"
-      )
+      ))
     ),
     h(
       "p.footnote",

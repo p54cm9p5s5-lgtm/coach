@@ -606,27 +606,6 @@ async function eliminaAllenamento(sed) {
   else location.hash = "#/seduta";
 }
 
-function bloccoStretchingPer(tipoId) {
-  const prot = store.riscaldamento(tipoId);
-  const voci = prot?.stretchingFinale || [];
-  if (!voci.length) return null;
-  return h(
-    "div.group",
-    h("h2", "Stretching di fine allenamento"),
-    h(
-      "div.guida",
-      { style: "margin:0" },
-      ...voci.map((s, i) =>
-        h(
-          "div.passo",
-          h("div.n", String(i + 1)),
-          h("div.testo", h("span.nome", s.nome), h("span.dose", s.dose), h("span.come", s.come))
-        )
-      )
-    )
-  );
-}
-
 // ---------- utilità di stato ----------
 
 async function salvaProgresso(patch) {
@@ -1152,9 +1131,13 @@ function quadranteCronometro(v, n) {
 function tempoDaDose(dose) {
   if (!dose) return null;
   const t = String(dose).toLowerCase();
-  const sec = t.match(/(\d+)\s*(?:s|sec|secondi)\b/);
-  const min = t.match(/(\d+)\s*(?:min|minuti)\b/);
-  const durata = sec ? Number(sec[1]) : min ? Number(min[1]) * 60 : null;
+  // Il numero può avere la virgola («1,5 min»): leggerne solo la parte intera
+  // faceva diventare novanta secondi cinque minuti. E «minuto» al singolare va
+  // riconosciuto come «min», altrimenti quella dose resta senza cronometro.
+  const numero = (x) => Number(String(x).replace(",", "."));
+  const sec = t.match(/(\d+(?:[.,]\d+)?)\s*(?:secondi|secondo|sec|s)\b/);
+  const min = t.match(/(\d+(?:[.,]\d+)?)\s*(?:minuti|minuto|min|m)\b/);
+  const durata = sec ? Math.round(numero(sec[1])) : min ? Math.round(numero(min[1]) * 60) : null;
   if (!durata || durata <= 0) return null;
   const giriMatch = t.match(/(\d+)\s*[×x]\s*\d/);
   const serie = giriMatch ? Number(giriMatch[1]) : 1;
@@ -1909,12 +1892,17 @@ async function vistaRecupero(corpo, piede) {
   // adesso. Prima le domande arrivavano in una schermata a parte, dopo il
   // recupero: un passaggio in più e il tempo del riposo buttato.
   let quiz = null;
+  // Dichiarato prima del questionario: la sua richiamata deve poterlo spegnere
+  // e accendere, e viene chiamata già durante la costruzione.
+  let pulsante = null;
   if (ultimaSerie) {
-    quiz = await vistaQuestionario(corpo, piede, true);
+    quiz = await vistaQuestionario(corpo, piede, true, (pronto) => {
+      if (pulsante) pulsante.disabled = !pronto;
+    });
     aggiungi(corpo, await bloccoProssimo(inv));
   }
 
-  const pulsante = h(
+  pulsante = h(
     "button.btn",
     ultimaSerie
       ? { disabled: true, onclick: azione(async () => { fermaTimer(); await quiz.conferma(); }) }
@@ -2039,7 +2027,7 @@ async function chiudiRecupero() {
 
 // ---------- questionario ----------
 
-async function vistaQuestionario(corpo, piede, dentroRecupero = false) {
+async function vistaQuestionario(corpo, piede, dentroRecupero = false, avvisa = null) {
   const v = vocePrevista();
   const def = store.esercizio(v.esercizioId);
   // Servono alla correzione dell'ultima serie: i passi del carico devono
@@ -2089,6 +2077,12 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false) {
       if (!stato.intensita) manca.push("quanto faceva male");
     }
     avanti.disabled = manca.length > 0;
+    // Chi ospita il questionario (il recupero) deve poter accendere il suo
+    // tasto NELLO STESSO ISTANTE in cui rispondi. Prima se ne accorgeva solo
+    // al battito del cronometro: un quarto di secondo di solito, ma con lo
+    // schermo appena riacceso anche molto di più, e nel frattempo il tasto
+    // sembrava morto.
+    avvisa?.(!avanti.disabled);
     mancano.textContent = manca.length
       ? `Manca ancora: ${manca.join(", ")}.`
       : "";
@@ -2711,36 +2705,6 @@ async function vistaStretching(corpo, piede) {
       await disegna();
     },
   });
-}
-
-// ---------- stretching di fine seduta ----------
-
-function bloccoStretching() {
-  const prot = store.riscaldamento(S.sed.tipoId);
-  const voci = prot?.stretchingFinale || [];
-  if (!voci.length) return null;
-
-  return h(
-    "div.group",
-    h("h2", "Stretching di fine allenamento"),
-    h(
-      "div.guida",
-      { style: "margin:0" },
-      ...voci.map((s, i) =>
-        h(
-          "div.passo",
-          h("div.n", String(i + 1)),
-          h(
-            "div.testo",
-            h("span.nome", s.nome),
-            h("span.dose", s.dose),
-            h("span.come", s.come)
-          )
-        )
-      )
-    ),
-    h("p.footnote", "Adesso ha senso: a muscolo caldo e a lavoro finito, senza togliere forza all'allenamento.")
-  );
 }
 
 /**
