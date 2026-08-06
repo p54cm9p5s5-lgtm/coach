@@ -193,8 +193,20 @@ a **−50%** (`fumoQuotaMinima`). Tutte le altre voci si fermano al 100%.
 
 L'app guida la seduta passo per passo. L'ordine è fisso:
 
-**1. Riscaldamento** — due passaggi, circa 10 minuti, con o senza tapis roulant.
-Include la serie di avvicinamento sul primo esercizio (non viene registrata).
+**1. Riscaldamento** — circa 10 minuti, con o senza tapis roulant. **Un
+passaggio per volta, non la lista intera**: l'app mostra solo quello che devi
+fare adesso (nome, dose, come si fa), dice qual è il prossimo e in testa scrive
+a che punto sei — «Riscaldamento 3 di 7». Include la serie di avvicinamento sul
+primo esercizio (non viene registrata).
+
+Dove la dose è **a secondi**, il passaggio ha un **cronometro vero** invece di
+un numero da leggere: «5 min» di camminata, «3 × 15 s per lato» di apertura del
+petto. L'app riconosce la dose com'è scritta nel protocollo e conta le tenute
+una per una — con «3 × 15 s per lato» sono sei tenute, e a schermo c'è scritto
+«giro 2 di 3 · altro lato» perché non si perda il conto a metà. Le dosi a
+ripetizioni (**«10 per verso»**, «15 ripetizioni») restano senza cronometro: lì
+un timer sarebbe solo rumore. Si può tornare **indietro** di una tenuta o di un
+passaggio.
 
 **2. Esercizi, uno alla volta.** Per ognuno mostra carico, obiettivo, **i dischi
 esatti da montare per lato**, il video e la guida (esecuzione, setup, errori,
@@ -234,14 +246,19 @@ l'app scrive quale, e «Avanti» resta spento.
 **4. Cardio**, se previsto: si può eseguire o dichiarare non eseguito, **con
 motivo obbligatorio**.
 
-**5. Stretching.**
+**5. Stretching** — come il riscaldamento: **un allungamento per volta**, con
+il **cronometro da 30 secondi per lato** che parte con «Avvia» e si chiude con
+«Fatto · altro lato». Chi vuole saltarlo può ancora farlo con un tocco.
 
 **6. Riepilogo e chiusura.** Qui si copiano i numeri dall'orologio (durata, kcal
 attive e totali, FC media e massima, sforzo; per il cardio anche distanza e
 ritmo). Sono facoltativi, e finiscono nel pacchetto.
 
 Si può **uscire a metà e riprendere**: serie, riscaldamento e posizione esatta
-restano al loro posto anche dopo aver chiuso l'app.
+restano al loro posto anche dopo aver chiuso l'app — compreso il passaggio del
+riscaldamento o dell'allungamento in cui eri, e il cronometro che stava
+girando, perché il tempo si misura su un istante salvato e non su un contatore
+che gira solo mentre guardi lo schermo.
 
 Un esercizio si può **saltare**, ma il motivo (tempo / dolore / attrezzo / altro)
 e una **nota scritta sono obbligatori**: «saltato» senza spiegazione, fra tre

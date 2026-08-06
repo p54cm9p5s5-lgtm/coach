@@ -736,8 +736,12 @@ function testata() {
     passo = "Cardio";
     avanzamento = 90;
   } else if (fase === "stretching") {
-    passo = "Stretching";
-    avanzamento = 96;
+    // Anche qui si va un passaggio per volta: la testata dice quale, come fa
+    // con gli esercizi.
+    const q = passiStretching().length;
+    const k = Math.min((S.sed.progresso?.strPasso ?? 0) + 1, Math.max(q, 1));
+    passo = q ? `Stretching ${k} di ${q}` : "Stretching";
+    avanzamento = q ? 96 + ((k - 1) / q) * 4 : 96;
   } else if (fase === "fine") {
     passo = "Riepilogo";
     avanzamento = 100;
@@ -745,7 +749,10 @@ function testata() {
     passo = `Esercizio ${Math.min(i + 1, n)} di ${n}`;
     avanzamento = n ? 6 + (i / n) * 88 : 6;
   } else {
-    avanzamento = 3;
+    const q = passiRiscaldamento().length;
+    const k = Math.min((S.sed.progresso?.riscPasso ?? 0) + 1, Math.max(q, 1));
+    passo = q ? `Riscaldamento ${k} di ${q}` : "Riscaldamento";
+    avanzamento = q ? ((k - 1) / q) * 6 : 3;
   }
 
   return h(
@@ -805,98 +812,100 @@ async function menuSeduta() {
 
 // ---------- riscaldamento ----------
 
-async function vistaRiscaldamento(corpo, piede) {
+/**
+ * I passaggi del riscaldamento, in ordine: camminata, mobilità, serie di
+ * avvicinamento. Sta fuori dalla vista perché anche la testata deve sapere
+ * quanti sono per scrivere «3 di 7».
+ */
+function passiRiscaldamento() {
   const conTapis = S.sed.riscaldamento?.modalita !== "senzaTapis";
   const prot = store.riscaldamento(S.sed.tipoId);
   const camminata = conTapis ? prot?.cardio?.conTapis : prot?.cardio?.senzaTapis;
-
-  const passo = (n, nome, dose, come) =>
-    h(
-      "div.passo",
-      h("div.n", String(n)),
-      h(
-        "div.testo",
-        h("span.nome", nome),
-        dose ? h("span.dose", dose) : null,
-        come ? h("span.come", come) : null
-      )
-    );
-
   const passi = [];
-  let n = 1;
-  if (camminata) passi.push(passo(n++, camminata.titolo, "5 min", camminata.dettaglio));
-  for (const m of prot?.mobilita || []) passi.push(passo(n++, m.nome, m.dose, m.come));
+  if (camminata) passi.push({ nome: camminata.titolo, dose: "5 min", come: camminata.dettaglio });
+  for (const m of prot?.mobilita || []) passi.push({ nome: m.nome, dose: m.dose, come: m.come });
   if (prot?.serieDiAvvicinamento) {
-    passi.push(passo(n++, prot.serieDiAvvicinamento.titolo, "1 serie", prot.serieDiAvvicinamento.dettaglio));
+    passi.push({
+      nome: prot.serieDiAvvicinamento.titolo,
+      dose: "1 serie",
+      come: prot.serieDiAvvicinamento.dettaglio,
+    });
   }
+  return passi;
+}
 
-  aggiungi(corpo, 
-    h(
-      "div.hero",
-      h("p.kicker", "Prima di iniziare"),
-      h("h2", "Riscaldamento"),
-      h("p.target", `${S.sed.tipoNome} · ${passi.length} passaggi, circa 10 minuti`)
-    ),
-    h(
-      "div.segmented",
-      h(
-        "button",
-        {
-          "aria-pressed": conTapis,
-          onclick: async () => {
-            S.sed = await store.aggiornaSeduta(S.sed.id, {
-              riscaldamento: { ...S.sed.riscaldamento, modalita: "tapis" },
-            });
-            await disegna();
-          },
-        },
-        "Con tapis"
-      ),
-      h(
-        "button",
-        {
-          "aria-pressed": !conTapis,
-          onclick: async () => {
-            S.sed = await store.aggiornaSeduta(S.sed.id, {
-              riscaldamento: { ...S.sed.riscaldamento, modalita: "senzaTapis" },
-            });
-            await disegna();
-          },
-        },
-        "Senza tapis"
-      )
-    ),
-    h("div.guida", { style: "margin-top:12px" }, ...passi),
-    h(
-      "div.guida",
-      h(
-        "section",
-        h("h3", "Sul Watch"),
-        h(
-          "p",
-          "Avvia una sola sessione «Rafforzamento funzionale» che comprenda riscaldamento e pesi. Non tracciare il riscaldamento come camminata separata."
-        )
-      ),
-      prot?.nota ? h("section", h("h3", "Perché niente stretching adesso"), h("p", prot.nota)) : null
-    )
-  );
+function passiStretching() {
+  const prot = store.riscaldamento(S.sed.tipoId);
+  return (prot?.stretchingFinale || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come }));
+}
 
-  aggiungiPiede(piede, 
-    h(
-      "button.btn",
-      {
-        onclick: azione(async () => {
-          sbloccaAudio();
-          S.sed = await store.aggiornaSeduta(S.sed.id, {
-            riscaldamento: { ...S.sed.riscaldamento, fatto: true },
-          });
-          await salvaProgresso({ fase: "esercizio", indice: 0 });
-          await disegna();
-        }),
-      },
-      "Riscaldamento fatto"
-    )
-  );
+async function vistaRiscaldamento(corpo, piede) {
+  const conTapis = S.sed.riscaldamento?.modalita !== "senzaTapis";
+  const prot = store.riscaldamento(S.sed.tipoId);
+
+  await vistaGuidata(corpo, piede, {
+    chiave: "risc",
+    kicker: "Riscaldamento",
+    titolo: "Riscaldamento",
+    passi: passiRiscaldamento(),
+    etichettaFine: "Riscaldamento fatto",
+    // La scelta del tapis cambia la camminata, quindi vive sul passaggio della
+    // camminata e non sta a ingombrare gli altri sei.
+    extra: (i) =>
+      i === 0
+        ? [
+            h(
+              "div.segmented",
+              h(
+                "button",
+                {
+                  "aria-pressed": conTapis,
+                  onclick: azione(async () => {
+                    S.sed = await store.aggiornaSeduta(S.sed.id, {
+                      riscaldamento: { ...S.sed.riscaldamento, modalita: "tapis" },
+                    });
+                    await disegna();
+                  }),
+                },
+                "Con tapis"
+              ),
+              h(
+                "button",
+                {
+                  "aria-pressed": !conTapis,
+                  onclick: azione(async () => {
+                    S.sed = await store.aggiornaSeduta(S.sed.id, {
+                      riscaldamento: { ...S.sed.riscaldamento, modalita: "senzaTapis" },
+                    });
+                    await disegna();
+                  }),
+                },
+                "Senza tapis"
+              )
+            ),
+            h(
+              "div.guida",
+              h(
+                "section",
+                h("h3", "Sul Watch"),
+                h(
+                  "p",
+                  "Avvia una sola sessione «Rafforzamento funzionale» che comprenda riscaldamento e pesi. Non tracciare il riscaldamento come camminata separata."
+                )
+              ),
+              prot?.nota ? h("section", h("h3", "Perché niente stretching adesso"), h("p", prot.nota)) : null
+            ),
+          ]
+        : [],
+    onFine: async () => {
+      sbloccaAudio();
+      S.sed = await store.aggiornaSeduta(S.sed.id, {
+        riscaldamento: { ...S.sed.riscaldamento, fatto: true },
+      });
+      await salvaProgresso({ fase: "esercizio", indice: 0 });
+      await disegna();
+    },
+  });
 }
 
 // ---------- esercizio ----------
@@ -1128,6 +1137,220 @@ function quadranteCronometro(v, n) {
     h("p.kicker", `Serie ${n} di ${v.serie} · tieni la posizione`),
     quadrante,
     h("p.target", `Previsti ${v.durataSec}s · «Fine» se molli prima`)
+  );
+}
+
+/**
+ * Legge la dose scritta a parole e dice se quel passaggio si fa a tempo.
+ *
+ * Le dosi arrivano dal protocollo come le scriverebbe un istruttore: «30 s per
+ * lato», «3 × 15 s per lato», «5 min», «10 per verso». Le prime tre sono tenute
+ * a cronometro e meritano un timer vero; le altre si contano a ripetizioni e un
+ * timer lì sarebbe solo rumore. Nessuna durata riconosciuta significa nessun
+ * cronometro: meglio niente che un conto inventato.
+ */
+function tempoDaDose(dose) {
+  if (!dose) return null;
+  const t = String(dose).toLowerCase();
+  const sec = t.match(/(\d+)\s*(?:s|sec|secondi)\b/);
+  const min = t.match(/(\d+)\s*(?:min|minuti)\b/);
+  const durata = sec ? Number(sec[1]) : min ? Number(min[1]) * 60 : null;
+  if (!durata || durata <= 0) return null;
+  const giriMatch = t.match(/(\d+)\s*[×x]\s*\d/);
+  const serie = giriMatch ? Number(giriMatch[1]) : 1;
+  const perLato = /per lato/.test(t);
+  return { durata, serie, perLato, tenute: serie * (perLato ? 2 : 1) };
+}
+
+/** «45s», «5 min»: i secondi nudi sopra il minuto non si leggono. */
+function durataScritta(sec) {
+  return sec >= 60 && sec % 60 === 0 ? `${sec / 60} min` : sec >= 60 ? mmss(sec) : `${sec}s`;
+}
+
+/**
+ * Come si chiama la tenuta numero `g` di una dose a tempo.
+ * «3 × 15 s per lato» sono sei tenute: giro 1 primo lato, giro 1 altro lato,
+ * giro 2 primo lato... Dirlo mentre sei in posizione evita di perdere il conto.
+ */
+function nomeTenuta(tempo, g) {
+  const parti = [];
+  if (tempo.serie > 1) parti.push(`giro ${Math.floor(g / (tempo.perLato ? 2 : 1)) + 1} di ${tempo.serie}`);
+  if (tempo.perLato) parti.push(g % 2 === 0 ? "primo lato" : "altro lato");
+  return parti.join(" · ");
+}
+
+/** Il quadrante del conto alla rovescia, uguale a quello degli esercizi a tempo. */
+function quadranteTempo(fine, totaleSec, kicker, sotto) {
+  const testo = h("p.timer", "");
+  const CIRC = 2 * Math.PI * 100;
+  const anelloTempo = h("circle.prog", {
+    cx: 108, cy: 108, r: 100,
+    style: `stroke-dasharray:${CIRC};stroke-dashoffset:0`,
+  });
+  const quadrante = h(
+    "div.timer-wrap",
+    h("svg.timer-ring", { viewBox: "0 0 216 216" }, h("circle.track", { cx: 108, cy: 108, r: 100 }), anelloTempo),
+    testo
+  );
+  const totale = Math.max(1, totaleSec) * 1000;
+  let preavvisoFatto = false;
+  const aggiorna = () => {
+    const restanti = (fine - Date.now()) / 1000;
+    const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
+    anelloTempo.style.strokeDashoffset = String(CIRC * (1 - quota));
+    if (restanti > 0) {
+      // Sotto il minuto i secondi netti si leggono meglio di «00:27»; sopra,
+      // «300» non vuol dire niente e ci vuole il minutaggio.
+      testo.textContent = totaleSec >= 60 ? mmss(restanti) : String(Math.ceil(restanti));
+      quadrante.classList.remove("done");
+      testo.classList.remove("done");
+      if (restanti <= 3 && !preavvisoFatto) {
+        preavvisoFatto = true;
+        tick();
+      }
+    } else {
+      testo.textContent = totaleSec >= 60 ? "00:00" : "0";
+      quadrante.classList.add("done");
+      testo.classList.add("done");
+      if (!allarmeAttivo()) avviaAllarme();
+    }
+  };
+  aggiorna();
+  fermaTimer();
+  S.timerHandle = setInterval(aggiorna, 200);
+  return h("div.hero", h("p.kicker", kicker), quadrante, sotto ? h("p.target", sotto) : null);
+}
+
+/**
+ * Un passaggio per volta, non la lista intera.
+ *
+ * Riscaldamento e stretching erano due muri di testo con tutti i passaggi
+ * insieme: per sapere a che punto eri dovevi ricordartelo tu, e le tenute a
+ * secondi le contavi a occhio. Qui c'è un passaggio alla volta, con il suo
+ * cronometro quando la dose è a tempo, e il posto in cui sei sta nel progresso
+ * salvato — chiudere l'app a metà riscaldamento non fa ricominciare da capo.
+ */
+async function vistaGuidata(corpo, piede, cfg) {
+  const { chiave, kicker, titolo, passi, etichettaFine, onFine, extra } = cfg;
+  const kPasso = `${chiave}Passo`;
+  const kGiro = `${chiave}Giro`;
+  const kFine = `${chiave}Fine`;
+
+  if (!passi.length) {
+    aggiungi(corpo,
+      h("div.hero", h("p.kicker", kicker), h("h2", titolo), h("p.target", S.sed.tipoNome)),
+      h("div.group", h("div.list", h("div.row", h("div.main", h("span.title", cfg.vuoto || "Niente da fare in questo giorno")))))
+    );
+    aggiungiPiede(piede, ...(cfg.tastiExtra?.(passi.length) || []), h("button.btn", { onclick: azione(onFine) }, etichettaFine));
+    return;
+  }
+
+  const i = Math.min(S.sed.progresso?.[kPasso] ?? 0, passi.length - 1);
+  const p = passi[i];
+  const tempo = tempoDaDose(p.dose);
+  const giro = tempo ? Math.min(S.sed.progresso?.[kGiro] ?? 0, tempo.tenute - 1) : 0;
+  const fine = tempo ? S.sed.progresso?.[kFine] || null : null;
+  const ultimo = i === passi.length - 1;
+  const ultimaTenuta = !tempo || giro >= tempo.tenute - 1;
+
+  const vai = async (patch) => {
+    fermaAllarme();
+    await salvaProgresso(patch);
+    await disegna();
+  };
+
+  // ---- corpo ----
+  if (fine) {
+    // «Tieni la posizione» vale per un allungamento, non per cinque minuti di
+    // camminata: il verbo lo decide la dose, non la schermata.
+    const tenuta = cfg.tenuta ?? tempo.perLato;
+    aggiungi(corpo,
+      quadranteTempo(
+        fine,
+        tempo.durata,
+        `${p.nome} · ${tenuta ? "tieni la posizione" : "in corso"}`,
+        nomeTenuta(tempo, giro) || `Previsti ${durataScritta(tempo.durata)}`
+      )
+    );
+  } else {
+    aggiungi(corpo,
+      h(
+        "div.hero",
+        h("p.kicker", `${kicker} · ${i + 1} di ${passi.length}`),
+        h("h2", p.nome),
+        p.dose ? h("p.target", p.dose) : null
+      )
+    );
+  }
+
+  aggiungi(corpo, ...(extra?.(i, p) || []).filter(Boolean));
+
+  if (p.come) aggiungi(corpo, h("div.guida", h("section", h("h3", "Come si fa"), h("p", p.come))));
+
+  if (tempo && tempo.tenute > 1) {
+    aggiungi(corpo,
+      h("p.footnote", { style: "margin:12px 16px 0" },
+        `${tempo.tenute} tenute da ${durataScritta(tempo.durata)}: sei alla ${giro + 1}.`)
+    );
+  }
+
+  aggiungi(corpo,
+    h("p.footnote", { style: "margin:12px 16px 24px" },
+      ultimo ? "È l'ultimo passaggio." : `Dopo questo: ${passi[i + 1].nome}.`)
+  );
+
+  // ---- piede ----
+  const servizio = [];
+  if (i > 0 || giro > 0 || fine) {
+    servizio.push(
+      h("button.btn.secondary", {
+        onclick: azione(async () => {
+          // Indietro annulla prima il cronometro in corso, poi la tenuta, poi
+          // il passaggio: è l'ordine in cui uno se ne pente.
+          if (fine) return vai({ [kFine]: null });
+          if (giro > 0) return vai({ [kGiro]: giro - 1 });
+          const prima = passi[i - 1];
+          const tPrima = tempoDaDose(prima.dose);
+          return vai({ [kPasso]: i - 1, [kGiro]: tPrima ? tPrima.tenute - 1 : 0, [kFine]: null });
+        }),
+      }, "Indietro")
+    );
+  }
+  servizio.push(...(cfg.tastiExtra?.(i) || []));
+
+  let principale;
+  if (tempo && !fine) {
+    principale = h("button.btn", {
+      onclick: azione(async () => {
+        sbloccaAudio();
+        await vai({ [kFine]: Date.now() + tempo.durata * 1000, [kGiro]: giro });
+      }),
+    }, `Avvia · ${durataScritta(tempo.durata)}${nomeTenuta(tempo, giro) ? ` · ${nomeTenuta(tempo, giro)}` : ""}`);
+  } else if (tempo && fine) {
+    principale = h("button.btn", {
+      onclick: azione(async () => {
+        if (!ultimaTenuta) return vai({ [kGiro]: giro + 1, [kFine]: null });
+        if (!ultimo) return vai({ [kPasso]: i + 1, [kGiro]: 0, [kFine]: null });
+        fermaAllarme();
+        await onFine();
+      }),
+    }, ultimaTenuta ? (ultimo ? etichettaFine : "Fatto · avanti") : "Fatto · altro lato");
+  } else {
+    principale = h("button.btn", {
+      onclick: azione(async () => {
+        if (!ultimo) return vai({ [kPasso]: i + 1, [kGiro]: 0, [kFine]: null });
+        await onFine();
+      }),
+    }, ultimo ? etichettaFine : "Fatto · avanti");
+  }
+
+  aggiungiPiede(piede,
+    servizio.length === 1
+      ? servizio[0]
+      : servizio.length
+        ? h("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" }, ...servizio)
+        : null,
+    principale
   );
 }
 
@@ -2430,90 +2653,64 @@ function spostaCardio(min) {
 // ---------- stretching, come passo dell'allenamento ----------
 
 async function vistaStretching(corpo, piede) {
-  const prot = store.riscaldamento(S.sed.tipoId);
-  const voci = prot?.stretchingFinale || [];
+  const passi = passiStretching();
 
-  const passo = (n, nome, dose, come) =>
-    h(
-      "div.passo",
-      h("div.n", String(n)),
+  await vistaGuidata(corpo, piede, {
+    chiave: "str",
+    tenuta: true,
+    kicker: "Stretching",
+    titolo: "Stretching",
+    passi,
+    vuoto: "Nessun allungamento previsto per questo giorno",
+    etichettaFine: "Stretching fatto",
+    extra: (i) => [
+      i === 0
+        ? h(
+            "div.guida",
+            h(
+              "section",
+              h("h3", "Perché adesso"),
+              h(
+                "p",
+                "A muscolo caldo e a lavoro finito. Prima dell'allenamento allungare a freddo un muscolo che deve spingere riduce la forza espressa: per quello all'inizio c'è la mobilità, non questo."
+              )
+            )
+          )
+        : null,
+      // I numeri dell'orologio stanno sull'ultimo allungamento: è lì che hai
+      // finito di muoverti e ce l'hai ancora al polso col riepilogo aperto.
+      i === passi.length - 1 && S.sed.cardio?.eseguito
+        ? bloccoOrologio(S.sed, "cardio", async (orologio) => {
+            S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+          })
+        : null,
+      i === passi.length - 1 && !S.sed.cardio?.previsto
+        ? bloccoOrologio(S.sed, "pesi", async (orologio) => {
+            S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+          })
+        : null,
+    ],
+    tastiExtra: () => [
       h(
-        "div.testo",
-        h("span.nome", nome),
-        dose ? h("span.dose", dose) : null,
-        come ? h("span.come", come) : null
-      )
-    );
-
-  aggiungi(corpo,
-    h(
-      "div.hero",
-      h("p.kicker", "Ultimo passo"),
-      h("h2", "Stretching"),
-      // Senza allungamenti previsti non c'è una durata da promettere: «0
-      // allungamenti, circa 3 minuti» sono due parole che si contraddicono.
-      h(
-        "p.target",
-        voci.length
-          ? `${S.sed.tipoNome} · ${voci.length} ${voci.length === 1 ? "allungamento" : "allungamenti"}, circa 3 minuti`
-          : S.sed.tipoNome
-      )
-    ),
-    voci.length
-      ? h("div.guida", { style: "margin-top:12px" }, ...voci.map((v, i) => passo(i + 1, v.nome, v.dose, v.come)))
-      : h("div.group", h("div.list", h("div.row", h("div.main", h("span.title", "Nessun allungamento previsto per questo giorno"))))),
-    h(
-      "div.guida",
-      h(
-        "section",
-        h("h3", "Perché adesso"),
-        h(
-          "p",
-          "A muscolo caldo e a lavoro finito. Prima dell'allenamento allungare a freddo un muscolo che deve spingere riduce la forza espressa: per quello all'inizio c'è la mobilità, non questo."
-        )
-      )
-    ),
-    // Il cardio è appena finito: qui il suo riepilogo è ancora sull'orologio.
-    S.sed.cardio?.eseguito
-      ? bloccoOrologio(S.sed, "cardio", async (orologio) => {
-          S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-        })
-      : null,
-    // Nei giorni senza cardio i pesi non sono ancora stati copiati da nessuna
-    // parte: l'occasione è questa.
-    !S.sed.cardio?.previsto
-      ? bloccoOrologio(S.sed, "pesi", async (orologio) => {
-          S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-        })
-      : null
-  );
-
-  aggiungiPiede(piede,
-    h(
-      "button.btn",
-      {
-        onclick: azione(async () => {
-          S.sed = await store.aggiornaSeduta(S.sed.id, {
-            stretching: { fatto: true, quando: Date.now() },
-          });
-          await salvaProgresso({ fase: "fine" });
-          await disegna();
-        }),
-      },
-      "Stretching fatto"
-    ),
-    h(
-      "button.btn.secondary",
-      {
-        onclick: azione(async () => {
-          S.sed = await store.aggiornaSeduta(S.sed.id, { stretching: { fatto: false } });
-          await salvaProgresso({ fase: "fine" });
-          await disegna();
-        }),
-      },
-      "Salta"
-    )
-  );
+        "button.btn.secondary",
+        {
+          onclick: azione(async () => {
+            S.sed = await store.aggiornaSeduta(S.sed.id, { stretching: { fatto: false } });
+            await salvaProgresso({ fase: "fine" });
+            await disegna();
+          }),
+        },
+        "Salta"
+      ),
+    ],
+    onFine: async () => {
+      S.sed = await store.aggiornaSeduta(S.sed.id, {
+        stretching: { fatto: true, quando: Date.now() },
+      });
+      await salvaProgresso({ fase: "fine" });
+      await disegna();
+    },
+  });
 }
 
 // ---------- stretching di fine seduta ----------
