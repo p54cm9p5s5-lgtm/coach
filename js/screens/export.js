@@ -291,7 +291,7 @@ async function componi(stato) {
 
   if (stato.fumo) {
     const primoGiorno = await store.fumoContatoDal();
-    if (primoGiorno) {
+    if (primoGiorno && store.regole().salute?.contaSigarette !== false) {
       const conteggi = await store.conteggioFumo();
       const oggi = isoDate();
       // La soglia scende a ogni nuovo minimo: serve quella di ogni giorno, non

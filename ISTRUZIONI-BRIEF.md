@@ -231,8 +231,15 @@ com'è. Le voci più usate:
 `misureGiornoSettimana` e `fotoGiornoSettimana` usano la stessa numerazione dei
 giorni: 0 = domenica.
 
-Se l'atleta non fuma, la sezione fumo dell'app resta semplicemente a zero: non
-serve disattivarla.
+**Se l'atleta non fuma**, scrivi `"contaSigarette": false` dentro `salute`: la
+sezione Fumo sparisce dal menu dell'app e la voce esce dal punteggio, invece di
+restare lì a valere sempre zero.
+
+**Un'attività che non ha un bersaglio** — una sessione di Pilates, una
+camminata, una seduta di mobilità — si scrive con `"serie": 1, "ripMin": 1,
+"ripMax": 1`: l'app la mostra come una voce da spuntare a fine sessione, senza
+cronometro e senza obiettivo. Se invece la durata conta davvero, usa `aTempo` e
+`durataSec` e avrai il conto alla rovescia.
 
 ---
 

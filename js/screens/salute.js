@@ -16,6 +16,7 @@ const NOME_SHORTCUT = "Coach Salute";
  * sarebbe il modo peggiore di dirlo.
  */
 async function schedaSigarette({ conPeriodo, oggiIso }) {
+  if (store.regole().salute?.contaSigarette === false) return null;
   const primoFumo = await store.fumoContatoDal();
   if (!primoFumo) return null;
   const conteggi = await store.conteggioFumo();
