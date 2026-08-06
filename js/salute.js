@@ -5,6 +5,22 @@
 export const VERSIONE = 1;
 
 /**
+ * Una data scritta bene non basta: deve anche esistere.
+ *
+ * Il controllo era solo sulla forma («quattro cifre, due, due»), e «2026-13-45»
+ * la passava. Finiva in archivio una giornata inesistente che nessun grafico
+ * avrebbe mai mostrato e nessun conto avrebbe mai potuto riconciliare: un dato
+ * fantasma, peggio di un dato mancante.
+ */
+function dataVera(iso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return false;
+  const [a, m, g] = iso.split("-").map(Number);
+  if (m < 1 || m > 12 || g < 1) return false;
+  const d = new Date(Date.UTC(a, m - 1, g));
+  return d.getUTCFullYear() === a && d.getUTCMonth() === m - 1 && d.getUTCDate() === g;
+}
+
+/**
  * Numeri come li scrive un iPhone italiano: «10.700» sono diecimilasettecento,
  * non dieci virgola sette, e «886,5» ha la virgola decimale. Senza questa
  * distinzione i passi finirebbero divisi per mille senza dare nessun segnale.
@@ -82,7 +98,7 @@ export function analizza(testo) {
 
     if (tipo === "FINESTRA") {
       const [da, a] = resto;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(da || "") && /^\d{4}-\d{2}-\d{2}$/.test(a || "")) {
+      if (dataVera(da) && dataVera(a)) {
         risultato.finestra = { da, a };
       } else {
         risultato.avvisi.push("Riga FINESTRA con date non valide: ignorata.");
@@ -111,7 +127,7 @@ export function analizza(testo) {
     }
 
     const data = (resto[0] || "").slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+    if (!dataVera(data)) {
       risultato.avvisi.push(`Riga senza data valida, ignorata: «${riga.slice(0, 40)}»`);
       continue;
     }

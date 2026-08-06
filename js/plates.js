@@ -14,12 +14,31 @@ export const INVENTARIO_DEFAULT = {
 const arrotonda = (n) => Math.round(n * 100) / 100;
 
 /**
+ * Rimette in forma un inventario incompleto.
+ *
+ * Il blocco tecnico lo scrive il coach a mano: può arrivare senza «dischi»
+ * (chi ha solo la barra), con «dischi: null», o senza «barra». Prima bastava
+ * questo per far esplodere il calcolo dei dischi proprio nella schermata
+ * dell'esercizio, cioè a metà allenamento. Un inventario incompleto adesso
+ * vuol dire soltanto meno carichi montabili, non un'app che si ferma.
+ */
+function completa(inv) {
+  const i = inv && typeof inv === "object" ? inv : INVENTARIO_DEFAULT;
+  return {
+    ...i,
+    barra: Number.isFinite(i.barra) ? i.barra : 0,
+    dischi: i.dischi && typeof i.dischi === "object" ? i.dischi : {},
+  };
+}
+
+/**
  * Combinazione per lato che raggiunge esattamente il totale, o null.
  * Ricerca esaustiva: l'approccio goloso sbaglia su casi reali
  * (10,5 kg per lato = 5 + 2,5 + 2 + 1, che il goloso non trova).
  * Preferisce le soluzioni con meno dischi, cioè quelle più comode da montare.
  */
-export function combinazioneEsatta(totale, inv = INVENTARIO_DEFAULT) {
+export function combinazioneEsatta(totale, grezzo = INVENTARIO_DEFAULT) {
+  const inv = completa(grezzo);
   const perLato = arrotonda((totale - inv.barra) / 2);
   if (perLato < -0.001) return null;
   if (Math.abs(perLato) < 0.001) return { perLato: [], totale: inv.barra, barra: inv.barra };
@@ -53,7 +72,8 @@ export function combinazioneEsatta(totale, inv = INVENTARIO_DEFAULT) {
 }
 
 /** Tutti i carichi realizzabili con il bilanciere, in ordine crescente. */
-export function carichiPossibili(inv = INVENTARIO_DEFAULT) {
+export function carichiPossibili(grezzo = INVENTARIO_DEFAULT) {
+  const inv = completa(grezzo);
   const pesi = Object.keys(inv.dischi).map(Number);
   const somme = new Set([0]);
   for (const p of pesi) {
@@ -80,7 +100,8 @@ export function incrementoMinimo(daCarico, inv = INVENTARIO_DEFAULT) {
   return arrotonda(sopra - daCarico);
 }
 
-export function descriviDischi(totale, inv = INVENTARIO_DEFAULT) {
+export function descriviDischi(totale, grezzo = INVENTARIO_DEFAULT) {
+  const inv = completa(grezzo);
   const c = combinazioneEsatta(totale, inv);
   if (!c) return null;
   if (!c.perLato.length) return `bilanciere scarico (${inv.barra} kg)`;
@@ -110,7 +131,8 @@ const usabiliPerManubrio = (quanti, paio) => Math.floor(quanti / (paio ? 4 : 2))
  * Se il peso corrisponde a un manubrio fisso posseduto, lo dice: è la
  * soluzione più comoda e non consuma dischi.
  */
-export function combinazioneManubrio(kg, inv = INVENTARIO_DEFAULT, paio = true) {
+export function combinazioneManubrio(kg, grezzo = INVENTARIO_DEFAULT, paio = true) {
+  const inv = completa(grezzo);
   const m = manubriDi(inv);
   const fissi = Array.isArray(m.fissi) ? m.fissi : [];
   const quantiFissi = fissi.filter((f) => Math.abs(f - kg) < 0.001).length;
@@ -152,7 +174,8 @@ export function combinazioneManubrio(kg, inv = INVENTARIO_DEFAULT, paio = true) 
 }
 
 /** Tutti i pesi realizzabili per manubrio, in ordine crescente. */
-export function carichiManubrio(inv = INVENTARIO_DEFAULT, paio = true) {
+export function carichiManubrio(grezzo = INVENTARIO_DEFAULT, paio = true) {
+  const inv = completa(grezzo);
   const m = manubriDi(inv);
   const out = new Set();
   const fissi = Array.isArray(m.fissi) ? m.fissi : [];
@@ -204,6 +227,7 @@ export function aPaio(def) {
  * brief fino a oggi — e in quel caso l'app non deve inventarsi né pesi
  * montabili né istruzioni: torna al passo da un chilo e non mostra niente.
  */
-export function conosceManubri(inv = INVENTARIO_DEFAULT, paio = true) {
+export function conosceManubri(grezzo = INVENTARIO_DEFAULT, paio = true) {
+  const inv = completa(grezzo);
   return carichiManubrio(inv, paio).length > 0;
 }

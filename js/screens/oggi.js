@@ -243,8 +243,10 @@ async function bloccoGrafico(ridisegna) {
     {
       "aria-expanded": apertoSalute ? "true" : "false",
       style:
-        "display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:10px 0 0;" +
-        "background:none;border:0;padding:6px 0;color:var(--label-secondary);font:inherit;font-size:13px",
+        // 44 px come ogni altro tasto: era alto trenta, e in un'app che si usa
+        // con le mani sudate anche un tasto innocuo va preso al primo colpo.
+        "display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:6px 0 0;" +
+        "min-height:44px;background:none;border:0;padding:6px 0;color:var(--label-secondary);font:inherit;font-size:13px",
       onclick: () => {
         apertoSalute = !apertoSalute;
         dettagli.style.display = apertoSalute ? "block" : "none";

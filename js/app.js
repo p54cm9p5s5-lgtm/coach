@@ -49,8 +49,12 @@ export function vaiA(rotta) {
 }
 
 let modCorrente = null;
-/* Un aggiornamento arrivato durante l'allenamento resta in attesa: si applica
-   appena la seduta è chiusa. */
+/* Un aggiornamento arrivato mentre sei DENTRO l'allenamento resta in attesa:
+   si applica appena esci da quella schermata. Prima la condizione era «finché
+   esiste una seduta aperta»: bastava un allenamento cominciato e mai chiuso —
+   capita — perché il telefono non prendesse più nessun aggiornamento, per
+   sempre. Quello che si perderebbe ricaricando (schermata, cronometro, gesto
+   che ha sbloccato l'audio) esiste solo mentre la seduta è sotto gli occhi. */
 let aggiornamentoInAttesa = false;
 
 let hashDisegnato = null;
@@ -130,17 +134,12 @@ export async function ridisegna() {
   }
   modCorrente = mod;
 
-  // Aggiornamento rimasto in attesa: si applica appena si esce dall'allenamento.
+  // Aggiornamento rimasto in attesa: si applica appena si esce dalla schermata
+  // dell'allenamento, senza chiedere che la seduta sia anche chiusa.
   if (aggiornamentoInAttesa && nome !== "seduta") {
-    try {
-      if (!(await store.sedutaInCorso())) {
-        aggiornamentoInAttesa = false;
-        location.reload();
-        return;
-      }
-    } catch {
-      /* niente: si riproverà al prossimo disegno */
-    }
+    aggiornamentoInAttesa = false;
+    location.reload();
+    return;
   }
 
   if (mioTurno !== turnoCorrente) return;
@@ -232,27 +231,6 @@ export function intestazione(titolo, azione) {
 
 // ---------- aggiornamenti ----------
 
-function bannerAggiornamento(reg) {
-  if (qs("#agg-banner")) return;
-  const banner = h(
-    "div.toast",
-    { id: "agg-banner", style: "bottom:auto;top:calc(env(safe-area-inset-top) + 12px)" },
-    "Aggiornamento disponibile · ",
-    h(
-      "button",
-      {
-        style: "background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer",
-        onclick: () => {
-          reg.waiting?.postMessage("SKIP_WAITING");
-          setTimeout(() => location.reload(), 300);
-        },
-      },
-      "Applica"
-    )
-  );
-  document.body.append(banner);
-}
-
 async function registraServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   if (location.protocol === "file:") return;
@@ -293,16 +271,12 @@ async function registraServiceWorker() {
         return;
       }
       if (ricaricato) return;
-      // Mai ricaricare mentre un allenamento è aperto: si perderebbe la
+      // Mai ricaricare mentre stai guardando l'allenamento: si perderebbe la
       // schermata in corso, il timer e il gesto che ha autorizzato l'audio.
-      // L'aggiornamento aspetta la fine.
-      try {
-        if (await store.sedutaInCorso()) {
-          aggiornamentoInAttesa = true;
-          return;
-        }
-      } catch {
-        /* se non si riesce a leggere l'archivio si ricarica come prima */
+      // Fuori di lì non c'è niente da salvare e l'aggiornamento entra subito.
+      if (rottaCorrente === "seduta") {
+        aggiornamentoInAttesa = true;
+        return;
       }
       ricaricato = true;
       location.reload();
