@@ -74,7 +74,12 @@ export function isoDate(d = new Date()) {
 }
 
 export function parseIso(iso) {
+  // Con `null` o una stringa senza data questa riga esplodeva («split of
+  // null») e portava giù l'intera schermata che la stava disegnando. Meglio
+  // una data non valida, che ogni formattatore sa già tradurre in «—».
+  if (typeof iso !== "string") return new Date(NaN);
   const [y, m, d] = iso.split("-").map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return new Date(NaN);
   return new Date(y, m - 1, d);
 }
 
@@ -89,11 +94,15 @@ export function nomeGiorno(iso) {
 
 export function dataLunga(iso) {
   const d = parseIso(iso);
+  if (!d || Number.isNaN(d.getTime())) return "—";
   return `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}`;
 }
 
 export function dataBreve(iso) {
   const d = parseIso(iso);
+  // Una data che non si legge diventa un trattino, non «NaN/NaN»: il trattino
+  // dice «non lo so», la sigla sembra un errore dell'app.
+  if (!d || Number.isNaN(d.getTime())) return "—";
   const p = (n) => String(n).padStart(2, "0");
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}`;
 }
@@ -109,11 +118,15 @@ export function oraDi(ts) {
 }
 
 export function mmss(sec) {
+  // Un valore non numerico qui è sempre un guaio nato altrove: scrivere
+  // «NaN:NaN» sul quadrante lo nasconderebbe dietro una sigla incomprensibile.
+  if (!Number.isFinite(Number(sec))) return "—";
   const s = Math.max(0, Math.round(sec));
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export function durataUmana(sec) {
+  if (!Number.isFinite(Number(sec))) return "—";
   // Prima si arrotondano i minuti, POI si separano le ore: arrotondando dopo,
   // 1h 59m 40s diventava «1h 60m».
   const minuti = Math.round(Math.max(0, sec) / 60);

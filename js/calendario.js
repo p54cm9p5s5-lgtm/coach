@@ -169,6 +169,9 @@ export function calcolaAttese({
     // Calendario collegato: le cose da fare sono quelle che ci ha scritto il
     // coach, con le sue parole. L'app non aggiunge scadenze di sua invenzione.
     for (const e of eventi) {
+      // Una riga vuota nell'elenco non deve fermare tutto il calcolo delle
+      // scadenze: si salta e si va avanti con le altre.
+      if (!e) continue;
       // Il titolo principale conta solo se non è l'allenamento (quello ha già
       // il suo segno sul calendario); gli altri eventi del giorno sempre.
       // `altri` può contenere stringhe o {titolo, nota}: qui serve il titolo.
@@ -217,6 +220,11 @@ export function calcolaAttese({
 }
 
 export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn, dal, origine = null }) {
+  // Senza una data vera non c'è niente da riassumere: meglio dirlo che
+  // scrivere in testa al riquadro «undefined NaN undefined».
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data || "")) {
+    return { titolo: "Giorno non riconosciuto", righe: [{ testo: "Data non valida", stato: "info" }] };
+  }
   let attese = atteseIn || [];
   if (dal && data < dal) {
     return { titolo: dataLunga(data), righe: [{ testo: "Prima dell'inizio del programma", stato: "info" }] };
