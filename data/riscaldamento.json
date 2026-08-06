@@ -18,72 +18,492 @@
   "giorni": {
     "petto-tricipiti": {
       "mobilita": [
-        { "nome": "Circonduzioni delle braccia", "dose": "10 avanti + 10 indietro", "come": "Braccia tese, cerchi ampi e lenti. Spalle lontane dalle orecchie." },
-        { "nome": "Rotazioni di polsi e gomiti", "dose": "10 per verso", "come": "Il polso destro è sollecitato oggi: scaldalo prima, non dopo." },
-        { "nome": "Apertura del petto sullo stipite", "dose": "3 × 15 s per lato", "come": "Avambraccio sullo stipite, gomito all'altezza della spalla, ruota il busto verso l'esterno fino a sentire tensione leggera. Non spingere." },
-        { "nome": "Retrazione e protrazione scapolare", "dose": "15 ripetizioni", "come": "Braccia tese avanti, avvicina e allontana le scapole senza piegare i gomiti. Prepara la posizione che dovrai tenere in panca." },
-        { "nome": "Rotazioni esterne di spalla", "dose": "12 per lato", "come": "Gomito al fianco a 90°, manubrio leggerissimo (1-2 kg), ruota l'avambraccio verso l'esterno. Scalda la cuffia dei rotatori." }
+        {
+          "nome": "Circonduzioni delle braccia",
+          "dose": "10 avanti + 10 indietro",
+          "come": "Braccia tese, cerchi ampi e lenti. Spalle lontane dalle orecchie."
+        },
+        {
+          "nome": "Rotazioni di polsi e gomiti",
+          "dose": "10 per verso",
+          "come": "Il polso destro è sollecitato oggi: scaldalo prima, non dopo."
+        },
+        {
+          "nome": "Apertura del petto sullo stipite",
+          "dose": "3 × 15 s per lato",
+          "come": "Avambraccio sullo stipite, gomito all'altezza della spalla, ruota il busto verso l'esterno fino a sentire tensione leggera. Non spingere."
+        },
+        {
+          "nome": "Retrazione e protrazione scapolare",
+          "dose": "15 ripetizioni",
+          "come": "Braccia tese avanti, avvicina e allontana le scapole senza piegare i gomiti. Prepara la posizione che dovrai tenere in panca."
+        },
+        {
+          "nome": "Rotazioni esterne di spalla",
+          "dose": "12 per lato",
+          "come": "Gomito al fianco a 90°, manubrio leggerissimo (1-2 kg), ruota l'avambraccio verso l'esterno. Scalda la cuffia dei rotatori."
+        }
       ],
       "stretchingFinale": [
-        { "nome": "Pettorale al muro", "dose": "30 s per lato", "come": "Mano appoggiata al muro all'altezza della spalla, ruota il busto in direzione opposta." },
-        { "nome": "Tricipite sopra la testa", "dose": "30 s per lato", "come": "Gomito piegato dietro la nuca, l'altra mano accompagna senza forzare." }
+        {
+          "nome": "Pettorale al muro",
+          "dose": "30 s per lato",
+          "come": "Mano appoggiata al muro all'altezza della spalla, ruota il busto in direzione opposta."
+        },
+        {
+          "nome": "Tricipite sopra la testa",
+          "dose": "30 s per lato",
+          "come": "Gomito piegato dietro la nuca, l'altra mano accompagna senza forzare."
+        }
       ]
     },
     "gambe-core": {
       "mobilita": [
-        { "nome": "Rotazioni delle anche", "dose": "10 per verso", "come": "In piedi, mani sui fianchi, cerchi ampi con il bacino." },
-        { "nome": "Mobilità di caviglia al muro", "dose": "10 per lato", "come": "Piede a un palmo dal muro, porta il ginocchio verso il muro senza staccare il tallone. Se non ci arrivi, avvicina il piede." },
-        { "nome": "Slanci della gamba avanti e indietro", "dose": "10 per lato", "come": "Appoggiati a un muro, gamba tesa che oscilla in modo controllato. Prepara l'anca all'hip hinge dell'RDL." },
-        { "nome": "Ponte per i glutei", "dose": "12 ripetizioni", "come": "Supino, piedi a terra, spingi il bacino in alto stringendo i glutei. Attiva quello che nello squat spesso resta spento." },
-        { "nome": "Squat a corpo libero", "dose": "10 lenti e completi", "come": "Tre secondi a scendere. È già la prova tecnica della seduta: se qui la posizione non regge, non regge nemmeno con il bilanciere." }
+        {
+          "nome": "Rotazioni delle anche",
+          "dose": "10 per verso",
+          "come": "In piedi, mani sui fianchi, cerchi ampi con il bacino."
+        },
+        {
+          "nome": "Mobilità di caviglia al muro",
+          "dose": "10 per lato",
+          "come": "Piede a un palmo dal muro, porta il ginocchio verso il muro senza staccare il tallone. Se non ci arrivi, avvicina il piede."
+        },
+        {
+          "nome": "Slanci della gamba avanti e indietro",
+          "dose": "10 per lato",
+          "come": "Appoggiati a un muro, gamba tesa che oscilla in modo controllato. Prepara l'anca all'hip hinge dell'RDL."
+        },
+        {
+          "nome": "Ponte per i glutei",
+          "dose": "12 ripetizioni",
+          "come": "Supino, piedi a terra, spingi il bacino in alto stringendo i glutei. Attiva quello che nello squat spesso resta spento."
+        },
+        {
+          "nome": "Squat a corpo libero",
+          "dose": "10 lenti e completi",
+          "come": "Tre secondi a scendere. È già la prova tecnica della seduta: se qui la posizione non regge, non regge nemmeno con il bilanciere."
+        }
       ],
       "stretchingFinale": [
-        { "nome": "Femorali da seduto", "dose": "30 s per lato", "come": "Gamba tesa, l'altra piegata, scendi con il petto verso il ginocchio tenendo la schiena dritta." },
-        { "nome": "Quadricipite in piedi", "dose": "30 s per lato", "come": "Tallone verso il gluteo, ginocchia vicine, bacino leggermente in avanti." },
-        { "nome": "Flessori dell'anca in affondo basso", "dose": "30 s per lato", "come": "Ginocchio dietro a terra, spingi il bacino avanti stringendo il gluteo della gamba dietro." },
-        { "nome": "Polpaccio al muro", "dose": "30 s per lato", "come": "Gamba dietro tesa, tallone a terra, spingi il bacino verso il muro." }
+        {
+          "nome": "Femorali da seduto",
+          "dose": "30 s per lato",
+          "come": "Gamba tesa, l'altra piegata, scendi con il petto verso il ginocchio tenendo la schiena dritta."
+        },
+        {
+          "nome": "Quadricipite in piedi",
+          "dose": "30 s per lato",
+          "come": "Tallone verso il gluteo, ginocchia vicine, bacino leggermente in avanti."
+        },
+        {
+          "nome": "Flessori dell'anca in affondo basso",
+          "dose": "30 s per lato",
+          "come": "Ginocchio dietro a terra, spingi il bacino avanti stringendo il gluteo della gamba dietro."
+        },
+        {
+          "nome": "Polpaccio al muro",
+          "dose": "30 s per lato",
+          "come": "Gamba dietro tesa, tallone a terra, spingi il bacino verso il muro."
+        }
       ]
     },
     "spalle": {
       "mobilita": [
-        { "nome": "Circonduzioni delle braccia", "dose": "10 avanti + 10 indietro", "come": "Cerchi ampi, lenti, spalle basse." },
-        { "nome": "Rotazioni di polsi e gomiti", "dose": "10 per verso", "come": "Il polso lavora sotto il bilanciere nel Military: scaldalo." },
-        { "nome": "Wall slide", "dose": "10 ripetizioni", "come": "Schiena e avambracci contro il muro, fai scorrere le braccia in alto senza staccare i polsi né inarcare la schiena. Se non ci riesci, quello è il tuo limite di mobilità: non forzarlo con il carico." },
-        { "nome": "Rotazioni esterne di spalla", "dose": "12 per lato", "come": "Gomito al fianco, carico minimo. Cuffia dei rotatori." },
-        { "nome": "Scrollate lente a vuoto", "dose": "12 ripetizioni", "come": "Solo su e giù, senza peso, per svegliare i trapezi." }
+        {
+          "nome": "Circonduzioni delle braccia",
+          "dose": "10 avanti + 10 indietro",
+          "come": "Cerchi ampi, lenti, spalle basse."
+        },
+        {
+          "nome": "Rotazioni di polsi e gomiti",
+          "dose": "10 per verso",
+          "come": "Il polso lavora sotto il bilanciere nel Military: scaldalo."
+        },
+        {
+          "nome": "Wall slide",
+          "dose": "10 ripetizioni",
+          "come": "Schiena e avambracci contro il muro, fai scorrere le braccia in alto senza staccare i polsi né inarcare la schiena. Se non ci riesci, quello è il tuo limite di mobilità: non forzarlo con il carico."
+        },
+        {
+          "nome": "Rotazioni esterne di spalla",
+          "dose": "12 per lato",
+          "come": "Gomito al fianco, carico minimo. Cuffia dei rotatori."
+        },
+        {
+          "nome": "Scrollate lente a vuoto",
+          "dose": "12 ripetizioni",
+          "come": "Solo su e giù, senza peso, per svegliare i trapezi."
+        }
       ],
       "stretchingFinale": [
-        { "nome": "Deltoide posteriore", "dose": "30 s per lato", "come": "Braccio teso incrociato davanti al petto, l'altro braccio lo accompagna." },
-        { "nome": "Trapezio superiore", "dose": "30 s per lato", "come": "Orecchio verso la spalla, spalla opposta bassa. Nessuna rotazione della testa." }
+        {
+          "nome": "Deltoide posteriore",
+          "dose": "30 s per lato",
+          "come": "Braccio teso incrociato davanti al petto, l'altro braccio lo accompagna."
+        },
+        {
+          "nome": "Trapezio superiore",
+          "dose": "30 s per lato",
+          "come": "Orecchio verso la spalla, spalla opposta bassa. Nessuna rotazione della testa."
+        }
       ]
     },
     "schiena-bicipiti": {
       "mobilita": [
-        { "nome": "Cat-camel", "dose": "10 ripetizioni", "come": "A quattro zampe, inarca e arrotonda la schiena lentamente. Sveglia la colonna prima del rematore." },
-        { "nome": "Hip hinge a vuoto con un bastone", "dose": "10 ripetizioni", "come": "Bastone (o manico di scopa) a contatto con nuca, dorso e sacro: se si stacca, la schiena non è neutra. È la posizione esatta del rematore." },
-        { "nome": "Rotazioni di polsi e avambracci", "dose": "10 per verso", "come": "Il Curl con bilanciere diritto forza la supinazione: qui il polso va scaldato bene." },
-        { "nome": "Retrazione scapolare", "dose": "15 ripetizioni", "come": "Braccia tese avanti, avvicina le scapole senza alzare le spalle. È il finale di ogni tirata." },
-        { "nome": "Dead bug", "dose": "8 per lato", "come": "Supino, lombare a contatto col pavimento, allunga braccio e gamba opposti. Stabilizza il tronco che dovrà reggere il rematore." }
+        {
+          "nome": "Cat-camel",
+          "dose": "10 ripetizioni",
+          "come": "A quattro zampe, inarca e arrotonda la schiena lentamente. Sveglia la colonna prima del rematore."
+        },
+        {
+          "nome": "Hip hinge a vuoto con un bastone",
+          "dose": "10 ripetizioni",
+          "come": "Bastone (o manico di scopa) a contatto con nuca, dorso e sacro: se si stacca, la schiena non è neutra. È la posizione esatta del rematore."
+        },
+        {
+          "nome": "Rotazioni di polsi e avambracci",
+          "dose": "10 per verso",
+          "come": "Il Curl con bilanciere diritto forza la supinazione: qui il polso va scaldato bene."
+        },
+        {
+          "nome": "Retrazione scapolare",
+          "dose": "15 ripetizioni",
+          "come": "Braccia tese avanti, avvicina le scapole senza alzare le spalle. È il finale di ogni tirata."
+        },
+        {
+          "nome": "Dead bug",
+          "dose": "8 per lato",
+          "come": "Supino, lombare a contatto col pavimento, allunga braccio e gamba opposti. Stabilizza il tronco che dovrà reggere il rematore."
+        }
       ],
       "stretchingFinale": [
-        { "nome": "Gran dorsale", "dose": "30 s per lato", "come": "Mano su un appoggio all'altezza dei fianchi, siediti indietro allungando il fianco." },
-        { "nome": "Bicipite al muro", "dose": "30 s per lato", "come": "Braccio teso dietro con il palmo sul muro, ruota il busto in direzione opposta." },
-        { "nome": "Flessori dell'avambraccio", "dose": "30 s per lato", "come": "Braccio teso, palmo in su, l'altra mano tira le dita verso il basso. Utile dopo i curl." }
+        {
+          "nome": "Gran dorsale",
+          "dose": "30 s per lato",
+          "come": "Mano su un appoggio all'altezza dei fianchi, siediti indietro allungando il fianco."
+        },
+        {
+          "nome": "Bicipite al muro",
+          "dose": "30 s per lato",
+          "come": "Braccio teso dietro con il palmo sul muro, ruota il busto in direzione opposta."
+        },
+        {
+          "nome": "Flessori dell'avambraccio",
+          "dose": "30 s per lato",
+          "come": "Braccio teso, palmo in su, l'altra mano tira le dita verso il basso. Utile dopo i curl."
+        }
       ]
     },
     "full-body": {
       "mobilita": [
-        { "nome": "Circonduzioni delle braccia", "dose": "10 avanti + 10 indietro", "come": "Oggi si spinge e si tira: servono entrambe le direzioni." },
-        { "nome": "Rotazioni di polsi e gomiti", "dose": "10 per verso", "come": "Panca, Military e Curl nello stesso giorno: il polso è il punto più sollecitato della settimana." },
-        { "nome": "Hip hinge a vuoto con un bastone", "dose": "10 ripetizioni", "come": "Prepara rematore e squat insieme." },
-        { "nome": "Squat a corpo libero", "dose": "10 lenti", "come": "Tre secondi a scendere." },
-        { "nome": "Retrazione scapolare", "dose": "15 ripetizioni", "come": "Vale per la panca e per il rematore." }
+        {
+          "nome": "Circonduzioni delle braccia",
+          "dose": "10 avanti + 10 indietro",
+          "come": "Oggi si spinge e si tira: servono entrambe le direzioni."
+        },
+        {
+          "nome": "Rotazioni di polsi e gomiti",
+          "dose": "10 per verso",
+          "come": "Panca, Military e Curl nello stesso giorno: il polso è il punto più sollecitato della settimana."
+        },
+        {
+          "nome": "Hip hinge a vuoto con un bastone",
+          "dose": "10 ripetizioni",
+          "come": "Prepara rematore e squat insieme."
+        },
+        {
+          "nome": "Squat a corpo libero",
+          "dose": "10 lenti",
+          "come": "Tre secondi a scendere."
+        },
+        {
+          "nome": "Retrazione scapolare",
+          "dose": "15 ripetizioni",
+          "come": "Vale per la panca e per il rematore."
+        }
       ],
       "stretchingFinale": [
-        { "nome": "Pettorale al muro", "dose": "30 s per lato", "come": "Mano al muro all'altezza della spalla, ruota il busto." },
-        { "nome": "Gran dorsale", "dose": "30 s per lato", "come": "Mano su un appoggio, siediti indietro allungando il fianco." },
-        { "nome": "Quadricipite in piedi", "dose": "30 s per lato", "come": "Tallone al gluteo, ginocchia vicine." },
-        { "nome": "Femorali da seduto", "dose": "30 s per lato", "come": "Schiena dritta, petto verso il ginocchio." }
+        {
+          "nome": "Pettorale al muro",
+          "dose": "30 s per lato",
+          "come": "Mano al muro all'altezza della spalla, ruota il busto."
+        },
+        {
+          "nome": "Gran dorsale",
+          "dose": "30 s per lato",
+          "come": "Mano su un appoggio, siediti indietro allungando il fianco."
+        },
+        {
+          "nome": "Quadricipite in piedi",
+          "dose": "30 s per lato",
+          "come": "Tallone al gluteo, ginocchia vicine."
+        },
+        {
+          "nome": "Femorali da seduto",
+          "dose": "30 s per lato",
+          "come": "Schiena dritta, petto verso il ginocchio."
+        }
+      ]
+    },
+    "spinta-catena-posteriore": {
+      "mobilita": [
+        {
+          "nome": "Circonduzioni delle braccia",
+          "dose": "10 avanti + 10 indietro",
+          "come": "In piedi, braccia tese, cerchi ampi e lenti."
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+        },
+        {
+          "nome": "Thread the needle",
+          "dose": "8 per lato",
+          "come": "In quadrupedia, fai passare un braccio sotto il corpo ruotando il torace."
+        },
+        {
+          "nome": "Scapular push-up",
+          "dose": "10 ripetizioni",
+          "come": "In plank alto a braccia tese: avvicina e allontana le scapole senza piegare i gomiti."
+        },
+        {
+          "nome": "Hip hinge a corpo libero",
+          "dose": "10 ripetizioni",
+          "come": "Bastone appoggiato a nuca, sacro e testa: manda indietro il bacino mantenendo i tre contatti."
+        },
+        {
+          "nome": "Ponte glutei a corpo libero",
+          "dose": "15 ripetizioni",
+          "come": "A terra, ginocchia piegate, spinta dai talloni, un secondo di pausa in alto."
+        },
+        {
+          "nome": "Flessioni sulle ginocchia",
+          "dose": "8 ripetizioni",
+          "come": "Attivazione leggera prima delle serie di lavoro."
+        }
+      ],
+      "stretchingFinale": [
+        {
+          "nome": "Pettorale allo stipite",
+          "dose": "30 s per lato",
+          "come": "Avambraccio contro lo stipite, gomito ad altezza spalla, ruota il torace dalla parte opposta."
+        },
+        {
+          "nome": "Femorali da seduta",
+          "dose": "30 s per lato",
+          "come": "Una gamba tesa, l'altra piegata: piegati dall'anca tenendo la schiena lunga."
+        },
+        {
+          "nome": "Polpaccio al muro",
+          "dose": "30 s per lato",
+          "come": "Mani al muro, gamba dietro tesa, tallone a terra."
+        }
+      ]
+    },
+    "dorso-quadricipiti": {
+      "mobilita": [
+        {
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+        },
+        {
+          "nome": "Circonduzioni delle spalle",
+          "dose": "10 per verso",
+          "come": "Solo le scapole, braccia rilassate lungo i fianchi."
+        },
+        {
+          "nome": "Retrazioni scapolari",
+          "dose": "12 ripetizioni",
+          "come": "In piedi: avvicina le scapole e tienile due secondi."
+        },
+        {
+          "nome": "Squat a corpo libero",
+          "dose": "10 ripetizioni",
+          "come": "Discesa lenta, ginocchia allineate sopra i piedi."
+        },
+        {
+          "nome": "90/90 d'anca",
+          "dose": "8 per lato",
+          "come": "Seduta a terra, ginocchia a 90°, ruota il bacino da un lato all'altro senza usare le mani."
+        },
+        {
+          "nome": "Affondo con rotazione toracica",
+          "dose": "5 per lato",
+          "come": "Dalla posizione di affondo, ruota il busto verso la gamba avanti e apri il braccio."
+        },
+        {
+          "nome": "Abduzioni laterali in piedi",
+          "dose": "15 per lato",
+          "come": "A corpo libero, come attivazione del medio gluteo."
+        }
+      ],
+      "stretchingFinale": [
+        {
+          "nome": "Quadricipite in piedi",
+          "dose": "30 s per lato",
+          "come": "Tallone al gluteo, ginocchia vicine, bacino in retroversione."
+        },
+        {
+          "nome": "Child's pose con allungo dorsale",
+          "dose": "45 s",
+          "come": "Ginocchia larghe, braccia distese avanti, spingi il petto verso il pavimento."
+        },
+        {
+          "nome": "Flessori dell'anca in affondo",
+          "dose": "30 s per lato",
+          "come": "Ginocchio dietro a terra, bacino in retroversione, spingi avanti."
+        }
+      ]
+    },
+    "dorso-femorali": {
+      "mobilita": [
+        {
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+        },
+        {
+          "nome": "Thread the needle",
+          "dose": "8 per lato",
+          "come": "In quadrupedia, fai passare un braccio sotto il corpo ruotando il torace."
+        },
+        {
+          "nome": "Circonduzioni delle braccia",
+          "dose": "10 per verso",
+          "come": "In piedi, braccia tese, cerchi ampi e lenti."
+        },
+        {
+          "nome": "Hip hinge con bastone",
+          "dose": "10 ripetizioni",
+          "come": "Bastone a nuca, sacro e testa: manda indietro il bacino mantenendo i tre contatti."
+        },
+        {
+          "nome": "Leg swing avanti e indietro",
+          "dose": "10 per lato",
+          "come": "Appoggiata a una parete, gamba rilassata che oscilla."
+        },
+        {
+          "nome": "Ponte glutei a corpo libero",
+          "dose": "15 ripetizioni",
+          "come": "A terra, ginocchia piegate, spinta dai talloni, un secondo di pausa in alto."
+        },
+        {
+          "nome": "Step-up lenti a corpo libero",
+          "dose": "8 per lato",
+          "come": "Su un gradino basso, salita e discesa controllate, senza carico."
+        }
+      ],
+      "stretchingFinale": [
+        {
+          "nome": "Femorali in piedi",
+          "dose": "30 s per lato",
+          "come": "Tallone su un rialzo basso, piegati dall'anca."
+        },
+        {
+          "nome": "Gran dorsale al montante",
+          "dose": "30 s per lato",
+          "come": "Mani su un appoggio ad altezza bacino, siediti indietro allungando il fianco."
+        },
+        {
+          "nome": "Piriforme da seduta",
+          "dose": "30 s per lato",
+          "come": "Caviglia sul ginocchio opposto, tira il ginocchio verso il petto."
+        }
+      ]
+    },
+    "recupero-attivo-a": {
+      "mobilita": [
+        {
+          "nome": "Respirazione diaframmatica supina",
+          "dose": "10 respiri",
+          "come": "Una mano sul petto e una sull'addome: si muove solo quella sull'addome."
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+        },
+        {
+          "nome": "Circonduzioni delle caviglie",
+          "dose": "10 per verso, per lato",
+          "come": "Sdraiata o seduta, movimento lento e completo."
+        },
+        {
+          "nome": "Ginocchia al petto alternate",
+          "dose": "8 per lato",
+          "come": "Supina, lente, senza staccare la lombare da terra."
+        },
+        {
+          "nome": "Rotazioni del bacino supine",
+          "dose": "8 per lato",
+          "come": "Ginocchia unite che cadono da un lato all'altro, spalle a terra."
+        }
+      ],
+      "stretchingFinale": [
+        {
+          "nome": "Polpaccio al muro",
+          "dose": "30 s per lato",
+          "come": "Mani al muro, gamba dietro tesa, tallone a terra."
+        },
+        {
+          "nome": "Femorali da seduta",
+          "dose": "30 s per lato",
+          "come": "Una gamba tesa, l'altra piegata: piegati dall'anca tenendo la schiena lunga."
+        },
+        {
+          "nome": "Gambe al muro",
+          "dose": "5 min",
+          "come": "Sdraiata a terra con le gambe verticali appoggiate alla parete. È il passaggio scelto per il drenaggio venoso: chiude bene una giornata seduta."
+        }
+      ]
+    },
+    "recupero-attivo-b": {
+      "mobilita": [
+        {
+          "nome": "Respirazione diaframmatica supina",
+          "dose": "10 respiri",
+          "come": "Una mano sul petto e una sull'addome: si muove solo quella sull'addome."
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+        },
+        {
+          "nome": "Circonduzioni delle caviglie",
+          "dose": "10 per verso, per lato",
+          "come": "Sdraiata o seduta, movimento lento e completo."
+        },
+        {
+          "nome": "Ginocchia al petto alternate",
+          "dose": "8 per lato",
+          "come": "Supina, lente, senza staccare la lombare da terra."
+        },
+        {
+          "nome": "Rotazioni del bacino supine",
+          "dose": "8 per lato",
+          "come": "Ginocchia unite che cadono da un lato all'altro, spalle a terra."
+        }
+      ],
+      "stretchingFinale": [
+        {
+          "nome": "Polpaccio al muro",
+          "dose": "30 s per lato",
+          "come": "Mani al muro, gamba dietro tesa, tallone a terra."
+        },
+        {
+          "nome": "Femorali da seduta",
+          "dose": "30 s per lato",
+          "come": "Una gamba tesa, l'altra piegata: piegati dall'anca tenendo la schiena lunga."
+        },
+        {
+          "nome": "Gambe al muro",
+          "dose": "5 min",
+          "come": "Sdraiata a terra con le gambe verticali appoggiate alla parete. È il passaggio scelto per il drenaggio venoso: chiude bene una giornata seduta."
+        }
       ]
     }
   }

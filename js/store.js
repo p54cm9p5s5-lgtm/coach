@@ -943,6 +943,10 @@ export const ETICHETTE_PATTERN = {
   bicipiti: "Bicipiti isolati",
   tricipiti: "Tricipiti isolati",
   dorsaliAltro: "Dorsali (altro)",
+  // Non è uno schema di forza: sono le attività dei giorni di recupero attivo
+  // (Pilates, camminata). Sta a parte per non gonfiare il volume del core con
+  // sedute che allenanti non sono.
+  recupero: "Recupero attivo",
 };
 
 // ---------- decisioni ----------
