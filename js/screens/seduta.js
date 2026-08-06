@@ -881,7 +881,7 @@ async function vistaRiscaldamento(corpo, piede) {
     )
   );
 
-  aggiungi(piede, 
+  aggiungiPiede(piede, 
     h(
       "button.btn",
       {
@@ -1045,9 +1045,22 @@ async function vistaEsercizio(corpo, piede) {
   // «Fine» registra i secondi davvero fatti — perché mollare a 38 su 45 va
   // scritto, non arrotondato al previsto.
   if (v.aTempo) {
-    aggiungi(piede, ...piedeCronometro(v, def, n));
+    aggiungiPiede(piede, ...piedeCronometro(v, def, n));
   } else {
-    aggiungi(piede,
+    // I due tasti di servizio stanno SOPRA e il tasto vero in fondo. È la
+    // stessa posizione che ha «Pronto» nel recupero: durante una serie si
+    // alterna fra queste due schermate decine di volte, e avere il tasto
+    // principale ora in alto ora in basso faceva centrare «Salta esercizio»
+    // a chi mirava a «Serie completata». In fondo, per giunta, un tocco
+    // troppo basso finisce sul bordo dello schermo invece che su un tasto
+    // che salta l'esercizio.
+    aggiungiPiede(piede,
+      h(
+        "div",
+        { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" },
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, inv)) }, "Cambia carico"),
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
+      ),
       h(
         "button.btn",
         {
@@ -1057,12 +1070,6 @@ async function vistaEsercizio(corpo, piede) {
           }),
         },
         "Serie completata"
-      ),
-      h(
-        "div",
-        { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
-        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, inv)) }, "Cambia carico"),
-        h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
       )
     );
   }
@@ -1124,10 +1131,34 @@ function quadranteCronometro(v, n) {
   );
 }
 
+/**
+ * Mette i tasti nel piede della seduta con una regola sola: **il tasto che
+ * porta avanti sta sempre in fondo**, sotto ai tasti di servizio.
+ *
+ * Durante una serie si passa dalla schermata dell'esercizio a quella del
+ * recupero decine di volte. Finché il tasto principale stava in alto qui e in
+ * basso là, il pollice andava a memoria e centrava «Salta esercizio» al posto
+ * di «Serie completata». Mettendolo in fondo dappertutto il bersaglio è
+ * sempre nello stesso punto, ed è il punto più comodo da raggiungere; un tocco
+ * che scivola troppo in basso finisce sul bordo dello schermo invece che su un
+ * tasto che salta l'esercizio.
+ */
+function aggiungiPiede(piede, ...figli) {
+  const vivi = figli.filter(Boolean);
+  const avanti = vivi.filter((x) => x.classList?.contains("btn") && !x.classList.contains("secondary"));
+  aggiungi(piede, ...vivi.filter((x) => !avanti.includes(x)), ...avanti);
+}
+
 function piedeCronometro(v, def, n) {
   const inCorso = Boolean(S.cronoFine);
   if (!inCorso) {
     return [
+      h(
+        "div",
+        { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" },
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, null)) }, "Cambia carico"),
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
+      ),
       h(
         "button.btn",
         {
@@ -1140,12 +1171,6 @@ function piedeCronometro(v, def, n) {
           }),
         },
         `Avvia · ${v.durataSec}s`
-      ),
-      h(
-        "div",
-        { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
-        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, null)) }, "Cambia carico"),
-        h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
       ),
     ];
   }
@@ -1673,10 +1698,10 @@ async function vistaRecupero(corpo, piede) {
       : { onclick: azione(chiudiRecupero) },
     ultimaSerie ? "Avanti" : "Pronto"
   );
-  aggiungi(piede, 
+  aggiungiPiede(piede, 
     h(
       "div",
-      { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
+      { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" },
       h("button.btn.secondary", { onclick: () => spostaTimer(-15) }, "−15 s"),
       h("button.btn.secondary", { onclick: () => spostaTimer(15) }, "+15 s")
     ),
@@ -2061,7 +2086,7 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false) {
     // Il recupero ha bisogno di sapere se può far avanzare e come salvare.
     return { completo: () => !avanti.disabled, mancano, conferma, verifica };
   }
-  aggiungi(piede, mancano, avanti);
+  aggiungiPiede(piede, mancano, avanti);
   verifica();
   ridisegnaPunteggio();
 
@@ -2217,7 +2242,7 @@ async function vistaCardio(corpo, piede) {
   );
   controlla();
 
-  aggiungi(piede,
+  aggiungiPiede(piede,
     h(
       "button.btn",
       {
@@ -2365,10 +2390,10 @@ async function vistaCardioInCorso(corpo, piede, r) {
 
   const pulsante = h("button.btn", { onclick: azione(chiudiCardio) }, "Ho finito");
 
-  aggiungi(piede,
+  aggiungiPiede(piede,
     h(
       "div",
-      { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" },
+      { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" },
       h("button.btn.secondary", { onclick: () => spostaCardio(-5) }, "−5 min"),
       h("button.btn.secondary", { onclick: () => spostaCardio(5) }, "+5 min")
     ),
@@ -2463,7 +2488,7 @@ async function vistaStretching(corpo, piede) {
       : null
   );
 
-  aggiungi(piede,
+  aggiungiPiede(piede,
     h(
       "button.btn",
       {
@@ -2705,7 +2730,7 @@ async function vistaFine(corpo, piede) {
     h("textarea.note", { id: "nota-seduta", value: S.sed.notaGenerale || "" })
   );
 
-  aggiungi(piede, 
+  aggiungiPiede(piede, 
     h("button.btn", {
       onclick: azione(async () => {
         await store.chiudiSeduta(S.sed.id, { notaGenerale: qs("#nota-seduta")?.value || null });

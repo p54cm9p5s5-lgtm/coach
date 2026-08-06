@@ -313,7 +313,9 @@ export function selettorePeriodo(periodo, onCambia) {
         "button",
         {
           "aria-pressed": p.id === periodo.id,
-          style: "min-height:34px;font-size:14px",
+          // 44 px come tutto il resto: erano 34 e in quattro su una riga sola
+          // il dito ne prendeva facilmente uno accanto a quello mirato.
+          style: "min-height:44px;font-size:14px",
           onclick: async () => {
             if (p.id === periodo.id) return;
             try {

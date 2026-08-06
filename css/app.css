@@ -287,7 +287,7 @@ a.row:active {
 .btn {
   display: block;
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: var(--accent);
@@ -468,23 +468,37 @@ a.row:active {
 }
 
 .session-foot {
-  padding: 10px var(--pad) calc(env(safe-area-inset-bottom) + 10px);
+  padding: 10px var(--pad) calc(env(safe-area-inset-bottom) + 12px);
   border-top: 0.5px solid var(--separator);
   background: var(--bar-bg);
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .session-foot .btn {
-  min-height: 50px;
+  min-height: 54px;
   font-size: 17px;
   border-radius: 12px;
 }
 
+/* I tasti di servizio restano più piccoli di quello principale, ma non sotto
+   i 44 px: è la misura minima perché un dito li prenda al primo colpo. */
 .session-foot .btn.secondary {
-  min-height: 38px;
+  min-height: 44px;
   font-size: 15px;
   font-weight: 500;
+}
+
+/* Un fosso fra i tasti di servizio e quello che porta avanti. Con otto pixel
+   di stacco un tocco un po' alto su «Serie completata» finiva su «Salta
+   esercizio»: il polpastrello è largo quasi un centimetro, molto più della
+   distanza che li separava. */
+.session-foot > :last-child {
+  margin-top: 10px;
+}
+
+.session-foot > :only-child {
+  margin-top: 0;
 }
 
 .hero {
@@ -650,7 +664,7 @@ a.row:active {
 }
 
 .segmented button {
-  min-height: 42px;
+  min-height: 44px;
   border: 0;
   border-radius: 8px;
   background: none;
@@ -680,7 +694,17 @@ a.row:active {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px var(--pad);
+  padding: 10px var(--pad);
+}
+
+/* Due campi uno sopra l'altro hanno i tasti nella stessa colonna: «+» delle
+   ripetizioni finisce esattamente sopra «+» dei chili. Con soli sedici pixel
+   in mezzo e nessuna riga a separarli, il dito prendeva l'uno per l'altro e
+   te ne accorgevi solo guardando il numero. Riga di stacco e più aria. */
+.field + .field {
+  border-top: 0.5px solid var(--separator);
+  margin-top: 8px;
+  padding-top: 16px;
 }
 
 .field label {
@@ -699,8 +723,8 @@ a.row:active {
 }
 
 .stepper button {
-  width: 52px;
-  min-height: 44px;
+  width: 56px;
+  min-height: 48px;
   border: 0;
   background: none;
   font-size: 22px;

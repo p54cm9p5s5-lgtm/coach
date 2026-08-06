@@ -253,8 +253,11 @@ export function chiedi({ titolo, testo, opzioni, annulla = true }) {
       titolo && h("h2", titolo),
       testo && h("p", { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" }, testo),
       h(
+        // Dodici pixel fra una scelta e l'altra, non otto: qui dentro capita
+        // che una delle opzioni cancelli un dato, e con i tasti appiccicati un
+        // tocco impreciso sceglie quella sbagliata.
         "div.btn-wrap",
-        { style: "display:grid;gap:8px" },
+        { style: "display:grid;gap:12px" },
         ...opzioni.map((o) =>
           h(
             "button",
