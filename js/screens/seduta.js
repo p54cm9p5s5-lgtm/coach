@@ -1073,7 +1073,12 @@ async function vistaEsercizio(corpo, piede) {
  * sull'orologio, non su un contatore che gira solo mentre guardi.
  */
 function quadranteCronometro(v, n) {
-  const testo = h("p.timer", `${v.durataSec}`);
+  // Un plank da 45 secondi si legge bene come numero secco; una camminata da
+  // 3600 mostrerebbe «3600», che non vuol dire niente. Sopra il minuto si
+  // passa ai minuti, come nel recupero.
+  const lungo = (v.durataSec || 0) >= 60;
+  const mostra = (sec) => (lungo ? mmss(sec) : String(Math.ceil(sec)));
+  const testo = h("p.timer", mostra(v.durataSec || 0));
   const CIRC = 2 * Math.PI * 100;
   const anello = h("circle.prog", {
     cx: 108, cy: 108, r: 100,
@@ -1092,7 +1097,7 @@ function quadranteCronometro(v, n) {
     const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
     anello.style.strokeDashoffset = String(CIRC * (1 - quota));
     if (restanti > 0) {
-      testo.textContent = String(Math.ceil(restanti));
+      testo.textContent = mostra(restanti);
       quadrante.classList.remove("done");
       testo.classList.remove("done");
       if (restanti <= 3 && !preavvisoFatto) {
@@ -1102,7 +1107,7 @@ function quadranteCronometro(v, n) {
     } else {
       // Arrivato a zero: la posizione l'hai tenuta tutta. Suona, e resta lì
       // finché non tocchi «Fine» — il tempo in più non viene contato.
-      testo.textContent = "0";
+      testo.textContent = lungo ? "00:00" : "0";
       quadrante.classList.add("done");
       testo.classList.add("done");
       if (!allarmeAttivo()) avviaAllarme();
@@ -1113,9 +1118,11 @@ function quadranteCronometro(v, n) {
   S.timerHandle = setInterval(aggiorna, 200);
   return h(
     "div.hero",
-    h("p.kicker", `Serie ${n} di ${v.serie} · tieni la posizione`),
+    // Un plank si tiene, una sessione di Pilates o una camminata da un'ora si
+    // fanno: il verbo lo decide la durata, non la schermata.
+    h("p.kicker", `Serie ${n} di ${v.serie} · ${lungo ? "in corso" : "tieni la posizione"}`),
     quadrante,
-    h("p.target", `Previsti ${v.durataSec}s · «Fine» se molli prima`)
+    h("p.target", `Previsti ${durataScritta(v.durataSec || 0)} · «Fine» se molli prima`)
   );
 }
 
@@ -1376,7 +1383,7 @@ function piedeCronometro(v, def, n) {
             await disegna();
           }),
         },
-        `Avvia · ${v.durataSec}s`
+        `Avvia · ${durataScritta(v.durataSec || 0)}`
       ),
     ];
   }
@@ -1498,6 +1505,11 @@ async function cambiaVideo(def) {
 
 async function modificaCarico(def, inv) {
   const bilanciere = def?.attrezzo === "bilanciere";
+  // Un esercizio a corpo libero può avere lo stesso un carico addosso: un disco
+  // sulla coscia nelle abduzioni, un manubrio sul bacino nel ponte. Chiamarlo
+  // «peso di un singolo manubrio» era sbagliato, e chiamarlo «peso totale
+  // bilanciere compreso» pure.
+  const conManubri = (def?.attrezzo || "").toLowerCase().includes("manubri");
   const partenza = S.caricoCorrente ?? 0;
 
   const scelto = await sheet((close) => {
@@ -1534,8 +1546,12 @@ async function modificaCarico(def, inv) {
         aiuto.textContent = "Scrivi un numero, per esempio 22,5";
         return;
       }
-      if (!bilanciere) {
+      if (conManubri) {
         aiuto.textContent = `${num(v)} kg per manubrio`;
+        return;
+      }
+      if (!bilanciere) {
+        aiuto.textContent = `${num(v)} kg aggiunti al corpo libero`;
         return;
       }
       const d = descriviDischi(v, inv);
@@ -1552,7 +1568,11 @@ async function modificaCarico(def, inv) {
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        bilanciere ? "Peso totale, bilanciere compreso." : "Peso di un singolo manubrio."
+        bilanciere
+          ? "Peso totale, bilanciere compreso."
+          : conManubri
+            ? "Peso di un singolo manubrio."
+            : "Peso che tieni addosso o in mano."
       ),
       campo,
       aiuto,

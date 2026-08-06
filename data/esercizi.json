@@ -651,6 +651,421 @@
         "Gomiti che si allontanano dai fianchi."
       ],
       "cue": "Presa neutra dall'inizio alla fine. È la variante più gentile con il polso."
+    },
+    {
+      "id": "flessioni",
+      "nome": "Flessioni a terra",
+      "pattern": "spinta",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 120,
+      "setup": [
+        "Mani a terra poco più larghe delle spalle, all'altezza della parte bassa del petto.",
+        "Corpo in linea da testa a talloni: glutei contratti, bacino in retroversione.",
+        "Scapole leggermente addotte, sguardo 20-30 cm avanti alle mani."
+      ],
+      "esecuzione": [
+        "Scendi in 2 secondi portando lo sterno verso il pavimento, gomiti a circa 45° dal busto.",
+        "Mezzo secondo di pausa in basso, senza appoggiarti a terra.",
+        "Risali in 1 secondo tenendo il corpo come un unico blocco rigido."
+      ],
+      "erroriComuni": [
+        "Testa che tocca il pavimento prima del petto: carica il collo e fa sembrare il range più ampio di quello vero.",
+        "Bacino che si alza o si appiattisce: il bracing è stato perso a metà ripetizione.",
+        "Gomiti aperti a 90°: stress sulla capsula anteriore della spalla.",
+        "Discesa rapida con rimbalzo in basso."
+      ],
+      "cue": "Il corpo è una tavola: solo i gomiti si piegano.",
+      "sicurezza": "Con dolore ai polsi usa impugnature o manubri esagonali per tenere il polso neutro. Se le ripetizioni pulite scendono sotto sei, passa alla variante con le mani rialzate."
+    },
+    {
+      "id": "ponte-glutei-piedi-rialzati",
+      "nome": "Ponte per glutei con piedi sulla panca",
+      "pattern": "femorali",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 120,
+      "setup": [
+        "Schiena a terra, talloni sul bordo della panca, ginocchia a circa 90°.",
+        "Manubrio sulla piega dell'anca, trattenuto con entrambe le mani.",
+        "Mento raccolto, sguardo avanti."
+      ],
+      "esecuzione": [
+        "Spingi dai talloni e alza il bacino fino ad allineare spalle, anca e ginocchia.",
+        "Un secondo di pausa in alto con i glutei contratti.",
+        "Scendi in 2 secondi fino a sfiorare il pavimento, senza appoggiarti."
+      ],
+      "erroriComuni": [
+        "Inarcare la schiena in alto invece di estendere l'anca: il lavoro passa dai glutei alla lombare.",
+        "Spingere dagli avampiedi: sposta il carico sui femorali e fa venire i crampi.",
+        "Panca troppo alta: l'anca parte già troppo flessa.",
+        "Appoggiare il bacino a terra fra una ripetizione e l'altra, perdendo tensione."
+      ],
+      "cue": "Spingi via il pavimento con i talloni, non inarcare la schiena.",
+      "sicurezza": "Controlla che la panca non scivoli sotto la spinta dei piedi. Oltre i 12 kg metti un cuscinetto sotto il manubrio."
+    },
+    {
+      "id": "military-press-manubri",
+      "nome": "Military press con manubri",
+      "pattern": "spinta",
+      "attrezzo": "manubri",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 120,
+      "setup": [
+        "In piedi, piedi a larghezza anche, manubri all'altezza delle spalle con presa prona.",
+        "Gomiti leggermente avanti rispetto al piano frontale.",
+        "Addome attivo, glutei contratti, costole basse: niente apertura del torace verso l'alto."
+      ],
+      "esecuzione": [
+        "Spingi verso l'alto e leggermente indietro fino a braccia tese, manubri sopra la verticale delle spalle.",
+        "Non far toccare i manubri fra loro in cima.",
+        "Scendi in 2 secondi fino all'altezza del mento."
+      ],
+      "erroriComuni": [
+        "Inarcare la lombare per compensare la mobilità della spalla: è l'errore più frequente e il più costoso.",
+        "Gomiti troppo aperti sul piano frontale: aumenta il conflitto sub-acromiale.",
+        "Aiutarsi con lo slancio delle gambe: diventa un push press.",
+        "Polso che si piega all'indietro sotto il peso."
+      ],
+      "cue": "Costole basse, spingi il soffitto lontano.",
+      "sicurezza": "Con dolore alla spalla riduci il range o passa alla presa neutra, palmi rivolti l'uno verso l'altro."
+    },
+    {
+      "id": "dead-bug",
+      "nome": "Dead bug",
+      "pattern": "core",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "Supina, anche e ginocchia a 90°, tibie parallele al pavimento.",
+        "Braccia tese verso il soffitto.",
+        "La zona lombare deve toccare il pavimento per tutta la durata: è il riferimento che rende l'esercizio quello che è."
+      ],
+      "esecuzione": [
+        "Estendi lentamente il braccio destro dietro la testa e la gamba sinistra in avanti, fino a sfiorare il pavimento.",
+        "Torna alla partenza controllando, poi alterna i lati.",
+        "Espira durante l'estensione."
+      ],
+      "erroriComuni": [
+        "Lombare che si stacca dal pavimento: l'esercizio smette di allenare l'anti-estensione.",
+        "Movimento veloce che usa lo slancio.",
+        "Trattenere il fiato invece di espirare.",
+        "Estendere l'arto oltre il proprio controllo: meglio ridurre il range."
+      ],
+      "cue": "Schiaccia la lombare contro il pavimento e non lasciarla andare.",
+      "sicurezza": "Nessun rischio particolare. Se la lombare si stacca, riduci il range invece di continuare."
+    },
+    {
+      "id": "rematore-bilanciere-presa-inversa",
+      "nome": "Rematore bilanciere presa inversa",
+      "pattern": "tirataOrizzontale",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 120,
+      "setup": [
+        "Presa supina, palmi in avanti, larghezza spalle.",
+        "Busto inclinato a circa 45°, ginocchia morbide, bacino indietro.",
+        "Schiena neutra, scapole leggermente addotte, sguardo a terra un metro avanti."
+      ],
+      "esecuzione": [
+        "Tira il bilanciere verso la parte bassa dell'addome, gomiti indietro e vicini al busto.",
+        "Mezzo secondo di pausa con le scapole avvicinate.",
+        "Scendi in 2 secondi fino a braccia quasi tese, senza muovere il busto."
+      ],
+      "erroriComuni": [
+        "Busto che si solleva a ogni ripetizione per aiutare la tirata: il carico è troppo alto.",
+        "Schiena che perde la posizione neutra e va in flessione.",
+        "Tirare solo con le braccia, senza retrarre le scapole.",
+        "Portare i gomiti dietro il tronco più del necessario."
+      ],
+      "cue": "Gomiti nelle tasche posteriori.",
+      "sicurezza": "La presa supina carica il bicipite vicino al gomito: con una storia di dolore al gomito riduci carico e profondità di tirata."
+    },
+    {
+      "id": "box-squat",
+      "nome": "Box squat con bilanciere",
+      "pattern": "quadricipiti",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 120,
+      "setup": [
+        "Panca dietro, alla distanza che permette di sedersi senza spostare i piedi.",
+        "Bilanciere in appoggio alto sui trapezi, piedi a larghezza spalle, punte leggermente aperte.",
+        "Addome attivo, sguardo avanti."
+      ],
+      "esecuzione": [
+        "Manda prima il bacino indietro, poi scendi in 3 secondi controllati fino a sfiorare la panca.",
+        "Non rilassarti sulla panca: mantieni la tensione.",
+        "Risali spingendo da talloni e mesopiede, estendendo anca e ginocchio insieme."
+      ],
+      "erroriComuni": [
+        "Crollare seduta sulla panca perdendo la tensione: è il rischio principale di questo esercizio.",
+        "Ginocchia che collassano verso l'interno in risalita.",
+        "Talloni che si staccano da terra.",
+        "Discesa più rapida dei tre secondi previsti."
+      ],
+      "cue": "Bacino indietro per primo, poi giù lentamente.",
+      "sicurezza": "Se un ginocchio entra verso l'interno in risalita, riduci il range e attiva il medio gluteo prima della serie. Una ripresa frontale ogni tre o quattro settimane è il modo più semplice per accorgersene."
+    },
+    {
+      "id": "split-squat-appoggiato",
+      "nome": "Split squat con appoggio leggero",
+      "pattern": "quadricipiti",
+      "attrezzo": "manubri",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 120,
+      "setup": [
+        "Affondo statico: un piede avanti, l'altro dietro con l'avampiede a terra, non sulla panca.",
+        "Una mano sfiora un appoggio stabile per l'equilibrio, senza scaricarci peso.",
+        "Manubri lungo i fianchi, busto verticale."
+      ],
+      "esecuzione": [
+        "Scendi in 2-3 secondi piegando entrambe le ginocchia, fino a portare il ginocchio dietro vicino al pavimento.",
+        "Il ginocchio avanti resta allineato sopra il piede.",
+        "Risali spingendo dal tallone della gamba avanti."
+      ],
+      "erroriComuni": [
+        "Scaricare peso sulla mano d'appoggio: diventa un esercizio su due gambe.",
+        "Busto che si inclina avanti: il lavoro passa dai quadricipiti alla catena posteriore.",
+        "Ginocchio avanti che va verso l'interno.",
+        "Passo troppo corto: il ginocchio avanza troppo oltre la punta."
+      ],
+      "cue": "Scendi in verticale, come un ascensore.",
+      "sicurezza": "L'appoggio serve all'equilibrio, non a reggere peso. Toglilo solo quando il controllo su una gamba sola è stabile."
+    },
+    {
+      "id": "abduzioni-decubito-laterale",
+      "nome": "Abduzioni d'anca in decubito laterale",
+      "pattern": "femorali",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "Sdraiata su un fianco, corpo in linea, testa appoggiata sul braccio sotto.",
+        "Gamba sotto leggermente piegata per stabilità, gamba sopra tesa.",
+        "Disco o manubrio leggero appoggiato sulla parte esterna della coscia, trattenuto con la mano libera."
+      ],
+      "esecuzione": [
+        "Solleva la gamba tesa di 30-45°, piede in posizione neutra o leggermente ruotato verso l'interno.",
+        "Un secondo di pausa in alto.",
+        "Scendi in 2 secondi senza appoggiare la gamba a terra."
+      ],
+      "erroriComuni": [
+        "Ruotare il bacino indietro per alzare di più: il lavoro passa dal medio gluteo al tensore della fascia lata.",
+        "Punta del piede ruotata verso l'alto: stesso effetto.",
+        "Salire oltre il range del medio gluteo.",
+        "Movimento rapido con slancio."
+      ],
+      "cue": "Bacino fermo, alza solo la gamba.",
+      "sicurezza": "Nessun rischio particolare. È il sostituto corretto degli slanci laterali con carichi alti alla caviglia, che a leva lunga non si controllano."
+    },
+    {
+      "id": "rdl-manubri",
+      "nome": "Stacco rumeno con manubri",
+      "pattern": "femorali",
+      "attrezzo": "manubri",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 120,
+      "setup": [
+        "In piedi, piedi a larghezza anche, manubri davanti alle cosce con presa prona.",
+        "Ginocchia morbide, non bloccate.",
+        "Scapole leggermente addotte, addome attivo."
+      ],
+      "esecuzione": [
+        "Manda il bacino indietro e scendi tenendo i manubri a contatto con le gambe.",
+        "Fermati dove senti l'allungamento dei femorali, di solito poco sotto il ginocchio.",
+        "Risali spingendo il bacino avanti e contraendo i glutei."
+      ],
+      "erroriComuni": [
+        "Piegare le ginocchia e trasformarlo in uno squat: è un movimento d'anca, non di ginocchio.",
+        "Perdere la posizione neutra della lombare in basso: è l'errore che costa di più qui.",
+        "Manubri che si allontanano dalle gambe: aumenta la leva sulla schiena.",
+        "Scendere oltre l'allungamento disponibile."
+      ],
+      "cue": "Chiudi la portiera dell'auto con il sedere.",
+      "sicurezza": "Al primo segno di perdita della posizione lombare la serie finisce. Non esiste una ripetizione in più che valga un compenso di schiena."
+    },
+    {
+      "id": "donkey-kick",
+      "nome": "Donkey kick con appoggio sulla panca",
+      "pattern": "femorali",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 90,
+      "setup": [
+        "Avambracci o mani sulla panca, busto inclinato, ginocchia a terra sotto le anche.",
+        "Schiena neutra, addome attivo.",
+        "Bacino in leggera retroversione."
+      ],
+      "esecuzione": [
+        "Porta indietro e in alto una gamba tenendo il ginocchio piegato a 90°, come a spingere il soffitto con la pianta.",
+        "Un secondo di pausa con il gluteo contratto.",
+        "Torna alla partenza controllando, senza appoggiare il ginocchio."
+      ],
+      "erroriComuni": [
+        "Inarcare la lombare per alzare di più la gamba: il lavoro passa alla schiena.",
+        "Ruotare il bacino verso il lato che lavora.",
+        "Aprire il ginocchio verso l'esterno.",
+        "Movimento rapido che perde la contrazione del gluteo."
+      ],
+      "cue": "Il bacino resta quadrato, si muove solo la gamba.",
+      "sicurezza": "Con dolore ai polsi appoggia gli avambracci invece delle mani."
+    },
+    {
+      "id": "rematore-bilanciere-presa-larga",
+      "nome": "Rematore bilanciere presa larga",
+      "pattern": "deltoidePosteriore",
+      "attrezzo": "bilanciere",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "Presa prona, più larga delle spalle.",
+        "Busto inclinato a circa 45°, ginocchia morbide, bacino indietro.",
+        "Schiena neutra."
+      ],
+      "esecuzione": [
+        "Tira il bilanciere verso lo sterno, con i gomiti alti e aperti sul piano frontale, non verso i fianchi.",
+        "Mezzo secondo di pausa in alto.",
+        "Scendi in 2 secondi controllati."
+      ],
+      "erroriComuni": [
+        "Tirare con i gomiti stretti al busto: diventa il rematore classico e la presa larga non serve più a niente.",
+        "Busto che si solleva per aiutare.",
+        "Carico troppo alto: con i gomiti alti la leva è sfavorevole e i pesi restano più bassi del rematore classico.",
+        "Perdere la posizione neutra della lombare."
+      ],
+      "cue": "Gomiti alti, tira verso lo sterno.",
+      "sicurezza": "I gomiti alti aumentano il conflitto sub-acromiale: se compare fastidio alla spalla, abbassa un po' il punto di tirata."
+    },
+    {
+      "id": "step-up",
+      "nome": "Step-up sulla panca",
+      "pattern": "quadricipiti",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "Di fronte alla panca, un piede appoggiato per intero sulla superficie.",
+        "L'altezza giusta porta il ginocchio a circa 90°.",
+        "Busto eretto, addome attivo."
+      ],
+      "esecuzione": [
+        "Sali spingendo solo con la gamba sopra, senza slancio della gamba a terra.",
+        "Estendi completamente l'anca in cima.",
+        "Scendi in 3 secondi controllati, appoggiando prima la punta e poi il tallone."
+      ],
+      "erroriComuni": [
+        "Spingere con la gamba a terra per salire: annulla il senso dell'esercizio.",
+        "Lasciarsi cadere in discesa invece di controllare i tre secondi, che sono la parte più utile.",
+        "Ginocchio che va verso l'interno in salita.",
+        "Busto che si inclina in avanti."
+      ],
+      "cue": "La gamba sotto non spinge: è solo appoggiata.",
+      "sicurezza": "Controlla la stabilità della panca prima di ogni serie. Per la stabilità su una gamba sola la qualità della discesa conta più del numero di ripetizioni."
+    },
+    {
+      "id": "pallof-press-manubrio",
+      "nome": "Pallof press con manubrio",
+      "pattern": "core",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "In piedi, piedi a larghezza spalle, ginocchia morbide.",
+        "Manubrio tenuto con entrambe le mani all'altezza dello sterno.",
+        "Addome attivo, glutei contratti, bacino in leggera retroversione."
+      ],
+      "esecuzione": [
+        "Estendi le braccia in avanti fino a distenderle, tenendo il tronco assolutamente fermo.",
+        "Due secondi di pausa con le braccia tese.",
+        "Riporta il manubrio allo sterno controllando."
+      ],
+      "erroriComuni": [
+        "Ruotare o inclinare il tronco durante l'estensione.",
+        "Inarcare la lombare quando il peso si allontana dal corpo.",
+        "Alzare le spalle verso le orecchie.",
+        "Estensione rapida che sfrutta lo slancio."
+      ],
+      "cue": "Il tronco è di pietra, si muovono solo le braccia.",
+      "sicurezza": "Con il manubrio la resistenza è verticale, quindi qui non c'è lavoro anti-rotazione: è una spinta frontale anti-estensione. Con l'attrezzatura disponibile il sostituto corretto è il suitcase hold, manubrio in una mano, 30 secondi per lato."
+    },
+    {
+      "id": "pilates",
+      "nome": "Sessione di Pilates",
+      "pattern": "recupero",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": true,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "Tappetino e spazio libero attorno.",
+        "Sessione guidata da video o da sequenza propria, 20-30 minuti.",
+        "Alterna il focus fra parte alta e parte bassa nelle due sedute della settimana."
+      ],
+      "esecuzione": [
+        "Movimenti lenti e controllati, respiro coordinato al movimento.",
+        "Attenzione costante alla posizione del bacino e alla lombare neutra.",
+        "Intensità bassa: è recupero attivo, non una seconda seduta di forza."
+      ],
+      "erroriComuni": [
+        "Trasformarla in un allenamento intenso, azzerando la funzione di recupero.",
+        "Trattenere il respiro nei passaggi difficili.",
+        "Compensare con collo e spalle nei lavori di core.",
+        "Saltarla nelle settimane piene: è la seduta che tiene insieme mobilità e continuità."
+      ],
+      "cue": "Respira e controlla: oggi non si spinge.",
+      "sicurezza": "Con articolazioni molto mobili evita i finali di range in iperestensione e non forzare gli allunghi. In quadrupedia appoggia gli avambracci se i polsi danno fastidio."
+    },
+    {
+      "id": "camminata",
+      "nome": "Camminata",
+      "pattern": "recupero",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "Cinque chilometri, 4-5 km/h, zero inclinazione.",
+        "Tapis roulant o all'aperto.",
+        "Scarpe con ammortizzazione adeguata."
+      ],
+      "esecuzione": [
+        "Andatura costante, passo naturale, busto eretto, spalle rilassate.",
+        "Nessuna variazione di intensità.",
+        "L'obiettivo è volume aerobico a bassa intensità, non uno stimolo cardiovascolare intenso."
+      ],
+      "erroriComuni": [
+        "Alzare la velocità fino a renderla un allenamento, compromettendo il recupero.",
+        "Scendere sotto i 4 km/h, che abbassa parecchio il dispendio.",
+        "Saltarla nei giorni pieni: è la principale fonte di movimento di una giornata sedentaria."
+      ],
+      "cue": "Passo costante, respiro che permette di parlare.",
+      "sicurezza": "Nessun rischio particolare. A bassa intensità è l'attività che favorisce di più la circolazione di ritorno delle gambe."
+    },
+    {
+      "id": "calf-manubrio",
+      "nome": "Calf raise con un manubrio",
+      "pattern": "polpacci",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "In piedi, avampiedi su un disco o un rialzo basso, talloni liberi di scendere.",
+        "Un manubrio in una mano lungo il fianco, l'altra mano appoggiata a un sostegno per l'equilibrio.",
+        "Busto eretto, ginocchia tese ma non bloccate."
+      ],
+      "esecuzione": [
+        "Scendi con i talloni sotto il livello dell'avampiede fino a sentire l'allungamento del polpaccio.",
+        "Sali sulla punta il più in alto possibile e tieni un secondo in contrazione.",
+        "Scendi in 2 secondi controllati, senza rimbalzare in basso."
+      ],
+      "erroriComuni": [
+        "Rimbalzare in basso usando l'elasticità del tendine invece del muscolo.",
+        "Range parziale: non scendere sotto il livello dell'appoggio annulla metà del lavoro.",
+        "Piegare le ginocchia durante la salita.",
+        "Scaricare peso sulla mano che tiene il sostegno."
+      ],
+      "cue": "Sali il più in alto che puoi, scendi il più in basso che puoi.",
+      "sicurezza": "Fatto lento e completo lavora anche come pompa per la circolazione di ritorno: meglio il range pieno che il carico alto."
     }
   ]
 }
