@@ -926,10 +926,12 @@ async function vistaEsercizio(corpo, piede) {
   S.caricoCorrente = S.caricoCorrente ?? S.sed.progresso?.caricoCorrente ?? caricoPrec;
 
   const bersaglio = v.aTempo
-    ? `${v.serie} × ${v.durataSec}s`
+    ? `${v.serie} × ${durataScritta(v.durataSec || 0)}`
     : obiettivo?.rip != null
       ? `${v.serie} × ${obiettivo.rip}`
-      : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
+      : senzaBersaglio(v)
+        ? null
+        : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
 
   // Col cronometro in corso il numero grande è il tempo che scorre, non il
   // carico: è l'unica cosa che serve guardare mentre tieni la posizione.
@@ -944,7 +946,7 @@ async function vistaEsercizio(corpo, piede) {
         S.caricoCorrente != null
           ? h("p.load", `${num(S.caricoCorrente)} kg`)
           : h("p.load", "corpo libero"),
-        h("p.target", `Obiettivo ${bersaglio}`)
+        bersaglio ? h("p.target", `Obiettivo ${bersaglio}`) : null
       )
     );
   }
@@ -1150,6 +1152,16 @@ function tempoDaDose(dose) {
   const serie = giriMatch ? Number(giriMatch[1]) : 1;
   const perLato = /per lato/.test(t);
   return { durata, serie, perLato, tenute: serie * (perLato ? 2 : 1) };
+}
+
+/**
+ * Una voce che si fa e basta, senza un bersaglio da dichiarare: serie singola,
+ * una «ripetizione» sola. È il caso di una sessione di Pilates o di una
+ * camminata segnate come attività, non come esercizio. Scrivere «Obiettivo
+ * 1 × 1» sarebbe una riga senza significato.
+ */
+function senzaBersaglio(v) {
+  return !v?.aTempo && v?.serie === 1 && v?.ripMin === 1 && v?.ripMax === 1;
 }
 
 /** «45s», «5 min»: i secondi nudi sopra il minuto non si leggono. */
@@ -1778,10 +1790,12 @@ async function bloccoProssimo(inv) {
     (prossima.carico > 0 ? prossima.carico : null) ??
     (await store.ultimoCarico(prossima.esercizioId, prossima.carico ?? null));
   const bersaglio = prossima.aTempo
-    ? `${prossima.serie} × ${prossima.durataSec}s`
+    ? `${prossima.serie} × ${durataScritta(prossima.durataSec || 0)}`
     : obiettivo?.rip != null
       ? `${prossima.serie} × ${obiettivo.rip}`
-      : `${prossima.serie} × ${prossima.ripMin === prossima.ripMax ? prossima.ripMin : `${prossima.ripMin}-${prossima.ripMax}`}`;
+      : senzaBersaglio(prossima)
+        ? null
+        : `${prossima.serie} × ${prossima.ripMin === prossima.ripMax ? prossima.ripMin : `${prossima.ripMin}-${prossima.ripMax}`}`;
 
   const gruppo = h(
     "div.group",

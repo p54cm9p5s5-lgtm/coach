@@ -340,6 +340,9 @@ const REGOLE_BASE = {
     // Sopra questa soglia la giornata è comunque compromessa, per quanto bene
     // sia andato tutto il resto: è il tetto, non una sottrazione.
     sigaretteTollerate: 10,
+    // Chi non fuma mette `false` nel brief: sparisce la scheda dal menu e la
+    // voce dal punteggio, invece di restare lì a valere sempre zero.
+    contaSigarette: true,
   },
   cadenze: {
     misureGiornoSettimana: 4, // giovedì
@@ -2040,7 +2043,14 @@ export async function punteggiSalute(dal, al = isoDate()) {
     // giorni come «allenamento saltato» dipingerebbe di rosso un passato che
     // non c'era.
     const previsto = inizio && data >= inizio ? Boolean(giornoPrevisto(data)) : false;
-    const sigarette = primoFumo && data >= primoFumo ? fumate.get(data) ?? 0 : null;
+    // Chi ha dichiarato di non contare le sigarette non deve trovarsi la voce
+    // nel punteggio nemmeno se in archivio è rimasta qualche riga vecchia.
+    const sigarette =
+      reg.salute?.contaSigarette === false
+        ? null
+        : primoFumo && data >= primoFumo
+          ? fumate.get(data) ?? 0
+          : null;
     const r = punteggioSalute({
       notte: notte?.presente ? notte : null,
       allenamento: allen,

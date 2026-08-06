@@ -84,6 +84,10 @@ export async function ridisegna() {
   const cambioSchermata = hashDisegnato === null || hashDisegnato !== location.hash;
   if (hashDisegnato !== null && cambioSchermata) chiudiFogli();
   hashDisegnato = location.hash;
+  if (nome === "fumo" && store.regole().salute?.contaSigarette === false) {
+    location.hash = "#/oggi";
+    return;
+  }
   rottaCorrente = nome;
   let mod;
   try {
@@ -189,8 +193,13 @@ export async function ridisegna() {
   if (cambioSchermata) window.scrollTo(0, 0);
   else window.scrollTo(0, posizione);
 
+  // La sezione Fumo esiste solo per chi conta le sigarette. Chi non fuma la
+  // dichiara nel brief («salute.contaSigarette: false») e non se la ritrova
+  // fra i piedi: una scheda che non riguarda nessuno è solo rumore.
+  const contaFumo = store.regole().salute?.contaSigarette !== false;
   for (const a of qsa(".tabbar a")) {
     a.classList.toggle("active", a.dataset.tab === nome);
+    if (a.dataset.tab === "fumo") a.classList.toggle("hidden", !contaFumo);
   }
   qs("#tabbar").classList.toggle("hidden", Boolean(mod.nascondiTabBar));
 }
