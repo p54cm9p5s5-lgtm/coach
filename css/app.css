@@ -451,13 +451,19 @@ a.row:active {
   color: var(--label-secondary);
 }
 
+/* «Esci» e «•••» restano piccoli a vedersi ma diventano bersagli da 44 px:
+   il riempimento allarga l'area sensibile, i margini negativi rimettono il
+   testo esattamente dov'era. Erano gli ultimi due tasti dell'app sotto la
+   misura minima, e uno dei due esce dall'allenamento. */
 .session-head button {
   background: none;
   border: 0;
   color: var(--accent);
   font-size: 15px;
   cursor: pointer;
-  padding: 4px 0;
+  min-height: 44px;
+  padding: 4px 10px;
+  margin: -8px -10px;
 }
 
 .session-body {
