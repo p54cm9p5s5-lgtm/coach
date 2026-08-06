@@ -161,6 +161,22 @@ accettati: **un `esercizioId` che non è in questo elenco fa rifiutare il brief.
 | `curl-bilanciere` | Curl con bilanciere | bilanciere |
 | `curl-alternato` | Curl alternato con manubri | manubri |
 | `hammer` | Hammer curl | manubri |
+| `flessioni` | Flessioni a terra | corpo libero |
+| `ponte-glutei-piedi-rialzati` | Ponte per glutei con piedi sulla panca | manubrio |
+| `military-press-manubri` | Military press con manubri | manubri |
+| `dead-bug` | Dead bug | corpo libero |
+| `rematore-bilanciere-presa-inversa` | Rematore bilanciere presa inversa | bilanciere |
+| `box-squat` | Box squat con bilanciere | bilanciere |
+| `split-squat-appoggiato` | Split squat con appoggio leggero | manubri |
+| `abduzioni-decubito-laterale` | Abduzioni d'anca in decubito laterale | corpo libero |
+| `rdl-manubri` | Stacco rumeno con manubri | manubri |
+| `donkey-kick` | Donkey kick con appoggio sulla panca | corpo libero |
+| `rematore-bilanciere-presa-larga` | Rematore bilanciere presa larga | bilanciere |
+| `step-up` | Step-up sulla panca | corpo libero |
+| `pallof-press-manubrio` | Pallof press con manubrio | manubrio |
+| `pilates` | Sessione di Pilates | corpo libero |
+| `camminata` | Camminata | corpo libero |
+| `calf-manubrio` | Calf raise con un manubrio | manubrio |
 
 ### Se il programma ha esercizi che non ci sono
 
