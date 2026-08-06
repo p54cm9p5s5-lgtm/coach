@@ -25,9 +25,18 @@ function dataVera(iso) {
  * non dieci virgola sette, e «886,5» ha la virgola decimale. Senza questa
  * distinzione i passi finirebbero divisi per mille senza dare nessun segnale.
  */
-const NUMERO = (v) => {
+const NUMERO = (v, intero = false) => {
   if (v === undefined || v === null || v === "") return null;
   let t = String(v).trim().replace(/\s|'| /g, "");
+  // Campi che sono conteggi e basta — passi, piani, minuti, battiti: un punto
+  // seguito da tre cifre lì è per forza il separatore delle migliaia. «9.120
+  // passi» sono novemilacentoventi; nove virgola dodici passi non vogliono
+  // dire niente. Per kcal e chilometri, che decimali lo sono davvero, resta
+  // la regola prudente più sotto.
+  if (intero && /^-?\d{1,3}(\.\d{3})+$/.test(t)) {
+    const soloCifre = Number(t.replace(/\./g, ""));
+    return Number.isFinite(soloCifre) ? soloCifre : null;
+  }
   if (t.includes(",")) {
     // virgola decimale: i punti che restano sono separatori di migliaia
     t = t.replace(/\./g, "").replace(",", ".");
@@ -146,30 +155,30 @@ export function analizza(testo) {
         presente: true,
         kcalAttive: NUMERO(c.kcal),
         obiettivoKcal: NUMERO(c.obiettivo),
-        passi: NUMERO(c.passi),
-        minutiEsercizio: NUMERO(c.esercizio),
+        passi: NUMERO(c.passi, true),
+        minutiEsercizio: NUMERO(c.esercizio, true),
         // «inpiedi» sono MINUTI: è quello che l'iPhone espone (tempo in piedi,
         // non il conteggio delle ore dell'anello). Chi avesse le ore può usare
         // «inpiediore» e vengono convertite.
         minutiInPiedi:
-          NUMERO(c.inpiedi) != null
-            ? NUMERO(c.inpiedi)
+          NUMERO(c.inpiedi, true) != null
+            ? NUMERO(c.inpiedi, true)
             : NUMERO(c.inpiediore) != null
               ? Math.round(NUMERO(c.inpiediore) * 60)
               : null,
-        pianiSaliti: NUMERO(c.piani),
+        pianiSaliti: NUMERO(c.piani, true),
         distanzaKm: km != null ? km : metri != null ? Math.round((metri / 1000) * 100) / 100 : null,
-        fcRiposo: NUMERO(c.fc),
+        fcRiposo: NUMERO(c.fc, true),
       });
     } else if (tipo === "NOTTE") {
       risultato.notti.push({
         data,
         presente: true,
-        durataMin: NUMERO(c.durata),
-        profondoMin: NUMERO(c.profondo),
-        remMin: NUMERO(c.rem),
-        vegliaMin: NUMERO(c.veglia),
-        risvegli: NUMERO(c.risvegli),
+        durataMin: NUMERO(c.durata, true),
+        profondoMin: NUMERO(c.profondo, true),
+        remMin: NUMERO(c.rem, true),
+        vegliaMin: NUMERO(c.veglia, true),
+        risvegli: NUMERO(c.risvegli, true),
       });
     } else if (tipo === "ALLENAMENTO") {
       risultato.allenamenti.push({
