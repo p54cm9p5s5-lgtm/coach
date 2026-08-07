@@ -365,19 +365,23 @@ export async function render({ ridisegna }) {
 
   // ---- sonno ----
   const fSonno2 = conPeriodo();
-  // Una notte porta la data della sera in cui cominci a dormire: la «notte di
-  // oggi» deve ancora succedere. Con «1 gg» quindi non si guarda oggi, si
-  // guarda l'ultima notte dormita — altrimenti la scheda spariva.
+  // Una notte porta la data del RISVEGLIO: quella di stanotte è datata oggi.
+  // Con «1 gg» si mostra soltanto quella, e se non c'è si dice che non c'è.
+  // Mostrare al suo posto l'ultima notte disponibile faceva leggere come sonno
+  // di stanotte una notte di giorni prima.
+  const notteDiStanotte = notti.find((n) => n.presente && n.data === oggiIso) || null;
   const ultimaNotte = [...notti]
     .filter((n) => n.presente && n.data <= oggiIso)
     .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
   const nottiOrd = perGrafico(
-    soloOggi ? (ultimaNotte ? [ultimaNotte] : []) : notti.filter(fSonno2.dentro)
+    soloOggi ? (notteDiStanotte ? [notteDiStanotte] : []) : notti.filter(fSonno2.dentro)
   );
   const etichettaSonno = soloOggi
-    ? ultimaNotte
-      ? `notte del ${dataBreve(ultimaNotte.data)}`
-      : "ultima notte"
+    ? notteDiStanotte
+      ? "stanotte"
+      : ultimaNotte
+        ? `stanotte nessun dato · ultima notte ${dataBreve(ultimaNotte.data)}`
+        : "nessuna notte registrata"
     : fSonno2.etichetta;
   // Con «1 gg» la notte mostrata è di ieri: la media non deve escluderla come
   // fa con la giornata in corso.
@@ -394,8 +398,12 @@ export async function render({ ridisegna }) {
         titolo: "Sonno",
         valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
         nota: mSonno
-          ? `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${etichettaSonno}`
-          : `nessun dato · ${etichettaSonno}`,
+          ? soloOggi
+            ? etichettaSonno
+            : `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${etichettaSonno}`
+          : soloOggi
+            ? etichettaSonno
+            : `nessun dato · ${etichettaSonno}`,
         grafico: graficoLinea({
           punti: nottiOrd.map((n) => ({
             data: n.data,

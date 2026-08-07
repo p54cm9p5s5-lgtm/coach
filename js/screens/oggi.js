@@ -134,14 +134,18 @@ async function bloccoGrafico(ridisegna) {
     (g) => g.presente && dentro(g) && (soloOggi || g.data < oggi)
   );
   const etichettaGiorni = etichettaPeriodo(periodo);
-  // Il sonno di stanotte porta la data di ieri sera: con «1 gg» si guarda
-  // l'ultima notte dormita, non «oggi», che deve ancora succedere.
+  // Una notte porta la data del RISVEGLIO: quella di stanotte è datata oggi.
+  // Con «1 gg» si mostra soltanto quella. Prima si prendeva l'ultima notte
+  // disponibile qualunque fosse: senza il dato di stanotte compariva come
+  // sonno «di oggi» una notte di giorni prima, con la data scritta piccola
+  // accanto — e un numero che non c'entra niente letto come se fosse tuo.
+  const notteDiStanotte = notti.find((n) => n.presente && n.data === oggi) || null;
   const ultimaNotte = [...notti]
     .filter((n) => n.presente && n.data <= oggi)
     .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
   const nottiConDati = soloOggi
-    ? ultimaNotte
-      ? [ultimaNotte]
+    ? notteDiStanotte
+      ? [notteDiStanotte]
       : []
     : notti.filter((n) => n.presente && dentro(n));
   const mediaKcal = media(giorniConDati, "kcalAttive");
@@ -313,9 +317,13 @@ async function bloccoGrafico(ridisegna) {
         {
           etichetta: "Sonno",
           valore: mediaSonno != null ? durataUmana(mediaSonno * 60) : "—",
-          nota: `${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"} · ${
-            soloOggi && ultimaNotte ? `notte del ${dataBreve(ultimaNotte.data)}` : etichettaPeriodo(periodo)
-          }`,
+          nota: soloOggi
+            ? notteDiStanotte
+              ? "stanotte"
+              : ultimaNotte
+                ? `stanotte nessun dato · ultima notte ${dataBreve(ultimaNotte.data)}`
+                : "nessuna notte registrata"
+            : `${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"} · ${etichettaPeriodo(periodo)}`,
         },
       ]),
       graficoAttivita(serie, { obiettivoRipiego: obiettivo }),
