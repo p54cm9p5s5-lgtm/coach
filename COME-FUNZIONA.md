@@ -232,19 +232,26 @@ prima **«Fine» registra i secondi davvero tenuti** — 38 su 45 restano 38, no
 vengono arrotondati al previsto. Il cronometro sta su un istante salvato, quindi
 bloccare lo schermo o riaprire l'app non falsa il conto.
 
-**3. Valutazione dell'esercizio, dentro il recupero.** Dopo l'ultima serie il
-recupero contiene, in quest'ordine: la correzione della serie appena chiusa, **le
-domande sull'esercizio**, il punteggio, e infine **il prossimo esercizio** (nome,
-obiettivo, carico, video) per prepararsi. Le domande stanno prima perché si
-rispondono adesso, il prossimo esercizio serve quando ti alzi.
+**3. Valutazione dell'esercizio, da sola, poi il recupero.** Dopo l'ultima
+serie arriva una schermata dedicata: correzione della serie appena chiusa,
+punteggio dell'esercizio, e le domande — quanto è stata dura, com'è andata la
+tecnica, se il polso ha dato fastidio. **Senza cronometro.** Il tasto resta
+spento finché manca qualcosa, e sotto c'è scritto cosa manca con le parole delle
+domande.
 
-Due domande obbligatorie: **quanto è stata dura** (RPE 1-10, con la zona prevista
-evidenziata) e **com'è andata la tecnica** (1-10). Più il **dolore al polso**
-(sì/no; se sì: quando e quanto). Nota facoltativa. Finché manca una risposta
-l'app scrive quale, e «Avanti» resta spento.
+Solo dopo aver risposto parte il **recupero cronometrato**, con il **prossimo
+esercizio** già in vista (nome, carico, dischi da montare). Prima le due cose
+stavano insieme: il tasto che mandava le risposte chiudeva anche il riposo, e
+rispondendo si finiva per saltare il recupero — che è la parte che conta.
 
 **4. Cardio**, se previsto: si può eseguire o dichiarare non eseguito, **con
 motivo obbligatorio**.
+
+**4-bis. I numeri del cardio.** Appena finito il cardio, prima dello
+stretching, l'app chiede i dati dell'orologio (durata, distanza, kcal, ritmo,
+battito, sforzo). Sono facoltativi e finiscono nel pacchetto. Stanno lì perché
+in quel momento il riepilogo è ancora quello sul quadrante: chiesti dopo lo
+stretching, al polso c'è già dell'altro.
 
 **5. Stretching** — come il riscaldamento: **un allungamento per volta**, con
 il **cronometro da 30 secondi per lato** che parte con «Avvia» e si chiude con

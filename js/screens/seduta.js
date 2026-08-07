@@ -1674,16 +1674,24 @@ async function completaSerie(v, def, numero, secondiTenuti = null) {
     recuperoTargetSec: def?.recuperoDefaultSec ?? 120,
   });
 
-  // Il recupero serve anche dopo l'ultima serie: prima si andava dritti alla
-  // valutazione, cioè si chiedeva un giudizio mentre il fiato non era ancora
-  // tornato, e il riposo prima dell'esercizio dopo spariva. Quando il recupero
-  // finisce, `vistaEsercizio` vede che le serie previste sono tutte fatte e
-  // manda al questionario da sé.
   const durata = (S.recuperoTarget ?? def?.recuperoDefaultSec ?? 120) * 1000;
   S.serieCorrenteId = rec.id;
-  S.recuperoFine = Date.now() + durata;
   S.tsInizioSerie = null;
 
+  // Dopo l'ULTIMA serie la valutazione viene prima, e da sola. Stava insieme al
+  // recupero, e il tasto che mandava la valutazione chiudeva anche il riposo:
+  // rispondendo si saltava il recupero, che è la parte che conta. Adesso sono
+  // due schermate: prima si risponde, poi parte il cronometro con il prossimo
+  // esercizio davanti.
+  const fatteOra = await serieFatte(v.esercizioId);
+  if (fatteOra.length >= v.serie) {
+    S.recuperoFine = null;
+    await salvaProgresso({ fase: "questionario", recuperoFine: null, tsInizioSerie: null });
+    await disegna();
+    return;
+  }
+
+  S.recuperoFine = Date.now() + durata;
   await salvaProgresso({
     fase: "recupero",
     recuperoFine: S.recuperoFine,
@@ -1872,7 +1880,7 @@ async function vistaRecupero(corpo, piede) {
   const sottotitolo = h(
     "p.target",
     fatte.length >= v.serie
-      ? "Ultima serie: rispondi qui sotto mentre recuperi"
+      ? "Esercizio finito: riposa prima del prossimo"
       : `Prossima: serie ${fatte.length + 1} di ${v.serie}`
   );
   aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo));
@@ -1928,30 +1936,17 @@ async function vistaRecupero(corpo, piede) {
     )
   );
 
-  // Dopo l'ultima serie il recupero è il momento buono per due cose: rispondere
-  // sull'esercizio appena finito, mentre ce l'hai ancora nelle braccia, e
-  // prepararsi al prossimo. In quest'ordine — prima le domande, poi il
-  // prossimo esercizio — perché la seconda cosa serve quando ti alzi, la prima
-  // adesso. Prima le domande arrivavano in una schermata a parte, dopo il
-  // recupero: un passaggio in più e il tempo del riposo buttato.
-  let quiz = null;
-  // Dichiarato prima del questionario: la sua richiamata deve poterlo spegnere
-  // e accendere, e viene chiamata già durante la costruzione.
-  let pulsante = null;
-  if (ultimaSerie) {
-    quiz = await vistaQuestionario(corpo, piede, true, (pronto) => {
-      if (pulsante) pulsante.disabled = !pronto;
-    });
-    aggiungi(corpo, await bloccoProssimo(inv));
-  }
-
-  pulsante = h(
+  // Dopo l'ultima serie qui c'è solo il riposo, con il prossimo esercizio già
+  // in vista. Le domande sono state fatte prima, in una schermata loro: stando
+  // insieme al cronometro, il tasto che mandava le risposte chiudeva anche il
+  // recupero, e rispondendo si finiva per saltare il riposo — che è la parte
+  // che conta.
+  const pulsante = h(
     "button.btn",
-    ultimaSerie
-      ? { disabled: true, onclick: azione(async () => { fermaTimer(); await quiz.conferma(); }) }
-      : { onclick: azione(chiudiRecupero) },
-    ultimaSerie ? "Avanti" : "Pronto"
+    { onclick: azione(ultimaSerie ? avanzaEsercizio : chiudiRecupero) },
+    "Pronto"
   );
+  if (ultimaSerie) aggiungi(corpo, await bloccoProssimo(inv));
   aggiungiPiede(piede, 
     h(
       "div",
@@ -1990,12 +1985,7 @@ async function vistaRecupero(corpo, piede) {
         preavvisoFatto = true;
         tick();
       }
-      if (ultimaSerie) {
-        pulsante.textContent = "Avanti";
-        pulsante.disabled = !quiz?.completo();
-      } else {
-        pulsante.textContent = "Pronto";
-      }
+      pulsante.textContent = "Pronto";
     } else {
       testoTimer.textContent = "00:00";
       quadrante.classList.add("done");
@@ -2003,24 +1993,7 @@ async function vistaRecupero(corpo, piede) {
       if (!allarmeAttivo() && !suonoSpento) {
         avviaAllarme();
       }
-      // Col suono acceso il bottone deve poterlo spegnere anche se le domande
-      // non sono finite: un allarme che non si zittisce finché non compili un
-      // questionario è una trappola.
-      if (ultimaSerie && !quiz?.completo()) {
-        pulsante.disabled = false;
-        pulsante.textContent = "Ferma il suono";
-        pulsante.onclick = () => {
-          suonoSpento = true;
-          fermaAllarme();
-          aggiorna();
-        };
-      } else if (ultimaSerie) {
-        pulsante.disabled = false;
-        pulsante.textContent = "Avanti · ferma il suono";
-        pulsante.onclick = azione(async () => { fermaAllarme(); fermaTimer(); await quiz.conferma(); });
-      } else {
-        pulsante.textContent = "Pronto · ferma il suono";
-      }
+      pulsante.textContent = "Pronto · ferma il suono";
     }
   };
   aggiorna();
@@ -2070,7 +2043,7 @@ async function chiudiRecupero() {
 
 // ---------- questionario ----------
 
-async function vistaQuestionario(corpo, piede, dentroRecupero = false, avvisa = null) {
+async function vistaQuestionario(corpo, piede) {
   const v = vocePrevista();
   const def = store.esercizio(v.esercizioId);
   // Servono alla correzione dell'ultima serie: i passi del carico devono
@@ -2102,7 +2075,7 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false, avvisa = 
   const hintRpe = h("p.scale-hint", "");
   const hintTec = h("p.scale-hint", "");
   const dettaglioPolso = h("div");
-  const avanti = h("button.btn", { disabled: true, onclick: azione(conferma) }, "Avanti");
+  const avanti = h("button.btn", { disabled: true, onclick: azione(conferma) }, "Avanti al recupero");
   // Un bottone spento senza spiegazione, a metà allenamento, è una trappola:
   // premi e non succede niente. Il commento sotto al punteggio parla solo di
   // intensità e tecnica, quindi rispondendo a quelle spariva anche l'unico
@@ -2120,12 +2093,6 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false, avvisa = 
       if (!stato.intensita) manca.push("quanto faceva male");
     }
     avanti.disabled = manca.length > 0;
-    // Chi ospita il questionario (il recupero) deve poter accendere il suo
-    // tasto NELLO STESSO ISTANTE in cui rispondi. Prima se ne accorgeva solo
-    // al battito del cronometro: un quarto di secondo di solito, ma con lo
-    // schermo appena riacceso anche molto di più, e nel frattempo il tasto
-    // sembrava morto.
-    avvisa?.(!avanti.disabled);
     mancano.textContent = manca.length
       ? `Manca ancora: ${manca.join(", ")}.`
       : "";
@@ -2281,14 +2248,9 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false, avvisa = 
   }
 
   aggiungi(corpo, 
-    // Dentro al recupero l'intestazione e la correzione dell'ultima serie ci
-    // sono già: qui si aggiungono solo le domande, altrimenti la stessa cosa
-    // comparirebbe due volte nella stessa schermata.
-    dentroRecupero
-      ? h("h2", { style: "margin:22px 16px 0" }, "Come è andato l'esercizio")
-      : h("div.hero", { style: "padding-bottom:2px" }, h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
-    dentroRecupero ? null : zonaPunteggio,
-    dentroRecupero ? null : correzione,
+    h("div.hero", { style: "padding-bottom:2px" }, h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
+    zonaPunteggio,
+    correzione,
 
     h("p.footnote", { style: "margin:14px 16px 0" }, "Quanto è stata dura l'ultima serie?"),
     righello(
@@ -2335,17 +2297,6 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false, avvisa = 
   // niente, altrimenti «Avanti» resterebbe spento con le risposte già date.
   if (stato.polso === true) mostraDettaglioPolso();
 
-  if (dentroRecupero) {
-    // Il punteggio dell'esercizio va comunque mostrato, ma sotto le domande:
-    // in cima c'è già il timer del recupero. E la riga che dice cosa manca
-    // deve stare qui accanto alle domande, non nel piede: nel piede il bottone
-    // è quello del recupero e la riga sparirebbe.
-    aggiungi(corpo, mancano, zonaPunteggio);
-    verifica();
-    ridisegnaPunteggio();
-    // Il recupero ha bisogno di sapere se può far avanzare e come salvare.
-    return { completo: () => !avanti.disabled, mancano, conferma, verifica };
-  }
   aggiungiPiede(piede, mancano, avanti);
   verifica();
   ridisegnaPunteggio();
@@ -2406,7 +2357,14 @@ async function vistaQuestionario(corpo, piede, dentroRecupero = false, avvisa = 
       dolorePolsoIntensita: stato.intensita,
       nota: qs("#nota-es")?.value,
     });
-    await avanzaEsercizio();
+    // Adesso il riposo: il cronometro parte da qui, con il prossimo esercizio
+    // già in vista. È l'ultimo pezzo prima di cambiare esercizio, e nessun
+    // tasto lo salta per sbaglio.
+    const def = store.esercizio(v.esercizioId);
+    const durata = (def?.recuperoDefaultSec ?? 120) * 1000;
+    S.recuperoFine = Date.now() + durata;
+    await salvaProgresso({ fase: "recupero", recuperoFine: S.recuperoFine });
+    await disegna();
   }
 }
 
