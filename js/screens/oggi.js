@@ -4,7 +4,7 @@ import {
 } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
-import { graficoAttivita, graficoLinea, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
+import { graficoAttivita, graficoLinea, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo, CHIAVE_PERIODO_SALUTE } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
 import { sbloccaAudio, unaVoltaSola } from "../ui.js";
@@ -62,6 +62,9 @@ export async function render({ vaiA, ridisegna }) {
 
 async function bloccoGrafico(ridisegna) {
   const periodo = periodoSalvato();
+  // Il punteggio Salute ha i suoi quattro tasti, staccati: spostarlo su «1 gg»
+  // non deve portarsi dietro passi, movimento e sonno qui sotto, e viceversa.
+  const periodoSalute = periodoSalvato("tutto", CHIAVE_PERIODO_SALUTE);
   const oggi = isoDate();
   const giorni = await store.giorniSalute();
   const notti = await store.notti();
@@ -161,14 +164,15 @@ async function bloccoGrafico(ridisegna) {
   // messi insieme con le stesse regole rigide del punteggio di allenamento.
   // Sta in cima perché è la domanda a cui l'app deve rispondere per prima:
   // com'è andata oggi, tutto compreso.
-  const daQuandoP = inizioPeriodo(periodo, oggi) || primeDate[0] || oggi;
+  const soloOggiSalute = periodoSalute.id === "1";
+  const daQuandoP = inizioPeriodo(periodoSalute, oggi) || primeDate[0] || oggi;
   const punteggi = await store.punteggiSalute(daQuandoP, oggi);
   const perPunteggio = new Map(punteggi.map((p) => [p.data, p]));
   // Oggi è a metà: entra nella media come una giornata fiacca e la tira giù di
   // qualche punto, che è esattamente il motivo per cui è fuori dalle medie di
   // passi e movimento qui accanto. Con «1 gg» invece è proprio oggi che vuoi
   // vedere, e lì il numero è quello di oggi, non una media.
-  const conPunteggio = punteggi.filter((p) => p.totale != null && (soloOggi || p.data < oggi));
+  const conPunteggio = punteggi.filter((p) => p.totale != null && (soloOggiSalute || p.data < oggi));
   const mediaSalute = conPunteggio.length
     ? Math.round(conPunteggio.reduce((t, p) => t + p.totale, 0) / conPunteggio.length)
     : null;
@@ -180,12 +184,12 @@ async function bloccoGrafico(ridisegna) {
   // Il numero segue il bottone premuto: «1 gg» è oggi, gli altri periodi sono
   // la media dei giorni che contengono. Prima mostrava sempre oggi e i quattro
   // bottoni non cambiavano niente, cioè mentivano.
-  const mostrato = soloOggi ? oggiSalute?.totale ?? null : mediaSalute;
+  const mostrato = soloOggiSalute ? oggiSalute?.totale ?? null : mediaSalute;
 
   // Anche la scomposizione segue il periodo: su più giorni ogni voce è la
   // media dei giorni in cui quel dato c'era davvero.
   const voci = (() => {
-    if (soloOggi) return (oggiSalute?.voci || []).filter((v) => v.quota != null);
+    if (soloOggiSalute) return (oggiSalute?.voci || []).filter((v) => v.quota != null);
     const per = new Map();
     for (const p of conPunteggio) {
       for (const v of p.voci || []) {
@@ -230,7 +234,7 @@ async function bloccoGrafico(ridisegna) {
     h(
       "p.footnote",
       { style: "margin:12px 0 0" },
-      oggiSalute?.limite && soloOggi
+      oggiSalute?.limite && soloOggiSalute
         ? `Oggi il punteggio è fermo a ${oggiSalute.totale}: ${oggiSalute.limite.perche}.`
         : "Sonno, allenamento, fumo, movimento, passi, minuti di esercizio e tempo in piedi. Le voci senza dato restano fuori dal conto invece di valere zero."
     )
@@ -269,7 +273,7 @@ async function bloccoGrafico(ridisegna) {
     h(
       "div",
       { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 16px" },
-      selettorePeriodo(periodo, ridisegna),
+      selettorePeriodo(periodoSalute, ridisegna, CHIAVE_PERIODO_SALUTE),
       mostrato != null
         ? anello(mostrato, {
             etichetta: "Salute",
@@ -279,16 +283,16 @@ async function bloccoGrafico(ridisegna) {
         : h(
             "p",
             { style: "margin:0;text-align:center;color:var(--label-secondary)" },
-            soloOggi ? "Oggi non ci sono ancora dati" : "Nessun dato in questo periodo"
+            soloOggiSalute ? "Oggi non ci sono ancora dati" : "Nessun dato in questo periodo"
           ),
       h(
         "p",
         { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
-        soloOggi
+        soloOggiSalute
           ? mostrato != null
             ? "oggi"
             : "oggi · nessun dato ancora"
-          : `media di ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodo)}`
+          : `media di ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodoSalute)}`
       ),
       mostrato != null ? apri : null,
       dettagli
