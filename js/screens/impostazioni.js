@@ -573,7 +573,11 @@ async function ripristinaSnapshot() {
   }
 
   try {
+    // Il tetto dichiarato sulle sigarette non si perde ripristinando una copia
+    // fatta prima della decisione: è la via più involontaria per annullarla.
+    const tettoPrima = await store.tettoFumoDichiarato();
     await store.db.importaTutto(dump, "sostituisci");
+    await store.proteggiTettoFumo(tettoPrima);
   } catch (e) {
     // La copia di sicurezza appena fatta ha preso il posto di quella che
     // stavi ripristinando: se il ripristino fallisce va rimessa quella
@@ -651,7 +655,9 @@ async function importaBackup(ridisegna) {
 
   let esito = null;
   try {
+    const tettoPrima2 = await store.tettoFumoDichiarato();
     esito = await store.db.importaTutto(dump, modo);
+    await store.proteggiTettoFumo(tettoPrima2);
     if (indietro && modo === "sostituisci") {
       // Il file importato ha riscritto anche le impostazioni: la copia di
       // sicurezza appena fatta va rimessa, altrimenti sparisce proprio quella.
