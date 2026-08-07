@@ -63,6 +63,7 @@ export function riscaldamento(giornoId) {
     cardio: RISCALDAMENTO.cardio,
     serieDiAvvicinamento: RISCALDAMENTO.serieDiAvvicinamento,
     nota: RISCALDAMENTO.nota,
+    fase1: null,
     ...(RISCALDAMENTO.giorni?.[giornoId] || { mobilita: [], stretchingFinale: [] }),
   };
 }

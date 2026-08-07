@@ -17,232 +17,366 @@
   },
   "giorni": {
     "petto-tricipiti": {
+      "fase1": {
+        "dose": "5 min"
+      },
       "mobilita": [
         {
-          "nome": "Circonduzioni delle braccia",
-          "dose": "10 avanti + 10 indietro",
-          "come": "Braccia tese, cerchi ampi e lenti. Spalle lontane dalle orecchie."
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano."
         },
         {
-          "nome": "Rotazioni di polsi e gomiti",
-          "dose": "10 per verso",
-          "come": "Il polso destro è sollecitato oggi: scaldalo prima, non dopo."
+          "nome": "Aperture del petto",
+          "dose": "30s",
+          "come": "In piedi, mani dietro la schiena con le dita intrecciate (o unite). Spingi il petto in fuori e le spalle indietro e in basso, come per far toccare le scapole. Si sente davanti alle spalle e al petto."
         },
         {
-          "nome": "Apertura del petto sullo stipite",
-          "dose": "3 × 15 s per lato",
-          "come": "Avambraccio sullo stipite, gomito all'altezza della spalla, ruota il busto verso l'esterno fino a sentire tensione leggera. Non spingere."
+          "nome": "Rotazioni delle spalle",
+          "dose": "10 per lato",
+          "come": "In piedi, braccia rilassate lungo i fianchi. Solleva le spalle verso le orecchie, portale indietro, poi giù, poi avanti: un cerchio fluido disegnato con le spalle."
         },
         {
-          "nome": "Retrazione e protrazione scapolare",
-          "dose": "15 ripetizioni",
-          "come": "Braccia tese avanti, avvicina e allontana le scapole senza piegare i gomiti. Prepara la posizione che dovrai tenere in panca."
+          "nome": "Push-up al muro",
+          "dose": "8-10 rip",
+          "come": "In piedi a mezzo metro dal muro, mani appoggiate all'altezza del petto poco più larghe delle spalle. Piega i gomiti avvicinando il petto al muro, poi spingi per tornare dritto. È una flessione in verticale, molto più leggera."
         },
         {
-          "nome": "Rotazioni esterne di spalla",
-          "dose": "12 per lato",
-          "come": "Gomito al fianco a 90°, manubrio leggerissimo (1-2 kg), ruota l'avambraccio verso l'esterno. Scalda la cuffia dei rotatori."
+          "nome": "Estensioni tricipiti a vuoto",
+          "dose": "10 rip",
+          "come": "Alza un braccio sopra la testa, piega il gomito portando la mano dietro la nuca; con l'altra mano accompagna il gomito. Distendi il braccio verso l'alto e ripeti. Serve solo a scaldare il gomito."
         }
       ],
       "stretchingFinale": [
         {
-          "nome": "Pettorale al muro",
-          "dose": "30 s per lato",
-          "come": "Mano appoggiata al muro all'altezza della spalla, ruota il busto in direzione opposta."
+          "nome": "Pettorali",
+          "dose": "30s per lato",
+          "come": "Avambraccio appoggiato a uno stipite, gomito piegato a 90° all'altezza della spalla. Ruota lentamente il busto dalla parte opposta al braccio, allontanando il corpo dal muro, tenendo l'avambraccio fermo. Si sente davanti alla spalla e al petto.",
+          "video": {
+            "id": "T6ZozOBoyo8",
+            "titolo": "Doorway Chest Stretch",
+            "canale": "Dr. Femi Betiku",
+            "verticale": true
+          }
         },
         {
-          "nome": "Tricipite sopra la testa",
-          "dose": "30 s per lato",
-          "come": "Gomito piegato dietro la nuca, l'altra mano accompagna senza forzare."
+          "nome": "Tricipiti",
+          "dose": "30s per lato",
+          "come": "Braccio verticale sopra la testa, gomito piegato, mano dietro la nuca. Con l'altra mano afferra il gomito e spingilo leggermente indietro e in basso. Si sente sul retro del braccio.",
+          "video": {
+            "id": "-7UYYTHcL94",
+            "titolo": "Overhead Triceps Stretch",
+            "canale": "Daily Workout Builder",
+            "verticale": true
+          }
+        },
+        {
+          "nome": "Deltoide anteriore",
+          "dose": "20s per lato",
+          "come": "In piedi, mani dietro la schiena con le dita intrecciate e braccia tese. Solleva lentamente le braccia verso l'alto senza piegare il busto in avanti. Si sente davanti alla spalla.",
+          "video": {
+            "id": "UbMCKQ7PkUs",
+            "titolo": "Anterior deltoid stretch",
+            "canale": "Calistrength",
+            "verticale": true
+          }
         }
       ]
     },
     "gambe-core": {
+      "fase1": {
+        "dose": "5 min",
+        "nota": "unico momento cardio della giornata: non saltarlo"
+      },
       "mobilita": [
         {
-          "nome": "Rotazioni delle anche",
-          "dose": "10 per verso",
-          "come": "In piedi, mani sui fianchi, cerchi ampi con il bacino."
-        },
-        {
-          "nome": "Mobilità di caviglia al muro",
-          "dose": "10 per lato",
-          "come": "Piede a un palmo dal muro, porta il ginocchio verso il muro senza staccare il tallone. Se non ci arrivi, avvicina il piede."
-        },
-        {
-          "nome": "Slanci della gamba avanti e indietro",
-          "dose": "10 per lato",
-          "come": "Appoggiati a un muro, gamba tesa che oscilla in modo controllato. Prepara l'anca all'hip hinge dell'RDL."
-        },
-        {
-          "nome": "Ponte per i glutei",
-          "dose": "12 ripetizioni",
-          "come": "Supino, piedi a terra, spingi il bacino in alto stringendo i glutei. Attiva quello che nello squat spesso resta spento."
-        },
-        {
           "nome": "Squat a corpo libero",
-          "dose": "10 lenti e completi",
-          "come": "Tre secondi a scendere. È già la prova tecnica della seduta: se qui la posizione non regge, non regge nemmeno con il bilanciere."
+          "dose": "10-15 rip lente",
+          "come": "Piedi larghi quanto le spalle, punte leggermente in fuori. Spingi i fianchi indietro come per sederti, piega le ginocchia col peso sui talloni e la schiena dritta. Scendi fin dove controlli, poi risali spingendo dai talloni."
+        },
+        {
+          "nome": "Affondi statici",
+          "dose": "5 per gamba",
+          "come": "Un passo avanti con una gamba. Piega entrambe le ginocchia fino a circa 90°, senza sbattere a terra il ginocchio dietro. Busto dritto, non inclinarti in avanti. Risali spingendo con la gamba davanti."
+        },
+        {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati."
+        },
+        {
+          "nome": "Ponte per glutei",
+          "dose": "10 rip",
+          "come": "Sdraiato sulla schiena, ginocchia piegate, piedi a terra vicino ai glutei. Spingi i talloni a terra e solleva il bacino verso il soffitto stringendo i glutei in alto. Scendi controllato."
+        },
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni."
         }
       ],
       "stretchingFinale": [
         {
-          "nome": "Femorali da seduto",
-          "dose": "30 s per lato",
-          "come": "Gamba tesa, l'altra piegata, scendi con il petto verso il ginocchio tenendo la schiena dritta."
+          "nome": "Quadricipiti",
+          "dose": "30s per lato",
+          "come": "In piedi, appoggiato a un muro per l'equilibrio, piega un ginocchio portando il tallone al gluteo, afferra la caviglia e tira delicatamente. Ginocchia vicine, bacino leggermente avanti. Si sente davanti alla coscia.",
+          "video": {
+            "id": "LHesB7TJW6c",
+            "titolo": "Quad Stretch",
+            "canale": "St. Peter's Health",
+            "verticale": true
+          }
         },
         {
-          "nome": "Quadricipite in piedi",
-          "dose": "30 s per lato",
-          "come": "Tallone verso il gluteo, ginocchia vicine, bacino leggermente in avanti."
+          "nome": "Femorali",
+          "dose": "30s per lato",
+          "come": "Tallone a terra davanti a te, gamba tesa e punta del piede in alto; l'altra gamba leggermente piegata dietro. Piegati in avanti dai fianchi con la schiena dritta, non arrotondata. Si sente dietro la coscia tesa.",
+          "video": {
+            "id": "A4-9oLGRocY",
+            "titolo": "Standing Hamstring Stretch",
+            "canale": "WorkoutsbyDavid",
+            "verticale": true
+          }
         },
         {
-          "nome": "Flessori dell'anca in affondo basso",
-          "dose": "30 s per lato",
-          "come": "Ginocchio dietro a terra, spingi il bacino avanti stringendo il gluteo della gamba dietro."
+          "nome": "Polpacci",
+          "dose": "30s per lato",
+          "come": "Davanti a un muro, mani appoggiate, un passo indietro con una gamba tesa e il tallone piantato a terra. Piega leggermente il ginocchio davanti e spingi i fianchi verso il muro. Si sente nel polpaccio della gamba dietro.",
+          "video": {
+            "id": "cc0k8cQxeEU",
+            "titolo": "Calf Stretch at Wall",
+            "canale": "P4S Golf",
+            "verticale": true
+          }
         },
         {
-          "nome": "Polpaccio al muro",
-          "dose": "30 s per lato",
-          "come": "Gamba dietro tesa, tallone a terra, spingi il bacino verso il muro."
+          "nome": "Glutei (figura a 4)",
+          "dose": "30s per lato",
+          "come": "Sdraiato sulla schiena, ginocchia piegate. Incrocia una caviglia sopra il ginocchio opposto formando un «4». Afferra la coscia della gamba d'appoggio e tirala verso il petto. Si sente nel gluteo della gamba incrociata.",
+          "video": {
+            "id": "4y4e-bJolHs",
+            "titolo": "Figure 4 Stretch for Glutes",
+            "canale": "Your House Fitness",
+            "verticale": true
+          }
+        },
+        {
+          "nome": "Flessori dell'anca",
+          "dose": "30s per lato",
+          "come": "Affondo basso, un ginocchio a terra dietro, l'altro piegato a 90° davanti. Spingi il bacino in avanti senza inarcare troppo la schiena, busto eretto. Si sente davanti all'anca della gamba dietro.",
+          "video": {
+            "id": "EVcnudMqQCE",
+            "titolo": "Lunge & Hip Flexor Stretch",
+            "canale": "Performance Therapies",
+            "verticale": true
+          }
         }
       ]
     },
     "spalle": {
+      "fase1": {
+        "dose": "5 min"
+      },
       "mobilita": [
         {
-          "nome": "Circonduzioni delle braccia",
-          "dose": "10 avanti + 10 indietro",
-          "come": "Cerchi ampi, lenti, spalle basse."
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano."
         },
         {
-          "nome": "Rotazioni di polsi e gomiti",
-          "dose": "10 per verso",
-          "come": "Il polso lavora sotto il bilanciere nel Military: scaldalo."
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su."
         },
         {
-          "nome": "Wall slide",
-          "dose": "10 ripetizioni",
-          "come": "Schiena e avambracci contro il muro, fai scorrere le braccia in alto senza staccare i polsi né inarcare la schiena. Se non ci riesci, quello è il tuo limite di mobilità: non forzarlo con il carico."
+          "nome": "Alzate laterali a vuoto",
+          "dose": "10 rip",
+          "come": "Lo stesso gesto delle alzate laterali, senza pesi. Braccia lungo i fianchi, sollevale lateralmente fino all'altezza delle spalle con i gomiti morbidi, poi riabbassa controllato."
         },
         {
-          "nome": "Rotazioni esterne di spalla",
-          "dose": "12 per lato",
-          "come": "Gomito al fianco, carico minimo. Cuffia dei rotatori."
+          "nome": "Retrazioni scapolari",
+          "dose": "10 rip",
+          "come": "In piedi o seduto, braccia rilassate. Stringi le scapole fra loro come per tenere una matita in mezzo alla schiena, senza alzare le spalle verso le orecchie. Rilascia."
         },
         {
-          "nome": "Scrollate lente a vuoto",
-          "dose": "12 ripetizioni",
-          "come": "Solo su e giù, senza peso, per svegliare i trapezi."
+          "nome": "Rotazione del collo",
+          "dose": "5 per lato",
+          "come": "Inclina lentamente la testa verso una spalla, torna al centro, poi verso l'altra. Movimento lento, mai forzato, mai un cerchio completo all'indietro."
         }
       ],
       "stretchingFinale": [
         {
           "nome": "Deltoide posteriore",
-          "dose": "30 s per lato",
-          "come": "Braccio teso incrociato davanti al petto, l'altro braccio lo accompagna."
+          "dose": "30s per lato",
+          "come": "Braccio disteso davanti al petto, parallelo al pavimento. Con l'altro braccio afferra il gomito da sotto e tira verso il petto. Si sente dietro la spalla.",
+          "video": {
+            "id": "gJ5qmKJK0dY",
+            "titolo": "Posterior Deltoid Stretch",
+            "canale": "Orchard Health Clinic",
+            "verticale": true
+          }
         },
         {
-          "nome": "Trapezio superiore",
-          "dose": "30 s per lato",
-          "come": "Orecchio verso la spalla, spalla opposta bassa. Nessuna rotazione della testa."
+          "nome": "Trapezio",
+          "dose": "20s per lato",
+          "come": "Inclina la testa verso una spalla, avvicinando l'orecchio. Con la mano dello stesso lato appoggiata sulla testa, tira molto delicatamente in basso, senza forzare. Si sente sul lato del collo.",
+          "video": {
+            "id": "qa2cYqdmHUg",
+            "titolo": "Upper Trapezius Stretch",
+            "canale": "Dr. Jon Saunders",
+            "verticale": true
+          }
+        },
+        {
+          "nome": "Pettorali",
+          "dose": "30s",
+          "come": "Avambraccio appoggiato a uno stipite, gomito piegato a 90° all'altezza della spalla. Ruota lentamente il busto dalla parte opposta al braccio, allontanando il corpo dal muro, tenendo l'avambraccio fermo. Si sente davanti alla spalla e al petto.",
+          "video": {
+            "id": "T6ZozOBoyo8",
+            "titolo": "Doorway Chest Stretch",
+            "canale": "Dr. Femi Betiku",
+            "verticale": true
+          }
         }
       ]
     },
     "schiena-bicipiti": {
+      "fase1": {
+        "dose": "5 min"
+      },
       "mobilita": [
         {
-          "nome": "Cat-camel",
-          "dose": "10 ripetizioni",
-          "come": "A quattro zampe, inarca e arrotonda la schiena lentamente. Sveglia la colonna prima del rematore."
+          "nome": "Cat-cow",
+          "dose": "10 rip lente",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente."
         },
         {
-          "nome": "Hip hinge a vuoto con un bastone",
-          "dose": "10 ripetizioni",
-          "come": "Bastone (o manico di scopa) a contatto con nuca, dorso e sacro: se si stacca, la schiena non è neutra. È la posizione esatta del rematore."
+          "nome": "Rematore a vuoto",
+          "dose": "10 rip",
+          "come": "Busto piegato in avanti dai fianchi, schiena dritta, come se tenessi un bilanciere. Porta i gomiti indietro stringendo le scapole, poi torna avanti. Senza pesi."
         },
         {
-          "nome": "Rotazioni di polsi e avambracci",
-          "dose": "10 per verso",
-          "come": "Il Curl con bilanciere diritto forza la supinazione: qui il polso va scaldato bene."
+          "nome": "Rotazioni delle spalle",
+          "dose": "10 per lato",
+          "come": "In piedi, braccia rilassate lungo i fianchi. Solleva le spalle verso le orecchie, portale indietro, poi giù, poi avanti: un cerchio fluido disegnato con le spalle."
         },
         {
-          "nome": "Retrazione scapolare",
-          "dose": "15 ripetizioni",
-          "come": "Braccia tese avanti, avvicina le scapole senza alzare le spalle. È il finale di ogni tirata."
-        },
-        {
-          "nome": "Dead bug",
-          "dose": "8 per lato",
-          "come": "Supino, lombare a contatto col pavimento, allunga braccio e gamba opposti. Stabilizza il tronco che dovrà reggere il rematore."
+          "nome": "Curl a vuoto",
+          "dose": "10 rip",
+          "come": "In piedi, pugni chiusi come su manubri immaginari. Piega i gomiti portando le mani verso le spalle, poi distendi. Senza peso."
         }
       ],
       "stretchingFinale": [
         {
-          "nome": "Gran dorsale",
-          "dose": "30 s per lato",
-          "come": "Mano su un appoggio all'altezza dei fianchi, siediti indietro allungando il fianco."
+          "nome": "Dorsali (allungamento laterale)",
+          "dose": "30s per lato",
+          "come": "Braccia alzate sopra la testa, afferra un polso con l'altra mano. Tira delicatamente verso un lato piegando il busto lateralmente, fianchi fermi. Si sente sul fianco e sulla schiena del lato opposto.",
+          "video": {
+            "id": "iPQ2rPyAbl0",
+            "titolo": "Side Stretch",
+            "canale": "St. Peter's Health",
+            "verticale": true
+          }
         },
         {
-          "nome": "Bicipite al muro",
-          "dose": "30 s per lato",
-          "come": "Braccio teso dietro con il palmo sul muro, ruota il busto in direzione opposta."
+          "nome": "Child's pose",
+          "dose": "30s",
+          "come": "Inginocchiato sui talloni, piega il busto in avanti fino a portare la fronte a terra o il più vicino possibile, braccia tese davanti o rilassate lungo i fianchi. Si sente lungo tutta la schiena.",
+          "video": {
+            "id": "CHk_NNL5cQU",
+            "titolo": "Childs Pose Stretch",
+            "canale": "PostureFlow",
+            "verticale": true
+          }
         },
         {
-          "nome": "Flessori dell'avambraccio",
-          "dose": "30 s per lato",
-          "come": "Braccio teso, palmo in su, l'altra mano tira le dita verso il basso. Utile dopo i curl."
+          "nome": "Bicipiti",
+          "dose": "20s per lato",
+          "come": "Braccio disteso dietro di te, palmo rivolto all'indietro, appoggiato a un muro all'altezza dei fianchi. Ruota lentamente il busto dal lato opposto. Si sente davanti al braccio.",
+          "video": {
+            "id": "8p9wcvIGEsE",
+            "titolo": "How To Biceps Stretch",
+            "canale": "COACH ALI",
+            "verticale": true
+          }
         }
       ]
     },
     "full-body": {
+      "fase1": {
+        "dose": "6-7 min"
+      },
       "mobilita": [
         {
-          "nome": "Circonduzioni delle braccia",
-          "dose": "10 avanti + 10 indietro",
-          "come": "Oggi si spinge e si tira: servono entrambe le direzioni."
-        },
-        {
-          "nome": "Rotazioni di polsi e gomiti",
-          "dose": "10 per verso",
-          "come": "Panca, Military e Curl nello stesso giorno: il polso è il punto più sollecitato della settimana."
-        },
-        {
-          "nome": "Hip hinge a vuoto con un bastone",
-          "dose": "10 ripetizioni",
-          "come": "Prepara rematore e squat insieme."
-        },
-        {
           "nome": "Squat a corpo libero",
-          "dose": "10 lenti",
-          "come": "Tre secondi a scendere."
+          "dose": "10 rip",
+          "come": "Piedi larghi quanto le spalle, punte leggermente in fuori. Spingi i fianchi indietro come per sederti, piega le ginocchia col peso sui talloni e la schiena dritta. Scendi fin dove controlli, poi risali spingendo dai talloni."
         },
         {
-          "nome": "Retrazione scapolare",
-          "dose": "15 ripetizioni",
-          "come": "Vale per la panca e per il rematore."
+          "nome": "Push-up al muro",
+          "dose": "8 rip",
+          "come": "In piedi a mezzo metro dal muro, mani appoggiate all'altezza del petto poco più larghe delle spalle. Piega i gomiti avvicinando il petto al muro, poi spingi per tornare dritto. È una flessione in verticale, molto più leggera."
+        },
+        {
+          "nome": "Rematore a vuoto",
+          "dose": "10 rip",
+          "come": "Busto piegato in avanti dai fianchi, schiena dritta, come se tenessi un bilanciere. Porta i gomiti indietro stringendo le scapole, poi torna avanti. Senza pesi."
+        },
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano."
+        },
+        {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati."
         }
       ],
       "stretchingFinale": [
         {
-          "nome": "Pettorale al muro",
-          "dose": "30 s per lato",
-          "come": "Mano al muro all'altezza della spalla, ruota il busto."
+          "nome": "Quadricipiti",
+          "dose": "20s per lato",
+          "come": "In piedi, appoggiato a un muro per l'equilibrio, piega un ginocchio portando il tallone al gluteo, afferra la caviglia e tira delicatamente. Ginocchia vicine, bacino leggermente avanti. Si sente davanti alla coscia.",
+          "video": {
+            "id": "LHesB7TJW6c",
+            "titolo": "Quad Stretch",
+            "canale": "St. Peter's Health",
+            "verticale": true
+          }
         },
         {
-          "nome": "Gran dorsale",
-          "dose": "30 s per lato",
-          "come": "Mano su un appoggio, siediti indietro allungando il fianco."
+          "nome": "Femorali",
+          "dose": "20s per lato",
+          "come": "Tallone a terra davanti a te, gamba tesa e punta del piede in alto; l'altra gamba leggermente piegata dietro. Piegati in avanti dai fianchi con la schiena dritta, non arrotondata. Si sente dietro la coscia tesa.",
+          "video": {
+            "id": "A4-9oLGRocY",
+            "titolo": "Standing Hamstring Stretch",
+            "canale": "WorkoutsbyDavid",
+            "verticale": true
+          }
         },
         {
-          "nome": "Quadricipite in piedi",
-          "dose": "30 s per lato",
-          "come": "Tallone al gluteo, ginocchia vicine."
+          "nome": "Pettorali",
+          "dose": "20s per lato",
+          "come": "Avambraccio appoggiato a uno stipite, gomito piegato a 90° all'altezza della spalla. Ruota lentamente il busto dalla parte opposta al braccio, allontanando il corpo dal muro, tenendo l'avambraccio fermo. Si sente davanti alla spalla e al petto.",
+          "video": {
+            "id": "T6ZozOBoyo8",
+            "titolo": "Doorway Chest Stretch",
+            "canale": "Dr. Femi Betiku",
+            "verticale": true
+          }
         },
         {
-          "nome": "Femorali da seduto",
-          "dose": "30 s per lato",
-          "come": "Schiena dritta, petto verso il ginocchio."
+          "nome": "Dorsali (allungamento laterale)",
+          "dose": "20s",
+          "come": "Braccia alzate sopra la testa, afferra un polso con l'altra mano. Tira delicatamente verso un lato piegando il busto lateralmente, fianchi fermi. Si sente sul fianco e sulla schiena del lato opposto.",
+          "video": {
+            "id": "iPQ2rPyAbl0",
+            "titolo": "Side Stretch",
+            "canale": "St. Peter's Health",
+            "verticale": true
+          }
         }
       ]
     },
