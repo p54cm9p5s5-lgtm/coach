@@ -284,8 +284,23 @@ a.row:active {
 
 /* ---------- pulsanti ---------- */
 
+/* Tutto ciò che si tocca risponde subito, senza l'attesa del doppio tocco. */
+button,
+a,
+label.row,
+input[type="checkbox"],
+.stepper button,
+.segmented button,
+.scale button {
+  touch-action: manipulation;
+}
+
 .btn {
   display: block;
+  /* Su iOS un elemento senza questa riga aspetta di capire se stai facendo un
+     doppio tocco per ingrandire: nel frattempo il primo tocco può andare
+     perso. Con «manipulation» il tocco è immediato. */
+  touch-action: manipulation;
   width: 100%;
   min-height: 44px;
   border: 0;
@@ -1342,6 +1357,11 @@ body:has(.session) .toast {
 
 .toast {
   position: fixed;
+  /* Un messaggio non si tocca: deve lasciar passare il dito. Senza questa
+     riga la pastiglia restava sopra i tasti del piede per due secondi buoni e
+     mangiava i tocchi ESATTAMENTE al centro — ai lati il tasto sporgeva oltre
+     la pastiglia e rispondeva, e sembrava che l'app funzionasse a metà. */
+  pointer-events: none;
   left: 50%;
   /* Durante l'allenamento la barra delle schede non c'è e in fondo sta il
      pulsante principale: il messaggio andava a coprirlo proprio mentre lo

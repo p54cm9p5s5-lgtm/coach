@@ -645,6 +645,11 @@ function azione(fn) {
       if (bottone) bottone.disabled = false;
     } finally {
       S.occupato = false;
+      // Se la schermata non è stata ridisegnata, il tasto è ancora quello di
+      // prima e va riacceso: lasciarlo spento vuol dire un tasto che da lì in
+      // poi non risponde più, senza dire perché. Dopo un ridisegno il nodo è
+      // staccato dal documento e non serve toccarlo.
+      if (bottone && bottone.isConnected) bottone.disabled = false;
     }
   };
 }
@@ -700,6 +705,7 @@ async function disegna() {
   else if (fase === "recupero") await vistaRecupero(corpo, piede);
   else if (fase === "questionario") await vistaQuestionario(corpo, piede);
   else if (fase === "cardio") await vistaCardio(corpo, piede);
+  else if (fase === "valutazioneCardio") await vistaValutazioneCardio(corpo, piede);
   else if (fase === "stretching") await vistaStretching(corpo, piede);
   else await vistaFine(corpo, piede);
 }
@@ -714,6 +720,9 @@ function testata() {
   if (fase === "cardio") {
     passo = "Cardio";
     avanzamento = 90;
+  } else if (fase === "valutazioneCardio") {
+    passo = "Cardio · numeri";
+    avanzamento = 93;
   } else if (fase === "stretching") {
     // Anche qui si va un passaggio per volta: la testata dice quale, come fa
     // con gli esercizi.
@@ -2635,7 +2644,10 @@ async function vistaCardioInCorso(corpo, piede, r) {
       },
     });
     S.cardioFine = null;
-    await salvaProgresso({ fase: "stretching", cardioInizio: null, cardioFine: null });
+    // I numeri del cardio si scrivono adesso, con l'orologio ancora al polso e
+    // il riepilogo aperto: dopo lo stretching sono già stati sostituiti da
+    // quelli della sessione pesi, e si finiva a ricordarli a memoria.
+    await salvaProgresso({ fase: "valutazioneCardio", cardioInizio: null, cardioFine: null });
     await disegna();
   };
 
@@ -2680,6 +2692,55 @@ function spostaCardio(min) {
 
 // ---------- stretching, come passo dell'allenamento ----------
 
+/**
+ * Com'è andato il cardio, subito dopo il cardio.
+ *
+ * I numeri stanno sull'orologio adesso: la sessione appena chiusa è ancora
+ * quella in cima al riepilogo. Chiedendoli dopo lo stretching, al polso c'era
+ * già dell'altro e si finiva a scriverli a memoria — o a non scriverli.
+ */
+async function vistaValutazioneCardio(corpo, piede) {
+  const c = S.sed.cardio || {};
+  const r = store.regole().cardio || {};
+  const previsti = c.durataPrevistaMin || r.durataMin || null;
+  const fatti = c.durataMin || 0;
+
+  aggiungi(corpo,
+    h(
+      "div.hero",
+      h("p.kicker", "Cardio finito"),
+      h("h2", "I numeri del cardio"),
+      h(
+        "p.target",
+        `${num(c.kmh ?? r.kmhMin ?? 0)} km/h per ${durataUmana(fatti * 60)}${
+          previsti ? ` · previsti ${durataUmana(previsti * 60)}` : ""
+        }`
+      )
+    ),
+    bloccoOrologio(S.sed, "cardio", async (orologio) => {
+      S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
+    }),
+    h(
+      "p.footnote",
+      { style: "margin:14px 16px 24px" },
+      "Copiali dal riepilogo che l'orologio mostra adesso. Sono facoltativi: quelli che scrivi finiscono nel pacchetto per il coach."
+    )
+  );
+
+  aggiungiPiede(piede,
+    h(
+      "button.btn",
+      {
+        onclick: azione(async () => {
+          await salvaProgresso({ fase: "stretching" });
+          await disegna();
+        }),
+      },
+      "Avanti"
+    )
+  );
+}
+
 async function vistaStretching(corpo, piede) {
   const passi = passiStretching();
 
@@ -2705,13 +2766,8 @@ async function vistaStretching(corpo, piede) {
             )
           )
         : null,
-      // I numeri dell'orologio stanno sull'ultimo allungamento: è lì che hai
-      // finito di muoverti e ce l'hai ancora al polso col riepilogo aperto.
-      i === passi.length - 1 && S.sed.cardio?.eseguito
-        ? bloccoOrologio(S.sed, "cardio", async (orologio) => {
-            S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-          })
-        : null,
+      // I numeri del cardio non si chiedono più qui: hanno una schermata loro
+      // subito dopo il cardio, quando l'orologio li mostra ancora.
       i === passi.length - 1 && !S.sed.cardio?.previsto
         ? bloccoOrologio(S.sed, "pesi", async (orologio) => {
             S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
