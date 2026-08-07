@@ -79,6 +79,7 @@ export async function render({ ridisegna }) {
   // di lui, e da lì non risale. Serve quello di OGGI, non quello del brief.
   const {limiti, corrente: limiteDomani, partenza} = await store.limitiFumo(oggi);
   const tollerate = limiti.get(oggi) ?? partenza;
+  const tettoDichiarato = await store.tettoFumoDichiarato();
   const dOggi = await store.sigaretteDi(oggi);
   const quante = dOggi.length;
   const tinta = colore(quante);
@@ -140,9 +141,13 @@ export async function render({ ridisegna }) {
         "p",
         { style: "margin:10px 0 0;font-size:14px;color:var(--label-secondary);text-align:center" },
         quante === 1 ? "sigaretta oggi" : "sigarette oggi",
-        quante > tollerate
-          ? ` · ${quante - tollerate} oltre le ${tollerate}`
-          : ` · su ${tollerate} tollerate`
+        tollerate === 0
+          ? quante === 0
+            ? " · il massimo è zero, e ci sei"
+            : ` · il massimo è zero: ${quante} ${quante === 1 ? "di troppo" : "di troppo"}`
+          : quante > tollerate
+            ? ` · ${quante - tollerate} oltre le ${tollerate}`
+            : ` · su ${tollerate} tollerate`
         )
       ),
       h(
@@ -210,10 +215,14 @@ export async function render({ ridisegna }) {
           h(
             "p.footnote",
             `Media ${(totale / Math.max(1, contati)).toFixed(1).replace(".", ",")} al giorno da quando conti (${dataBreve(primo)}). ` +
-              `Le sigarette pesano sul punteggio Salute: zero vale pieno, ${tollerate} vale zero, oltre ${tollerate} la giornata non supera 50.` +
-              (limiteDomani < tollerate
-                ? ` Oggi hai abbassato l'asticella: da domani il massimo è ${limiteDomani}.`
-                : "")
+              (tollerate === 0
+                ? "Il massimo è zero: ogni sigaretta pesa sul punteggio Salute e la giornata non supera 50."
+                : `Le sigarette pesano sul punteggio Salute: zero vale pieno, ${tollerate} vale zero, oltre ${tollerate} la giornata non supera 50.`) +
+              (tettoDichiarato && tettoDichiarato.massimo === 0 && tettoDichiarato.dal > oggi
+                ? ` Hai deciso che da domani il massimo è zero.`
+                : limiteDomani < tollerate
+                  ? ` Oggi hai abbassato l'asticella: da domani il massimo è ${limiteDomani}.`
+                  : "")
           ),
           // Fumare senza segnare capita. Un giorno segnato a metà è peggio di un
           // giorno non segnato: il primo entra nel punteggio come dato vero e lo
@@ -247,6 +256,37 @@ export async function render({ ridisegna }) {
                 }),
               },
               "Il conteggio riparte da oggi"
+            ),
+            // Una volta dichiarato lo zero il tasto non serve più: la decisione
+            // è presa e non si può disfare da qui.
+            tettoDichiarato?.massimo === 0 ? null : h("div", { style: "height:10px" }),
+            // La tacca scende da sé quando tocchi un nuovo minimo, ma «da domani
+            // basta» è una decisione, non una conseguenza dei numeri. Questo
+            // tasto la scrive, e da lì in poi il massimo non risale più.
+            tettoDichiarato?.massimo === 0 ? null : h(
+              "button.btn.secondary",
+              {
+                onclick: unaVoltaSola(async () => {
+                  const domani = (() => {
+                    const d = new Date(oggi + "T00:00:00");
+                    d.setDate(d.getDate() + 1);
+                    const p = (n) => String(n).padStart(2, "0");
+                    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+                  })();
+                  const scelta = await chiedi({
+                    titolo: "Da domani il massimo è zero?",
+                    testo:
+                      "I giorni fino a oggi restano giudicati con la soglia che avevano: non si riscrive niente del passato.\n\n" +
+                      "Da domani ogni sigaretta conta come oltre il massimo, e la giornata non supera 50 nel punteggio Salute. Il massimo non risale più da solo.",
+                    opzioni: [{ etichetta: "Sì, da domani zero", valore: "si" }],
+                  });
+                  if (scelta !== "si") return;
+                  await store.dichiaraTettoFumo(0, domani);
+                  toast("Da domani il massimo è zero.");
+                  await ridisegna();
+                }),
+              },
+              "Da domani il massimo è zero"
             )
           )
         )
