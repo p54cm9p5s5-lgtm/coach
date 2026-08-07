@@ -877,6 +877,18 @@ textarea.note {
   overflow: hidden;
 }
 
+/* Uno Short è girato in verticale: in un riquadro 16:9 se ne vedrebbe una
+   fascia centrale, con testa e piedi tagliati. Più alto che largo si vede
+   tutto il movimento. */
+.video.verticale {
+  aspect-ratio: 3 / 4;
+  margin: 0 auto;
+  /* Alto abbastanza da vedere il movimento, non tanto da spingere fuori
+     schermo le istruzioni scritte, che restano la fonte affidabile. */
+  width: min(100%, 39vh);
+  border-radius: 12px;
+}
+
 .video img,
 .video iframe {
   position: absolute;

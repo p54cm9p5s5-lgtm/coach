@@ -810,8 +810,16 @@ function passiRiscaldamento() {
   const prot = store.riscaldamento(S.sed.tipoId);
   const camminata = conTapis ? prot?.cardio?.conTapis : prot?.cardio?.senzaTapis;
   const passi = [];
-  if (camminata) passi.push({ nome: camminata.titolo, dose: "5 min", come: camminata.dettaglio });
-  for (const m of prot?.mobilita || []) passi.push({ nome: m.nome, dose: m.dose, come: m.come });
+  if (camminata) {
+    // La durata della Fase 1 la decide il giorno: il full body ne chiede di più.
+    const f1 = prot?.fase1 || {};
+    passi.push({
+      nome: camminata.titolo,
+      dose: f1.dose || "5 min",
+      come: f1.nota ? `${camminata.dettaglio} ${f1.nota[0].toUpperCase()}${f1.nota.slice(1)}.` : camminata.dettaglio,
+    });
+  }
+  for (const m of prot?.mobilita || []) passi.push({ nome: m.nome, dose: m.dose, come: m.come, video: m.video });
   if (prot?.serieDiAvvicinamento) {
     passi.push({
       nome: prot.serieDiAvvicinamento.titolo,
@@ -824,7 +832,7 @@ function passiRiscaldamento() {
 
 function passiStretching() {
   const prot = store.riscaldamento(S.sed.tipoId);
-  return (prot?.stretchingFinale || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come }));
+  return (prot?.stretchingFinale || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video }));
 }
 
 async function vistaRiscaldamento(corpo, piede) {
@@ -833,6 +841,9 @@ async function vistaRiscaldamento(corpo, piede) {
 
   await vistaGuidata(corpo, piede, {
     chiave: "risc",
+    // La mobilità si fa, non si tiene: «tieni la posizione» andrebbe bene per
+    // un allungamento, non per dei cerchi con le braccia.
+    tenuta: false,
     kicker: "Riscaldamento",
     titolo: "Riscaldamento",
     passi: passiRiscaldamento(),
@@ -1153,14 +1164,28 @@ function tempoDaDose(dose) {
   // faceva diventare novanta secondi cinque minuti. E «minuto» al singolare va
   // riconosciuto come «min», altrimenti quella dose resta senza cronometro.
   const numero = (x) => Number(String(x).replace(",", "."));
+  // Una dose può essere un intervallo («6-7 min»): si prende il minimo, che è
+  // quello che il protocollo chiede davvero. Prima veniva letto il massimo,
+  // perché è il numero attaccato all'unità di misura.
+  const gamma = t.match(/(\d+(?:[.,]\d+)?)\s*-\s*(\d+(?:[.,]\d+)?)\s*(secondi|secondo|sec|s|minuti|minuto|min|m)\b/);
   const sec = t.match(/(\d+(?:[.,]\d+)?)\s*(?:secondi|secondo|sec|s)\b/);
   const min = t.match(/(\d+(?:[.,]\d+)?)\s*(?:minuti|minuto|min|m)\b/);
-  const durata = sec ? Math.round(numero(sec[1])) : min ? Math.round(numero(min[1]) * 60) : null;
+  const inMinuti = gamma ? /^m/.test(gamma[3]) : !sec && Boolean(min);
+  const grezzo = gamma ? numero(gamma[1]) : sec ? numero(sec[1]) : min ? numero(min[1]) : null;
+  if (grezzo == null) return null;
+  const durata = Math.round(inMinuti ? grezzo * 60 : grezzo);
   if (!durata || durata <= 0) return null;
   const giriMatch = t.match(/(\d+)\s*[×x]\s*\d/);
   const serie = giriMatch ? Number(giriMatch[1]) : 1;
-  const perLato = /per lato/.test(t);
-  return { durata, serie, perLato, tenute: serie * (perLato ? 2 : 1) };
+  // «per lato» si scrive in molti modi — con la barra, per gamba, per braccio —
+  // e ogni direzione di un cerchio è una tenuta come lo è un lato. Riconoscerne
+  // uno solo faceva partire un cronometro invece di due, cioè metà del lavoro.
+  const m = t.match(/(?:per|\/)\s*(lato|gamba|braccio|direzione|verso)/);
+  const perLato = Boolean(m);
+  // Due giri di cerchi con le braccia non sono «due lati»: la parola giusta
+  // la dice la dose stessa.
+  const parola = m ? m[1] : null;
+  return { durata, serie, perLato, parola, tenute: serie * (perLato ? 2 : 1) };
 }
 
 /**
@@ -1186,7 +1211,16 @@ function durataScritta(sec) {
 function nomeTenuta(tempo, g) {
   const parti = [];
   if (tempo.serie > 1) parti.push(`giro ${Math.floor(g / (tempo.perLato ? 2 : 1)) + 1} di ${tempo.serie}`);
-  if (tempo.perLato) parti.push(g % 2 === 0 ? "primo lato" : "altro lato");
+  if (tempo.perLato) {
+    const p = tempo.parola === "direzione" || tempo.parola === "verso"
+      ? ["una direzione", "l'altra direzione"]
+      : tempo.parola === "gamba"
+        ? ["prima gamba", "altra gamba"]
+        : tempo.parola === "braccio"
+          ? ["primo braccio", "altro braccio"]
+          : ["primo lato", "altro lato"];
+    parti.push(g % 2 === 0 ? p[0] : p[1]);
+  }
   return parti.join(" · ");
 }
 
@@ -1296,6 +1330,11 @@ async function vistaGuidata(corpo, piede, cfg) {
 
   aggiungi(corpo, ...(extra?.(i, p) || []).filter(Boolean));
 
+  // Il video sta dove sta negli esercizi: sopra le istruzioni scritte, e si
+  // carica solo se lo tocchi. La spiegazione a parole resta comunque la fonte:
+  // in palestra senza rete l'anteprima non parte, il testo sì.
+  if (p.video?.id) aggiungi(corpo, riquadroVideo({ video: p.video, nome: p.nome }));
+
   if (p.come) aggiungi(corpo, h("div.guida", h("section", h("h3", "Come si fa"), h("p", p.come))));
 
   if (tempo && tempo.tenute > 1) {
@@ -1345,7 +1384,9 @@ async function vistaGuidata(corpo, piede, cfg) {
         fermaAllarme();
         await onFine();
       }),
-    }, ultimaTenuta ? (ultimo ? etichettaFine : "Fatto · avanti") : "Fatto · altro lato");
+    }, ultimaTenuta
+      ? ultimo ? etichettaFine : "Fatto · avanti"
+      : `Fatto · ${nomeTenuta(tempo, giro + 1) || "continua"}`);
   } else {
     principale = h("button.btn", {
       onclick: azione(async () => {
@@ -1443,8 +1484,12 @@ function riquadroVideo(def) {
     );
   };
 
+  // I video verticali (gli Shorts degli allungamenti) hanno la loro anteprima:
+  // «hqdefault» per uno Short è un riquadro 4:3 quasi tutto barre nere, e in
+  // schermata si vedeva un rettangolo scuro col tasto play sopra.
+  const verticale = Boolean(def.video?.verticale);
   const copertina = h("img", {
-    src: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    src: `https://i.ytimg.com/vi/${id}/${verticale ? "oardefault" : "hqdefault"}.jpg`,
     alt: "",
     loading: "lazy",
     onerror: (e) => {
@@ -1453,7 +1498,7 @@ function riquadroVideo(def) {
   });
 
   const riquadro = h(
-    "button.video",
+    verticale ? "button.video.verticale" : "button.video",
     { onclick: apri, "aria-label": `Riproduci: ${titolo || def.nome}` },
     copertina,
     h("span.play", h("span", "▶"))
