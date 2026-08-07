@@ -24,27 +24,53 @@
         {
           "nome": "Cerchi con le braccia",
           "dose": "20s per direzione",
-          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano."
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
         },
         {
           "nome": "Aperture del petto",
           "dose": "30s",
-          "come": "In piedi, mani dietro la schiena con le dita intrecciate (o unite). Spingi il petto in fuori e le spalle indietro e in basso, come per far toccare le scapole. Si sente davanti alle spalle e al petto."
+          "come": "In piedi, mani dietro la schiena con le dita intrecciate (o unite). Spingi il petto in fuori e le spalle indietro e in basso, come per far toccare le scapole. Si sente davanti alle spalle e al petto.",
+          "video": {
+            "id": "23HwJIiDVWM",
+            "titolo": "Hands behind back chest opener stretch",
+            "canale": "William Vantrease",
+            "verticale": true
+          }
         },
         {
           "nome": "Rotazioni delle spalle",
           "dose": "10 per lato",
-          "come": "In piedi, braccia rilassate lungo i fianchi. Solleva le spalle verso le orecchie, portale indietro, poi giù, poi avanti: un cerchio fluido disegnato con le spalle."
+          "come": "In piedi, braccia rilassate lungo i fianchi. Solleva le spalle verso le orecchie, portale indietro, poi giù, poi avanti: un cerchio fluido disegnato con le spalle.",
+          "video": {
+            "id": "X7NtgY9kCCM",
+            "titolo": "How to do shoulder rolls",
+            "canale": "Rehab My Patient"
+          }
         },
         {
           "nome": "Push-up al muro",
           "dose": "8-10 rip",
-          "come": "In piedi a mezzo metro dal muro, mani appoggiate all'altezza del petto poco più larghe delle spalle. Piega i gomiti avvicinando il petto al muro, poi spingi per tornare dritto. È una flessione in verticale, molto più leggera."
+          "come": "In piedi a mezzo metro dal muro, mani appoggiate all'altezza del petto poco più larghe delle spalle. Piega i gomiti avvicinando il petto al muro, poi spingi per tornare dritto. È una flessione in verticale, molto più leggera.",
+          "video": {
+            "id": "-KVhapnEtuk",
+            "titolo": "Wall push up",
+            "canale": "CSIRO Total Wellbeing Diet"
+          }
         },
         {
           "nome": "Estensioni tricipiti a vuoto",
           "dose": "10 rip",
-          "come": "Alza un braccio sopra la testa, piega il gomito portando la mano dietro la nuca; con l'altra mano accompagna il gomito. Distendi il braccio verso l'alto e ripeti. Serve solo a scaldare il gomito."
+          "come": "Alza un braccio sopra la testa, piega il gomito portando la mano dietro la nuca; con l'altra mano accompagna il gomito. Distendi il braccio verso l'alto e ripeti. Serve solo a scaldare il gomito.",
+          "video": {
+            "id": "ouym_zWHmOM",
+            "titolo": "Tricep Extension — No Weight",
+            "canale": "Rehab My Patient"
+          }
         }
       ],
       "stretchingFinale": [
@@ -92,27 +118,52 @@
         {
           "nome": "Squat a corpo libero",
           "dose": "10-15 rip lente",
-          "come": "Piedi larghi quanto le spalle, punte leggermente in fuori. Spingi i fianchi indietro come per sederti, piega le ginocchia col peso sui talloni e la schiena dritta. Scendi fin dove controlli, poi risali spingendo dai talloni."
+          "come": "Piedi larghi quanto le spalle, punte leggermente in fuori. Spingi i fianchi indietro come per sederti, piega le ginocchia col peso sui talloni e la schiena dritta. Scendi fin dove controlli, poi risali spingendo dai talloni.",
+          "video": {
+            "id": "ckvHymGK3s0",
+            "titolo": "The Air Squat — Beginner Bodyweight Squat",
+            "canale": "Dr. Carl Baird"
+          }
         },
         {
           "nome": "Affondi statici",
           "dose": "5 per gamba",
-          "come": "Un passo avanti con una gamba. Piega entrambe le ginocchia fino a circa 90°, senza sbattere a terra il ginocchio dietro. Busto dritto, non inclinarti in avanti. Risali spingendo con la gamba davanti."
+          "come": "Un passo avanti con una gamba. Piega entrambe le ginocchia fino a circa 90°, senza sbattere a terra il ginocchio dietro. Busto dritto, non inclinarti in avanti. Risali spingendo con la gamba davanti.",
+          "video": {
+            "id": "xoZMv_YJtkA",
+            "titolo": "Static Lunge",
+            "canale": "Dr. Chris Pieton"
+          }
         },
         {
           "nome": "Mobilità di caviglia",
           "dose": "10 per lato",
-          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati."
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
         },
         {
           "nome": "Ponte per glutei",
           "dose": "10 rip",
-          "come": "Sdraiato sulla schiena, ginocchia piegate, piedi a terra vicino ai glutei. Spingi i talloni a terra e solleva il bacino verso il soffitto stringendo i glutei in alto. Scendi controllato."
+          "come": "Sdraiato sulla schiena, ginocchia piegate, piedi a terra vicino ai glutei. Spingi i talloni a terra e solleva il bacino verso il soffitto stringendo i glutei in alto. Scendi controllato.",
+          "video": {
+            "id": "tqp5XQPpTxY",
+            "titolo": "How To Do A Glute Bridge",
+            "canale": "PureGym"
+          }
         },
         {
           "nome": "Cerchi con il bacino",
           "dose": "10 per lato",
-          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni."
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
         }
       ],
       "stretchingFinale": [
@@ -181,27 +232,52 @@
         {
           "nome": "Cerchi con le braccia",
           "dose": "20s per direzione",
-          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano."
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
         },
         {
           "nome": "Rotazioni interne ed esterne di spalla",
           "dose": "10 per lato",
-          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su."
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
         },
         {
           "nome": "Alzate laterali a vuoto",
           "dose": "10 rip",
-          "come": "Lo stesso gesto delle alzate laterali, senza pesi. Braccia lungo i fianchi, sollevale lateralmente fino all'altezza delle spalle con i gomiti morbidi, poi riabbassa controllato."
+          "come": "Lo stesso gesto delle alzate laterali, senza pesi. Braccia lungo i fianchi, sollevale lateralmente fino all'altezza delle spalle con i gomiti morbidi, poi riabbassa controllato.",
+          "video": {
+            "id": "XPPfnSEATJA",
+            "titolo": "How to do a Lateral Raise",
+            "canale": "National Academy of Sports Medicine"
+          }
         },
         {
           "nome": "Retrazioni scapolari",
           "dose": "10 rip",
-          "come": "In piedi o seduto, braccia rilassate. Stringi le scapole fra loro come per tenere una matita in mezzo alla schiena, senza alzare le spalle verso le orecchie. Rilascia."
+          "come": "In piedi o seduto, braccia rilassate. Stringi le scapole fra loro come per tenere una matita in mezzo alla schiena, senza alzare le spalle verso le orecchie. Rilascia.",
+          "video": {
+            "id": "b1snr_g3MZY",
+            "titolo": "How to Do a Standing Scapular Retraction",
+            "canale": "Medbridge"
+          }
         },
         {
           "nome": "Rotazione del collo",
           "dose": "5 per lato",
-          "come": "Inclina lentamente la testa verso una spalla, torna al centro, poi verso l'altra. Movimento lento, mai forzato, mai un cerchio completo all'indietro."
+          "come": "Inclina lentamente la testa verso una spalla, torna al centro, poi verso l'altra. Movimento lento, mai forzato, mai un cerchio completo all'indietro.",
+          "video": {
+            "id": "IOdDXf_5d0c",
+            "titolo": "How To Do A Neck Side Bend",
+            "canale": "Rehab My Patient"
+          }
         }
       ],
       "stretchingFinale": [
@@ -248,22 +324,42 @@
         {
           "nome": "Cat-cow",
           "dose": "10 rip lente",
-          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente."
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
         },
         {
           "nome": "Rematore a vuoto",
           "dose": "10 rip",
-          "come": "Busto piegato in avanti dai fianchi, schiena dritta, come se tenessi un bilanciere. Porta i gomiti indietro stringendo le scapole, poi torna avanti. Senza pesi."
+          "come": "Busto piegato in avanti dai fianchi, schiena dritta, come se tenessi un bilanciere. Porta i gomiti indietro stringendo le scapole, poi torna avanti. Senza pesi.",
+          "video": {
+            "id": "6gvmcqr226U",
+            "titolo": "How To Do A Bent Over Row",
+            "canale": "PureGym"
+          }
         },
         {
           "nome": "Rotazioni delle spalle",
           "dose": "10 per lato",
-          "come": "In piedi, braccia rilassate lungo i fianchi. Solleva le spalle verso le orecchie, portale indietro, poi giù, poi avanti: un cerchio fluido disegnato con le spalle."
+          "come": "In piedi, braccia rilassate lungo i fianchi. Solleva le spalle verso le orecchie, portale indietro, poi giù, poi avanti: un cerchio fluido disegnato con le spalle.",
+          "video": {
+            "id": "X7NtgY9kCCM",
+            "titolo": "How to do shoulder rolls",
+            "canale": "Rehab My Patient"
+          }
         },
         {
           "nome": "Curl a vuoto",
           "dose": "10 rip",
-          "come": "In piedi, pugni chiusi come su manubri immaginari. Piega i gomiti portando le mani verso le spalle, poi distendi. Senza peso."
+          "come": "In piedi, pugni chiusi come su manubri immaginari. Piega i gomiti portando le mani verso le spalle, poi distendi. Senza peso.",
+          "video": {
+            "id": "cBSD6mQIPQk",
+            "titolo": "Bicep Curl",
+            "canale": "Nuffield Health"
+          }
         }
       ],
       "stretchingFinale": [
@@ -310,27 +406,52 @@
         {
           "nome": "Squat a corpo libero",
           "dose": "10 rip",
-          "come": "Piedi larghi quanto le spalle, punte leggermente in fuori. Spingi i fianchi indietro come per sederti, piega le ginocchia col peso sui talloni e la schiena dritta. Scendi fin dove controlli, poi risali spingendo dai talloni."
+          "come": "Piedi larghi quanto le spalle, punte leggermente in fuori. Spingi i fianchi indietro come per sederti, piega le ginocchia col peso sui talloni e la schiena dritta. Scendi fin dove controlli, poi risali spingendo dai talloni.",
+          "video": {
+            "id": "ckvHymGK3s0",
+            "titolo": "The Air Squat — Beginner Bodyweight Squat",
+            "canale": "Dr. Carl Baird"
+          }
         },
         {
           "nome": "Push-up al muro",
           "dose": "8 rip",
-          "come": "In piedi a mezzo metro dal muro, mani appoggiate all'altezza del petto poco più larghe delle spalle. Piega i gomiti avvicinando il petto al muro, poi spingi per tornare dritto. È una flessione in verticale, molto più leggera."
+          "come": "In piedi a mezzo metro dal muro, mani appoggiate all'altezza del petto poco più larghe delle spalle. Piega i gomiti avvicinando il petto al muro, poi spingi per tornare dritto. È una flessione in verticale, molto più leggera.",
+          "video": {
+            "id": "-KVhapnEtuk",
+            "titolo": "Wall push up",
+            "canale": "CSIRO Total Wellbeing Diet"
+          }
         },
         {
           "nome": "Rematore a vuoto",
           "dose": "10 rip",
-          "come": "Busto piegato in avanti dai fianchi, schiena dritta, come se tenessi un bilanciere. Porta i gomiti indietro stringendo le scapole, poi torna avanti. Senza pesi."
+          "come": "Busto piegato in avanti dai fianchi, schiena dritta, come se tenessi un bilanciere. Porta i gomiti indietro stringendo le scapole, poi torna avanti. Senza pesi.",
+          "video": {
+            "id": "6gvmcqr226U",
+            "titolo": "How To Do A Bent Over Row",
+            "canale": "PureGym"
+          }
         },
         {
           "nome": "Cerchi con le braccia",
           "dose": "20s per direzione",
-          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano."
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
         },
         {
           "nome": "Mobilità di caviglia",
           "dose": "10 per lato",
-          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati."
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
         }
       ],
       "stretchingFinale": [
@@ -390,7 +511,12 @@
         {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
         },
         {
           "nome": "Thread the needle",
@@ -441,7 +567,12 @@
         {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
         },
         {
           "nome": "Circonduzioni delle spalle",
@@ -451,12 +582,22 @@
         {
           "nome": "Retrazioni scapolari",
           "dose": "12 ripetizioni",
-          "come": "In piedi: avvicina le scapole e tienile due secondi."
+          "come": "In piedi: avvicina le scapole e tienile due secondi.",
+          "video": {
+            "id": "b1snr_g3MZY",
+            "titolo": "How to Do a Standing Scapular Retraction",
+            "canale": "Medbridge"
+          }
         },
         {
           "nome": "Squat a corpo libero",
           "dose": "10 ripetizioni",
-          "come": "Discesa lenta, ginocchia allineate sopra i piedi."
+          "come": "Discesa lenta, ginocchia allineate sopra i piedi.",
+          "video": {
+            "id": "ckvHymGK3s0",
+            "titolo": "The Air Squat — Beginner Bodyweight Squat",
+            "canale": "Dr. Carl Baird"
+          }
         },
         {
           "nome": "90/90 d'anca",
@@ -497,7 +638,12 @@
         {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
         },
         {
           "nome": "Thread the needle",
@@ -558,7 +704,12 @@
         {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
         },
         {
           "nome": "Circonduzioni delle caviglie",
@@ -604,7 +755,12 @@
         {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro."
+          "come": "In quadrupedia, alterna flessione ed estensione della colonna seguendo il respiro.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
         },
         {
           "nome": "Circonduzioni delle caviglie",
