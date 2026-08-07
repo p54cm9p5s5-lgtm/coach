@@ -294,17 +294,25 @@ export const PERIODI = [
    sposta anche tutti gli altri, così i numeri che guardi insieme parlano
    sempre dello stesso periodo. */
 const CHIAVE_PERIODO = "coach-periodo";
+/** Il punteggio Salute in Home ha il suo, staccato da tutti gli altri grafici. */
+export const CHIAVE_PERIODO_SALUTE = "coach-periodo-salute";
 
-export function periodoSalvato(predefinito = "tutto") {
+/**
+ * Il periodo scelto. Chi non dice niente usa quello condiviso da tutti i
+ * grafici; chi passa una chiave sua ne tiene uno indipendente — serve al
+ * punteggio Salute in Home, che si guarda con un occhio diverso dal resto e
+ * non deve trascinare tutte le altre schede quando lo sposti.
+ */
+export function periodoSalvato(predefinito = "tutto", chiave = CHIAVE_PERIODO) {
   try {
-    const id = localStorage.getItem(CHIAVE_PERIODO);
+    const id = localStorage.getItem(chiave);
     return PERIODI.find((p) => p.id === id) || PERIODI.find((p) => p.id === predefinito) || PERIODI[1];
   } catch {
     return PERIODI.find((p) => p.id === predefinito) || PERIODI[1];
   }
 }
 
-export function selettorePeriodo(periodo, onCambia) {
+export function selettorePeriodo(periodo, onCambia, chiave = CHIAVE_PERIODO) {
   return h(
     "div.segmented",
     { style: "margin:0 0 12px" },
@@ -319,7 +327,7 @@ export function selettorePeriodo(periodo, onCambia) {
           onclick: async () => {
             if (p.id === periodo.id) return;
             try {
-              localStorage.setItem(CHIAVE_PERIODO, p.id);
+              localStorage.setItem(chiave, p.id);
             } catch {
               /* senza localStorage la scelta vale solo per questa schermata */
             }
