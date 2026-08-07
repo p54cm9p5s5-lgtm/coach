@@ -2167,21 +2167,46 @@ export async function riparteConteggioFumo(data = isoDate()) {
  * quante ne siano state fumate, e uno zero che non è mai stato misurato non è
  * un record.
  */
+/**
+ * Un tetto dichiarato a mano, valido da una certa data in poi.
+ *
+ * La tacca scende da sé quando tocchi un nuovo minimo, ma non sa cosa hai
+ * deciso: «da domani zero» è una scelta, non una conseguenza dei numeri.
+ * Vale solo verso il basso — dichiararlo più alto non lo alza — e non tocca
+ * i giorni prima della data, che restano giudicati con la soglia che avevano.
+ */
+export async function tettoFumoDichiarato() {
+  const t = await impostazione("fumoTettoDichiarato");
+  return t && t.dal && Number.isFinite(t.massimo) ? t : null;
+}
+
+export async function dichiaraTettoFumo(massimo, dal) {
+  await setImpostazione("fumoTettoDichiarato", { dal, massimo, decisoIl: new Date().toISOString() });
+}
+
 export async function limitiFumo(al = isoDate(), base = null) {
   const partenza = base ?? regole().salute?.sigaretteTollerate ?? 10;
   const limiti = new Map();
   const dal = await fumoContatoDal();
   if (!dal) return { limiti, corrente: partenza, partenza };
   const conteggi = await conteggioFumo();
+  const tetto = await tettoFumoDichiarato();
   const p = (n) => String(n).padStart(2, "0");
   const d = new Date(dal + "T00:00:00");
   const fine = new Date(al + "T00:00:00");
   let limite = partenza;
   while (d <= fine) {
     const g = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    if (tetto && g >= tetto.dal) limite = Math.min(limite, tetto.massimo);
     limiti.set(g, limite);
     limite = Math.min(limite, conteggi.get(g) ?? 0);
     d.setDate(d.getDate() + 1);
+  }
+  // Anche il limite di domani rispetta la dichiarazione, se parte da domani.
+  if (tetto) {
+    const dom = new Date(fine); dom.setDate(dom.getDate() + 1);
+    const gDom = `${dom.getFullYear()}-${p(dom.getMonth() + 1)}-${p(dom.getDate())}`;
+    if (gDom >= tetto.dal) limite = Math.min(limite, tetto.massimo);
   }
   // `corrente` è il limite che varrà DOMANI: quello di oggi sta già in `limiti`.
   return { limiti, corrente: limite, partenza };
