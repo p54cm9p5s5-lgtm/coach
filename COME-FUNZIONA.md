@@ -211,6 +211,17 @@ fare adesso (nome, dose, come si fa), dice qual è il prossimo e in testa scrive
 a che punto sei — «Riscaldamento 3 di 7». Include la serie di avvicinamento sul
 primo esercizio (non viene registrata).
 
+La serie di avvicinamento **dice quale esercizio è e con quanto**: «Serie di
+avvicinamento: Squat con bilanciere — 1 × 8-10 · bilanciere scarico (10 kg)»,
+col video di quell'esercizio. Il carico lo calcola l'app dall'inventario e dal
+programma: bilanciere scarico per i bilancieri, metà carico per i manubri.
+Quando il gesto è lo **stesso** di un passaggio di mobilità già fatto — squat a
+corpo libero prima, squat con bilanciere adesso — l'app lo scrive, così è chiaro
+che non è lo stesso lavoro due volte ma la scaletta verso il carico di lavoro.
+Nei giorni che aprono con un esercizio **a corpo libero** il passaggio non
+compare: «con bilanciere scarico o metà carico» non vuol dire niente su una cosa
+che carico non ne ha.
+
 Dove la dose è **a secondi**, il passaggio ha un **cronometro vero** invece di
 un numero da leggere: «5 min» di camminata, «3 × 15 s per lato» di apertura del
 petto. L'app riconosce la dose com'è scritta nel protocollo e conta le tenute
