@@ -94,12 +94,18 @@ html {
   height: 100%;
 }
 
-/* Il body cresce con il contenuto invece di restare alto quanto lo schermo:
-   così a scorrere è la pagina, non un contenitore interno. Con l'altezza fissa
-   window.scrollTo non arrivava a niente e la testata non si accorgeva dello
-   scorrimento. */
+/* A scorrere è il contenuto, non la pagina.
+
+   Prima scorreva il body, con la barra delle sezioni in «position: fixed» in
+   fondo. Su iPhone, quando la pagina scorre e la barra degli indirizzi si
+   ritira, Safari rimette a posto gli elementi fissi solo a scorrimento finito:
+   nel frattempo la barra si stacca e resta a mezzo schermo. È lo stesso motivo
+   per cui la schermata dell'allenamento non ha mai avuto il problema — quella
+   è sempre stata un contenitore fisso con dentro una parte che scorre.
+   Adesso lo è tutta l'app. */
 body {
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 html,
@@ -132,9 +138,21 @@ textarea {
 /* ---------- layout ---------- */
 
 #app {
-  min-height: 100%;
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* La parte che scorre davvero. Lo spazio per la barra delle sezioni lo tiene
+   il riempimento in fondo a «.screen», come prima. */
+#view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .screen {
@@ -410,6 +428,14 @@ input[type="checkbox"],
 }
 
 .tabbar.hidden {
+  display: none;
+}
+
+/* Una singola voce nascosta — la sezione Fumo per chi non conta le sigarette.
+   Serve una regola sua: «.tabbar.hidden» vale per la barra intera e sui link
+   non aveva alcun effetto, così la voce restava lì. Con le colonne automatiche
+   la barra si ridistribuisce da sola sulle voci rimaste. */
+.tabbar a.hidden {
   display: none;
 }
 
