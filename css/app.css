@@ -191,10 +191,6 @@ textarea {
   padding: 0 0 calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 24px);
 }
 
-.screen.fullscreen {
-  padding-bottom: 0;
-}
-
 .topbar {
   position: sticky;
   top: 0;
@@ -1041,60 +1037,6 @@ textarea.note {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
-
-/* passi del riscaldamento */
-
-.passo {
-  display: flex;
-  gap: 12px;
-  padding: 13px var(--pad);
-  border-top: 0.5px solid var(--separator);
-}
-
-.passo:first-child {
-  border-top: 0;
-}
-
-.passo .n {
-  flex: 0 0 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--fill-tertiary);
-  color: var(--label-secondary);
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.passo .testo {
-  flex: 1;
-  min-width: 0;
-}
-
-.passo .nome {
-  font-weight: 600;
-  display: block;
-}
-
-.passo .dose {
-  display: inline-block;
-  margin-top: 3px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.passo .come {
-  display: block;
-  margin-top: 4px;
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--label-secondary);
-}
-
-/* ---------- foglio modale ---------- */
 
 .sheet-backdrop {
   position: fixed;

@@ -94,12 +94,6 @@ export function carichoPiuVicino(target, verso = 0, inv = INVENTARIO_DEFAULT) {
   return lista.reduce((best, c) => (Math.abs(c - target) < Math.abs(best - target) ? c : best), lista[0]);
 }
 
-/** Incremento minimo realizzabile sopra un dato carico (in kg totali). */
-export function incrementoMinimo(daCarico, inv = INVENTARIO_DEFAULT) {
-  const sopra = carichoPiuVicino(daCarico, 1, inv);
-  return arrotonda(sopra - daCarico);
-}
-
 export function descriviDischi(totale, grezzo = INVENTARIO_DEFAULT) {
   const inv = completa(grezzo);
   const c = combinazioneEsatta(totale, inv);

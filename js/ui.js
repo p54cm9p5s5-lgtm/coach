@@ -104,10 +104,6 @@ export function weekdayOf(iso) {
   return parseIso(iso).getDay();
 }
 
-export function nomeGiorno(iso) {
-  return GIORNI[weekdayOf(iso)];
-}
-
 export function dataLunga(iso) {
   const d = parseIso(iso);
   if (!d || Number.isNaN(d.getTime())) return "—";
