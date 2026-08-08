@@ -291,7 +291,6 @@ async function vistaRisultato(id, vaiA, da = null) {
   // stretching. Il volume totale in kg non guida nessuna decisione — cambia con
   // il numero di esercizi, non con la qualità del lavoro.
   const comp = await store.completezzaSeduta(id);
-  const completezza = comp?.totale ?? null;
   // Con un punteggio congelato si usano i suoi numeri: altrimenti la scheda
   // «Esercizi» diceva 4 e l'anello era stato calcolato su 3, perché nel
   // frattempo il coach aveva cambiato lo split.
@@ -1153,7 +1152,6 @@ async function vistaEsercizio(corpo, piede) {
     );
     const ind = indiciBlocco();
     if (ind.length > 1) {
-      const fatteQui = fatte.length;
       const mio = ind.indexOf(S.sed.progresso.indice);
       const dopo = ind.find((k, j) => j > mio);
       const altro = dopo != null ? store.esercizio(S.esercizi[dopo].esercizioId) : null;
@@ -2147,7 +2145,6 @@ async function vistaRecupero(corpo, piede) {
   // campi della serie appena chiusa
   let rip = ultima?.ripFatte ?? bersaglio;
   let carico = ultima?.carico ?? null;
-  const bilanciere = def?.attrezzo === "bilanciere";
 
   // Rileggere prima di scrivere: partendo dalla copia caricata al disegno, la
   // seconda correzione riscriveva sopra la prima e la cancellava.

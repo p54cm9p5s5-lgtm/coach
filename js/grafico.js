@@ -65,14 +65,6 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
   const passo = L / Math.max(dati.length, 1);
   const larghezza = Math.max(1.5, Math.min(9, passo * 0.42));
 
-  const etichettaFascia = (testo, y) => {
-    const t = el("text", {
-      x: 0, y, "font-size": 7.5, fill: "currentColor", opacity: 0.4,
-      "letter-spacing": 0.6,
-    });
-    t.textContent = testo.toUpperCase();
-    return t;
-  };
   // linea dell'obiettivo
   const yObiettivo = areaBarre - (obiettivo / massimo) * areaBarre;
   svg.append(
