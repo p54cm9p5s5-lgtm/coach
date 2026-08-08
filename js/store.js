@@ -46,6 +46,11 @@ export async function init() {
   return { libreria: LIBRERIA, programma: PROGRAMMA };
 }
 
+/* I video di mobilità e stretching sostituiti a mano. Non stanno nella
+   libreria degli esercizi — quei passaggi arrivano dal file del protocollo e
+   non hanno un id — quindi vivono qui, uno per nome del passaggio. */
+let VIDEO_PASSI = {};
+
 async function caricaRiscaldamento() {
   try {
     const r = await fetch("data/riscaldamento.json", { cache: "no-cache" });
@@ -53,18 +58,34 @@ async function caricaRiscaldamento() {
   } catch {
     /* offline al primissimo avvio: il riscaldamento resta senza dettaglio */
   }
+  const salvati = await impostazione("videoRiscaldamento");
+  VIDEO_PASSI = salvati && typeof salvati === "object" ? salvati : {};
   return RISCALDAMENTO;
 }
+
+/** Sostituisce il video di un passaggio di riscaldamento o stretching. */
+export async function cambiaVideoPasso(nome, video) {
+  const chiave = String(nome || "").trim();
+  if (!chiave) return false;
+  VIDEO_PASSI = { ...VIDEO_PASSI, [chiave]: video };
+  await setImpostazione("videoRiscaldamento", VIDEO_PASSI);
+  return true;
+}
+
+const conVideoScelto = (p) => (p && VIDEO_PASSI[p.nome] ? { ...p, video: VIDEO_PASSI[p.nome] } : p);
 
 /** Protocollo di riscaldamento per un giorno dello split. */
 export function riscaldamento(giornoId) {
   if (!RISCALDAMENTO) return null;
+  const giorno = RISCALDAMENTO.giorni?.[giornoId] || { mobilita: [], stretchingFinale: [] };
   return {
     cardio: RISCALDAMENTO.cardio,
     serieDiAvvicinamento: RISCALDAMENTO.serieDiAvvicinamento,
     nota: RISCALDAMENTO.nota,
     fase1: null,
-    ...(RISCALDAMENTO.giorni?.[giornoId] || { mobilita: [], stretchingFinale: [] }),
+    ...giorno,
+    mobilita: (giorno.mobilita || []).map(conVideoScelto),
+    stretchingFinale: (giorno.stretchingFinale || []).map(conVideoScelto),
   };
 }
 
@@ -654,12 +675,20 @@ export async function registraSerie({
   aTempo = false,
   tsInizioSerie,
   recuperoTargetSec,
+  misuraDallaSeduta = false,
 }) {
-  const precedenti = (await db.byIndex("serie", "sedutaId", sedutaId)).filter(
-    (s) => s.esercizioId === esercizioId
+  const tutteDellaSeduta = (await db.byIndex("serie", "sedutaId", sedutaId)).sort(
+    (a, b) => a.tsFineSerie - b.tsFineSerie
   );
-  const ultima = precedenti.sort((a, b) => a.tsFineSerie - b.tsFineSerie).at(-1);
+  const precedenti = tutteDellaSeduta.filter((s) => s.esercizioId === esercizioId);
+  const ultima = precedenti.at(-1);
   const inizio = tsInizioSerie || (ultima ? ultima.tsFineSerie : Date.now());
+  // Dentro un blocco fra una serie e l'altra dello stesso esercizio c'è di
+  // mezzo la serie del compagno: misurare da lì a lì significava contare come
+  // riposo anche il lavoro dell'altro esercizio, e un blocco eseguito alla
+  // lettera risultava con i recuperi troppo lunghi. Il riposo vero è il tempo
+  // passato dall'ULTIMA cosa fatta, qualunque esercizio fosse.
+  const daCui = misuraDallaSeduta ? tutteDellaSeduta.at(-1) : ultima;
 
   const rec = {
     id: db.nuovoId("ser"),
@@ -682,7 +711,10 @@ export async function registraSerie({
     // Senza cronometro non c'è un recupero misurato: dedurlo dall'orario di
     // partenza faceva risultare «recupero di 40 minuti» dopo una pausa in cui
     // l'app era chiusa.
-    recuperoRealeSec: tsInizioSerie && ultima ? Math.round((inizio - ultima.tsFineSerie) / 1000) : null,
+    // Nessuna serie precedente di questo esercizio significa che non c'è
+    // ancora nessun riposo da giudicare: è la prima volta che lo fai oggi.
+    recuperoRealeSec:
+      tsInizioSerie && ultima && daCui ? Math.max(0, Math.round((inizio - daCui.tsFineSerie) / 1000)) : null,
     creatoIl: new Date().toISOString(),
     fonte: "app",
   };
