@@ -113,6 +113,23 @@ export async function ridisegna() {
     return;
   }
   rottaCorrente = nome;
+
+  // Aggiornamento rimasto in attesa: si applica appena si esce dalla schermata
+  // dell'allenamento, senza chiedere che la seduta sia anche chiusa.
+  //
+  // Va fatto PRIMA di caricare il modulo della schermata. Il comando è già
+  // passato alla versione nuova: il file della schermata arriverebbe nuovo
+  // mentre ui.js e store.js restano quelli vecchi già in memoria. Se la
+  // versione nuova importa da lì un nome che prima non esisteva, il caricamento
+  // fallisce, si finisce sulla schermata «questa sezione non si è caricata» e
+  // la riga qui sotto non viene mai raggiunta: l'aggiornamento non entra più e
+  // «Riprova» rifà lo stesso errore, per sempre.
+  if (aggiornamentoInAttesa && nome !== "seduta") {
+    aggiornamentoInAttesa = false;
+    location.reload();
+    return;
+  }
+
   let mod;
   try {
     mod = await ROTTE[nome]();
@@ -161,14 +178,6 @@ export async function ridisegna() {
     }
   }
   modCorrente = mod;
-
-  // Aggiornamento rimasto in attesa: si applica appena si esce dalla schermata
-  // dell'allenamento, senza chiedere che la seduta sia anche chiusa.
-  if (aggiornamentoInAttesa && nome !== "seduta") {
-    aggiornamentoInAttesa = false;
-    location.reload();
-    return;
-  }
 
   if (mioTurno !== turnoCorrente) return;
 
