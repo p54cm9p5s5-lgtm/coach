@@ -198,6 +198,12 @@ Sequenza rigida, un passo per volta.
    Durante il recupero: ripetizioni fatte (precompilate) e carico (precompilato
    dall'ultima volta). +15 / −15 s. Timer per esercizio, default 120 s.
    **Avviso di fine: suono ripetuto finché non tocchi**, più cambio colore schermo.
+   Il suono si dichiara a iOS come **`transient`**: si sente anche col telefono in
+   silenzioso e la musica che stavi ascoltando **riprende da sola** appena lo
+   spegni. In tutti gli altri momenti l'app si dichiara **`ambient`** — sblocco
+   dell'audio compreso — e non tiene acceso nessun contesto audio: chi ha detto a
+   iOS di essere un lettore musicale, anche una volta sola, la musica non la
+   restituisce più.
 4. **Questionario di fine esercizio** (obbligatorio):
    - "Quanto è stata dura l'ultima serie?" → 10 tasti, zona 6–8 evidenziata,
      sotto la selezione la traduzione in ripetizioni rimaste (8 = "ne avevo ancora 2").
