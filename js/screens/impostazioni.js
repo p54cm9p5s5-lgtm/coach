@@ -706,8 +706,14 @@ async function azzera(ridisegna) {
   // svuotamento a pezzi che si ferma a metà lasciava l'app con dati parziali
   // e nessun messaggio, e nominare un archivio inesistente lo faceva fallire
   // proprio all'inizio.
+  // Il massimo dichiarato sulle sigarette non è un dato come gli altri: è una
+  // decisione presa una volta e messa dove due tocchi non possano disfarla.
+  // «Elimina tutti i dati» era rimasta l'unica strada per annullarla senza
+  // dirlo, e le due strade del ripristino sono già protette allo stesso modo.
+  const tettoPrima = await store.tettoFumoDichiarato();
   try {
     await store.db.svuotaTutto();
+    await store.proteggiTettoFumo(tettoPrima);
   } catch (e) {
     await chiedi({
       titolo: "Eliminazione non riuscita",

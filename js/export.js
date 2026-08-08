@@ -75,9 +75,8 @@ function caricoESerie(righeSerie, def) {
   // direzione è andato, così la riga si legge senza doverla ricostruire.
   const primo = conCarico[0].carico;
   const ultimo = conCarico[conCarico.length - 1].carico;
-  const freccia = ultimo > primo ? "→" : ultimo < primo ? "→" : "/";
   return {
-    carico: `${num(primo)} ${freccia} ${num(ultimo)} kg${suffisso}`,
+    carico: `${num(primo)} → ${num(ultimo)} kg${suffisso}`,
     serie: righeSerie
       .map((s, i) => `s${i + 1} ${s.carico != null ? `${num(s.carico)} kg` : "—"}×${rip(s)}`)
       .join(" · "),
@@ -205,7 +204,15 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       if (!r.length) return null;
       const target = righeSerie.find((x) => x.recuperoTargetSec)?.recuperoTargetSec ?? null;
       const media = Math.round(r.reduce((a, b) => a + b, 0) / r.length);
-      return `${esercizio(esId)?.nome || esId} ${mmss(media)}${target ? ` su ${mmss(target)}` : ""}`;
+      const nome = esercizio(esId)?.nome || esId;
+      // Il secondo esercizio di un blocco non ha nessun riposo davanti: è così
+      // che è scritto il programma. Senza dirlo, «00:00» si legge come un
+      // recupero saltato, cioè il contrario di quello che è successo.
+      if (target == null) {
+        const inBlocco = (previsti || []).find((x) => x.esercizioId === esId)?.blocco;
+        return inBlocco ? `${nome} ${mmss(media)} (in blocco, nessun riposo previsto)` : `${nome} ${mmss(media)}`;
+      }
+      return `${nome} ${mmss(media)} su ${mmss(target)}`;
     })
     .filter(Boolean);
 
@@ -392,11 +399,12 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       // stato o no.
       seduta.riscaldamento?.fatto
         ? [
-            seduta.riscaldamento.modalita === "senzaTapis"
-              ? "fatto, senza tapis"
-              : seduta.riscaldamento.modalita === "conTapis"
-                ? "fatto, con tapis"
-                : "fatto",
+            // La regola è la stessa che usa la schermata del riscaldamento:
+            // tutto ciò che non è «senzaTapis» vuol dire con il tapis. Qui si
+            // cercava la parola «conTapis», che l'app non ha mai scritto: un
+            // riscaldamento col tapis arrivava al coach come un «fatto» secco,
+            // cioè senza l'informazione che questa riga esiste per dare.
+            seduta.riscaldamento.modalita === "senzaTapis" ? "fatto, senza tapis" : "fatto, con tapis",
             seduta.riscaldamento.note
               ? String(seduta.riscaldamento.note).replace(/\s*\n+\s*/g, " · ")
               : null,
