@@ -807,15 +807,6 @@ async function registraSerieVera({
   return rec;
 }
 
-export async function eliminaUltimaSerie(sedutaId, esercizioId) {
-  const tutte = (await db.byIndex("serie", "sedutaId", sedutaId))
-    .filter((s) => s.esercizioId === esercizioId)
-    .sort((a, b) => a.tsFineSerie - b.tsFineSerie);
-  const ultima = tutte.at(-1);
-  if (ultima) await db.del("serie", ultima.id);
-  return ultima || null;
-}
-
 // ---------- questionario ----------
 
 export function registraQuestionario(dati) {
@@ -1622,12 +1613,6 @@ export async function ultimaMisura(tipo) {
   return m[0] || null;
 }
 
-/** Giorni trascorsi dall'ultima misura di un tipo, null se non ce n'è. */
-export async function giorniDaUltimaMisura(tipo) {
-  const m = await ultimaMisura(tipo);
-  return m ? giorniTra(m.data, isoDate()) : null;
-}
-
 // ---------- import dati Salute ----------
 
 /**
@@ -2063,10 +2048,6 @@ async function caricaAgenda() {
     FINESTRE_AGENDA = [{ da: LETTURA_AGENDA, a: COPERTURA_AGENDA }];
   }
   return AGENDA;
-}
-
-export function agendaDi(iso) {
-  return AGENDA?.get(iso) || null;
 }
 
 /** Da quando a quando arriva l'ultima lettura del calendario. */
