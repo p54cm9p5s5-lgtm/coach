@@ -529,13 +529,54 @@ async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
   return rec;
 }
 
-export async function aggiornaSeduta(id, patch) {
-  invalidaCacheSedute();
-  const s = await db.get("sedute", id);
-  if (!s) throw new Error("Seduta non trovata.");
-  const agg = { ...s, ...patch };
-  await db.put("sedute", agg);
-  return agg;
+/**
+ * Le scritture sull'allenamento aperto vanno in fila.
+ *
+ * Ognuna legge il record, ci mette sopra la sua modifica e lo riscrive. Due
+ * partite insieme leggono lo stesso record di partenza e la seconda a scrivere
+ * cancella la prima: toccando «+15 s» e subito «Pronto», la scritta del timer
+ * arrivava dopo e RIMETTEVA il recupero appena chiuso — un tocco che sembrava
+ * non aver funzionato. In fila, ognuna parte da quello che ha lasciato la
+ * precedente e vince l'ultima toccata, che è quello che uno si aspetta.
+ *
+ * È una coda a parte da quella del motore: nessuna di queste funzioni ne
+ * chiama un'altra, quindi non può incastrarsi ad aspettare se stessa.
+ */
+let codaScritture = Promise.resolve();
+function inFila(fn) {
+  codaScritture = codaScritture.catch(() => {}).then(fn);
+  return codaScritture;
+}
+
+export function aggiornaSeduta(id, patch) {
+  return inFila(async () => {
+    invalidaCacheSedute();
+    const s = await db.get("sedute", id);
+    if (!s) throw new Error("Seduta non trovata.");
+    const agg = { ...s, ...patch };
+    await db.put("sedute", agg);
+    return agg;
+  });
+}
+
+/**
+ * Cambia solo alcune voci del progresso, fondendole su quello SALVATO.
+ *
+ * La differenza con `aggiornaSeduta({progresso: {...}})` è tutta qui: chi
+ * chiama non deve ricostruire l'oggetto intero partendo dalla copia che ha in
+ * memoria, che può essere già vecchia. «+15 s» toccato subito dopo «Pronto»
+ * spediva un progresso costruito su una fotografia di un istante prima e
+ * rimetteva il recupero appena chiuso. Così ognuno scrive solo la voce sua.
+ */
+export function aggiornaProgresso(id, patch) {
+  return inFila(async () => {
+    invalidaCacheSedute();
+    const s = await db.get("sedute", id);
+    if (!s) throw new Error("Seduta non trovata.");
+    const agg = { ...s, progresso: { ...(s.progresso || {}), ...patch } };
+    await db.put("sedute", agg);
+    return agg;
+  });
 }
 
 /**
@@ -674,7 +715,11 @@ export async function serieDi(sedutaId) {
   return r.sort((a, b) => a.tsFineSerie - b.tsFineSerie);
 }
 
-export async function registraSerie({
+export function registraSerie(dati) {
+  return inFila(() => registraSerieVera(dati));
+}
+
+async function registraSerieVera({
   sedutaId,
   esercizioId,
   numero,
@@ -743,7 +788,11 @@ export async function eliminaUltimaSerie(sedutaId, esercizioId) {
 
 // ---------- questionario ----------
 
-export async function registraQuestionario({
+export function registraQuestionario(dati) {
+  return inFila(() => registraQuestionarioVero(dati));
+}
+
+async function registraQuestionarioVero({
   sedutaId,
   esercizioId,
   ordine,
@@ -783,7 +832,11 @@ export async function registraQuestionario({
   return rec;
 }
 
-export async function registraSalto({ sedutaId, esercizioId, ordine, motivo, nota }) {
+export function registraSalto(dati) {
+  return inFila(() => registraSaltoVero(dati));
+}
+
+async function registraSaltoVero({ sedutaId, esercizioId, ordine, motivo, nota }) {
   const esistenti = await db.byIndex("esercizioLog", "sedutaId", sedutaId);
   const prec = esistenti.find((l) => l.esercizioId === esercizioId);
   const rec = {
