@@ -959,13 +959,19 @@ textarea.note {
   border-top: 0.5px solid var(--separator);
 }
 
+/* «Cambia» era alto sedici pixel: l'unico tasto rimasto sotto la misura
+   minima, e per giunta attaccato all'anteprima del video — chi lo sbagliava
+   faceva partire il filmato. Il riempimento allarga l'area sensibile a 44 px,
+   i margini negativi rimettono la scritta esattamente dov'era. */
 .video-meta button {
   background: none;
   border: 0;
   color: var(--accent);
   font-size: 12px;
   cursor: pointer;
-  padding: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  margin: -12px -10px;
   white-space: nowrap;
 }
 
