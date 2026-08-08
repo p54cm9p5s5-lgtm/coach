@@ -86,6 +86,7 @@ Solo `split` è obbligatorio. `inventario` serve a calcolare i dischi da montare
 | `esercizi[].serie` | numero maggiore di 0 |
 | `esercizi[].ripMin` / `ripMax` | `ripMin > 0` e `ripMax >= ripMin` |
 | `esercizi[].carico` | kg totali di partenza, bilanciere compreso; si omette a corpo libero |
+| `esercizi[].recuperoSec` | secondi di recupero dopo la serie; se manca, l'app usa quello della scheda |
 
 **Non ripetere lo stesso esercizio due volte nello stesso giorno**: l'app lo
 rifiuta, perché punteggio e progressioni ragionano per esercizio.
@@ -104,7 +105,9 @@ il recupero, e si ricomincia — dai a tutti e due lo stesso `blocco`:
 ```
 
 Gli esercizi con la stessa lettera vanno scritti **uno dopo l'altro** e devono
-avere lo **stesso numero di serie**: sono i giri del blocco. L'app li incatena
+avere lo **stesso numero di serie**: sono i giri del blocco. Il recupero è
+**uno solo per giro**, alla fine della coppia, e l'app usa quello del **primo**
+esercizio del blocco: scrivi lì il valore giusto. L'app li incatena
 da sola, mette il recupero solo alla fine del giro, e chiede le valutazioni di
 tutti e due quando il blocco è finito. Un esercizio senza `blocco` si comporta
 come sempre: tutte le sue serie di fila.
