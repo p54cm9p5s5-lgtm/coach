@@ -2118,13 +2118,18 @@ async function vistaRecupero(corpo, piede) {
     ),
     testoTimer
   );
-  // Dentro un blocco il riposo vuol dire sempre «un altro giro»: quando il
-  // blocco è finito non si passa di qui, si va alle valutazioni. Senza questa
-  // distinzione, una coppia con un numero di giri diverso fra i due esercizi
-  // faceva comparire «Esercizio finito» e il tasto saltava oltre il compagno,
-  // che restava indietro di un giro.
-  const dentroBlocco = inBlocco();
-  const ultimaSerie = !dentroBlocco && fatte.length >= v.serie;
+  // Questo riposo porta al prossimo esercizio o a un altro giro dello stesso?
+  // Lo dice una cosa sola: se quello che stai facendo è già stato valutato,
+  // allora è finito e si va avanti. Contare le serie non basta dentro un
+  // blocco — una coppia con giri diversi faceva saltare oltre il compagno
+  // rimasto indietro — e nemmeno guardare solo il blocco, perché anche il
+  // riposo che segue le valutazioni cade su un indice del blocco.
+  const ind = indiciBlocco();
+  const logsOra = await store.questionariDi(S.sed.id);
+  const valutato = (k) =>
+    logsOra.some((l) => l.esercizioId === S.esercizi[k]?.esercizioId && !l.saltato);
+  const ultimaSerie = ind.every(valutato) || (ind.length === 1 && fatte.length >= v.serie);
+  const dentroBlocco = ind.length > 1 && !ultimaSerie;
   const sottotitolo = h(
     "p.target",
     ultimaSerie
