@@ -337,13 +337,22 @@ export function unaVoltaSola(fn) {
 let audioCtx = null;
 let alarmTimer = null;
 let elementoAllarme = null;
+let rilascioBip = null;
 
 /**
- * "transient" serve per un suono breve: si fa sentire anche con l'interruttore
- * su silenzioso, abbassa per un attimo quello che stai ascoltando e poi lo
- * lascia riprendere. Dichiararla come "playback" — come facevo prima —
- * equivale a dire a iOS che l'app è un lettore musicale, e ferma la musica
- * per tutta la durata dell'allenamento.
+ * Che cosa dichiariamo a iOS sull'audio dell'app.
+ *
+ * - "transient": suono breve. Si sente anche con l'interruttore su silenzioso,
+ *   mette in pausa quello che stai ascoltando e **iOS lo fa riprendere da solo**
+ *   appena finiamo. È quello giusto mentre l'allarme suona.
+ * - "ambient": l'app non possiede l'audio, si mescola a quello che c'è. È
+ *   quello giusto in tutti gli altri momenti — cioè quasi sempre.
+ * - "playback" (il valore che iOS sceglie da sé se non diciamo niente): l'app
+ *   è un lettore musicale. Ferma la musica e non la fa ripartire.
+ *
+ * La dichiarazione va fatta PRIMA che parta qualunque suono, sblocco compreso:
+ * una volta che la sessione si è attivata come "playback", cambiarle nome dopo
+ * non restituisce la musica a chi ce l'aveva.
  */
 function sessioneAudio(tipo) {
   try {
@@ -351,6 +360,32 @@ function sessioneAudio(tipo) {
   } catch {
     /* API non disponibile: si resta sul comportamento predefinito */
   }
+}
+
+/**
+ * Lascia andare l'audio: niente contesto acceso, niente traccia caricata,
+ * sessione dichiarata "ambient".
+ *
+ * Finché resta acceso un AudioContext — anche fermo, anche senza nessun suono —
+ * iOS considera che l'app stia ancora usando l'audio, e la musica di chi c'era
+ * prima non riparte. Il contesto lo apre `beep()`, cioè i bip di riserva: una
+ * volta usati restavano accesi per tutto il resto dell'allenamento.
+ */
+function rilasciaAudio() {
+  if (rilascioBip) {
+    clearTimeout(rilascioBip);
+    rilascioBip = null;
+  }
+  if (audioCtx) {
+    try {
+      const morente = audioCtx;
+      audioCtx = null;
+      if (typeof morente.close === "function") morente.close().catch(() => {});
+    } catch {
+      /* niente: quello che conta è non tenerlo acceso */
+    }
+  }
+  sessioneAudio("ambient");
 }
 
 /**
@@ -426,8 +461,14 @@ let audioSbloccato = false;
 export function sbloccaAudio() {
   if (audioSbloccato) return Promise.resolve();
   audioSbloccato = true;
-  // Nessuna dichiarazione di sessione qui: l'app non deve occupare l'audio
-  // finché non c'è davvero qualcosa da suonare.
+  // Qui la dichiarazione ci vuole, ed è "ambient".
+  //
+  // Senza, questo `play()` — muto, ma pur sempre un play — è il primo suono
+  // dell'app e apre la sessione con il nome che sceglie iOS: quello del lettore
+  // musicale. Da lì in poi la musica di chi stava ascoltando è ferma, e nessuna
+  // dichiarazione successiva gliela restituisce. Succedeva all'inizio
+  // dell'allenamento, ore prima che l'allarme suonasse davvero.
+  sessioneAudio("ambient");
   const a = elemento();
   // Muto, volume a zero e senza ripetizione: tre precauzioni perché lo sblocco
   // non si senta. Su iOS «muted» da solo non basta sempre, e il frammento che
@@ -476,9 +517,18 @@ function beep(freq = 880, dur = 0.16, gain = 0.22) {
   // sentivano mai.
   if (audioCtx.state === "suspended") {
     audioCtx.resume().then(suona).catch(() => {});
-    return;
+  } else {
+    suona();
   }
-  suona();
+  // Finito il suono, si molla l'audio. Un contesto acceso, anche muto, per iOS
+  // vuol dire «sto ancora usando l'altoparlante», e la musica di chi ce l'aveva
+  // non riparte. Il preavviso dei tre secondi ne apriva uno e lo lasciava lì.
+  // Non si molla se c'è un allarme in corso: quello lo chiude `fermaAllarme`.
+  if (rilascioBip) clearTimeout(rilascioBip);
+  rilascioBip = setTimeout(() => {
+    rilascioBip = null;
+    if (alarmTimer === null && bipTimer === null) rilasciaAudio();
+  }, Math.round((dur + 0.3) * 1000));
 }
 
 let bipTimer = null;
@@ -531,8 +581,11 @@ export function fermaAllarme() {
     elementoAllarme.pause();
     elementoAllarme.currentTime = 0;
   }
-  // restituisce l'audio a chi lo stava usando
-  sessioneAudio("auto");
+  // Restituisce l'audio a chi lo stava usando: sessione "ambient" e contesto
+  // dei bip spento. Prima qui si dichiarava "auto", che vuol dire «decidi tu»:
+  // con una traccia ancora appesa al documento, iOS decideva che il lettore
+  // musicale eravamo noi.
+  rilasciaAudio();
 }
 
 export function allarmeAttivo() {
@@ -603,7 +656,9 @@ export async function provaSuono() {
   ripristinoProva = setTimeout(() => {
     ripristinoProva = null;
     a.loop = true;
-    sessioneAudio("auto");
+    // Anche la prova del suono deve restituire l'audio: fatta due volte di
+    // seguito dalle Impostazioni, lasciava la sessione a «decidi tu».
+    rilasciaAudio();
   }, 2500);
 }
 
