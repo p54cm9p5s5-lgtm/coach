@@ -112,6 +112,11 @@ da sola, mette il recupero solo alla fine del giro, e chiede le valutazioni di
 tutti e due quando il blocco è finito. Un esercizio senza `blocco` si comporta
 come sempre: tutte le sue serie di fila.
 
+Possono essere anche **tre**, se il programma lo chiede: vale la stessa regola.
+Il brief viene **rifiutato** se gli esercizi di una lettera non sono di seguito
+(con un terzo esercizio in mezzo quello resterebbe fuori dall'allenamento senza
+che nessuno se ne accorga) o se una lettera tocca a un esercizio solo.
+
 **Esercizi a tempo** (plank e simili): niente ripetizioni, ci vuole la durata.
 
 ```json
