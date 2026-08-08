@@ -195,8 +195,10 @@ Sequenza rigida, un passo per volta.
    e sostituibile dall'app incollando un altro link. Carico suggerito
    **e quali dischi montare** dall'inventario.
 3. **Serie** — `[SERIE COMPLETATA]` → timer parte nello stesso istante.
-   Durante il recupero: ripetizioni fatte (precompilate) e carico (precompilato
-   dall'ultima volta). +15 / −15 s. Timer per esercizio, default 120 s.
+   Durante il recupero **fra una serie e l'altra**: ripetizioni fatte
+   (precompilate) e carico (precompilato dall'ultima volta). Nel recupero che
+   segue la valutazione quei campi non ci sono: restano il cronometro e il
+   prossimo esercizio. +15 / −15 s. Timer per esercizio, default 120 s.
    **Avviso di fine: suono ripetuto finché non tocchi**, più cambio colore schermo.
    Il suono si dichiara a iOS come **`transient`**: si sente anche col telefono in
    silenzioso e la musica che stavi ascoltando **riprende da sola** appena lo
