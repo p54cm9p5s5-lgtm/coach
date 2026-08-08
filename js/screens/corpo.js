@@ -416,7 +416,12 @@ async function bloccoFoto(ridisegna) {
           h(
             "button",
             {
-              style: "background:none;border:0;padding:0;color:var(--red);font-size:13px;font:inherit;font-size:13px",
+              // Il testo resta piccolo dov'è, ma il dito ha i suoi 44 punti:
+              // i margini negativi allargano l'area toccabile senza spostare
+              // niente di quello che si vede.
+              style:
+                "background:none;border:0;color:var(--red);font:inherit;font-size:13px;" +
+                "min-height:44px;padding:0 8px;margin:-14px -8px;",
               onclick: async () => {
                 const c = await chiedi({
                   titolo: `Eliminare il set del ${dataBreve(s.data)}?`,

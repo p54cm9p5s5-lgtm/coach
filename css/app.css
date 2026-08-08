@@ -220,9 +220,17 @@ textarea {
   font-size: 34px;
   font-weight: 700;
   letter-spacing: -0.4px;
+  /* Senza queste due righe il titolo non si stringe mai, e con Safari impostato
+     a ingrandire le pagine spingeva «Fine» fuori dallo schermo: il tasto c'era
+     ma per arrivarci bisognava trascinare la pagina di lato. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topbar .bar-action {
+  flex: none;
   background: none;
   border: 0;
   color: var(--accent);
@@ -1494,4 +1502,21 @@ td.num,
 th.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- chi ha chiesto meno movimento ---------- */
+
+/* Le animazioni qui sono poche e brevi — un'ombra che appare, un anello che si
+   riempie, il messaggio che sale — ma chi soffre di vertigini o di emicrania da
+   movimento lo dice al telefono una volta sola, e ogni app dovrebbe ascoltarlo.
+   Niente sparisce: tutto arriva subito al punto d'arrivo. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
