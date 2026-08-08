@@ -375,7 +375,12 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   // hanno: mancare un bersaglio è non aver fatto abbastanza, fumare oltre il
   // tollerato è aver fatto un danno. Con la quota fermata a zero, venti
   // sigarette e dieci pesavano uguale — e non è vero.
-  if (sigarette != null) {
+  // Chi non conta le sigarette non ha proprio la voce, come per l'acqua: una
+  // riga che dice per sempre «non ancora contate» sarebbe una mancanza
+  // dichiarata a chi quella cosa non la fa.
+  if (R.contaSigarette === false) {
+    /* nessuna voce */
+  } else if (sigarette != null) {
     // Col limite a zero non si può dividere, e non serve: qualunque sigaretta è
     // già oltre. È il capolinea della tacca che scende — quando il massimo è
     // zero, l'unico modo di non sforare è non fumare.
