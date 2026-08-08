@@ -8,6 +8,7 @@
 
 import { carichoPiuVicino, manubrioPiuVicino, aPaio, conosceManubri } from "./plates.js";
 import { dataBreve, giorniTra, parseIso, isoDate, num } from "./ui.js";
+import { doloriDi } from "./punteggio.js";
 
 /**
  * I motivi di un salto sono salvati con una parola sola: comoda per il codice,
@@ -206,7 +207,7 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
   const rpePeggiore = Math.max(...recenti.map((e) => e.rpe));
   const tecnicaPeggiore = Math.min(...recenti.map((e) => e.tecnica));
   const ripPeggiori = Math.min(...recenti.map(ripetizioniEffettive));
-  const conDolore = recenti.filter((e) => e.log?.dolorePolso);
+  const conDolore = recenti.filter((e) => doloriDi(e.log).length);
 
   if (ripPeggiori < variante.ripMin) {
     return niente(
@@ -217,7 +218,8 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
     return niente(`RPE ${rpePeggiore}: già al limite, nessuna modifica.`);
   }
   if (conDolore.length) {
-    return niente("Dolore al polso registrato: nessuna progressione finché il segnale non sparisce.");
+    const dove = [...new Set(conDolore.flatMap((e) => doloriDi(e.log).map((d) => d.nome)))].join(", ");
+    return niente(`Dolore registrato (${dove}): nessuna progressione finché il segnale non sparisce.`);
   }
   if (rpePeggiore > R.rpePerSalire) {
     return niente(`RPE ${rpePeggiore}: zona corretta ${regole.rpeTarget.min}-${regole.rpeTarget.max}, nessuna modifica.`);
@@ -405,20 +407,32 @@ export function calcolaSegnali(ctx) {
     });
   }
 
-  // --- pattern polso destro ----------------------------------------------
-  const conPolso = ultime.filter((s) => (logsPerSeduta.get(s.id) || []).some((l) => l.dolorePolso));
-  if (conPolso.length >= 2) {
-    const esercizi_ = new Set();
-    for (const s of conPolso) {
-      for (const l of logsPerSeduta.get(s.id) || []) if (l.dolorePolso) esercizi_.add(nome(l.esercizioId));
+  // --- pattern dolore, un segnale per punto -------------------------------
+  // Ogni articolazione ha la sua storia: un ginocchio che fa male tre volte e
+  // un'anca che fa male una volta sono due cose diverse, e sommarle in un
+  // segnale solo nasconderebbe quella che si sta ripetendo.
+  const perSito = new Map();
+  for (const s of ultime) {
+    for (const l of logsPerSeduta.get(s.id) || []) {
+      for (const d of doloriDi(l)) {
+        if (!perSito.has(d.id)) perSito.set(d.id, { nome: d.nome, sedute: new Map() });
+        const v = perSito.get(d.id);
+        if (!v.sedute.has(s.id)) v.sedute.set(s.id, new Set());
+        v.sedute.get(s.id).add(nome(l.esercizioId));
+      }
     }
+  }
+  for (const [id, v] of perSito) {
+    if (v.sedute.size < 2) continue;
+    const esercizi_ = new Set([...v.sedute.values()].flatMap((x) => [...x]));
+    const dove = v.nome.charAt(0).toUpperCase() + v.nome.slice(1);
     agg({
-      id: "seg_polso",
-      tipo: "patternPolso",
+      id: id === "polso" ? "seg_polso" : `seg_dolore_${id}`,
+      tipo: id === "polso" ? "patternPolso" : "patternDolore",
       gravita: "attenzione",
-      messaggio: `Polso destro dolente in ${conPolso.length} degli ultimi ${ultime.length} allenamenti.`,
-      dettaglio: `Esercizi coinvolti: ${[...esercizi_].join(", ")}. Non è più un episodio isolato: prima di caricare oltre va cambiato qualcosa nella presa o nell'esercizio.`,
-      riferimenti: conPolso.map((s) => s.id),
+      messaggio: `${dove} dolente in ${v.sedute.size} degli ultimi ${ultime.length} allenamenti.`,
+      dettaglio: `Esercizi coinvolti: ${[...esercizi_].join(", ")}. Non è più un episodio isolato: prima di caricare oltre va cambiato qualcosa ${id === "polso" ? "nella presa" : "nell'esecuzione"} o nell'esercizio.`,
+      riferimenti: [...v.sedute.keys()],
     });
   }
 

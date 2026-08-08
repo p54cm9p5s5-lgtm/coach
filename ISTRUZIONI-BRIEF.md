@@ -210,7 +210,8 @@ scheda per ciascun esercizio nuovo con esattamente questi dati:
   quadricipiti, femorali, polpacci, core, bicipiti, tricipiti,
   deltoideLaterale, deltoidePosteriore, trapezi, dorsaliAltro)
 - **recupero consigliato** in secondi
-- **sollecita il polso?** sì/no (serve a una domanda di sicurezza)
+- **sollecita il polso?** sì/no (serve solo a chi ha il polso fra i punti
+  dolenti dichiarati in `regole.dolori`: l'app segnala la domanda)
 - **setup**: 3-4 righe, come ci si mette in posizione
 - **esecuzione**: 3-4 righe, il movimento passo per passo
 - **errori comuni**: 3-4 righe, cosa va storto e cosa provoca
@@ -273,6 +274,26 @@ restare lì a valere sempre zero.
 `"acquaLitriBersaglio": 2`: compare una sezione Acqua con una domanda al giorno
 — «hai bevuto almeno N litri?», sì o no — e la risposta pesa sul punteggio
 Salute come le altre voci. Senza risposta il giorno resta fuori dal conto.
+
+**I punti dolenti da chiedere dopo ogni esercizio** si dichiarano in
+`"dolori"`, dentro `regole`:
+
+```json
+"dolori": [
+  { "id": "ginocchio", "nome": "ginocchio" },
+  { "id": "anca", "nome": "anca" }
+]
+```
+
+Ogni voce diventa una **domanda separata** a fine esercizio: sì/no e, se sì,
+quando (durante o dopo) e quanto (lieve, medio, forte). Ogni sì toglie 20 punti
+a quell'esercizio e blocca il punteggio a 70; finché il segnale c'è, l'app non
+propone progressioni su quel movimento. Se lo stesso punto torna in due degli
+ultimi allenamenti compare un segnale a sé, con gli esercizi coinvolti.
+
+Se la preposizione automatica non basta («Dolore alla spalla?») scrivi la
+domanda per intero con `"domanda": "Dolore alla spalla?"`. **Senza `dolori`**
+l'app chiede il polso destro, che è la domanda con cui è nata.
 
 **Un'attività che non ha un bersaglio** — una sessione di Pilates, una
 camminata, una seduta di mobilità — si scrive con `"serie": 1, "ripMin": 1,

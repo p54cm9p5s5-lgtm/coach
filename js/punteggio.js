@@ -50,11 +50,46 @@ const CURVA_TECNICA = { 10: 1, 9: 0.75, 8: 0.45, 7: 0.2, 6: 0.08 };
 const quotaTecnica = (t) => (t == null ? 0 : CURVA_TECNICA[t] ?? (t > 10 ? 1 : 0));
 
 /**
+ * I punti dolenti segnalati in un questionario, comunque siano stati scritti.
+ * Le valutazioni vecchie hanno solo `dolorePolso`: vanno lette lo stesso, o lo
+ * storico di chi usa l'app da mesi sparirebbe dai grafici e dagli export il
+ * giorno in cui il brief cambia le domande. Sta qui, e non in store.js, perché
+ * serve anche ai moduli puri (segnali, export) che non possono importare lo
+ * store senza creare un anello.
+ */
+export function doloriDi(log) {
+  if (!log) return [];
+  if (Array.isArray(log.dolori)) {
+    return log.dolori
+      .filter((d) => d && d.id)
+      .map((d) => ({ id: d.id, nome: d.nome || d.id, quando: d.quando || null, intensita: d.intensita || null }));
+  }
+  if (log.dolorePolso) {
+    return [
+      {
+        id: "polso",
+        nome: "polso destro",
+        quando: log.dolorePolsoQuando || null,
+        intensita: log.dolorePolsoIntensita || null,
+      },
+    ];
+  }
+  return [];
+}
+
+/**
  * @param variante  riga dello split: serie, ripMin/ripMax, carico previsto
  * @param serie     serie registrate per questo esercizio
- * @param rpe, tecnica, dolorePolso  risposte del questionario (possono mancare)
+ * @param rpe, tecnica  risposte del questionario (possono mancare)
+ * @param dolori   punti dolenti segnalati: [{id, nome}]. `dolorePolso` resta
+ *                 accettato per le chiamate vecchie e vale un solo punto.
  */
-export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso, regole }) {
+export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolori, dolorePolso, regole }) {
+  const puntiDolenti = Array.isArray(dolori)
+    ? dolori.filter((d) => d && d.id)
+    : dolorePolso
+      ? [{ id: "polso", nome: "polso destro" }]
+      : [];
   const voci = [];
   const tetti = []; // regole rigide: nessuna media può aggirarle
 
@@ -168,11 +203,19 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
   const pesoTotale = pesati.reduce((t, v) => t + v.peso, 0) || 1;
   let totale = Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100);
 
+  // Ogni punto dolente pesa per conto suo: due articolazioni che fanno male
+  // non sono lo stesso allenamento di una sola. Il tetto invece è uno: dove
+  // c'è dolore non si passa comunque, per quanto tutto il resto sia perfetto.
   const penalita = [];
-  if (dolorePolso) {
-    penalita.push({ nome: "Dolore al polso", punti: -20 });
+  for (const d of puntiDolenti) {
+    penalita.push({ nome: `Dolore: ${d.nome || d.id}`, punti: -20 });
     totale = Math.max(0, totale - 20);
-    tetti.push({ tetto: 70, perche: "dolore al polso" });
+  }
+  if (puntiDolenti.length) {
+    tetti.push({
+      tetto: 70,
+      perche: `dolore ${puntiDolenti.map((d) => d.nome || d.id).join(" e ")}`,
+    });
   }
 
   const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];
@@ -663,7 +706,10 @@ export function commento(risultato, nomeEsercizio) {
     return `Il punteggio è fermo a ${risultato.totale}: ${risultato.limite.perche}. Finché resta così, il resto non lo alza.`;
   }
   if (risultato.penalita.length) {
-    return `Il dolore al polso pesa più di ogni altra cosa: finché c'è, ${nomeEsercizio.toLowerCase()} non va caricato.`;
+    const dove = risultato.penalita
+      .map((p) => String(p.nome).replace(/^Dolore:\s*/i, "").replace(/^Dolore al\s*/i, ""))
+      .join(" e ");
+    return `Il dolore (${dove}) pesa più di ogni altra cosa: finché c'è, ${nomeEsercizio.toLowerCase()} non va caricato.`;
   }
   const validi = risultato.voci.filter((v) => v.quota != null);
   const peggiore = [...validi].sort((a, b) => a.quota - b.quota)[0];

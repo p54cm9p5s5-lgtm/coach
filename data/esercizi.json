@@ -192,9 +192,9 @@
       "sollecitaPolso": false,
       "recuperoDefaultSec": 120,
       "video": {
-        "id": "JCXUYuzwNrM",
-        "titolo": "How To: Romanian Deadlift (Barbell)",
-        "canale": "ScottHermanFitness"
+        "id": "2SHsk9AzdjA",
+        "titolo": "How to Perform Romanian Deadlift - Hamstring Leg Exercise",
+        "canale": "Buff Dudes"
       },
       "setup": [
         "In piedi, bilanciere davanti alle cosce, presa poco più larga dei fianchi.",
@@ -676,7 +676,12 @@
         "Discesa rapida con rimbalzo in basso."
       ],
       "cue": "Il corpo è una tavola: solo i gomiti si piegano.",
-      "sicurezza": "Con dolore ai polsi usa impugnature o manubri esagonali per tenere il polso neutro. Se le ripetizioni pulite scendono sotto sei, passa alla variante con le mani rialzate."
+      "sicurezza": "Con dolore ai polsi usa impugnature o manubri esagonali per tenere il polso neutro. Se le ripetizioni pulite scendono sotto sei, passa alla variante con le mani rialzate.",
+      "video": {
+        "id": "wxhNoKZlfY8",
+        "titolo": "How To: Push-Up",
+        "canale": "ScottHermanFitness"
+      }
     },
     {
       "id": "ponte-glutei-piedi-rialzati",
@@ -702,7 +707,12 @@
         "Appoggiare il bacino a terra fra una ripetizione e l'altra, perdendo tensione."
       ],
       "cue": "Spingi via il pavimento con i talloni, non inarcare la schiena.",
-      "sicurezza": "Controlla che la panca non scivoli sotto la spinta dei piedi. Oltre i 12 kg metti un cuscinetto sotto il manubrio."
+      "sicurezza": "Controlla che la panca non scivoli sotto la spinta dei piedi. Oltre i 12 kg metti un cuscinetto sotto il manubrio.",
+      "video": {
+        "id": "eSSloIyhHUw",
+        "titolo": "Feet Elevated Glute Bridge",
+        "canale": "Girls Gone Strong"
+      }
     },
     {
       "id": "military-press-manubri",
@@ -728,7 +738,12 @@
         "Polso che si piega all'indietro sotto il peso."
       ],
       "cue": "Costole basse, spingi il soffitto lontano.",
-      "sicurezza": "Con dolore alla spalla riduci il range o passa alla presa neutra, palmi rivolti l'uno verso l'altro."
+      "sicurezza": "Con dolore alla spalla riduci il range o passa alla presa neutra, palmi rivolti l'uno verso l'altro.",
+      "video": {
+        "id": "TacMZ7g6OIw",
+        "titolo": "Military Dumbbell Press - The Proper Lift",
+        "canale": "BPI Sports"
+      }
     },
     {
       "id": "dead-bug",
@@ -754,7 +769,12 @@
         "Estendere l'arto oltre il proprio controllo: meglio ridurre il range."
       ],
       "cue": "Schiaccia la lombare contro il pavimento e non lasciarla andare.",
-      "sicurezza": "Nessun rischio particolare. Se la lombare si stacca, riduci il range invece di continuare."
+      "sicurezza": "Nessun rischio particolare. Se la lombare si stacca, riduci il range invece di continuare.",
+      "video": {
+        "id": "GbSC02oU3To",
+        "titolo": "How to Do a Dead Bug: A Guide from Physical Therapists",
+        "canale": "Hinge Health"
+      }
     },
     {
       "id": "rematore-bilanciere-presa-inversa",
@@ -780,7 +800,12 @@
         "Portare i gomiti dietro il tronco più del necessario."
       ],
       "cue": "Gomiti nelle tasche posteriori.",
-      "sicurezza": "La presa supina carica il bicipite vicino al gomito: con una storia di dolore al gomito riduci carico e profondità di tirata."
+      "sicurezza": "La presa supina carica il bicipite vicino al gomito: con una storia di dolore al gomito riduci carico e profondità di tirata.",
+      "video": {
+        "id": "3gdGSSgDby8",
+        "titolo": "Reverse Grip Bent Over Rows | How To Perform Them Correctly",
+        "canale": "KAGED"
+      }
     },
     {
       "id": "box-squat",
@@ -806,7 +831,12 @@
         "Discesa più rapida dei tre secondi previsti."
       ],
       "cue": "Bacino indietro per primo, poi giù lentamente.",
-      "sicurezza": "Se un ginocchio entra verso l'interno in risalita, riduci il range e attiva il medio gluteo prima della serie. Una ripresa frontale ogni tre o quattro settimane è il modo più semplice per accorgersene."
+      "sicurezza": "Se un ginocchio entra verso l'interno in risalita, riduci il range e attiva il medio gluteo prima della serie. Una ripresa frontale ogni tre o quattro settimane è il modo più semplice per accorgersene.",
+      "video": {
+        "id": "WGjf5w8iaTM",
+        "titolo": "Box Squats Exercise Tutorial",
+        "canale": "Buff Dudes Workouts"
+      }
     },
     {
       "id": "split-squat-appoggiato",
@@ -832,7 +862,12 @@
         "Passo troppo corto: il ginocchio avanza troppo oltre la punta."
       ],
       "cue": "Scendi in verticale, come un ascensore.",
-      "sicurezza": "L'appoggio serve all'equilibrio, non a reggere peso. Toglilo solo quando il controllo su una gamba sola è stabile."
+      "sicurezza": "L'appoggio serve all'equilibrio, non a reggere peso. Toglilo solo quando il controllo su una gamba sola è stabile.",
+      "video": {
+        "id": "Zaw_9ckSvz4",
+        "titolo": "Split Squats (aka Static Lunges) – A Quick Guide",
+        "canale": "JP Total Fitness"
+      }
     },
     {
       "id": "abduzioni-decubito-laterale",
@@ -858,7 +893,12 @@
         "Movimento rapido con slancio."
       ],
       "cue": "Bacino fermo, alza solo la gamba.",
-      "sicurezza": "Nessun rischio particolare. È il sostituto corretto degli slanci laterali con carichi alti alla caviglia, che a leva lunga non si controllano."
+      "sicurezza": "Nessun rischio particolare. È il sostituto corretto degli slanci laterali con carichi alti alla caviglia, che a leva lunga non si controllano.",
+      "video": {
+        "id": "CTmFNSDJTR8",
+        "titolo": "How to Do Side Lying Hip Abduction Correctly",
+        "canale": "MOVE with Dr. Mike"
+      }
     },
     {
       "id": "rdl-manubri",
@@ -884,7 +924,12 @@
         "Scendere oltre l'allungamento disponibile."
       ],
       "cue": "Chiudi la portiera dell'auto con il sedere.",
-      "sicurezza": "Al primo segno di perdita della posizione lombare la serie finisce. Non esiste una ripetizione in più che valga un compenso di schiena."
+      "sicurezza": "Al primo segno di perdita della posizione lombare la serie finisce. Non esiste una ripetizione in più che valga un compenso di schiena.",
+      "video": {
+        "id": "uUjqvxEWcbo",
+        "titolo": "Dumbbell Romanian Deadlift (RDL) | TECHNIQUE for Beginners",
+        "canale": "Mobility Doc"
+      }
     },
     {
       "id": "donkey-kick",
@@ -910,7 +955,12 @@
         "Movimento rapido che perde la contrazione del gluteo."
       ],
       "cue": "Il bacino resta quadrato, si muove solo la gamba.",
-      "sicurezza": "Con dolore ai polsi appoggia gli avambracci invece delle mani."
+      "sicurezza": "Con dolore ai polsi appoggia gli avambracci invece delle mani.",
+      "video": {
+        "id": "DRZeD0Ns71k",
+        "titolo": "How To Do Glute Donkey Kicks in Quadruped",
+        "canale": "Onyx Physical Therapy and Wellness"
+      }
     },
     {
       "id": "rematore-bilanciere-presa-larga",
@@ -936,7 +986,12 @@
         "Perdere la posizione neutra della lombare."
       ],
       "cue": "Gomiti alti, tira verso lo sterno.",
-      "sicurezza": "I gomiti alti aumentano il conflitto sub-acromiale: se compare fastidio alla spalla, abbassa un po' il punto di tirata."
+      "sicurezza": "I gomiti alti aumentano il conflitto sub-acromiale: se compare fastidio alla spalla, abbassa un po' il punto di tirata.",
+      "video": {
+        "id": "rTbb70P8_BI",
+        "titolo": "How To Do Barbell Rear Delt Row | Exercise Demo",
+        "canale": "OriGym"
+      }
     },
     {
       "id": "step-up",
@@ -962,7 +1017,12 @@
         "Busto che si inclina in avanti."
       ],
       "cue": "La gamba sotto non spinge: è solo appoggiata.",
-      "sicurezza": "Controlla la stabilità della panca prima di ogni serie. Per la stabilità su una gamba sola la qualità della discesa conta più del numero di ripetizioni."
+      "sicurezza": "Controlla la stabilità della panca prima di ogni serie. Per la stabilità su una gamba sola la qualità della discesa conta più del numero di ripetizioni.",
+      "video": {
+        "id": "wGoKb6mPJzU",
+        "titolo": "Step-Ups for Glutes (w/ Common Mistakes) | Form Tutorial",
+        "canale": "Physique Development"
+      }
     },
     {
       "id": "pallof-press-manubrio",
@@ -988,7 +1048,12 @@
         "Estensione rapida che sfrutta lo slancio."
       ],
       "cue": "Il tronco è di pietra, si muovono solo le braccia.",
-      "sicurezza": "Con il manubrio la resistenza è verticale, quindi qui non c'è lavoro anti-rotazione: è una spinta frontale anti-estensione. Con l'attrezzatura disponibile il sostituto corretto è il suitcase hold, manubrio in una mano, 30 secondi per lato."
+      "sicurezza": "Con il manubrio la resistenza è verticale, quindi qui non c'è lavoro anti-rotazione: è una spinta frontale anti-estensione. Con l'attrezzatura disponibile il sostituto corretto è il suitcase hold, manubrio in una mano, 30 secondi per lato.",
+      "video": {
+        "id": "LMEccH-34PI",
+        "titolo": "How To Do A Standing Dumbbell Press Out",
+        "canale": "Live Lean TV"
+      }
     },
     {
       "id": "pilates",
@@ -1065,7 +1130,12 @@
         "Scaricare peso sulla mano che tiene il sostegno."
       ],
       "cue": "Sali il più in alto che puoi, scendi il più in basso che puoi.",
-      "sicurezza": "Fatto lento e completo lavora anche come pompa per la circolazione di ritorno: meglio il range pieno che il carico alto."
+      "sicurezza": "Fatto lento e completo lavora anche come pompa per la circolazione di ritorno: meglio il range pieno che il carico alto.",
+      "video": {
+        "id": "H6WptvjXkgw",
+        "titolo": "Dumbbell Standing Calf Raises",
+        "canale": "J2FIT Strength"
+      }
     }
   ]
 }
