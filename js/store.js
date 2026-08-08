@@ -454,18 +454,36 @@ export function varianti() {
 
 // ---------- allenamenti ----------
 
+/**
+ * Il nome del giorno è scritto DENTRO la seduta quando nasce, e resta quello
+ * anche se il brief poi cambia: un allenamento di gennaio non diventa un altro
+ * perché a marzo lo split è stato riscritto.
+ *
+ * Ma una seduta può arrivare da un archivio vecchio o da un backup fatto a mano
+ * e non averlo. Senza questa riga a schermo compariva «15/01 · undefined», e
+ * nel pacchetto per il coach «Giorno: undefined»: una parola inglese in mezzo a
+ * una frase italiana, che sembra un guasto dell'app.
+ */
+function conNomeDelGiorno(s) {
+  if (!s || s.tipoNome) return s;
+  const g = (PROGRAMMA?.split || []).find((x) => x.id === s.tipoId);
+  return { ...s, tipoNome: g?.nome || "allenamento" };
+}
+
 export async function allenamenti() {
   const s = await db.all("sedute");
-  return s.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+  return s
+    .map(conNomeDelGiorno)
+    .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
 }
 
 export async function seduta(id) {
-  return db.get("sedute", id);
+  return conNomeDelGiorno(await db.get("sedute", id));
 }
 
 export async function sedutaInCorso() {
   const s = await db.all("sedute");
-  return s.find((x) => x.stato === "inCorso") || null;
+  return conNomeDelGiorno(s.find((x) => x.stato === "inCorso")) || null;
 }
 
 /**
