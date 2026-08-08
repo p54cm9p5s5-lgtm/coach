@@ -894,13 +894,85 @@ function passiRiscaldamento() {
   }
   for (const m of prot?.mobilita || []) passi.push({ nome: m.nome, dose: m.dose, come: m.come, video: m.video });
   if (prot?.serieDiAvvicinamento) {
-    passi.push({
-      nome: prot.serieDiAvvicinamento.titolo,
-      dose: "1 serie",
-      come: prot.serieDiAvvicinamento.dettaglio,
-    });
+    const a = avvicinamento(prot.serieDiAvvicinamento, prot?.mobilita || []);
+    // «Una serie con bilanciere scarico o metà carico» non vuol dire niente
+    // davanti a un esercizio che carico non ne ha: nei giorni che aprono a
+    // corpo libero il passaggio non si mostra invece di chiedere otto ripetizioni
+    // di una cosa che non si può alleggerire.
+    if (a) passi.push({ nome: a.nome, dose: a.dose, come: a.come, video: a.video });
   }
   return passi;
+}
+
+/** Le parole che contano di un nome, per capire se due esercizi sono lo stesso gesto. */
+function paroleChiave(nome) {
+  return new Set(
+    String(nome || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .split(/[^a-z0-9]+/)
+      .filter((p) => p.length >= 4 && !["corpo", "libero", "vuoto", "lente", "lenti", "bilanciere", "manubri", "manubrio", "panca"].includes(p))
+  );
+}
+
+/**
+ * La serie di avvicinamento, detta per intero.
+ *
+ * Il protocollo dice «sul primo esercizio della seduta»: giusto sulla carta,
+ * inutile davanti al bilanciere, perché quel primo esercizio bisogna andarselo
+ * a cercare. E quando il gesto è lo stesso della mobilità — squat a corpo
+ * libero in riscaldamento e squat con bilanciere come primo esercizio —
+ * sembrava di dover fare venti squat di riscaldamento senza motivo. Qui
+ * l'esercizio ha un nome, il carico un numero, e la differenza con la mobilità
+ * è scritta: prima a corpo libero, adesso sotto il bilanciere.
+ */
+function avvicinamento(def, mobilita) {
+  const v = S.esercizi[0];
+  const es = v ? store.esercizio(v.esercizioId) : null;
+  if (!es) return null;
+
+  // L'inventario si legge dal programma già in memoria: qui non si può aspettare.
+  const barra = Number.isFinite(store.programma()?.inventario?.barra)
+    ? store.programma().inventario.barra
+    : 10;
+  const lavoro = Number.isFinite(v.carico) && v.carico > 0 ? v.carico : null;
+  const attrezzo = es.attrezzo || "";
+
+  let carico;
+  let scala = null; // quanto pesa davvero, se è un numero
+  if (attrezzo === "bilanciere") {
+    carico = `bilanciere scarico (${num(barra)} kg)`;
+    scala = barra;
+  } else if (attrezzo === "manubri" || attrezzo === "manubrio") {
+    carico = lavoro ? `metà carico (${num(lavoro / 2)} kg)` : "il manubrio più leggero che hai";
+    scala = lavoro ? lavoro / 2 : null;
+  } else {
+    return null;
+  }
+
+  // Se lo stesso gesto sta già nella mobilità, dirlo: è la differenza fra
+  // «rifallo un'altra volta» e «lo stesso movimento, adesso con il ferro».
+  const mie = paroleChiave(es.nome);
+  const gemello = (mobilita || []).find((m) => [...paroleChiave(m.nome)].some((p) => mie.has(p)));
+  let nota = "";
+  if (gemello) {
+    // Quando l'avvicinamento pesa quanto la serie vera non c'è nessuna rampa da
+    // promettere: è solo un giro di prova prima di quello che conta.
+    const rampa = lavoro != null && scala != null && lavoro > scala;
+    nota = rampa
+      ? ` Lo stesso gesto di «${gemello.nome}», che hai appena fatto: questa volta con il carico addosso, per ritrovarlo prima della serie vera da ${num(lavoro)} kg.`
+      : ` Lo stesso gesto di «${gemello.nome}», che hai appena fatto: questa volta con il ferro in mano. Pesa quanto la serie vera, quindi tienila facile e curata — è un giro di prova, non la prima serie.`;
+  }
+
+  return {
+    nome: `${def.titolo}: ${es.nome}`,
+    dose: `1 × 8-10 · ${carico}`,
+    video: es.video,
+    // Il nome dell'esercizio sta già nel titolo: ripeterlo qui dentro dava
+    // «di Squat con bilanciere con bilanciere scarico».
+    come: `Una serie da 8-10 ripetizioni con ${carico}.${nota} Non va registrata: serve solo a scaldare il movimento.`,
+  };
 }
 
 function passiStretching() {
