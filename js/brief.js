@@ -80,6 +80,9 @@ export function valida(dati, libreria) {
         problemi.push(`Esercizio sconosciuto: "${v.esercizioId}" in ${giorno.nome || giorno.id}.`);
       }
       if (!(v.serie > 0)) problemi.push(`Serie non valide per ${v.esercizioId}.`);
+      if (v.recuperoSec != null && !(v.recuperoSec > 0)) {
+        problemi.push(`Recupero non valido per ${v.esercizioId}: dev'essere un numero di secondi.`);
+      }
       // Lo stesso esercizio due volte nello stesso giorno manderebbe in
       // confusione punteggio e proposte, che ragionano per esercizio.
       if (visti.has(v.esercizioId)) {

@@ -625,6 +625,21 @@ async function salvaProgresso(patch) {
  * serie di fila. Chi non usa i blocchi non si accorge di niente.
  */
 /**
+ * Quanto dura il recupero di questo esercizio.
+ *
+ * Comanda il programma («recuperoSec» nel brief); la libreria è il ripiego per
+ * chi non lo dichiara. Dentro un blocco il recupero è UNO SOLO, alla fine del
+ * giro, ed è quello del primo esercizio della coppia: prenderlo dal secondo
+ * significava usare un numero scelto a caso fra i due.
+ */
+function recuperoDi(i = S.sed.progresso.indice) {
+  const ind = indiciBlocco(i);
+  const v = S.esercizi[ind[0]] || S.esercizi[i];
+  const def = v ? store.esercizio(v.esercizioId) : null;
+  return v?.recuperoSec ?? def?.recuperoDefaultSec ?? 120;
+}
+
+/**
  * «Serie 2 di 3» da solo; dentro un blocco anche a che punto sei del giro e con
  * chi è accoppiato, perché la prossima cosa da fare non è riposare ma l'altro
  * esercizio.
@@ -1784,10 +1799,10 @@ async function completaSerie(v, def, numero, secondiTenuti = null) {
     ripTarget: target,
     aTempo: Boolean(v.aTempo),
     tsInizioSerie: S.tsInizioSerie,
-    recuperoTargetSec: def?.recuperoDefaultSec ?? 120,
+    recuperoTargetSec: recuperoDi(),
   });
 
-  const durata = (S.recuperoTarget ?? def?.recuperoDefaultSec ?? 120) * 1000;
+  const durata = (S.recuperoTarget ?? recuperoDi()) * 1000;
   S.serieCorrenteId = rec.id;
   S.tsInizioSerie = null;
 
@@ -2118,7 +2133,7 @@ async function vistaRecupero(corpo, piede) {
     pulsante
   );
 
-  const totale = (ultima?.recuperoTargetSec || def?.recuperoDefaultSec || 120) * 1000;
+  const totale = (ultima?.recuperoTargetSec || recuperoDi()) * 1000;
 
   let preavvisoFatto = false;
   // Una volta zittito, il suono non riparte da solo: il controllo gira ogni
@@ -2536,7 +2551,7 @@ async function vistaQuestionario(corpo, piede) {
     // già in vista. È l'ultimo pezzo prima di cambiare esercizio, e nessun
     // tasto lo salta per sbaglio.
     const def = store.esercizio(v.esercizioId);
-    const durata = (def?.recuperoDefaultSec ?? 120) * 1000;
+    const durata = recuperoDi() * 1000;
     S.recuperoFine = Date.now() + durata;
     await salvaProgresso({ fase: "recupero", indice: ind[ind.length - 1], recuperoFine: S.recuperoFine });
     await disegna();
