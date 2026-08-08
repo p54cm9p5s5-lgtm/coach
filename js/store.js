@@ -468,10 +468,20 @@ export async function sedutaInCorso() {
   return s.find((x) => x.stato === "inCorso") || null;
 }
 
-export async function iniziaSeduta({ data = isoDate(), giornoId }) {
+/**
+ * Ultima rete contro il doppio avvio: due allenamenti aperti insieme
+ * renderebbero impossibile capire dove finisce l'uno e comincia l'altro.
+ *
+ * Il controllo passa dalla coda che serializza già i giri del motore: senza,
+ * due avvii partiti nello stesso istante leggevano tutti e due «nessuna seduta
+ * aperta» prima che uno dei due avesse scritto, e ne nascevano due.
+ */
+export function iniziaSeduta(argomenti) {
+  return inCoda(() => iniziaSedutaVera(argomenti));
+}
+
+async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
   invalidaCacheSedute();
-  // Ultima rete contro il doppio avvio: due allenamenti aperti insieme
-  // renderebbero impossibile capire dove finisce l'uno e comincia l'altro.
   const gia = await sedutaInCorso();
   if (gia) return gia;
   const g = giornoSplit(giornoId);
