@@ -93,6 +93,14 @@ export function valida(dati, libreria) {
       }
     }
     if (!giorno.id || !giorno.nome) problemi.push("Un giorno dello split è senza id o nome.");
+    // L'id è la chiave con cui l'app ritrova il giorno, negli allenamenti già
+    // in archivio e negli abbinamenti col calendario: la specifica lo chiede
+    // minuscolo con trattini, e finora era l'unica riga di quella tabella che
+    // l'app non controllava davvero. Due id che differiscono per una maiuscola
+    // o uno spazio diventerebbero due giorni diversi senza che si veda.
+    else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(giorno.id)) {
+      problemi.push(`Id del giorno non valido: "${giorno.id}". Va scritto minuscolo con trattini, per esempio "gambe-core".`);
+    }
     if (typeof giorno.giorno !== "number" || giorno.giorno < 0 || giorno.giorno > 6) {
       problemi.push(`Giorno della settimana non valido in "${giorno.nome || giorno.id}".`);
     }
@@ -101,6 +109,12 @@ export function valida(dati, libreria) {
         problemi.push(`Esercizio sconosciuto: "${v.esercizioId}" in ${giorno.nome || giorno.id}.`);
       }
       if (!(v.serie > 0)) problemi.push(`Serie non valide per ${v.esercizioId}.`);
+      // Un carico negativo (o scritto a parole) arrivava fino alla schermata
+      // dell'esercizio e ci restava: «-20 kg da montare» non vuol dire niente,
+      // e quel numero entra anche nel punteggio come carico previsto.
+      if (v.carico != null && !(Number.isFinite(v.carico) && v.carico >= 0)) {
+        problemi.push(`Carico non valido per ${v.esercizioId}: dev'essere un numero di chili, zero o più.`);
+      }
       if (v.recuperoSec != null && !(v.recuperoSec > 0)) {
         problemi.push(`Recupero non valido per ${v.esercizioId}: dev'essere un numero di secondi.`);
       }
