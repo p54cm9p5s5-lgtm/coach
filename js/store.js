@@ -318,6 +318,7 @@ const REGOLE_BASE = {
       passi: 10,
       esercizio: 8,
       inPiedi: 6,
+      acqua: 12,
     },
     sonnoOreBersaglio: 8,
     sonnoOreMinime: 6,
@@ -344,6 +345,10 @@ const REGOLE_BASE = {
     // Chi non fuma mette `false` nel brief: sparisce la scheda dal menu e la
     // voce dal punteggio, invece di restare lì a valere sempre zero.
     contaSigarette: true,
+    // L'acqua è il contrario: c'è solo per chi la chiede nel brief
+    // («contaAcqua: true»), con il suo bersaglio in litri.
+    contaAcqua: false,
+    acquaLitriBersaglio: 2,
   },
   cadenze: {
     misureGiornoSettimana: 4, // giovedì
@@ -2022,6 +2027,7 @@ export async function punteggiSalute(dal, al = isoDate()) {
   const giorni = new Map((await giorniSalute()).map((g) => [g.data, g]));
   const fumate = await conteggioFumo();
   const primoFumo = await fumoContatoDal();
+  const risposteAcqua = new Map((await giorniAcqua()).map((r) => [r.data, Boolean(r.bevuto)]));
   const { limiti: limitiSigarette } = await limitiFumo(al);
   const chiuse = (await allenamenti()).filter((s) => s.stato === "completata");
   const perData = new Map();
@@ -2059,6 +2065,7 @@ export async function punteggiSalute(dal, al = isoDate()) {
       giorno: giorno?.presente ? giorno : null,
       sigarette,
       sigaretteTollerate: limitiSigarette.get(data),
+      acqua: risposteAcqua.has(data) ? risposteAcqua.get(data) : null,
       regole: reg,
     });
     out.push({ data, ...r, sigarette });
@@ -2262,6 +2269,28 @@ export async function limitiFumo(al = isoDate(), base = null) {
   }
   // `corrente` è il limite che varrà DOMANI: quello di oggi sta già in `limiti`.
   return { limiti, corrente: limite, partenza };
+}
+
+// ---------- acqua ----------
+
+/** La risposta di un giorno: true, false, oppure null se non hai risposto. */
+export async function acquaDi(data = isoDate()) {
+  const r = await db.get("acqua", data);
+  return r ? Boolean(r.bevuto) : null;
+}
+
+export async function segnaAcqua(bevuto, data = isoDate()) {
+  await db.put("acqua", { data, bevuto: Boolean(bevuto), rispostoIl: new Date().toISOString() });
+}
+
+export async function cancellaAcqua(data = isoDate()) {
+  await db.del("acqua", data);
+}
+
+/** Tutte le risposte, dalla più recente. */
+export async function giorniAcqua() {
+  const r = await db.all("acqua");
+  return r.sort((a, b) => (a.data < b.data ? 1 : -1));
 }
 
 /** Conteggio giorno per giorno, per il grafico e per il punteggio. */

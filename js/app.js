@@ -11,6 +11,7 @@ const ROTTE = {
   fumo: () => import("./screens/fumo.js"),
   storico: () => import("./screens/storico.js"),
   proposte: () => import("./screens/proposte.js"),
+  acqua: () => import("./screens/acqua.js"),
   export: () => import("./screens/export.js"),
   impostazioni: () => import("./screens/impostazioni.js"),
 };
@@ -104,6 +105,10 @@ export async function ridisegna() {
   if (hashDisegnato !== null && cambioSchermata) chiudiFogli();
   hashDisegnato = location.hash;
   if (nome === "fumo" && store.regole().salute?.contaSigarette === false) {
+    location.hash = "#/oggi";
+    return;
+  }
+  if (nome === "acqua" && store.regole().salute?.contaAcqua !== true) {
     location.hash = "#/oggi";
     return;
   }
@@ -217,9 +222,11 @@ export async function ridisegna() {
   // dichiara nel brief («salute.contaSigarette: false») e non se la ritrova
   // fra i piedi: una scheda che non riguarda nessuno è solo rumore.
   const contaFumo = store.regole().salute?.contaSigarette !== false;
+  const contaAcqua = store.regole().salute?.contaAcqua === true;
   for (const a of qsa(".tabbar a")) {
     a.classList.toggle("active", a.dataset.tab === nome);
     if (a.dataset.tab === "fumo") a.classList.toggle("hidden", !contaFumo);
+    if (a.dataset.tab === "acqua") a.classList.toggle("hidden", !contaAcqua);
   }
   qs("#tabbar").classList.toggle("hidden", Boolean(mod.nascondiTabBar));
 }

@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260808-105045";
+const VERSION = "20260808-105823";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -34,6 +34,7 @@ const ASSETS = [
   "./js/screens/corpo.js",
   "./js/screens/salute.js",
   "./js/screens/fumo.js",
+  "./js/screens/acqua.js",
   "./js/screens/storico.js",
   "./js/screens/impostazioni.js",
 ];

@@ -4,7 +4,7 @@
 const DB_NAME = "coach";
 // Sale solo quando si aggiunge un archivio: l'aggiornamento qui sotto crea
 // quello che manca e non tocca niente di quello che c'è già.
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 /** store -> { keyPath, indexes: { nome: keyPath } } */
 export const SCHEMA = {
@@ -28,6 +28,9 @@ export const SCHEMA = {
   // Una riga per sigaretta, non un totale al giorno: l'ora serve a vedere
   // quando capitano, e disfare l'ultima diventa togliere una riga.
   fumo: { keyPath: "id", indexes: { data: "data" } },
+  // Una riga al giorno: hai bevuto abbastanza, sì o no. La data è la chiave,
+  // quindi rispondere due volte lo stesso giorno corregge invece di sommare.
+  acqua: { keyPath: "data" },
 };
 
 let dbPromise = null;
