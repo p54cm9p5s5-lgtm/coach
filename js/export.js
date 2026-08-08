@@ -240,7 +240,14 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     if (parti.length) chiestiDiversi.push(`${esercizio(esId)?.nome || esId}: ${parti.join(" · ")}`);
   }
 
-  const recuperi = serie.map((s) => s.recuperoRealeSec).filter((x) => x != null);
+  // Nella media entrano solo i riposi che il programma prevedeva davvero. Il
+  // secondo esercizio di un blocco si fa attaccato al primo: quello zero non è
+  // un recupero saltato, è il programma. Mescolandolo agli altri, una seduta a
+  // blocchi eseguita alla lettera risultava con «media un minuto» su due
+  // minuti previsti, cioè come se avessi tirato via.
+  const conRiposoPrevisto = serie.filter((s) => s.recuperoRealeSec != null && s.recuperoTargetSec);
+  const recuperi = conRiposoPrevisto.map((s) => s.recuperoRealeSec);
+  const senzaRiposoPrevisto = serie.filter((s) => s.recuperoRealeSec != null && !s.recuperoTargetSec).length;
   // L'inizio del lavoro vero (una seduta ripresa il giorno dopo comincia
   // quando riprendi, non quando l'avevi aperta).
   const durata = seduta.oraFine
@@ -325,7 +332,10 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     riga(
       "Recuperi reali (cronometrati dall'app)",
       recuperi.length
-        ? `media ${mmss(recuperi.reduce((a, b) => a + b, 0) / recuperi.length)}, da ${mmss(Math.min(...recuperi))} a ${mmss(Math.max(...recuperi))}`
+        ? `media ${mmss(recuperi.reduce((a, b) => a + b, 0) / recuperi.length)}, da ${mmss(Math.min(...recuperi))} a ${mmss(Math.max(...recuperi))}` +
+          (senzaRiposoPrevisto
+            ? ` — fuori dal conto ${senzaRiposoPrevisto} ${senzaRiposoPrevisto === 1 ? "serie fatta" : "serie fatte"} in blocco, senza riposo previsto`
+            : "")
         : null
     ),
     riga("Recuperi per esercizio", recuperiPerEsercizio.join(" · ") || null),
