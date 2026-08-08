@@ -218,6 +218,15 @@ export async function importaTutto(dump, modo = "sostituisci") {
   if (!dump || dump.formato !== "coach-backup") {
     throw new Error("File non riconosciuto: manca l'intestazione coach-backup.");
   }
+  // Una versione che non è un numero non dice niente: il file può venire da
+  // qualsiasi versione, anche molto più nuova. Prima passava il controllo qui
+  // sotto — «boh» non è maggiore di 1 — e veniva importato come se fosse la
+  // v1. Un file senza il campo resta buono: le prime copie non lo scrivevano.
+  if (dump.versione !== undefined && !Number.isFinite(Number(dump.versione))) {
+    throw new Error(
+      `Il file dice di essere in formato «${dump.versione}», che non è una versione. Non ho toccato niente.`
+    );
+  }
   // Un file scritto da una versione più nuova può contenere cose che questa
   // app non sa leggere: importarlo lo stesso significherebbe ricostruire un
   // archivio a metà senza dirlo.
