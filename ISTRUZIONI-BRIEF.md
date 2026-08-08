@@ -94,6 +94,21 @@ rifiuta, perché punteggio e progressioni ragionano per esercizio.
 progressione: l'app non ha più margine per proporre una ripetizione in più prima
 di salire di carico. Usa sempre una forbice (8-10, 12-15).
 
+**Blocchi (due esercizi attaccati).** Se il programma prevede di alternare due
+esercizi senza pausa in mezzo — una serie del primo, subito una del secondo, poi
+il recupero, e si ricomincia — dai a tutti e due lo stesso `blocco`:
+
+```json
+{ "esercizioId": "flessioni", "serie": 3, "ripMin": 6, "ripMax": 8, "blocco": "A" },
+{ "esercizioId": "ponte-glutei-piedi-rialzati", "serie": 3, "ripMin": 10, "ripMax": 12, "carico": 10, "blocco": "A" }
+```
+
+Gli esercizi con la stessa lettera vanno scritti **uno dopo l'altro** e devono
+avere lo **stesso numero di serie**: sono i giri del blocco. L'app li incatena
+da sola, mette il recupero solo alla fine del giro, e chiede le valutazioni di
+tutti e due quando il blocco è finito. Un esercizio senza `blocco` si comporta
+come sempre: tutte le sue serie di fila.
+
 **Esercizi a tempo** (plank e simili): niente ripetizioni, ci vuole la durata.
 
 ```json

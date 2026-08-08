@@ -614,6 +614,49 @@ async function salvaProgresso(patch) {
   });
 }
 
+/**
+ * I blocchi: due esercizi che si fanno attaccati.
+ *
+ * Una serie del primo, subito una del secondo senza pausa, POI il recupero, e
+ * si ricomincia finché i giri non sono finiti. Solo dopo si valuta — prima uno
+ * poi l'altro — e si passa al blocco dopo.
+ *
+ * Un esercizio senza `blocco` si comporta come ha sempre fatto: tutte le sue
+ * serie di fila. Chi non usa i blocchi non si accorge di niente.
+ */
+/**
+ * «Serie 2 di 3» da solo; dentro un blocco anche a che punto sei del giro e con
+ * chi è accoppiato, perché la prossima cosa da fare non è riposare ma l'altro
+ * esercizio.
+ */
+function etichettaSerie(n, v) {
+  const ind = indiciBlocco();
+  if (ind.length < 2) return `Serie ${n} di ${v.serie}`;
+  const pos = ind.indexOf(S.sed.progresso.indice) + 1;
+  return `Blocco · esercizio ${pos} di ${ind.length} · giro ${n} di ${v.serie}`;
+}
+
+function indiciBlocco(i = S.sed.progresso.indice) {
+  const v = S.esercizi[i];
+  if (!v?.blocco) return [i];
+  const fuori = [];
+  for (let k = 0; k < S.esercizi.length; k++) {
+    if (S.esercizi[k]?.blocco === v.blocco) fuori.push(k);
+  }
+  return fuori.length ? fuori : [i];
+}
+
+/** Quante serie risultano fatte per ciascun esercizio del blocco. */
+async function fatteNelBlocco(indici) {
+  const out = [];
+  for (const k of indici) out.push((await serieFatte(S.esercizi[k].esercizioId)).length);
+  return out;
+}
+
+function inBlocco(i = S.sed.progresso.indice) {
+  return indiciBlocco(i).length > 1;
+}
+
 function vocePrevista(i = S.sed.progresso.indice) {
   return S.esercizi[i] || null;
 }
@@ -919,9 +962,18 @@ async function vistaEsercizio(corpo, piede) {
   const fatte = await serieFatte(v.esercizioId);
 
   // Rete di sicurezza: se le serie registrate hanno già raggiunto il previsto,
-  // si passa al questionario invece di proporne un'altra.
+  // si passa al questionario invece di proporne un'altra. Dentro un blocco vale
+  // solo quando li ha finiti tutti e due: il compagno indietro di un giro va
+  // fatto, non saltato.
   if (fatte.length >= v.serie) {
-    await salvaProgresso({ fase: "questionario" });
+    const ind = indiciBlocco();
+    const quante = await fatteNelBlocco(ind);
+    const indietro = ind.findIndex((k, j) => quante[j] < (S.esercizi[k].serie || 0));
+    if (indietro >= 0) {
+      await salvaProgresso({ fase: "esercizio", indice: ind[indietro], recuperoFine: null });
+      return disegna();
+    }
+    await salvaProgresso({ fase: "questionario", indice: ind[0] });
     return disegna();
   }
 
@@ -961,7 +1013,7 @@ async function vistaEsercizio(corpo, piede) {
     aggiungi(corpo, 
       h(
         "div.hero",
-        h("p.kicker", `Serie ${n} di ${v.serie}`),
+        h("p.kicker", etichettaSerie(n, v)),
         h("h2", def?.nome || v.esercizioId),
         S.caricoCorrente != null
           ? h("p.load", `${num(S.caricoCorrente)} kg`)
@@ -1082,6 +1134,22 @@ async function vistaEsercizio(corpo, piede) {
         "Serie completata"
       )
     );
+    const ind = indiciBlocco();
+    if (ind.length > 1) {
+      const fatteQui = fatte.length;
+      const mio = ind.indexOf(S.sed.progresso.indice);
+      const dopo = ind.find((k, j) => j > mio);
+      const altro = dopo != null ? store.esercizio(S.esercizi[dopo].esercizioId) : null;
+      aggiungi(corpo,
+        h(
+          "p.footnote",
+          { style: "margin:14px 16px 24px" },
+          altro
+            ? `Subito dopo, senza riposo: ${altro.nome}. Il recupero viene dopo tutti e due.`
+            : `Chiusa questa, riposo e si ricomincia il blocco dal primo esercizio.`
+        )
+      );
+    }
   }
 }
 
@@ -1728,6 +1796,53 @@ async function completaSerie(v, def, numero, secondiTenuti = null) {
   // rispondendo si saltava il recupero, che è la parte che conta. Adesso sono
   // due schermate: prima si risponde, poi parte il cronometro con il prossimo
   // esercizio davanti.
+  const indici = indiciBlocco();
+  if (indici.length > 1) {
+    // Dentro un blocco: se il compagno è indietro di una serie, si va da lui
+    // SENZA riposo — è tutto il senso del blocco. Il recupero arriva solo dopo
+    // che tutti e due hanno fatto il giro.
+    const fatte = await fatteNelBlocco(indici);
+    const mio = indici.indexOf(S.sed.progresso.indice);
+    const giroMio = fatte[mio];
+    const dopo = indici.findIndex((k, j) => j > mio && fatte[j] < giroMio);
+    if (dopo >= 0) {
+      S.caricoCorrente = null;
+      S.obiettivo = null;
+      S.tsInizioSerie = Date.now();
+      await salvaProgresso({
+        fase: "esercizio",
+        indice: indici[dopo],
+        recuperoFine: null,
+        caricoCorrente: null,
+        tsInizioSerie: S.tsInizioSerie,
+      });
+      await disegna();
+      return;
+    }
+    // Giro completo. Restano altri giri? Riposo e si riparte dal primo.
+    const giriFatti = Math.min(...fatte);
+    const giriPrevisti = Math.max(...indici.map((k) => S.esercizi[k].serie || 0));
+    if (giriFatti < giriPrevisti) {
+      S.caricoCorrente = null;
+      S.obiettivo = null;
+      S.recuperoFine = Date.now() + durata;
+      await salvaProgresso({
+        fase: "recupero",
+        indice: indici[0],
+        recuperoFine: S.recuperoFine,
+        caricoCorrente: null,
+        tsInizioSerie: null,
+      });
+      await disegna();
+      return;
+    }
+    // Blocco finito: si valuta, un esercizio alla volta, partendo dal primo.
+    S.recuperoFine = null;
+    await salvaProgresso({ fase: "questionario", indice: indici[0], recuperoFine: null, tsInizioSerie: null });
+    await disegna();
+    return;
+  }
+
   const fatteOra = await serieFatte(v.esercizioId);
   if (fatteOra.length >= v.serie) {
     S.recuperoFine = null;
@@ -1807,7 +1922,8 @@ async function saltaEsercizio(v, def) {
 }
 
 async function avanzaEsercizio() {
-  const prossimo = S.sed.progresso.indice + 1;
+  const ind = indiciBlocco();
+  const prossimo = ind[ind.length - 1] + 1;
   S.caricoCorrente = null;
   S.recuperoFine = null;
   S.tsInizioSerie = null;
@@ -2402,13 +2518,27 @@ async function vistaQuestionario(corpo, piede) {
       dolorePolsoIntensita: stato.intensita,
       nota: qs("#nota-es")?.value,
     });
+    // In un blocco si valuta un esercizio alla volta: finito il primo si passa
+    // al secondo, senza riposo in mezzo — il riposo l'hai già fatto fra i giri.
+    const ind = indiciBlocco();
+    if (ind.length > 1) {
+      const risposti = new Set(
+        (await store.questionariDi(S.sed.id)).filter((l) => !l.saltato).map((l) => l.esercizioId)
+      );
+      const manca = ind.findIndex((k) => !risposti.has(S.esercizi[k].esercizioId));
+      if (manca >= 0) {
+        await salvaProgresso({ fase: "questionario", indice: ind[manca] });
+        await disegna();
+        return;
+      }
+    }
     // Adesso il riposo: il cronometro parte da qui, con il prossimo esercizio
     // già in vista. È l'ultimo pezzo prima di cambiare esercizio, e nessun
     // tasto lo salta per sbaglio.
     const def = store.esercizio(v.esercizioId);
     const durata = (def?.recuperoDefaultSec ?? 120) * 1000;
     S.recuperoFine = Date.now() + durata;
-    await salvaProgresso({ fase: "recupero", recuperoFine: S.recuperoFine });
+    await salvaProgresso({ fase: "recupero", indice: ind[ind.length - 1], recuperoFine: S.recuperoFine });
     await disegna();
   }
 }
