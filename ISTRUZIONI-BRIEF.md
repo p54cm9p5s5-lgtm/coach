@@ -45,7 +45,7 @@ l'app lo toglie da sola.
 {
   "versione": 1,
   "aggiornatoIl": "2026-08-10",
-  "atleta": { "nome": "Nome" },
+  "atleta": { "nome": "Nome", "altezzaCm": 178 },
   "split": [ ... ],
   "inventario": { ... },
   "regole": { ... }
@@ -54,6 +54,10 @@ l'app lo toglie da sola.
 
 Solo `split` è obbligatorio. `inventario` serve a calcolare i dischi da montare,
 `regole` a spostare le soglie: senza, l'app usa i suoi valori.
+
+**Scrivi `altezzaCm`.** Non è un dettaglio anagrafico: senza, l'app non può
+calcolare il rapporto vita/altezza né il BMI, e quelle due righe spariscono
+dalla schermata Corpo e dal pacchetto per il coach senza dire perché.
 
 ---
 
@@ -320,7 +324,7 @@ cronometro e senza obiettivo. Se invece la durata conta davvero, usa `aTempo` e
 {
   "versione": 1,
   "aggiornatoIl": "2026-08-10",
-  "atleta": { "nome": "Nome" },
+  "atleta": { "nome": "Nome", "altezzaCm": 178 },
   "inventario": {
     "barra": 10,
     "dischi": { "10": 2, "5": 4, "2.5": 4, "1.25": 4 },
