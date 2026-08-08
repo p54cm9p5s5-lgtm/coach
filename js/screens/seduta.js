@@ -468,7 +468,7 @@ async function vistaRisultato(id, vaiA, da = null) {
             String(p.totale)
           );
         })(),
-        l.dolorePolso ? h("span.pill.bad", "polso") : null
+        ...store.doloriDi(l).map((d) => h("span.pill.bad", d.nome))
       )
     );
   }
@@ -1279,6 +1279,17 @@ function tempoDaDose(dose) {
  */
 function senzaBersaglio(v) {
   return !v?.aTempo && v?.serie === 1 && v?.ripMin === 1 && v?.ripMax === 1;
+}
+
+/**
+ * «al polso destro», «all'anca». Il brief scrive il nome del punto dolente
+ * senza preposizione, ma la domanda in italiano la vuole. Se il brief scrive
+ * già la domanda intera questa non viene usata: è solo il ripiego.
+ */
+function conArticolo(nome) {
+  const n = String(nome || "").trim();
+  if (/^(al |allo |all'|alla |ai |alle )/i.test(n)) return n;
+  return /^[aeiouàèéìòù]/i.test(n) ? `all'${n}` : `al ${n}`;
 }
 
 /** «45s», «5 min»: i secondi nudi sopra il minuto non si leggono. */
@@ -2231,12 +2242,23 @@ async function vistaQuestionario(corpo, piede) {
   // o l'app è ripartita), il questionario riparte da quello che avevi scritto:
   // prima era vuoto, e confermarlo cancellava nota e risposte già date.
   const gia = (await store.questionariDi(S.sed.id)).find((l) => l.esercizioId === v.esercizioId && !l.saltato) || null;
+  // I punti dolenti da chiedere li dice il brief: uno, due o nessuno, ognuno
+  // con la sua domanda. Se il questionario era già stato compilato le risposte
+  // tornano su come le avevi lasciate, punto per punto.
+  const siti = store.sitiDolore();
+  const giaDolori = gia ? store.doloriDi(gia) : [];
   const stato = {
     rpe: gia?.rpe ?? null,
     tecnica: gia?.tecnica ?? null,
-    polso: gia?.dolorePolso ?? null,
-    quando: gia?.dolorePolsoQuando ?? null,
-    intensita: gia?.dolorePolsoIntensita ?? null,
+    dolori: new Map(
+      siti.map((s) => {
+        const d = giaDolori.find((x) => x.id === s.id) || null;
+        // Nessuna risposta è diverso da «no»: senza questa distinzione il
+        // questionario risulterebbe già completo appena aperto.
+        if (d) return [s.id, { c: true, quando: d.quando, intensita: d.intensita }];
+        return [s.id, { c: gia ? false : null, quando: null, intensita: null }];
+      })
+    ),
   };
 
   const RIR = {
@@ -2250,12 +2272,11 @@ async function vistaQuestionario(corpo, piede) {
 
   const hintRpe = h("p.scale-hint", "");
   const hintTec = h("p.scale-hint", "");
-  const dettaglioPolso = h("div");
   const avanti = h("button.btn", { disabled: true, onclick: azione(conferma) }, "Avanti al recupero");
   // Un bottone spento senza spiegazione, a metà allenamento, è una trappola:
   // premi e non succede niente. Il commento sotto al punteggio parla solo di
   // intensità e tecnica, quindi rispondendo a quelle spariva anche l'unico
-  // indizio e restavano fuori le domande sul polso. Qui c'è sempre scritto
+  // indizio e restavano fuori le domande sul dolore. Qui c'è sempre scritto
   // cosa manca, con le parole delle domande.
   const mancano = h("p.footnote", { style: "margin:0 0 8px;text-align:center" }, "");
 
@@ -2263,10 +2284,13 @@ async function vistaQuestionario(corpo, piede) {
     const manca = [];
     if (stato.rpe == null) manca.push("quanto è stata dura");
     if (stato.tecnica == null) manca.push("com'è andata la tecnica");
-    if (stato.polso == null) manca.push("il dolore al polso");
-    else if (stato.polso === true) {
-      if (!stato.quando) manca.push("quando faceva male");
-      if (!stato.intensita) manca.push("quanto faceva male");
+    for (const s of siti) {
+      const d = stato.dolori.get(s.id);
+      if (d.c == null) manca.push(`il dolore (${s.nome})`);
+      else if (d.c === true) {
+        if (!d.quando) manca.push(`quando faceva male ${s.nome}`);
+        if (!d.intensita) manca.push(`quanto faceva male ${s.nome}`);
+      }
     }
     avanti.disabled = manca.length > 0;
     mancano.textContent = manca.length
@@ -2305,13 +2329,18 @@ async function vistaQuestionario(corpo, piede) {
   const zonaPunteggio = h("div", { style: "padding:4px 0 2px" });
   const zonaDettaglio = h("div");
 
+  const doloriSegnati = () =>
+    siti
+      .filter((s) => stato.dolori.get(s.id)?.c === true)
+      .map((s) => ({ id: s.id, nome: s.nome, ...stato.dolori.get(s.id) }));
+
   const calcolaPunteggio = () =>
     punteggioEsercizio({
       variante: v,
       serie: serieFatteQui,
       rpe: stato.rpe,
       tecnica: stato.tecnica,
-      dolorePolso: stato.polso === true,
+      dolori: doloriSegnati(),
       regole: regoleOra,
     });
 
@@ -2423,7 +2452,59 @@ async function vistaQuestionario(corpo, piede) {
     );
   }
 
-  aggiungi(corpo, 
+  // Una sezione per ogni punto dolente dichiarato dal brief: domanda, sì/no e,
+  // solo se la risposta è sì, quando e quanto. Sono indipendenti fra loro:
+  // rispondere di uno non tocca l'altro.
+  const blocchiDolore = siti.flatMap((s) => {
+    const d = stato.dolori.get(s.id);
+    const dettaglio = h("div");
+    const sollecita = s.flagEsercizio && def?.[s.flagEsercizio];
+    const mostraDettaglio = () => {
+      const premuto = (campo, valore) => (d[campo] === valore ? "true" : "false");
+      clear(dettaglio);
+      dettaglio.append(
+        h(
+          "div.segmented",
+          h("button", { "aria-pressed": premuto("quando", "durante"), onclick: (ev) => pick(ev, d, "quando", "durante") }, "Durante"),
+          h("button", { "aria-pressed": premuto("quando", "dopo"), onclick: (ev) => pick(ev, d, "quando", "dopo") }, "Dopo")
+        ),
+        h(
+          "div.segmented",
+          h("button", { "aria-pressed": premuto("intensita", "lieve"), onclick: (ev) => pick(ev, d, "intensita", "lieve") }, "Lieve"),
+          h("button", { "aria-pressed": premuto("intensita", "medio"), onclick: (ev) => pick(ev, d, "intensita", "medio") }, "Medio"),
+          h("button", { "aria-pressed": premuto("intensita", "forte"), onclick: (ev) => pick(ev, d, "intensita", "forte") }, "Forte")
+        )
+      );
+    };
+    const setC = (e, valore) => {
+      const gruppo = e.target.parentElement;
+      for (const b of gruppo.children) b.setAttribute("aria-pressed", "false");
+      e.target.setAttribute("aria-pressed", "true");
+      d.c = valore;
+      ridisegnaPunteggio();
+      clear(dettaglio);
+      if (valore) {
+        d.quando = null;
+        d.intensita = null;
+        mostraDettaglio();
+      }
+      verifica();
+    };
+    // Se era già segnato, i dettagli devono ricomparire senza toccare niente,
+    // altrimenti «Avanti» resterebbe spento con le risposte già date.
+    if (d.c === true) mostraDettaglio();
+    return [
+      h("p.footnote", { style: "margin:22px 16px 0" }, `${s.domanda || `Dolore ${conArticolo(s.nome)}?`}${sollecita ? " (esercizio che lo sollecita)" : ""}`),
+      h(
+        "div.segmented.danger",
+        h("button", { "aria-pressed": d.c === false ? "true" : "false", onclick: (e) => setC(e, false) }, "NO"),
+        h("button", { "aria-pressed": d.c === true ? "true" : "false", onclick: (e) => setC(e, true) }, "SÌ")
+      ),
+      dettaglio,
+    ];
+  });
+
+  aggiungi(corpo,
     h("div.hero", { style: "padding-bottom:2px" }, h("p.kicker", "Fine esercizio"), h("h2", def?.nome || v.esercizioId)),
     zonaPunteggio,
     correzione,
@@ -2452,13 +2533,7 @@ async function vistaQuestionario(corpo, piede) {
     ),
     hintTec,
 
-    h("p.footnote", { style: "margin:22px 16px 0" }, `Dolore al polso destro?${def?.sollecitaPolso ? " (esercizio che lo sollecita)" : ""}`),
-    h(
-      "div.segmented.danger",
-      h("button", { "aria-pressed": stato.polso === false ? "true" : "false", onclick: (e) => setPolso(e, false) }, "NO"),
-      h("button", { "aria-pressed": stato.polso === true ? "true" : "false", onclick: (e) => setPolso(e, true) }, "SÌ")
-    ),
-    dettaglioPolso,
+    ...blocchiDolore,
 
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota (facoltativa — vuota significa nessun segnale)"),
     h("textarea.note", {
@@ -2469,52 +2544,15 @@ async function vistaQuestionario(corpo, piede) {
     zonaDettaglio
   );
 
-  // Se il polso era già segnato, i dettagli devono ricomparire senza toccare
-  // niente, altrimenti «Avanti» resterebbe spento con le risposte già date.
-  if (stato.polso === true) mostraDettaglioPolso();
-
   aggiungiPiede(piede, mancano, avanti);
   verifica();
   ridisegnaPunteggio();
 
-  function setPolso(e, valore) {
-    const gruppo = e.target.parentElement;
-    for (const b of gruppo.children) b.setAttribute("aria-pressed", "false");
-    e.target.setAttribute("aria-pressed", "true");
-    stato.polso = valore;
-    ridisegnaPunteggio();
-    clear(dettaglioPolso);
-    if (valore) {
-      stato.quando = null;
-      stato.intensita = null;
-      mostraDettaglioPolso();
-    }
-    verifica();
-  }
-
-  function mostraDettaglioPolso() {
-    const premuto = (campo, valore) => (stato[campo] === valore ? "true" : "false");
-    clear(dettaglioPolso);
-    dettaglioPolso.append(
-      h(
-        "div.segmented",
-        h("button", { "aria-pressed": premuto("quando", "durante"), onclick: (ev) => pick(ev, "quando", "durante") }, "Durante"),
-        h("button", { "aria-pressed": premuto("quando", "dopo"), onclick: (ev) => pick(ev, "quando", "dopo") }, "Dopo")
-      ),
-      h(
-        "div.segmented",
-        h("button", { "aria-pressed": premuto("intensita", "lieve"), onclick: (ev) => pick(ev, "intensita", "lieve") }, "Lieve"),
-        h("button", { "aria-pressed": premuto("intensita", "medio"), onclick: (ev) => pick(ev, "intensita", "medio") }, "Medio"),
-        h("button", { "aria-pressed": premuto("intensita", "forte"), onclick: (ev) => pick(ev, "intensita", "forte") }, "Forte")
-      )
-    );
-  }
-
-  function pick(ev, campo, valore) {
+  function pick(ev, dove, campo, valore) {
     const gruppo = ev.target.parentElement;
     for (const b of gruppo.children) b.setAttribute("aria-pressed", "false");
     ev.target.setAttribute("aria-pressed", "true");
-    stato[campo] = valore;
+    dove[campo] = valore;
     verifica();
     ridisegnaPunteggio();
   }
@@ -2528,9 +2566,7 @@ async function vistaQuestionario(corpo, piede) {
       ordine: S.sed.progresso.indice,
       rpe: stato.rpe,
       tecnica: stato.tecnica,
-      dolorePolso: stato.polso,
-      dolorePolsoQuando: stato.quando,
-      dolorePolsoIntensita: stato.intensita,
+      dolori: doloriSegnati(),
       nota: qs("#nota-es")?.value,
     });
     // In un blocco si valuta un esercizio alla volta: finito il primo si passa
@@ -3079,7 +3115,16 @@ async function vistaFine(corpo, piede) {
     else if (log.saltato) mancanti.push(`${nome}: saltato (${log.saltato.motivo})`);
   }
 
-  const polso = logs.filter((l) => l.dolorePolso);
+  // Un gruppo per punto dolente: se hanno fatto male sia il ginocchio sia
+  // l'anca, sommarli in un elenco solo renderebbe illeggibile quale esercizio
+  // ha dato fastidio a cosa.
+  const perDolore = new Map();
+  for (const l of logs) {
+    for (const d of store.doloriDi(l)) {
+      if (!perDolore.has(d.id)) perDolore.set(d.id, { nome: d.nome, righe: [] });
+      perDolore.get(d.id).righe.push({ log: l, d });
+    }
+  }
 
   aggiungi(corpo, 
     h("div.hero", h("p.kicker", "Riepilogo"), h("h2", S.sed.tipoNome)),
@@ -3106,14 +3151,17 @@ async function vistaFine(corpo, piede) {
           }))
         )
       : null,
-    polso.length
-      ? h("div.group", h("h2", "Polso destro"),
-          h("div.list", ...polso.map((l) => {
-            const def = store.esercizio(l.esercizioId);
-            return h("div.row", h("div.main", h("span.title", def?.nome || l.esercizioId)), h("span.pill.bad", `${l.dolorePolsoIntensita} · ${l.dolorePolsoQuando}`));
-          }))
-        )
-      : null,
+    ...[...perDolore.values()].map((g) =>
+      h("div.group", h("h2", g.nome.charAt(0).toUpperCase() + g.nome.slice(1)),
+        h("div.list", ...g.righe.map(({ log, d }) => {
+          const def = store.esercizio(log.esercizioId);
+          return h("div.row",
+            h("div.main", h("span.title", def?.nome || log.esercizioId)),
+            h("span.pill.bad", `${d.intensita || "—"} · ${d.quando || "—"}`)
+          );
+        }))
+      )
+    ),
     mancanti.length
       ? h("div.group", h("h2", "Dati mancanti"), h("div.list", ...mancanti.map((m) => h("div.row", h("div.main", h("span.title", m))))))
       : null,

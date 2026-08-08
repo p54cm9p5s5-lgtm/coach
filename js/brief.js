@@ -100,6 +100,28 @@ export function valida(dati, libreria) {
     }
   }
 
+  // I punti dolenti sono domande che compaiono dopo ogni esercizio: una lista
+  // scritta male svuoterebbe il questionario senza dire perché.
+  const dol = dati.regole?.dolori;
+  if (dol != null) {
+    if (!Array.isArray(dol)) {
+      problemi.push("«regole.dolori» deve essere un elenco di punti dolenti.");
+    } else {
+      const visti = new Set();
+      for (const s of dol) {
+        if (!s || typeof s !== "object" || !s.id || typeof s.id !== "string") {
+          problemi.push("Un punto dolente è senza «id».");
+          continue;
+        }
+        if (visti.has(s.id)) problemi.push(`Punto dolente ripetuto: "${s.id}".`);
+        visti.add(s.id);
+        if (s.nome != null && typeof s.nome !== "string") {
+          problemi.push(`Nome non valido per il punto dolente "${s.id}".`);
+        }
+      }
+    }
+  }
+
   const inv = dati.inventario;
   if (inv) {
     if (!(inv.barra >= 0)) problemi.push("Peso della barra non valido nell'inventario.");

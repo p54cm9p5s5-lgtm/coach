@@ -4,7 +4,7 @@ import * as db from "./db.js";
 import { isoDate, weekdayOf, giorniTra, dataBreve, num } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
 import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni } from "./segnali.js";
-import { punteggioEsercizio, punteggioAllenamento } from "./punteggio.js";
+import { punteggioEsercizio, punteggioAllenamento, doloriDi } from "./punteggio.js";
 
 let LIBRERIA = null;
 let PROGRAMMA = null;
@@ -390,6 +390,30 @@ export function regole() {
   return fuse;
 }
 
+/* I punti dolenti da chiedere dopo ogni esercizio li decide il brief, perché
+   non sono gli stessi per tutti. Se il brief non dice niente vale il polso
+   destro, che è la domanda con cui l'app è nata: così una persona che non ha
+   mai scritto «dolori» continua a vedere esattamente quello che vedeva prima.
+   Ogni punto è una domanda separata, con il suo «quando» e il suo «quanto». */
+const SITI_DOLORE_DEFAULT = [{ id: "polso", nome: "polso destro", flagEsercizio: "sollecitaPolso" }];
+
+export { doloriDi };
+
+export function sitiDolore() {
+  const r = (PROGRAMMA && PROGRAMMA.regole && PROGRAMMA.regole.dolori) || null;
+  if (!Array.isArray(r) || !r.length) return SITI_DOLORE_DEFAULT;
+  return r
+    .filter((s) => s && typeof s.id === "string" && s.id.trim())
+    .map((s) => ({
+      id: s.id.trim(),
+      nome: (s.nome || s.id).trim(),
+      // Il brief può scrivere la domanda per intero quando la preposizione
+      // automatica non basta («Dolore alla spalla?»).
+      domanda: typeof s.domanda === "string" && s.domanda.trim() ? s.domanda.trim() : null,
+      flagEsercizio: typeof s.flagEsercizio === "string" ? s.flagEsercizio : null,
+    }));
+}
+
 /** La riga dello split che riguarda un esercizio: serie, range, carico di partenza. */
 export function varianteDi(esercizioId) {
   for (const g of giorniSplit()) {
@@ -684,13 +708,18 @@ export async function registraQuestionario({
   punteggio = null,
   rpe,
   tecnica,
-  dolorePolso,
-  dolorePolsoQuando,
-  dolorePolsoIntensita,
+  dolori,
   nota,
 }) {
   const esistenti = await db.byIndex("esercizioLog", "sedutaId", sedutaId);
   const prec = esistenti.find((l) => l.esercizioId === esercizioId);
+  const elenco = (Array.isArray(dolori) ? dolori : [])
+    .filter((d) => d && d.id)
+    .map((d) => ({ id: d.id, nome: d.nome || d.id, quando: d.quando || null, intensita: d.intensita || null }));
+  // Il polso resta scritto anche nei campi vecchi finché è uno dei punti
+  // chiesti: gli allenamenti già in archivio e quelli nuovi devono restare
+  // leggibili allo stesso modo, senza migrazioni del database.
+  const polso = elenco.find((d) => d.id === "polso") || null;
   const rec = {
     id: prec?.id || db.nuovoId("log"),
     sedutaId,
@@ -699,9 +728,10 @@ export async function registraQuestionario({
     punteggio,
     rpe: rpe ?? null,
     tecnica: tecnica ?? null,
-    dolorePolso: Boolean(dolorePolso),
-    dolorePolsoQuando: dolorePolso ? dolorePolsoQuando || null : null,
-    dolorePolsoIntensita: dolorePolso ? dolorePolsoIntensita || null : null,
+    dolori: elenco,
+    dolorePolso: Boolean(polso),
+    dolorePolsoQuando: polso?.quando || null,
+    dolorePolsoIntensita: polso?.intensita || null,
     nota: (nota || "").trim() || null,
     saltato: null,
     creatoIl: new Date().toISOString(),
@@ -721,6 +751,7 @@ export async function registraSalto({ sedutaId, esercizioId, ordine, motivo, not
     ordine,
     rpe: null,
     tecnica: null,
+    dolori: [],
     dolorePolso: false,
     dolorePolsoQuando: null,
     dolorePolsoIntensita: null,
@@ -789,7 +820,7 @@ export async function completezzaSeduta(id) {
       serie: sueSerie,
       rpe: log?.rpe,
       tecnica: log?.tecnica,
-      dolorePolso: Boolean(log?.dolorePolso),
+      dolori: doloriDi(log),
       regole: reg,
     });
     punteggi.push(r.totale);

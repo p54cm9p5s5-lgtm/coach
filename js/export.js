@@ -3,6 +3,7 @@
    a leggerlo: dati salute del giorno, stato delle finestre, proposte aperte. */
 
 import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate, oraDi } from "./ui.js";
+import { doloriDi } from "./punteggio.js";
 
 // Il pacchetto si legge per righe: una nota scritta con l'invio ne produceva
 // una senza etichetta, e il coach leggeva una frase sospesa senza sapere di chi
@@ -180,7 +181,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     const c = caricoESerie(righeSerie, def);
 
     const note = [];
-    if (log?.dolorePolso) note.push(`DOLORE POLSO ${log.dolorePolsoIntensita} ${log.dolorePolsoQuando}`);
+    for (const d of doloriDi(log)) note.push(`DOLORE ${d.nome.toUpperCase()} ${d.intensita || ""} ${d.quando || ""}`.trim());
     if (log?.tecnica != null) note.push(`tecnica ${num(log.tecnica)}/10`);
     // Gli a capo dentro una cella spezzerebbero la tabella a formato fisso che
     // il coach si aspetta: diventano separatori.
@@ -297,10 +298,8 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
         `brief ${v.serie}×${v.aTempo ? `${v.durataSec}s` : `${v.ripMin}-${v.ripMax}`}${v.carico != null ? ` @ ${num(v.carico)} kg` : ""}`
       );
     }
-    if (log?.dolorePolso) {
-      coda.push(
-        `DOLORE POLSO ${log.dolorePolsoIntensita || "intensità non detta"} ${log.dolorePolsoQuando || ""}`.trim()
-      );
+    for (const d of doloriDi(log)) {
+      coda.push(`DOLORE ${d.nome.toUpperCase()} ${d.intensita || "intensità non detta"} ${d.quando || ""}`.trim());
     }
     if (log?.saltato) {
       coda.push(
