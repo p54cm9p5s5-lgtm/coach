@@ -27,6 +27,11 @@ function dataVera(iso) {
  */
 const NUMERO = (v, intero = false) => {
   if (v === undefined || v === null || v === "") return null;
+  // Un numero negativo qui dentro non esiste: passi, minuti, chilometri,
+  // battiti, calorie, risvegli sono tutti conteggi. Se arriva, è una lettura
+  // sbagliata dell'orologio o del comando rapido, e vale «non registrato» —
+  // non un valore che entra nei punteggi, nelle medie e nei grafici.
+  if (/^\s*-/.test(String(v))) return null;
   let t = String(v).trim().replace(/\s|'| /g, "");
   // Campi che sono conteggi e basta — passi, piani, minuti, battiti: un punto
   // seguito da tre cifre lì è per forza il separatore delle migliaia. «9.120
@@ -151,6 +156,17 @@ export function analizza(testo) {
     // `coda.slice(data.length)` toglie la data e lascia le coppie chiave=valore,
     // anche quando la prima è attaccata alla data senza spazio.
     const c = coppie(coda.slice(data.length));
+
+    // Un valore negativo diventa «non registrato» (vedi NUMERO): va detto, se
+    // no un dato sparisce senza che nessuno se ne accorga.
+    const negativi = Object.entries(c)
+      .filter(([, v]) => /^\s*-\d/.test(String(v)))
+      .map(([k]) => k);
+    if (negativi.length) {
+      risultato.avvisi.push(
+        `${data}: ${negativi.join(", ")} ${negativi.length === 1 ? "ha un valore negativo e resta" : "hanno valori negativi e restano"} non registrat${negativi.length === 1 ? "o" : "i"}.`
+      );
+    }
 
     if (tipo === "GIORNO") {
       // La distanza può arrivare in chilometri o in metri, a seconda di come è
