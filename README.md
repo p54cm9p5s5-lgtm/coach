@@ -19,23 +19,18 @@ js/brief.js           lettura del blocco COACH-DATA dal master brief
 js/plates.js          calcolo dei dischi da montare
 js/salute.js          formato e lettura del pacchetto dati Salute
 js/segnali.js         motore deterministico di segnali e proposte
+js/punteggio.js       i tre punteggi e il loro disegno
+js/export.js          il pacchetto di testo per il coach
+js/grafico.js         grafici in SVG, senza librerie
+js/calendario.js      calendario mensile e cose attese
 js/screens/*.js       una schermata per file
 data/esercizi.json    libreria esercizi (contenuto generico)
+data/riscaldamento.json  protocolli di riscaldamento e stretching per giorno
 tools/icona.py        ritaglia e riquadra l'icona sorgente
 tools/icona-da-immagine.sh  genera le tre misure delle icone
 tools/serve.py        server di sviluppo senza cache
-tools/prova.sh        esegue le prove del motore
+tools/pubblica.sh     pubblica su GitHub Pages
 ```
-
-## Prove
-
-```bash
-tools/prova.sh
-```
-
-Coprono la progressione, i segnali e il ciclo proposta → risposta → obiettivo →
-verifica. Sull'host non c'è node (vincolo dichiarato nella specifica): lo script
-usa `jsc`, il motore JS già presente in macOS dentro JavaScriptCore.
 
 ## Sviluppo
 
@@ -59,14 +54,23 @@ GitHub Pages su repository pubblico. Nel repository **non entra alcun dato perso
 programma e storico arrivano sul telefono importando i file generati in `_privato/`,
 che è escluso da git.
 
-Un cambio di `VERSION` in `sw.js` pubblica un aggiornamento: l'app mostra un avviso e
-lo applica solo su conferma. I dati salvati non vengono toccati dagli aggiornamenti.
+Un cambio di `VERSION` in `sw.js` pubblica un aggiornamento: la versione nuova prende
+il comando e l'app si ricarica **da sola**, senza chiedere niente — tranne mentre sei
+dentro un allenamento, dove l'aggiornamento resta in attesa e entra appena esci, per
+non perdere schermata, cronometro e audio sbloccato. I dati salvati non vengono mai
+toccati dagli aggiornamenti.
 
 ## Stato
 
-Fasi 1-4 complete: programma, Modalità Seduta, storico e volumi, misure e foto,
-ponte con l'app Salute, segnali e proposte di progressione con registro decisioni.
-Resta la fase 5: export per la chat, caricamento del .md, rifinitura.
+L'app è completa e in uso su due telefoni, con dati separati: programma, Modalità
+Seduta guidata passo per passo, blocchi di esercizi incatenati, storico e volumi,
+misure e foto, ponte con l'app Salute e col calendario, conteggio delle sigarette
+o dell'acqua, segnali e proposte di progressione con registro decisioni, pacchetto
+di testo per la chat col coach e caricamento del master brief.
+
+Quello che cambia da una persona all'altra lo dichiara il **brief**, non il codice:
+giorni e carichi, punti dolenti da chiedere dopo ogni esercizio, blocchi, recuperi,
+e se contare le sigarette o l'acqua.
 
 Il motore delle proposte è deterministico e non applica mai niente da solo:
 propone, l'atleta accetta o rifiuta, e ogni esito finisce nel registro con una
