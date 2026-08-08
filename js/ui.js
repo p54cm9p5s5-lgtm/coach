@@ -5,6 +5,15 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const TAG_SVG = new Set(["svg", "circle", "path", "line", "rect", "g", "text", "polyline", "ellipse"]);
 
+/**
+ * Costruisce un elemento. I figli passano SEMPRE da `createTextNode`: qualunque
+ * cosa arrivi — una nota scritta a mano, un titolo del calendario, il nome di
+ * un esercizio dal brief — finisce a schermo come testo e non come markup.
+ *
+ * C'era una scorciatoia `html:` che scriveva direttamente in `innerHTML`: non
+ * la usava nessuno, ed era l'unico punto dell'app da cui un testo scritto
+ * altrove avrebbe potuto diventare codice. Tolta.
+ */
 export function h(tag, props, ...kids) {
   const [name, ...cls] = tag.split(".");
   const inSvg = TAG_SVG.has(name);
@@ -30,8 +39,7 @@ export function h(tag, props, ...kids) {
         const unito = [attuale, v].filter(Boolean).join(" ");
         if (inSvg) node.setAttribute("class", unito);
         else node.className = unito;
-      } else if (k === "html") node.innerHTML = v;
-      else if (k.startsWith("on")) node.addEventListener(k.slice(2).toLowerCase(), v);
+      } else if (k.startsWith("on")) node.addEventListener(k.slice(2).toLowerCase(), v);
       else if (k === "dataset") Object.assign(node.dataset, v);
       else if (inSvg) node.setAttribute(k, v === true ? "" : v);
       else if (k in node && k !== "list" && k !== "type") node[k] = v;
