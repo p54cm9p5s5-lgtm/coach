@@ -506,7 +506,12 @@
         {
           "nome": "Circonduzioni delle braccia",
           "dose": "10 avanti + 10 indietro",
-          "come": "In piedi, braccia tese, cerchi ampi e lenti."
+          "come": "In piedi, braccia tese, cerchi ampi e lenti.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles - Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
         },
         {
           "nome": "Cat-cow",
@@ -536,7 +541,12 @@
         {
           "nome": "Ponte glutei a corpo libero",
           "dose": "15 ripetizioni",
-          "come": "A terra, ginocchia piegate, spinta dai talloni, un secondo di pausa in alto."
+          "come": "A terra, ginocchia piegate, spinta dai talloni, un secondo di pausa in alto.",
+          "video": {
+            "id": "tqp5XQPpTxY",
+            "titolo": "How To Do A Glute Bridge",
+            "canale": "PureGym"
+          }
         },
         {
           "nome": "Flessioni sulle ginocchia",
@@ -548,7 +558,12 @@
         {
           "nome": "Pettorale allo stipite",
           "dose": "30 s per lato",
-          "come": "Avambraccio contro lo stipite, gomito ad altezza spalla, ruota il torace dalla parte opposta."
+          "come": "Avambraccio contro lo stipite, gomito ad altezza spalla, ruota il torace dalla parte opposta.",
+          "video": {
+            "id": "T6ZozOBoyo8",
+            "titolo": "Doorway Chest Stretch",
+            "canale": "Dr. Femi Betiku"
+          }
         },
         {
           "nome": "Femorali da seduta",
@@ -558,7 +573,12 @@
         {
           "nome": "Polpaccio al muro",
           "dose": "30 s per lato",
-          "come": "Mani al muro, gamba dietro tesa, tallone a terra."
+          "come": "Mani al muro, gamba dietro tesa, tallone a terra.",
+          "video": {
+            "id": "cc0k8cQxeEU",
+            "titolo": "Calf Stretch at Wall",
+            "canale": "P4S Golf"
+          }
         }
       ]
     },
@@ -577,7 +597,12 @@
         {
           "nome": "Circonduzioni delle spalle",
           "dose": "10 per verso",
-          "come": "Solo le scapole, braccia rilassate lungo i fianchi."
+          "come": "Solo le scapole, braccia rilassate lungo i fianchi.",
+          "video": {
+            "id": "X7NtgY9kCCM",
+            "titolo": "How to do shoulder rolls",
+            "canale": "Rehab My Patient"
+          }
         },
         {
           "nome": "Retrazioni scapolari",
@@ -619,7 +644,12 @@
         {
           "nome": "Quadricipite in piedi",
           "dose": "30 s per lato",
-          "come": "Tallone al gluteo, ginocchia vicine, bacino in retroversione."
+          "come": "Tallone al gluteo, ginocchia vicine, bacino in retroversione.",
+          "video": {
+            "id": "LHesB7TJW6c",
+            "titolo": "Quad Stretch",
+            "canale": "St. Peter’s Health"
+          }
         },
         {
           "nome": "Child's pose con allungo dorsale",
@@ -629,7 +659,12 @@
         {
           "nome": "Flessori dell'anca in affondo",
           "dose": "30 s per lato",
-          "come": "Ginocchio dietro a terra, bacino in retroversione, spingi avanti."
+          "come": "Ginocchio dietro a terra, bacino in retroversione, spingi avanti.",
+          "video": {
+            "id": "EVcnudMqQCE",
+            "titolo": "Lunge & Hip Flexor Stretch",
+            "canale": "Performance Therapies"
+          }
         }
       ]
     },
@@ -653,7 +688,12 @@
         {
           "nome": "Circonduzioni delle braccia",
           "dose": "10 per verso",
-          "come": "In piedi, braccia tese, cerchi ampi e lenti."
+          "come": "In piedi, braccia tese, cerchi ampi e lenti.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles - Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
         },
         {
           "nome": "Hip hinge con bastone",
@@ -668,7 +708,12 @@
         {
           "nome": "Ponte glutei a corpo libero",
           "dose": "15 ripetizioni",
-          "come": "A terra, ginocchia piegate, spinta dai talloni, un secondo di pausa in alto."
+          "come": "A terra, ginocchia piegate, spinta dai talloni, un secondo di pausa in alto.",
+          "video": {
+            "id": "tqp5XQPpTxY",
+            "titolo": "How To Do A Glute Bridge",
+            "canale": "PureGym"
+          }
         },
         {
           "nome": "Step-up lenti a corpo libero",
@@ -680,7 +725,12 @@
         {
           "nome": "Femorali in piedi",
           "dose": "30 s per lato",
-          "come": "Tallone su un rialzo basso, piegati dall'anca."
+          "come": "Tallone su un rialzo basso, piegati dall'anca.",
+          "video": {
+            "id": "A4-9oLGRocY",
+            "titolo": "Standing Hamstring Stretch",
+            "canale": "WorkoutsbyDavid"
+          }
         },
         {
           "nome": "Gran dorsale al montante",
@@ -731,7 +781,12 @@
         {
           "nome": "Polpaccio al muro",
           "dose": "30 s per lato",
-          "come": "Mani al muro, gamba dietro tesa, tallone a terra."
+          "come": "Mani al muro, gamba dietro tesa, tallone a terra.",
+          "video": {
+            "id": "cc0k8cQxeEU",
+            "titolo": "Calf Stretch at Wall",
+            "canale": "P4S Golf"
+          }
         },
         {
           "nome": "Femorali da seduta",
@@ -782,7 +837,12 @@
         {
           "nome": "Polpaccio al muro",
           "dose": "30 s per lato",
-          "come": "Mani al muro, gamba dietro tesa, tallone a terra."
+          "come": "Mani al muro, gamba dietro tesa, tallone a terra.",
+          "video": {
+            "id": "cc0k8cQxeEU",
+            "titolo": "Calf Stretch at Wall",
+            "canale": "P4S Golf"
+          }
         },
         {
           "nome": "Femorali da seduta",
