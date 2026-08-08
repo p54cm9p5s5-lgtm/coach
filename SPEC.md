@@ -216,7 +216,12 @@ Sequenza rigida, un passo per volta.
 5. **Salto esercizio** — motivo obbligatorio (tempo | dolore | attrezzo | altro) + nota.
 6. **Cardio** — step guidato in coda alla seduta (mai dopo Gambe/Core):
    velocità target 4,5–5 km/h e FC 105–115 in evidenza, avviso sopra 125.
-   Chiede velocità impostata sul tapis e durata. Nessun video.
+   Chiede velocità impostata sul tapis e durata prevista. Nessun video.
+   **Cronometro all'insù, senza fine**: parte da zero, la durata prevista è solo
+   un traguardo (anello + un suono una volta sola, zittibile senza chiudere), e
+   i minuti registrati sono quelli fra l'avvio e «Ho finito». Sopra i previsti
+   +20 min l'app chiede conferma: non sa distinguere una camminata lunga da un
+   «Ho finito» toccato tardi.
 7. **Fine seduta** — riepilogo: durata, densità (serie/minuto), recuperi medi
    reali, RPE per esercizio, dati mancanti. Tasto per generare il pacchetto export.
 

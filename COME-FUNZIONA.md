@@ -290,6 +290,15 @@ rispondendo si finiva per saltare il recupero — che è la parte che conta.
 **4. Cardio**, se previsto: si può eseguire o dichiarare non eseguito, **con
 motivo obbligatorio**.
 
+Il cronometro del cardio **sale da zero e non si ferma da solo**: cammini quanto
+vuoi e tocchi «Ho finito» quando scendi: i minuti registrati sono quelli fra
+l'avvio e il tocco. La durata prevista resta come traguardo — l'anello si riempie
+fino a lì e il suono arriva **una volta sola** quando ci arrivi, con un tasto che
+lo zittisce **senza chiudere il cardio**. Dopo, il tempo continua a salire in
+silenzio e sotto il cronometro c'è scritto quanto sei andato oltre. Prima era un
+conto alla rovescia: per camminare di più bisognava premere «+5 min» mentre si
+camminava.
+
 **4-bis. I numeri del cardio.** Appena finito il cardio, prima dello
 stretching, l'app chiede i dati dell'orologio (durata, distanza, kcal, ritmo,
 battito, sforzo). Sono facoltativi e finiscono nel pacchetto. Stanno lì perché
