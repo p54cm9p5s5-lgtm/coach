@@ -32,6 +32,17 @@ function xNelDisegno(svg, clientX, clientY = 0) {
   return null;
 }
 
+/**
+ * Un valore che non è un numero finito vale «non lo so», come un valore
+ * assente.
+ *
+ * NaN e Infinity nascono da una divisione andata storta a monte, e arrivavano
+ * fin dentro le coordinate del disegno: il browser rifiuta un attributo che
+ * vale «NaN» e il grafico spariva tutto, non solo il punto sbagliato. Meglio
+ * un buco nella linea — quello l'app lo sa già disegnare. */
+const soloNumeri = (punti) =>
+  (punti || []).map((p) => (Number.isFinite(p?.valore) ? p : { ...p, valore: null }));
+
 const GIORNI_CORTI = ["D", "L", "M", "M", "G", "V", "S"];
 const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
@@ -39,6 +50,10 @@ const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
  * @param dati [{ data, kcal|null, obiettivo, allenamento: bool, presente, futuro, previsto }]
  */
 export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null } = {}) {
+  // Stesso motivo di «soloNumeri»: un movimento che non è un numero finito è un
+  // giorno senza dati, e va disegnato come tale — un trattino, non una barra
+  // alta «NaN» che porta giù tutto il grafico.
+  dati = (dati || []).map((d) => (Number.isFinite(d?.kcal) ? d : { ...d, kcal: null }));
   const L = 320;
   const A = altezza;
   const margineBasso = 22;
@@ -364,6 +379,7 @@ export function graficoBarre({
   altezza = 96,
   invito = "Tocca una colonna per vedere il giorno",
 }) {
+  punti = soloNumeri(punti);
   const L = 320;
   const A = altezza;
   const margineBasso = 18;
@@ -500,6 +516,7 @@ export function graficoLinea({
   altezza = 104,
   invito = "Tocca un punto per vedere il giorno",
 }) {
+  punti = soloNumeri(punti);
   const L = 320;
   const A = altezza;
   const margineBasso = 18;
