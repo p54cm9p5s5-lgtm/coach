@@ -2327,6 +2327,15 @@ export async function tettoFumoDichiarato() {
  * come questo sta tutto nel fatto che non basta chiedere per annullarlo.
  */
 export async function dichiaraTettoFumo(massimo, dal) {
+  // Una dichiarazione scritta male non deve passare in silenzio: verrebbe
+  // salvata e poi riletta come «nessun tetto», e la decisione risulterebbe
+  // presa senza esserlo. Meglio un errore visibile che un impegno finto.
+  if (!Number.isFinite(massimo) || massimo < 0) {
+    throw new Error("Il massimo dev'essere un numero da zero in su.");
+  }
+  if (typeof dal !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dal)) {
+    throw new Error("Serve il giorno da cui vale il massimo.");
+  }
   const prima = await tettoFumoDichiarato();
   if (prima) {
     // Già a zero: chiuso. Nessuna scrittura, nemmeno identica.
