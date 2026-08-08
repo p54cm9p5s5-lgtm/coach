@@ -251,6 +251,11 @@ giorni: 0 = domenica.
 sezione Fumo sparisce dal menu dell'app e la voce esce dal punteggio, invece di
 restare lì a valere sempre zero.
 
+**Per seguire l'acqua** scrivi `"contaAcqua": true` e, se serve,
+`"acquaLitriBersaglio": 2`: compare una sezione Acqua con una domanda al giorno
+— «hai bevuto almeno N litri?», sì o no — e la risposta pesa sul punteggio
+Salute come le altre voci. Senza risposta il giorno resta fuori dal conto.
+
 **Un'attività che non ha un bersaglio** — una sessione di Pilates, una
 camminata, una seduta di mobilità — si scrive con `"serie": 1, "ripMin": 1,
 "ripMax": 1`: l'app la mostra come una voce da spuntare a fine sessione, senza

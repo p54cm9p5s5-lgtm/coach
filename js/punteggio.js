@@ -202,7 +202,7 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolorePolso,
  * @param giorno       riga dei dati salute: kcalAttive, obiettivoKcal
  * @param sigarette    quante ne hai segnate (null = prima che tenessi il conto)
  */
-export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, sigaretteTollerate = null, regole }) {
+export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, sigaretteTollerate = null, acqua = null, regole }) {
   const R = (regole && regole.salute) || {};
   const pesi = R.pesi || {
     sonno: 22, allenamento: 22, fumo: 20, movimento: 12, passi: 10, esercizio: 8, inPiedi: 6,
@@ -360,6 +360,24 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
     }
   } else {
     voci.push({ nome: "Fumo", quota: null, peso: pesi.fumo, dettaglio: "non ancora contate" });
+  }
+
+  // L'acqua è una domanda sola, e la risposta è sì o no: o hai bevuto quanto
+  // ti sei detto, o no. Senza risposta la voce resta fuori dal conto, come
+  // ogni altro dato mancante — non vale zero.
+  if (R.contaAcqua) {
+    const litri = R.acquaLitriBersaglio ?? 2;
+    voci.push({
+      nome: "Acqua",
+      quota: acqua == null ? null : acqua ? 1 : 0,
+      peso: pesi.acqua ?? 12,
+      dettaglio:
+        acqua == null
+          ? "non ancora risposto"
+          : acqua
+            ? `almeno ${num(litri)} litri`
+            : `sotto i ${num(litri)} litri`,
+    });
   }
 
   const pesati = voci.filter((v) => v.quota != null);
