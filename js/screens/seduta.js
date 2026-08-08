@@ -2760,7 +2760,9 @@ async function vistaQuestionario(corpo, piede) {
 
 async function vistaCardio(corpo, piede) {
   const r = store.regole().cardio;
-  if (S.sed.progresso?.cardioFine) return vistaCardioInCorso(corpo, piede, r);
+  // Il cardio è in corso se è stato AVVIATO: prima si guardava l'ora di fine,
+  // che con un cronometro che sale non esiste più.
+  if (S.sed.progresso?.cardioInizio) return vistaCardioInCorso(corpo, piede, r);
 
   let kmh = S.sed.cardio?.kmh ?? r.kmhMin;
   let durata = S.sed.cardio?.durataMin ?? r.durataMin;
@@ -2879,7 +2881,11 @@ async function vistaCardio(corpo, piede) {
               note: qs("#nota-cardio")?.value ?? notaPrec ?? null,
             },
           });
-          await salvaProgresso({ cardioInizio: Date.now(), cardioFine: Date.now() + durata * 60000 });
+          // Solo l'istante di partenza: il cronometro sale da lì e la durata
+          // prevista sta già in `cardio.durataPrevistaMin`. `cardioFine` si
+          // azzera perché una seduta lasciata aperta con la versione di prima
+          // ce l'ha ancora dentro.
+          await salvaProgresso({ cardioInizio: Date.now(), cardioFine: null });
           await disegna();
         }),
       },
@@ -2919,12 +2925,23 @@ async function vistaCardio(corpo, piede) {
 }
 
 /** Cardio in corso: conto alla rovescia sulla durata impostata. */
+/**
+ * Il cardio si conta all'insù, da zero, e finisce quando lo dici tu.
+ *
+ * Prima era un conto alla rovescia da mezz'ora: chi voleva camminare di più
+ * doveva stare lì a premere «+5 min» mentre camminava, e chi smetteva prima
+ * lasciava correre il timer. Un cronometro che sale non ha bisogno di sapere
+ * in anticipo quanto durerà: i minuti che finiscono nel pacchetto sono quelli
+ * fra l'avvio e il tocco su «Ho finito», nient'altro.
+ *
+ * La durata prevista resta scritta, ma solo come traguardo: l'anello si riempie
+ * fino a lì e il suono arriva una volta sola quando ci arrivi. Dopo, il tempo
+ * continua a salire in silenzio.
+ */
 async function vistaCardioInCorso(corpo, piede, r) {
   const inizio = S.sed.progresso.cardioInizio;
-  // La fine vive in memoria e viene salvata in sottofondo: leggere ogni volta
-  // il valore salvato farebbe perdere i tocchi rapidi su +5 e −5.
-  S.cardioFine = S.sed.progresso.cardioFine;
-  const totale = Math.max(1, S.cardioFine - inizio);
+  const previstiMin = S.sed.cardio?.durataPrevistaMin || r.durataMin || 0;
+  const traguardo = previstiMin ? inizio + previstiMin * 60000 : null;
 
   const testoTimer = h("p.timer", "--:--");
   const CIRC = 2 * Math.PI * 100;
@@ -2940,11 +2957,13 @@ async function vistaCardioInCorso(corpo, piede, r) {
     testoTimer
   );
 
+  const sottoQuadrante = h("p.target", "");
   aggiungi(corpo,
     h(
       "div.hero",
       h("p.kicker", "Cardio in corso"),
       quadrante,
+      sottoQuadrante,
       h("p.target", `${num(S.sed.cardio.kmh)} km/h · FC ${r.fcMin}-${r.fcMax}, mai sopra ${r.fcLimite}`)
     ),
     h(
@@ -2952,7 +2971,8 @@ async function vistaCardioInCorso(corpo, piede, r) {
       h(
         "p.footnote",
         { style: "text-align:center" },
-        "Il tempo si conta sull'orologio: puoi bloccare lo schermo, al ritorno il conto è giusto."
+        "Il cronometro sale e non si ferma da solo: cammina quanto vuoi e tocca «Ho finito» quando scendi. " +
+          "Il tempo si conta sull'orologio: puoi bloccare lo schermo, al ritorno il conto è giusto."
       )
     )
   );
@@ -2966,13 +2986,18 @@ async function vistaCardioInCorso(corpo, piede, r) {
     // per il coach e nel punteggio.
     const previsti = S.sed.cardio?.durataPrevistaMin || r.durataMin || 0;
     if (previsti && trascorsi > previsti + 20) {
+      // Camminare più del previsto adesso è una cosa che si fa apposta, quindi
+      // la risposta giusta viene per prima. La domanda resta perché l'app non
+      // può distinguere «ho camminato un'ora» da «ho toccato Ho finito un'ora
+      // dopo essere sceso», e sbagliare qui sporca il pacchetto per il coach.
       const scelta = await chiedi({
         titolo: "Quanto è durato davvero?",
-        testo: `Dall'avvio sono passati ${durataUmana(trascorsi * 60)}, ma erano previsti ${previsti} minuti. Se il telefono è rimasto acceso a fine cardio, il conto è più lungo del vero.`,
+        testo: `Dall'avvio sono passati ${durataUmana(trascorsi * 60)}, contro i ${previsti} minuti previsti. Se hai camminato davvero tanto va benissimo; se invece hai toccato «Ho finito» un po' dopo essere sceso, il conto è più lungo del vero.`,
         opzioni: [
+          { etichetta: `${trascorsi} minuti, ho camminato così`, valore: "trascorsi" },
           { etichetta: `${previsti} minuti, come previsto`, valore: "previsti" },
-          { etichetta: `${trascorsi} minuti, è giusto`, valore: "trascorsi" },
         ],
+        annulla: false,
       });
       if (scelta !== "trascorsi") trascorsi = previsti;
     }
@@ -2989,7 +3014,6 @@ async function vistaCardioInCorso(corpo, piede, r) {
         finitoIl: Math.min(Date.now(), inizio + trascorsi * 60000),
       },
     });
-    S.cardioFine = null;
     // I numeri del cardio si scrivono adesso, con l'orologio ancora al polso e
     // il riepilogo aperto: dopo lo stretching sono già stati sostituiti da
     // quelli della sessione pesi, e si finiva a ricordarli a memoria.
@@ -2999,40 +3023,51 @@ async function vistaCardioInCorso(corpo, piede, r) {
 
   const pulsante = h("button.btn", { onclick: azione(chiudiCardio) }, "Ho finito");
 
-  aggiungiPiede(piede,
-    h(
-      "div",
-      { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" },
-      h("button.btn.secondary", { onclick: () => spostaCardio(-5) }, "−5 min"),
-      h("button.btn.secondary", { onclick: () => spostaCardio(5) }, "+5 min")
-    ),
-    pulsante
+  // Il suono del traguardo si spegne senza chiudere il cardio: se vuoi
+  // camminare ancora, zittirlo non deve costarti la fine dell'esercizio. Il
+  // tasto esiste solo mentre suona.
+  const zittisci = h(
+    "button.btn.secondary",
+    { style: "display:none", onclick: () => { fermaAllarme(); aggiorna(); } },
+    "Ferma il suono e continua"
   );
 
+  // Niente più «−5 / +5»: non c'è nessun conto alla rovescia da allungare.
+  aggiungiPiede(piede, zittisci, pulsante);
+
+  // Il traguardo suona una volta sola. Zittito, resta zitto: il cronometro
+  // continua a salire e nessuno ti richiama ogni cinque minuti.
+  let traguardoSuonato = Boolean(traguardo && Date.now() >= traguardo);
+
   const aggiorna = () => {
-    const restanti = (S.cardioFine - Date.now()) / 1000;
-    const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
+    const trascorsi = Math.max(0, (Date.now() - inizio) / 1000);
+    testoTimer.textContent = mmss(trascorsi);
+
+    if (!traguardo) {
+      anelloCardio.style.strokeDashoffset = "0";
+      sottoQuadrante.textContent = "";
+      return;
+    }
+    const quota = Math.min(1, (trascorsi * 1000) / (previstiMin * 60000));
     anelloCardio.style.strokeDashoffset = String(CIRC * (1 - quota));
-    if (restanti > 0) {
-      testoTimer.textContent = mmss(restanti);
-      quadrante.classList.remove("done");
-      pulsante.textContent = "Ho finito";
-    } else {
-      testoTimer.textContent = "00:00";
+    const oltre = Math.floor((Date.now() - traguardo) / 60000);
+    if (oltre >= 0) {
       quadrante.classList.add("done");
-      if (!allarmeAttivo()) avviaAllarme();
-      pulsante.textContent = "Ho finito · ferma il suono";
+      sottoQuadrante.textContent =
+        oltre >= 1 ? `${previstiMin} min previsti · ${oltre} in più` : `${previstiMin} min previsti, raggiunti`;
+      if (!traguardoSuonato) {
+        traguardoSuonato = true;
+        avviaAllarme();
+      }
+      zittisci.style.display = allarmeAttivo() ? "" : "none";
+    } else {
+      quadrante.classList.remove("done");
+      sottoQuadrante.textContent = `${previstiMin} min previsti`;
+      zittisci.style.display = "none";
     }
   };
   aggiorna();
   S.timerHandle = setInterval(aggiorna, 250);
-}
-
-function spostaCardio(min) {
-  const base = Math.max(S.cardioFine || Date.now(), min > 0 ? Date.now() : 0);
-  S.cardioFine = Math.max(Date.now(), base + min * 60000);
-  if (S.cardioFine > Date.now()) fermaAllarme();
-  salvaProgresso({ cardioFine: S.cardioFine });
 }
 
 
