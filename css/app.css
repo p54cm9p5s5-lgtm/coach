@@ -9,17 +9,35 @@
   --fill-quaternary: rgba(116, 116, 128, 0.08);
   --fill-tertiary: rgba(118, 118, 128, 0.12);
   --label: #000000;
-  --label-secondary: rgba(60, 60, 67, 0.6);
-  --label-tertiary: rgba(60, 60, 67, 0.3);
+  /* Questi due sono i grigi di sistema di iOS (0.6 e 0.3). Sul bianco danno
+     3,4:1 e 1,7:1, sotto il minimo leggibile — e tutti e due portano testo
+     vero, non solo contorni: note, sottotitoli, «5 giorni · tutto lo storico».
+     Qui salgono a 6,9:1 e 4,9:1: leggibili tutti e due, e ancora distinguibili
+     fra loro. Il tema scuro e il nero-lime erano già a posto. */
+  --label-secondary: rgba(60, 60, 67, 0.85);
+  --label-tertiary: rgba(60, 60, 67, 0.73);
   --separator: rgba(60, 60, 67, 0.29);
-  --accent: #007aff;
+  /* I colori di sistema di iOS sono pensati per superfici chiare ma sul bianco
+     danno 2,2:1 (arancione), 3,5:1 (rosso), 4,0:1 (blu): un'etichetta piccola
+     scritta così non si legge. Qui sono gli stessi colori scuriti quanto basta
+     per stare sopra 4,5:1 sia sul bianco sia sul grigio delle schede, hue
+     invariata. Il tema scuro e il nero-lime restano com'erano: là il contrasto
+     era già alto. */
+  --accent: #006be0;
+  /* Due usi opposti dello stesso colore: come TESTO deve staccare dal fondo
+     della pagina, come SFONDO di un bottone deve reggere il bianco sopra. Nel
+     tema chiaro basta un colore solo; nel tema scuro no, e per questo esiste
+     «--accent-pieno». */
+  --accent-pieno: var(--accent);
   --su-accent: #ffffff;
-  --red: #ff3b30;
-  --green: #34c759;
-  --orange: #ff9500;
+  --red: #de0c00;
+  --green: #217f39;
+  --orange: #a25f00;
   /* Il giallo esiste solo per il contatore delle sigarette: la soglia di mezzo
-     va vista subito, e fra verde e arancione non c'era niente. */
-  --giallo: #e6b800;
+     va vista subito, e fra verde e arancione non c'era niente. Lì il numero
+     riempie lo schermo — testo grande, soglia 3:1 — e resta più chiaro degli
+     altri due invece di confondersi con l'arancione. */
+  --giallo: #ab8800;
   --bar-bg: rgba(249, 249, 249, 0.94);
 
   --radius: 10px;
@@ -49,6 +67,7 @@
   --label-tertiary: rgba(244, 244, 242, 0.5);
   --separator: rgba(255, 255, 255, 0.12);
   --accent: #b8ff4e;
+  --accent-pieno: var(--accent);
   --su-accent: #0b0e06;
   --red: #ff5c47;
   --green: #b8ff4e;
@@ -82,7 +101,12 @@
     /* stesso motivo del tema nero e lime: 2,5:1 era troppo poco */
     --label-tertiary: rgba(235, 235, 245, 0.5);
     --separator: rgba(84, 84, 88, 0.65);
-    --accent: #0a84ff;
+    /* Il blu di sistema #0a84ff scritto sopra una scheda chiara dà 3,8:1, e il
+       bianco scritto sopra di lui 3,6:1: nessuno dei due arriva a 4,5. Come
+       testo va un filo più chiaro, come sfondo un filo più scuro — e sono due
+       colori diversi perché tirano da parti opposte. */
+    --accent: #2b94ff;
+    --accent-pieno: #0068d6;
     --su-accent: #ffffff;
     --red: #ff453a;
     --green: #30d158;
@@ -330,7 +354,7 @@ input[type="checkbox"],
   min-height: 44px;
   border: 0;
   border-radius: 10px;
-  background: var(--accent);
+  background: var(--accent-pieno);
   color: var(--su-accent);
   font-size: 16px;
   font-weight: 600;
@@ -606,7 +630,7 @@ input[type="checkbox"],
 .progressline > i {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: var(--accent-pieno);
   border-radius: 0 2px 2px 0;
   transition: width 0.35s ease;
 }
@@ -690,8 +714,8 @@ input[type="checkbox"],
 }
 
 .scale button[aria-pressed="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-pieno);
+  border-color: var(--accent-pieno);
   color: var(--su-accent);
 }
 
@@ -1152,7 +1176,8 @@ textarea.note {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: var(--label-tertiary);
+  /* Dice quale posa manca: è testo, non un segno di contorno. */
+  color: var(--label-secondary);
   text-align: center;
   padding: 4px;
 }
@@ -1314,7 +1339,9 @@ textarea.note {
   text-align: center;
   font-size: 10px;
   font-weight: 600;
-  color: var(--label-tertiary);
+  /* Le iniziali dei giorni sono testo, e a dieci pixel il grigio più chiaro
+     non si legge: qui vale il secondario. */
+  color: var(--label-secondary);
   padding-bottom: 4px;
 }
 
@@ -1379,7 +1406,7 @@ textarea.note {
 }
 
 .cal-punti .p-allenamento {
-  background: var(--accent);
+  background: var(--accent-pieno);
 }
 
 .cal-giorno.saltato .n {
