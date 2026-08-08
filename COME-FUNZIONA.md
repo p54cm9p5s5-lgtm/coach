@@ -266,7 +266,11 @@ conto dei recuperi, invece di risultare «riposo saltato». Chi non usa i blocch
 non si accorge di niente: tutte le serie di fila, come sempre.
 
 **3. Valutazione dell'esercizio, da sola, poi il recupero.** Dopo l'ultima
-serie arriva una schermata dedicata: correzione della serie appena chiusa,
+serie arriva una schermata dedicata: correzione di **tutte le serie di
+quell'esercizio** — ripetizioni e carico, una riga per serie, non solo l'ultima:
+di due ripetizioni in più te ne accorgi dopo, riprendendo fiato, e questo è
+l'ultimo momento in cui l'esercizio è ancora aperto. Il punteggio qui sopra si
+rifà a ogni tocco. Poi il
 punteggio dell'esercizio, e le domande — quanto è stata dura, com'è andata la
 tecnica, e **se ha fatto male dove il brief ha dichiarato**: una domanda
 separata per ogni punto (`regole.dolori`), con quando e quanto se la risposta è

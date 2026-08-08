@@ -2517,91 +2517,93 @@ async function vistaQuestionario(corpo, piede) {
     );
   };
 
-  // L'ultima serie non passa dalla schermata di recupero: senza questi campi
-  // resterebbe registrata al bersaglio previsto qualunque cosa sia successo,
-  // e una serie su tre nel log del coach sarebbe inventata.
-  const ultimaSerie = serieFatteQui.at(-1) || null;
+  // TUTTE le serie dell'esercizio, non solo l'ultima.
+  //
+  // Prima si poteva correggere soltanto quella appena chiusa: le altre erano
+  // passate dalla schermata di recupero e lì restavano. Ma un paio di
+  // ripetizioni in più te ne accorgi dopo, quando riprendi fiato, e questa è
+  // l'ultima schermata in cui l'esercizio è ancora sotto gli occhi: se non si
+  // può correggere qui, nel log del coach resta un numero sbagliato per sempre.
   const correzione = h("div");
-  if (ultimaSerie) {
-    let rip = ultimaSerie.ripFatte ?? (v.aTempo ? v.durataSec : v.ripMin ?? v.ripMax);
-    let carico = ultimaSerie.carico ?? null;
-    const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
-    const valCar = h("span.val", carico != null ? `${num(carico)} kg` : "—");
-
-    const salvaUltima = async (patch) => {
-      const attuale = (await store.serieDi(S.sed.id)).find((x) => x.id === ultimaSerie.id) || ultimaSerie;
-      const nuova = { ...attuale, ...patch };
-      await store.db.put("serie", nuova);
-      Object.assign(ultimaSerie, patch);
-      const i = serieFatteQui.findIndex((x) => x.id === ultimaSerie.id);
+  if (serieFatteQui.length) {
+    const salvaSerie = async (id, patch) => {
+      const attuale = (await store.serieDi(S.sed.id)).find((x) => x.id === id);
+      if (!attuale) return;
+      await store.db.put("serie", { ...attuale, ...patch });
+      const i = serieFatteQui.findIndex((x) => x.id === id);
       if (i >= 0) serieFatteQui[i] = { ...serieFatteQui[i], ...patch };
       ridisegnaPunteggio();
     };
 
+    // Un righello per ogni serie: quello delle ripetizioni e, dove il carico
+    // c'è, quello del carico. I passi sono gli stessi della schermata di
+    // recupero, così correggere qui o correggere lì è lo stesso gesto.
+    const righelli = serieFatteQui.flatMap((s, idx) => {
+      const numeroSerie = s.numero ?? idx + 1;
+      const ultima = idx === serieFatteQui.length - 1;
+      // Con una sola serie il titolo del gruppo dice già tutto: ripetere
+      // «Serie 1 · appena chiusa» su ogni righello sarebbe solo rumore.
+      const sola = serieFatteQui.length === 1;
+      const quale = sola ? "" : `Serie ${numeroSerie}${ultima ? " · appena chiusa" : ""}`;
+      const etichetta = (testo) => (sola ? `${testo[0].toUpperCase()}${testo.slice(1)}` : `${quale} · ${testo}`);
+      let rip = s.ripFatte ?? (v.aTempo ? v.durataSec : v.ripMin ?? v.ripMax);
+      let carico = s.carico ?? null;
+      const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
+      const valCar = h("span.val", carico != null ? `${num(carico)} kg` : "—");
+      const passoRip = async (verso) => {
+        // Un tetto largo, ma un tetto: il carico ce l'ha (l'inventario), le
+        // ripetizioni no, e con il dito fermo sul «+» si arrivava a numeri che
+        // nessuno ha mai fatto.
+        const passo = v.aTempo ? 5 : 1;
+        rip = verso > 0 ? Math.min(v.aTempo ? 3600 : 200, rip + passo) : Math.max(0, rip - passo);
+        valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`;
+        await salvaSerie(s.id, { ripFatte: rip });
+      };
+      const passoCar = async (verso) => {
+        // Prima qui si andava di mezzo chilo alla volta e senza tetto: con
+        // dischi da 1,25 il passo più piccolo montabile è 2,5 kg, e si finiva
+        // per registrare 70,5 kg, un carico che non esiste in casa.
+        carico = passoCarico(carico, verso, def, invQui);
+        valCar.textContent = `${num(carico)} kg`;
+        await salvaSerie(s.id, { carico });
+      };
+      return [
+        h(
+          "div.field",
+          h("label", etichetta(v.aTempo ? "secondi tenuti" : "ripetizioni fatte")),
+          h(
+            "div.stepper",
+            h("button", { "aria-label": etichetta("una in meno"), onclick: () => passoRip(-1) }, "−"),
+            valRip,
+            h("button", { "aria-label": etichetta("una in più"), onclick: () => passoRip(1) }, "+")
+          )
+        ),
+        carico != null
+          ? h(
+              "div.field",
+              h("label", etichetta("carico usato")),
+              h(
+                "div.stepper",
+                h("button", { "aria-label": etichetta("carico più basso"), onclick: () => passoCar(-1) }, "−"),
+                valCar,
+                h("button", { "aria-label": etichetta("carico più alto"), onclick: () => passoCar(1) }, "+")
+              )
+            )
+          : null,
+      ];
+    });
+
     aggiungi(correzione,
       h(
         "div.group",
-        h("h2", `Serie ${ultimaSerie.numero} appena chiusa`),
+        h("h2", serieFatteQui.length === 1 ? "La serie appena chiusa" : "Le serie di questo esercizio"),
+        h("div.list", ...righelli),
         h(
-          "div.list",
-          h(
-            "div.field",
-            h("label", v.aTempo ? "Secondi tenuti" : "Ripetizioni fatte"),
-            h(
-              "div.stepper",
-              h("button", {
-                onclick: async () => {
-                  rip = Math.max(0, rip - (v.aTempo ? 5 : 1));
-                  valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`;
-                  await salvaUltima({ ripFatte: rip });
-                },
-              }, "−"),
-              valRip,
-              h("button", {
-                onclick: async () => {
-                  // Un tetto largo, ma un tetto: il carico ce l'ha (l'inventario),
-                  // le ripetizioni no, e con il dito fermo sul «+» si arrivava a
-                  // numeri che nessuno ha mai fatto.
-                  rip = Math.min(v.aTempo ? 3600 : 200, rip + (v.aTempo ? 5 : 1));
-                  valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`;
-                  await salvaUltima({ ripFatte: rip });
-                },
-              }, "+")
-            )
-          ),
-          carico != null
-            ? h(
-                "div.field",
-                h("label", "Carico usato"),
-                h(
-                  "div.stepper",
-                  // Gli stessi passi della schermata di recupero. Prima qui si
-                  // andava di mezzo chilo alla volta e senza tetto: con dischi
-                  // da 1,25 il passo più piccolo montabile è 2,5 kg, e si
-                  // finiva per registrare 70,5 kg, un carico che non esiste in
-                  // casa. Correggere 70 in 60 chiedeva venti tocchi.
-                  h("button", {
-                    "aria-label": "carico più basso",
-                    onclick: async () => {
-                      carico = passoCarico(carico, -1, def, invQui);
-                      valCar.textContent = `${num(carico)} kg`;
-                      await salvaUltima({ carico });
-                    },
-                  }, "−"),
-                  valCar,
-                  h("button", {
-                    "aria-label": "carico più alto",
-                    onclick: async () => {
-                      carico = passoCarico(carico, 1, def, invQui);
-                      valCar.textContent = `${num(carico)} kg`;
-                      await salvaUltima({ carico });
-                    },
-                  }, "+")
-                )
-              )
-            : null
-        ),
-        h("p.footnote", "Correggi solo se l'ultima serie è andata diversamente dal previsto.")
+          "p.footnote",
+          serieFatteQui.length === 1
+            ? "Correggi solo se è andata diversamente dal previsto."
+            : "Qui si correggono tutte, non solo l'ultima: è l'ultimo momento in cui questo esercizio è ancora aperto. Il punteggio qui sopra si aggiorna a ogni tocco."
+        )
       )
     );
   }
