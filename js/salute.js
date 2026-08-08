@@ -122,7 +122,15 @@ export function analizza(testo) {
       // fase. I minuti e le notti li calcola l'app: dentro il comando rapido
       // servirebbero date, condizioni e dizionari, e sarebbe fragile.
       const [d1, o1, d2, o2, ...resto2] = resto;
-      const valida = (d, o) => /^\d{4}-\d{2}-\d{2}$/.test(d || "") && /^\d{1,2}:\d{2}/.test(o || "");
+      // La forma non basta: «2026-13-45 25:99» ha la forma giusta e non esiste.
+      // Passava, diventava una data non valida, e la notte finiva in archivio
+      // con la chiave «NaN-NaN-NaN» e i minuti a NaN — un dato fantasma che
+      // nessun grafico può mostrare, senza nemmeno un avviso.
+      const oraVera = (o) => {
+        const m = /^(\d{1,2}):(\d{2})/.exec(o || "");
+        return Boolean(m) && Number(m[1]) < 24 && Number(m[2]) < 60;
+      };
+      const valida = (d, o) => dataVera(d) && oraVera(o);
       if (!valida(d1, o1) || !valida(d2, o2)) {
         risultato.avvisi.push(`Riga FASE con orari non validi, ignorata: «${riga.slice(0, 44)}»`);
         continue;
@@ -235,8 +243,11 @@ export function analizza(testo) {
     for (const f of risultato.fasi) {
       const inizio = new Date(f.inizio);
       const fine = new Date(f.fine);
-      if (Number.isNaN(inizio) || Number.isNaN(fine)) continue;
+      // Su un oggetto Date, `Number.isNaN` è sempre falso: il controllo di
+      // prima non fermava niente e una data impossibile arrivava fin qui.
+      if (Number.isNaN(inizio.getTime()) || Number.isNaN(fine.getTime())) continue;
       let minuti = Math.round((fine - inizio) / 60000);
+      if (!Number.isFinite(minuti)) continue;
       // Una fase che scavalca la mezzanotte con la data di fine sbagliata
       // darebbe minuti negativi: si assume il giorno dopo.
       if (minuti < 0) minuti += 24 * 60;
