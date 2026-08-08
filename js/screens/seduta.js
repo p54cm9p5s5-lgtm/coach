@@ -471,6 +471,20 @@ async function vistaRisultato(id, vaiA, da = null) {
   }
   aggiungi(wrap, h("div.group", h("h2", "Esercizio per esercizio"), righe));
 
+  // La nota scritta chiudendo l'allenamento finiva solo nel pacchetto per il
+  // coach: qui dentro non si rivedeva più. È l'unica cosa che scrivi a parole,
+  // e serve prima di tutto a te — «il ginocchio alla terza serie» va riletto la
+  // volta dopo, non ritrovato dentro un testo lungo dieci pagine.
+  if ((sed.notaGenerale || "").trim()) {
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h("h2", "Nota"),
+        h("div.list", h("div.row", h("div.main", h("span.title", { style: "white-space:pre-wrap" }, sed.notaGenerale))))
+      )
+    );
+  }
+
   // Anche un cardio non previsto ma fatto va mostrato: era stato registrato e
   // poi sparito dal riepilogo, come se non l'avessi fatto.
   if (sed.cardio?.previsto || sed.cardio?.eseguito) {
