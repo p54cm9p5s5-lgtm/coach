@@ -40,7 +40,13 @@
   --fill-tertiary: rgba(255, 255, 255, 0.09);
   --label: #f4f4f2;
   --label-secondary: rgba(244, 244, 242, 0.62);
-  --label-tertiary: rgba(244, 244, 242, 0.32);
+  /* Il terzo livello serviva a dire «questo conta meno», non «questo non si
+     legge»: a 0,32 il contrasto era 2,6:1 — sotto la soglia dei 4,5:1 — e a
+     quel colore ci stanno le intestazioni delle sezioni, le frecce e le note
+     piccole. In palestra, con la luce storta e il telefono sudato, era la
+     parte peggiore da leggere. A 0,50 il contrasto è 4,9:1 e resta comunque
+     più quieto del secondo livello, che sta a 6,9:1. */
+  --label-tertiary: rgba(244, 244, 242, 0.5);
   --separator: rgba(255, 255, 255, 0.12);
   --accent: #b8ff4e;
   --su-accent: #0b0e06;
@@ -73,7 +79,8 @@
     --fill-tertiary: rgba(118, 118, 128, 0.24);
     --label: #ffffff;
     --label-secondary: rgba(235, 235, 245, 0.6);
-    --label-tertiary: rgba(235, 235, 245, 0.3);
+    /* stesso motivo del tema nero e lime: 2,5:1 era troppo poco */
+    --label-tertiary: rgba(235, 235, 245, 0.5);
     --separator: rgba(84, 84, 88, 0.65);
     --accent: #0a84ff;
     --su-accent: #ffffff;
