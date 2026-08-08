@@ -834,16 +834,57 @@ async function esci() {
   S.vaiA("oggi");
 }
 
+/**
+ * Il cronometro del cardio lasciato acceso dietro le spalle.
+ *
+ * Uscendo dal cardio con il menu — «vai allo stretching», «chiudi
+ * l'allenamento» — il cronometro restava avviato: la camminata non veniva
+ * registrata (l'allenamento si chiudeva col cardio «non fatto» anche se
+ * l'avevi fatto) e tornandoci il conto comprendeva pure il tempo passato
+ * altrove. Qui si chiede cosa farne, una volta, con i minuti veri davanti.
+ *
+ * @returns false se hai annullato: allora non si esce nemmeno dal cardio.
+ */
+async function cardioDaChiudere() {
+  const inizio = S.sed.progresso?.cardioInizio;
+  if (!inizio) return true;
+  const minuti = Math.max(1, Math.round((Date.now() - inizio) / 60000));
+  const scelta = await chiedi({
+    titolo: "Il cardio è ancora in corso",
+    testo: `Il cronometro va da ${durataUmana(minuti * 60)}. Se esci adesso, quel tempo o lo registro o lo butto via: dopo non c'è più modo di recuperarlo.`,
+    opzioni: [
+      { etichetta: `Registralo: ${minuti} min`, valore: "registra" },
+      { etichetta: "Buttalo via", valore: "butta", stile: "destructive" },
+    ],
+  });
+  if (scelta !== "registra" && scelta !== "butta") return false;
+  if (scelta === "registra") {
+    S.sed = await store.aggiornaSeduta(S.sed.id, {
+      cardio: {
+        ...S.sed.cardio,
+        eseguito: true,
+        durataMin: minuti,
+        finitoIl: Date.now(),
+      },
+    });
+  }
+  fermaTimer();
+  await salvaProgresso({ cardioInizio: null, cardioFine: null });
+  return true;
+}
+
 async function menuSeduta() {
+  const fase = S.sed.progresso?.fase;
   const scelta = await chiedi({
     titolo: "Allenamento",
     opzioni: [
       // Il cardio si può saltare solo se era previsto: portarci l'allenamento
       // quando il programma non lo chiede faceva comparire una schermata di
-      // cardio inventata dal nulla.
-      ...(S.sed.cardio?.previsto ? [{ etichetta: "Salta al cardio", valore: "cardio" }] : []),
-      { etichetta: "Vai allo stretching", valore: "stretching" },
-      { etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" },
+      // cardio inventata dal nulla. E non si offre di andare dove sei già: una
+      // voce che non fa niente sembra una voce che non funziona.
+      ...(S.sed.cardio?.previsto && fase !== "cardio" ? [{ etichetta: "Salta al cardio", valore: "cardio" }] : []),
+      ...(fase !== "stretching" ? [{ etichetta: "Vai allo stretching", valore: "stretching" }] : []),
+      ...(fase !== "fine" ? [{ etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" }] : []),
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
     ],
   });
@@ -851,9 +892,11 @@ async function menuSeduta() {
     await salvaProgresso({ fase: "cardio" });
     await disegna();
   } else if (scelta === "stretching") {
+    if (!(await cardioDaChiudere())) return;
     await salvaProgresso({ fase: "stretching" });
     await disegna();
   } else if (scelta === "chiudi") {
+    if (!(await cardioDaChiudere())) return;
     await salvaProgresso({ fase: "fine" });
     await disegna();
   } else if (scelta === "annulla") {
