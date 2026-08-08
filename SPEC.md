@@ -339,11 +339,14 @@ impostazioni.
 | 2 | Corpo: misure, pressione, foto con guida | sì | fatta |
 | 3 | Ponte Salute: sonda, import, tabelle, finestre | sì | fatta |
 | 4 | Segnali, proposte di progressione, registro decisioni | sì | fatta |
-| 5 | Export per la chat, caricamento .md, backup, rifinitura | completa | da fare |
+| 5 | Export per la chat, caricamento .md, backup, rifinitura | completa | fatta |
+| 6 | Seconda persona: differenze dichiarate dal brief, non dal codice | sì | fatta |
 
 Ogni fase si chiude solo quando è verificata sul dispositivo simulato e usabile.
-Il motore della fase 4 è deterministico e quindi verificabile fuori dal telefono:
-`tools/prova.sh`.
+Il motore della fase 4 è deterministico e quindi verificabile fuori dal telefono,
+ma le prove si fanno dentro il browser, contro il codice davvero pubblicato: sul
+Mac non c'è node, e uno script a parte finiva per provare una copia del motore
+invece del motore.
 
 ---
 
