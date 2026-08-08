@@ -40,6 +40,10 @@ const arrotonda = (n) => Math.round(n * 100) / 100;
 
 export function piuGiorni(iso, giorni) {
   const d = parseIso(iso);
+  // Una data che non esiste non deve produrre «NaN-NaN-NaN»: quella stringa
+  // finirebbe in archivio come data di verifica, e nessun confronto la
+  // riconoscerebbe più.
+  if (Number.isNaN(d.getTime()) || !Number.isFinite(giorni)) return null;
   d.setDate(d.getDate() + giorni);
   return isoDate(d);
 }

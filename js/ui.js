@@ -119,22 +119,33 @@ export function giorniTra(isoA, isoB) {
   return Math.round((parseIso(isoB) - parseIso(isoA)) / 86400000);
 }
 
+/**
+ * Un orario che non c'è si scrive «—», non «NaN:NaN».
+ */
 export function oraDi(ts) {
   const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
   const p = (n) => String(n).padStart(2, "0");
   return `${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/**
+ * «Non lo so» e «zero» sono due cose diverse.
+ *
+ * `Number(null)` fa 0: il controllo qui sotto lasciava passare un valore
+ * assente e lo scriveva come «00:00», cioè un tempo misurato pari a zero.
+ * Su un recupero o su una durata è una bugia — quella giusta è il trattino.
+ */
+const nonMisurato = (v) => v === null || v === undefined || v === "" || !Number.isFinite(Number(v));
+
 export function mmss(sec) {
-  // Un valore non numerico qui è sempre un guaio nato altrove: scrivere
-  // «NaN:NaN» sul quadrante lo nasconderebbe dietro una sigla incomprensibile.
-  if (!Number.isFinite(Number(sec))) return "—";
+  if (nonMisurato(sec)) return "—";
   const s = Math.max(0, Math.round(sec));
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export function durataUmana(sec) {
-  if (!Number.isFinite(Number(sec))) return "—";
+  if (nonMisurato(sec)) return "—";
   // Prima si arrotondano i minuti, POI si separano le ore: arrotondando dopo,
   // 1h 59m 40s diventava «1h 60m».
   const minuti = Math.round(Math.max(0, sec) / 60);
