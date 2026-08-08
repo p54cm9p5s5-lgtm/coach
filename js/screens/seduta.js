@@ -606,10 +606,14 @@ async function eliminaAllenamento(sed) {
 
 // ---------- utilità di stato ----------
 
+/**
+ * Scrive solo le voci del progresso che cambiano, fondendole su quello salvato
+ * e non sulla copia che questa schermata ha in memoria: due tocchi ravvicinati
+ * partivano tutti e due dalla stessa fotografia, e il secondo a scrivere
+ * rimetteva quello che il primo aveva appena tolto.
+ */
 async function salvaProgresso(patch) {
-  S.sed = await store.aggiornaSeduta(S.sed.id, {
-    progresso: { ...S.sed.progresso, ...patch },
-  });
+  S.sed = await store.aggiornaProgresso(S.sed.id, patch);
 }
 
 /**
