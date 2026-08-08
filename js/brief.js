@@ -288,7 +288,10 @@ export function confronta(corrente, nuovo, libreria) {
     // ripetizioni: senza queste due righe un brief che rifà tutti i riposi, o
     // che scioglie una coppia, veniva presentato come «nessuna differenza».
     if ((vecchio.recuperoSec ?? null) !== (v.recuperoSec ?? null)) {
-      cambi.push(`recupero ${vecchio.recuperoSec ?? "—"}s → ${v.recuperoSec ?? "—"}s`);
+      // «—s» non vuol dire niente: il trattino dice già che il recupero non era
+      // dichiarato, e la «s» attaccata lo faceva sembrare un numero.
+      const dice = (x) => (x == null ? "non dichiarato" : `${x}s`);
+      cambi.push(`recupero ${dice(vecchio.recuperoSec)} → ${dice(v.recuperoSec)}`);
     }
     if ((vecchio.blocco ?? null) !== (v.blocco ?? null)) {
       cambi.push(
