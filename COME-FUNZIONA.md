@@ -69,8 +69,12 @@ non viene conservato: ne estrae il blocco e lo scarta.
 respinti: blocco assente, versione diversa dalla v1, blocco aperto e non chiuso,
 blocco vuoto, JSON malformato, split mancante, esercizio non presente in
 libreria, stesso esercizio due volte nello stesso giorno, range di ripetizioni
-rovesciato, esercizio a tempo senza durata, giorno della settimana fuori scala,
-dischi in numero dispari (non montabili a coppie).
+rovesciato, esercizio a tempo senza durata, esercizio che si tiene a tempo
+scritto invece a ripetizioni, giorno della settimana fuori scala, id del giorno
+non minuscolo-con-trattini, carico negativo o non numerico, recupero non
+numerico, punti dolenti senza id o ripetuti, esercizi di uno stesso blocco non
+scritti di seguito o lettera su un esercizio solo, dischi in numero dispari
+(non montabili a coppie).
 
 Caricare di nuovo lo stesso brief **non azzera le proposte già accettate**: la
 data di caricamento cambia solo se cambia davvero il contenuto tecnico.
@@ -187,6 +191,14 @@ a **−50%** (`fumoQuotaMinima`). Tutte le altre voci si fermano al 100%.
 
 **Cadenze**: misure il **giovedì**; foto il **mercoledì**, **ogni 2 settimane**.
 
+**Recupero**: lo decide il brief, esercizio per esercizio (`recuperoSec`); dove
+non lo dice vale quello della scheda in libreria. Dentro un blocco è uno solo
+per giro, ed è quello del primo esercizio della coppia.
+
+**Punti dolenti**: li dichiara il brief (`regole.dolori`), uno per uno, e
+diventano una domanda separata dopo ogni esercizio. Senza dichiarazione la
+domanda è il polso destro.
+
 ---
 
 ## 5. Come si svolge un allenamento
@@ -232,12 +244,24 @@ prima **«Fine» registra i secondi davvero tenuti** — 38 su 45 restano 38, no
 vengono arrotondati al previsto. Il cronometro sta su un istante salvato, quindi
 bloccare lo schermo o riaprire l'app non falsa il conto.
 
+**2-bis. I blocchi.** Se il brief accoppia due esercizi con la stessa lettera
+(`"blocco": "A"`), l'app li incatena: una serie del primo, **subito** una del
+secondo senza pausa, poi il recupero, e si ricomincia finché i giri non sono
+finiti. Le valutazioni arrivano alla fine del blocco, una per esercizio. In
+testa c'è scritto a che punto sei — «Blocco · esercizio 2 di 2 · giro 3 di 3».
+Il recupero è **uno solo per giro** e vale quello del primo esercizio della
+coppia: la serie del secondo non ha nessun riposo davanti e resta fuori dal
+conto dei recuperi, invece di risultare «riposo saltato». Chi non usa i blocchi
+non si accorge di niente: tutte le serie di fila, come sempre.
+
 **3. Valutazione dell'esercizio, da sola, poi il recupero.** Dopo l'ultima
 serie arriva una schermata dedicata: correzione della serie appena chiusa,
 punteggio dell'esercizio, e le domande — quanto è stata dura, com'è andata la
-tecnica, se il polso ha dato fastidio. **Senza cronometro.** Il tasto resta
-spento finché manca qualcosa, e sotto c'è scritto cosa manca con le parole delle
-domande.
+tecnica, e **se ha fatto male dove il brief ha dichiarato**: una domanda
+separata per ogni punto (`regole.dolori`), con quando e quanto se la risposta è
+sì. Senza dichiarazione la domanda è il polso destro, com'è sempre stata.
+**Senza cronometro.** Il tasto resta spento finché manca qualcosa, e sotto c'è
+scritto cosa manca con le parole delle domande.
 
 Solo dopo aver risposto parte il **recupero cronometrato**, con il **prossimo
 esercizio** già in vista (nome, carico, dischi da montare). Prima le due cose
@@ -254,8 +278,9 @@ in quel momento il riepilogo è ancora quello sul quadrante: chiesti dopo lo
 stretching, al polso c'è già dell'altro.
 
 **5. Stretching** — come il riscaldamento: **un allungamento per volta**, con
-il **cronometro da 30 secondi per lato** che parte con «Avvia» e si chiude con
-«Fatto · altro lato». Chi vuole saltarlo può ancora farlo con un tocco.
+il cronometro sulla durata che dice il protocollo (di solito 30 secondi per
+lato) che parte con «Avvia» e si chiude con «Fatto · altro lato». Chi vuole
+saltarlo può ancora farlo con un tocco.
 
 **6. Riepilogo e chiusura.** Qui si copiano i numeri dall'orologio (durata, kcal
 attive e totali, FC media e massima, sforzo; per il cardio anche distanza e
@@ -301,8 +326,9 @@ Architettura comune ai due punteggi:
 tecnica non valutata → max 70; RPE fuori zona → max 80; recuperi non rispettati
 → max 85.
 
-**Dolore al polso: −20 punti e tetto a 70.** Finché c'è, quell'esercizio non va
-caricato.
+**Dolore: −20 punti per ogni punto dolente segnalato, e tetto a 70.** Due
+articolazioni che fanno male nello stesso esercizio pesano il doppio di una; il
+tetto resta uno solo. Finché c'è, quell'esercizio non va caricato.
 
 Il bersaglio delle ripetizioni è **quello che l'app ha chiesto quel giorno**, non
 il tetto del range: chi lavora al fondo del range fa il suo lavoro e non risulta
@@ -326,7 +352,7 @@ silenzio dal conto.
 
 ### 6.3 Punteggio Salute della giornata (0-100)
 
-Sette voci, nessuna capace di decidere da sola:
+Sette voci di base, nessuna capace di decidere da sola:
 
 | Voce | Peso | Bersaglio |
 |---|---|---|
@@ -338,8 +364,16 @@ Sette voci, nessuna capace di decidere da sola:
 | Minuti di esercizio | 8 | 60 min |
 | Tempo in piedi | 6 | 180 min |
 
+**Due voci le decide il brief**, e chi non le dichiara non se le ritrova
+addosso:
+
+| Voce | Peso | Quando c'è |
+|---|---|---|
+| Acqua | 12 | con `"contaAcqua": true`: una domanda al giorno, sì o no |
+| Fumo | 20 | sparisce del tutto con `"contaSigarette": false` |
+
 **Tetti**: meno di 6 ore di sonno → max 70; allenamento previsto e non fatto →
-max 60; **10 sigarette esatte → max 70; oltre 10 → max 50**.
+max 60; **sigarette esattamente al limite → max 70; oltre il limite → max 50**.
 
 Un **giorno di riposo non è un vuoto da punire**: la voce allenamento resta
 fuori dal conto, non vale zero.
@@ -431,7 +465,8 @@ una dimenticanza.
 ## 8. I segnali
 
 Osservazioni che non sono proposte. Attualmente l'app sa riconoscere: cardio
-fuori protocollo, inversione dell'intensità, pattern di dolore al polso,
+fuori protocollo, inversione dell'intensità, pattern di dolore (uno per punto
+dichiarato),
 finestra dati completa, scostamento sul movimento e sul sonno (solo se
 **sostenuto per due settimane consecutive**, §4),
 taratura dell'RPE (RPE dichiarato basso ma serie chiuse sotto il range), buchi
@@ -570,7 +605,7 @@ non trascritti a mano. Si sceglie cosa includere. Contiene:
   ripetizioni fatte, quello che l'app aveva chiesto in quel momento, il
   **recupero cronometrato prima di quella serie** contro quello previsto, e
   l'orario. Sotto ogni esercizio: RPE, tecnica, prescrizione del brief,
-  eventuale dolore al polso con quando e quanto, note. Serve quando il
+  eventuali dolori con dove, quando e quanto, note. Serve quando il
   riassunto non basta — cedimenti a metà esercizio, recuperi saltati, carichi
   cambiati in corsa
 
