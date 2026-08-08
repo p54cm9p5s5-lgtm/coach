@@ -80,7 +80,15 @@ export function parseIso(iso) {
   if (typeof iso !== "string") return new Date(NaN);
   const [y, m, d] = iso.split("-").map(Number);
   if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return new Date(NaN);
-  return new Date(y, m - 1, d);
+  const data = new Date(y, m - 1, d);
+  // Una data che non esiste non va corretta in silenzio: `new Date(2026, 12, 45)`
+  // diventa il 14 febbraio 2027, e «2026-13-45» finiva scritto a schermo come
+  // «domenica 14 febbraio» — un giorno plausibile e sbagliato, peggio di un
+  // trattino. Se i pezzi non tornano, la data non è una data.
+  if (data.getFullYear() !== y || data.getMonth() !== m - 1 || data.getDate() !== d) {
+    return new Date(NaN);
+  }
+  return data;
 }
 
 /** 0 = domenica … 6 = sabato, come Date.getDay(). */
