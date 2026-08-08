@@ -63,14 +63,33 @@ let hashDisegnato = null;
  * Riporta la pagina in cima. Prova con l'animazione e poi si assicura del
  * risultato: dove lo scorrimento animato non è disponibile resterebbe a metà.
  */
+/**
+ * L'ombra sotto la testata quando il contenuto scorre.
+ *
+ * Un ascoltatore solo, messo una volta sul contenitore che scorre: prima ne
+ * veniva creato uno a ogni disegno, agganciato alla testata di quel momento, e
+ * bastava un ridisegno perché l'ombra restasse accesa su una barra ferma in
+ * cima.
+ */
+export function aggiornaOmbraTestata() {
+  const bar = qs(".topbar");
+  if (bar) bar.classList.toggle("scrolled", scorritore().scrollTop > 4);
+}
+
+/** Il contenitore che scorre davvero: non è più la pagina, è «#view». */
+function scorritore() {
+  return qs("#view") || document.scrollingElement || document.documentElement;
+}
+
 export function inCima() {
+  const v = scorritore();
   try {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    v.scrollTo({ top: 0, behavior: "smooth" });
   } catch {
-    window.scrollTo(0, 0);
+    v.scrollTop = 0;
   }
   setTimeout(() => {
-    if (window.scrollY > 0) window.scrollTo(0, 0);
+    if (v.scrollTop > 0) v.scrollTop = 0;
   }, 400);
 }
 
@@ -185,13 +204,14 @@ export async function ridisegna() {
     return;
   }
 
-  const posizione = window.scrollY;
+  const posizione = scorritore().scrollTop;
   clear(view);
   view.append(nodo);
   // Ridisegnare la stessa schermata (freccia del mese, selettore del periodo)
   // non è una navigazione: la pagina deve restare dov'era.
-  if (cambioSchermata) window.scrollTo(0, 0);
-  else window.scrollTo(0, posizione);
+  if (cambioSchermata) scorritore().scrollTop = 0;
+  else scorritore().scrollTop = posizione;
+  aggiornaOmbraTestata();
 
   // La sezione Fumo esiste solo per chi conta le sigarette. Chi non fuma la
   // dichiara nel brief («salute.contaSigarette: false») e non se la ritrova
@@ -231,10 +251,6 @@ export function intestazione(titolo, azione) {
     : null;
 
   const bar = h("header.topbar", h("h1", titolo), bottone);
-  const onScroll = () => bar.classList.toggle("scrolled", window.scrollY > 4);
-  window.removeEventListener("scroll", window.__coachScroll || (() => {}));
-  window.__coachScroll = onScroll;
-  window.addEventListener("scroll", onScroll, { passive: true });
   return bar;
 }
 
@@ -344,6 +360,9 @@ async function avvia() {
   // schermata dell'allenamento, al primo tocco dentro la seduta.
 
   await ridisegna();
+  // Un ascoltatore solo per tutta la vita dell'app.
+  qs("#view")?.addEventListener("scroll", aggiornaOmbraTestata, { passive: true });
+
   registraServiceWorker();
 
   // Le altre schermate si caricano subito dopo la prima, senza fretta: se la
