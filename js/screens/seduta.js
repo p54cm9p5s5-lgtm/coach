@@ -3242,7 +3242,15 @@ async function vistaFine(corpo, piede) {
         })
       : null,
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota generale (dolori, sensazioni — solo se presenti)"),
-    h("textarea.note", { id: "nota-seduta", value: S.sed.notaGenerale || "" })
+    // La scritta qui sopra si vede ma non è collegata al campo: chi usa
+    // VoiceOver sentirebbe «campo di testo» e basta. È l'unico campo dell'app
+    // rimasto senza nome — tutti gli altri ce l'hanno nel segnaposto.
+    h("textarea.note", {
+      id: "nota-seduta",
+      "aria-label": "Nota generale sull'allenamento",
+      placeholder: "Dolori, sensazioni — solo se c'è qualcosa da segnalare",
+      value: S.sed.notaGenerale || "",
+    })
   );
 
   aggiungiPiede(piede, 
