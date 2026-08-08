@@ -1303,7 +1303,10 @@ textarea.note {
 
 .cal-griglia {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* «minmax(0, 1fr)» e non «1fr»: con «1fr» la colonna non scende sotto il
+     contenuto, e l'altezza minima della casella qui sotto diventerebbe anche
+     una larghezza minima — su uno schermo stretto la domenica finiva fuori. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
 }
 
@@ -1318,6 +1321,10 @@ textarea.note {
 .cal-giorno {
   position: relative;
   aspect-ratio: 1;
+  /* Sette caselle in fila: su uno schermo da 320 punti il quadrato viene alto
+     37, sotto la misura minima di un bersaglio da toccare. Il quadrato resta
+     dove c'è spazio; dove non c'è, la casella si alza invece di stringersi. */
+  min-height: 44px;
   border: 0;
   background: none;
   border-radius: 9px;
