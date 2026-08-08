@@ -118,6 +118,16 @@ export function valida(dati, libreria) {
       } else if (!(v.ripMax >= v.ripMin && v.ripMin > 0)) {
         problemi.push(`Range ripetizioni non valido per ${v.esercizioId}.`);
       }
+      // Un esercizio che si tiene a tempo (il plank) scritto a ripetizioni
+      // passerebbe tutti i controlli e poi in palestra chiederebbe «8-10
+      // ripetizioni di plank». La libreria sa che si tiene: se il brief non lo
+      // dice, è una svista e va corretta prima, non scoperta sotto il bilanciere.
+      const def = libreria.find((e) => e.id === v.esercizioId);
+      if (def?.aTempo && !v.aTempo) {
+        problemi.push(
+          `${v.esercizioId} si tiene a tempo: serve «"aTempo": true» e «durataSec», non un range di ripetizioni.`
+        );
+      }
     }
   }
 
