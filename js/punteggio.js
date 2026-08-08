@@ -567,18 +567,54 @@ const SCALA = [
   [95, [168, 240, 58]],  // lime acceso
 ];
 
+/** Fondo chiaro: nessun attributo di tema e iPhone non in scuro. */
+function fondoChiaro() {
+  if (typeof document === "undefined") return false;
+  if (document.documentElement.getAttribute("data-tema") === "lime") return false;
+  return !window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+}
+
+const luminanza = ([r, g, b]) => {
+  const f = (c) => (c / 255 <= 0.03928 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+};
+
+/**
+ * Gli stessi colori, visibili sul bianco.
+ *
+ * La scala qui sopra è un dato e non cambia: quello che cambia è solo quanto è
+ * chiaro il colore, perché il giallo e il lime sul bianco danno 2:1 e il numero
+ * non si legge. La tinta resta identica — un 60 è giallo su tutti e due i fondi
+ * — e questo vale solo dove il fondo è chiaro davvero.
+ */
+function visibileSulBianco(rgb) {
+  const contrasto = (c) => (1.05) / (luminanza(c) + 0.05);
+  if (contrasto(rgb) >= 4.5) return rgb;
+  let basso = 0;
+  let alto = 1;
+  for (let i = 0; i < 20; i++) {
+    const k = (basso + alto) / 2;
+    const prova = rgb.map((c) => Math.round(c * k));
+    if (contrasto(prova) >= 4.5) basso = k;
+    else alto = k;
+  }
+  return rgb.map((c) => Math.round(c * basso));
+}
+
+const tinta = (rgb) => `rgb(${(fondoChiaro() ? visibileSulBianco(rgb) : rgb).join(",")})`;
+
 export function coloreDaPunteggio(totale) {
   if (totale == null || Number.isNaN(totale)) return "var(--label-secondary)";
   const v = Math.max(0, Math.min(100, totale));
-  if (v <= SCALA[0][0]) return `rgb(${SCALA[0][1].join(",")})`;
-  if (v >= SCALA[SCALA.length - 1][0]) return `rgb(${SCALA[SCALA.length - 1][1].join(",")})`;
+  if (v <= SCALA[0][0]) return tinta(SCALA[0][1]);
+  if (v >= SCALA[SCALA.length - 1][0]) return tinta(SCALA[SCALA.length - 1][1]);
   for (let i = 1; i < SCALA.length; i++) {
     const [x1, c1] = SCALA[i - 1];
     const [x2, c2] = SCALA[i];
     if (v <= x2) {
       const q = (v - x1) / (x2 - x1);
       const mix = c1.map((c, k) => Math.round(c + (c2[k] - c) * q));
-      return `rgb(${mix.join(",")})`;
+      return tinta(mix);
     }
   }
   return "var(--label-secondary)";

@@ -40,6 +40,19 @@ export function temaCorrente() {
 
 applicaTema(temaCorrente());
 
+/* Con «Sistema», l'iPhone può passare da chiaro a scuro mentre l'app è aperta:
+   al tramonto, o con un tocco in Centro di Controllo. I colori del foglio di
+   stile cambiano da soli; quelli calcolati qui dentro — il colore del punteggio,
+   che si sceglie in base al fondo — no, e resterebbero quelli del fondo di
+   prima. Basta ridisegnare. Non durante l'allenamento: lì c'è un cronometro che
+   scorre e una schermata su cui si sta lavorando, e un colore leggermente fuori
+   posto è meno peggio di un ridisegno a metà serie. */
+window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
+  if (temaCorrente() !== "sistema") return;
+  if (rottaCorrente === "seduta") return;
+  ridisegna();
+});
+
 function nomeRotta() {
   const raw = location.hash.replace(/^#\/?/, "").split("?")[0];
   return ROTTE[raw] ? raw : "oggi";
