@@ -71,6 +71,27 @@ export function valida(dati, libreria) {
 
   for (const giorno of dati.split || []) {
     const visti = new Set();
+    // I blocchi si fanno attaccati: gli esercizi di una stessa lettera devono
+    // essere uno dopo l'altro. Con un terzo esercizio in mezzo l'app accoppia
+    // comunque il primo con l'ultimo e quello in mezzo non viene mai proposto —
+    // sparisce dall'allenamento senza che nessuno lo dica. E una lettera su un
+    // esercizio solo non è un blocco: è una dichiarazione che non fa niente.
+    const posizioni = new Map();
+    (giorno.esercizi || []).forEach((v, i) => {
+      if (!v?.blocco) return;
+      if (!posizioni.has(v.blocco)) posizioni.set(v.blocco, []);
+      posizioni.get(v.blocco).push(i);
+    });
+    for (const [lettera, pos] of posizioni) {
+      const dove = giorno.nome || giorno.id;
+      if (pos.length < 2) {
+        problemi.push(`Blocco "${lettera}" in ${dove}: c'è un esercizio solo. Un blocco ne vuole almeno due.`);
+      } else if (pos[pos.length - 1] - pos[0] !== pos.length - 1) {
+        problemi.push(
+          `Blocco "${lettera}" in ${dove}: gli esercizi non sono di seguito. Un blocco si fa attaccato, quindi vanno scritti uno dopo l'altro.`
+        );
+      }
+    }
     if (!giorno.id || !giorno.nome) problemi.push("Un giorno dello split è senza id o nome.");
     if (typeof giorno.giorno !== "number" || giorno.giorno < 0 || giorno.giorno > 6) {
       problemi.push(`Giorno della settimana non valido in "${giorno.nome || giorno.id}".`);
