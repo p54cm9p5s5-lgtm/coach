@@ -243,10 +243,14 @@ dice invece di far caricare dischi inutilmente. Il selettore del carico e le
 proposte di progressione si muovono sui pesi **davvero montabili**, non a passi
 di un chilo.
 
-Per ogni serie: «Serie completata» → parte il **recupero cronometrato**. Nella
-schermata di recupero si correggono ripetizioni e carico davvero fatti,
-precompilati con l'obiettivo. Il carico si muove **a passi di dischi montabili
-davvero** e non supera l'inventario.
+Per ogni serie: «Serie completata» → parte il **recupero cronometrato**. Nel
+riposo **fra una serie e l'altra** si correggono ripetizioni e carico davvero
+fatti, precompilati con l'obiettivo. Il carico si muove **a passi di dischi
+montabili davvero** e non supera l'inventario.
+
+Nel riposo **dopo l'ultima serie** quei campi non ci sono: le serie si sono già
+corrette tutte nella scheda di valutazione, che viene prima, e quella pagina
+serve a un'altra cosa — il cronometro e il prossimo esercizio da preparare.
 
 **Esercizi a tempo** (plank e simili): non si «completa» una serie, la si
 tiene. «Avvia» fa partire un **cronometro alla rovescia** dal previsto; se

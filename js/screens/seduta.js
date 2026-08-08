@@ -2228,7 +2228,13 @@ async function vistaRecupero(corpo, piede) {
   );
   aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo));
 
-  // campi della serie appena chiusa
+  // Campi della serie appena chiusa — ma SOLO fra una serie e l'altra.
+  //
+  // Quando l'esercizio è finito questo riposo serve a un'altra cosa: il
+  // cronometro e il prossimo esercizio da preparare. Le sue serie si correggono
+  // nella scheda di valutazione, che viene prima e le mostra tutte; rimetterle
+  // qui vuol dire chiedere di sistemare una cosa già sistemata, in una pagina
+  // che parla del prossimo esercizio.
   let rip = ultima?.ripFatte ?? bersaglio;
   let carico = ultima?.carico ?? null;
 
@@ -2243,7 +2249,7 @@ async function vistaRecupero(corpo, piede) {
   const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
   const valCar = h("span.val", carico != null ? `${num(carico)} kg` : "—");
 
-  aggiungi(corpo, 
+  if (!ultimaSerie) aggiungi(corpo,
     h(
       "div.group",
       h("h2", `Serie ${ultima?.numero ?? fatte.length} appena chiusa`),
