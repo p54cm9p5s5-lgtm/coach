@@ -1758,6 +1758,9 @@ function riquadroVideo(def) {
  * pannello restava aperto e non veniva scritto niente.
  */
 async function cambiaVideo(def) {
+  const personalizzato = def.id
+    ? Boolean(def.videoPersonalizzato)
+    : Boolean(store.videoPassoPersonalizzato?.(def.nome));
   await sheet((close) => {
     const campo = h("textarea.note", {
       placeholder: "Incolla qui il link YouTube del video che preferisci",
@@ -1772,21 +1775,43 @@ async function cambiaVideo(def) {
         `${def.nome} — attuale: ${def.video?.titolo || "nessuno"}.`
       ),
       campo,
+      // Un video sbagliato dev'essere disfacibile. Prima l'unico modo di
+      // togliere un link incollato male era incollarne un altro: quello di
+      // partenza non tornava più, e restava lì per sempre.
+      personalizzato
+        ? h(
+            "p",
+            { style: "margin:8px 16px 0;color:var(--label-secondary);font-size:13px" },
+            "Lascia il campo vuoto e tocca Salva per rimettere il video di partenza."
+          )
+        : null,
       h(
         "div.btn-wrap",
         h(
           "button.btn",
           {
             onclick: async () => {
-              const m = campo.value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
-              if (!m) {
+              const vuoto = !campo.value.trim();
+              if (vuoto && !personalizzato) {
                 toast("Link non riconosciuto: serve un indirizzo YouTube.");
                 return;
               }
-              const video = { id: m[1], titolo: "Video scelto da te", canale: "YouTube" };
+              const m = vuoto ? null : campo.value.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+              if (!vuoto && !m) {
+                toast("Link non riconosciuto: serve un indirizzo YouTube.");
+                return;
+              }
+              const video = vuoto ? null : { id: m[1], titolo: "Video scelto da te", canale: "YouTube" };
               try {
                 if (def.id) {
-                  await store.db.put("esercizi", { ...def, video, videoPersonalizzato: true });
+                  if (vuoto) {
+                    // Si toglie la scelta personale e si ricarica dal file: il
+                    // video di libreria torna da solo, senza doverlo conoscere.
+                    const { video: _v, videoPersonalizzato: _p, ...pulito } = def;
+                    await store.db.put("esercizi", pulito);
+                  } else {
+                    await store.db.put("esercizi", { ...def, video, videoPersonalizzato: true });
+                  }
                   await store.ricaricaLibreria();
                 } else {
                   await store.cambiaVideoPasso(def.nome, video);
@@ -1799,7 +1824,7 @@ async function cambiaVideo(def) {
               }
               close();
               await disegna();
-              toast("Video sostituito.");
+              toast(vuoto ? "Rimesso il video di partenza." : "Video sostituito.");
             },
           },
           "Salva"

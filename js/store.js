@@ -63,11 +63,23 @@ async function caricaRiscaldamento() {
   return RISCALDAMENTO;
 }
 
-/** Sostituisce il video di un passaggio di riscaldamento o stretching. */
+/** Se quel passaggio ha un video scelto a mano, e non quello del protocollo. */
+export const videoPassoPersonalizzato = (nome) => Boolean(VIDEO_PASSI[String(nome || "").trim()]);
+
+/**
+ * Sostituisce il video di un passaggio di riscaldamento o stretching.
+ * Con `video` a null la scelta personale si toglie e torna quello del
+ * protocollo: senza, un link incollato male restava lì per sempre.
+ */
 export async function cambiaVideoPasso(nome, video) {
   const chiave = String(nome || "").trim();
   if (!chiave) return false;
-  VIDEO_PASSI = { ...VIDEO_PASSI, [chiave]: video };
+  if (video == null) {
+    const { [chiave]: _tolto, ...resto } = VIDEO_PASSI;
+    VIDEO_PASSI = resto;
+  } else {
+    VIDEO_PASSI = { ...VIDEO_PASSI, [chiave]: video };
+  }
   await setImpostazione("videoRiscaldamento", VIDEO_PASSI);
   return true;
 }
