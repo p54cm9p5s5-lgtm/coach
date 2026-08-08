@@ -239,6 +239,21 @@ export function confronta(corrente, nuovo, libreria) {
     if (Boolean(vecchio.aTempo) !== Boolean(v.aTempo)) {
       cambi.push(v.aTempo ? "ora è a tempo" : "ora è a ripetizioni");
     }
+    // Il recupero e l'accoppiamento in blocco cambiano l'allenamento quanto le
+    // ripetizioni: senza queste due righe un brief che rifà tutti i riposi, o
+    // che scioglie una coppia, veniva presentato come «nessuna differenza».
+    if ((vecchio.recuperoSec ?? null) !== (v.recuperoSec ?? null)) {
+      cambi.push(`recupero ${vecchio.recuperoSec ?? "—"}s → ${v.recuperoSec ?? "—"}s`);
+    }
+    if ((vecchio.blocco ?? null) !== (v.blocco ?? null)) {
+      cambi.push(
+        v.blocco
+          ? vecchio.blocco
+            ? `blocco ${vecchio.blocco} → ${v.blocco}`
+            : `entra nel blocco ${v.blocco}`
+          : `esce dal blocco ${vecchio.blocco}`
+      );
+    }
     if (cambi.length) {
       righe.push({ tipo: "modificato", testo: `${g.nome} · ${nome(v.esercizioId)}: ${cambi.join(", ")}` });
     }

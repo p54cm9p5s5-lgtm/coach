@@ -102,10 +102,12 @@ const wrap = (req) =>
 
 /**
  * Gli archivi che il telefono non ha ancora.
- * La versione del database resta 1 per scelta: un aggiornamento di schema che
- * va storto sul telefono farebbe più danni di quanti ne eviti. Quindi qui non
- * si creano archivi nuovi — si controlla che ci siano tutti, così backup e
- * ripristino non falliscono in silenzio su un archivio inesistente.
+ *
+ * Gli archivi nuovi li crea l'aggiornamento di versione qui sopra, e solo
+ * quello: questa funzione non ne crea nessuno, si limita a dire quali mancano.
+ * Serve a backup e ripristino, che senza questo controllo fallirebbero in
+ * silenzio su un archivio inesistente — per esempio su un telefono che non ha
+ * ancora aperto la versione che ha introdotto «acqua».
  */
 export async function archiviMancanti() {
   const db = await open();

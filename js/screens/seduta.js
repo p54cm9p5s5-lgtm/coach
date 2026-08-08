@@ -340,8 +340,6 @@ async function vistaRisultato(id, vaiA, da = null) {
 
   // Anche a allenamento chiuso: l'orologio lo guardi con calma dopo, e i
   // numeri devono poter entrare lo stesso.
-  // Anche a allenamento chiuso: l'orologio lo guardi con calma dopo, e i
-  // numeri devono poter entrare lo stesso.
   const salvaOrologio = async (orologio) => {
     await store.aggiornaSeduta(sed.id, { orologio });
     sed.orologio = orologio;
@@ -1122,7 +1120,7 @@ async function vistaEsercizio(corpo, piede) {
   // «Fine» registra i secondi davvero fatti — perché mollare a 38 su 45 va
   // scritto, non arrotondato al previsto.
   if (v.aTempo) {
-    aggiungiPiede(piede, ...piedeCronometro(v, def, n));
+    aggiungiPiede(piede, ...piedeCronometro(v, def, n, inv));
   } else {
     // I due tasti di servizio stanno SOPRA e il tasto vero in fondo. È la
     // stessa posizione che ha «Pronto» nel recupero: durante una serie si
@@ -1518,14 +1516,14 @@ function aggiungiPiede(piede, ...figli) {
   aggiungi(piede, ...vivi.filter((x) => !avanti.includes(x)), ...avanti);
 }
 
-function piedeCronometro(v, def, n) {
+function piedeCronometro(v, def, n, inv) {
   const inCorso = Boolean(S.cronoFine);
   if (!inCorso) {
     return [
       h(
         "div",
         { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" },
-        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, null)) }, "Cambia carico"),
+        h("button.btn.secondary", { onclick: unaVoltaSola(() => modificaCarico(def, inv)) }, "Cambia carico"),
         h("button.btn.secondary", { onclick: unaVoltaSola(() => saltaEsercizio(v, def)) }, "Salta esercizio")
       ),
       h(
@@ -1618,7 +1616,16 @@ function riquadroVideo(def) {
   return box;
 }
 
-/** Sostituzione del video di un esercizio, salvata sul dispositivo. */
+/**
+ * Sostituzione del video, salvata sul dispositivo.
+ *
+ * Due strade, perché i video vengono da due posti diversi: quelli degli
+ * esercizi stanno nella libreria e si scrivono lì; quelli di mobilità e
+ * stretching arrivano dal file del protocollo e non hanno un id, quindi si
+ * salvano a parte, per nome del passaggio. Prima passavano tutti dalla prima
+ * strada: sui passaggi del riscaldamento «Salva» falliva in silenzio, il
+ * pannello restava aperto e non veniva scritto niente.
+ */
 async function cambiaVideo(def) {
   await sheet((close) => {
     const campo = h("textarea.note", {
@@ -1645,12 +1652,20 @@ async function cambiaVideo(def) {
                 toast("Link non riconosciuto: serve un indirizzo YouTube.");
                 return;
               }
-              await store.db.put("esercizi", {
-                ...def,
-                video: { id: m[1], titolo: "Video scelto da te", canale: "YouTube" },
-                videoPersonalizzato: true,
-              });
-              await store.ricaricaLibreria();
+              const video = { id: m[1], titolo: "Video scelto da te", canale: "YouTube" };
+              try {
+                if (def.id) {
+                  await store.db.put("esercizi", { ...def, video, videoPersonalizzato: true });
+                  await store.ricaricaLibreria();
+                } else {
+                  await store.cambiaVideoPasso(def.nome, video);
+                }
+              } catch (e) {
+                // Meglio dirlo che lasciare il pannello aperto come se il tocco
+                // non fosse arrivato.
+                toast("Non sono riuscito a salvare il video: " + e.message, 5000);
+                return;
+              }
               close();
               await disegna();
               toast("Video sostituito.");
@@ -1800,6 +1815,13 @@ async function completaSerie(v, def, numero, secondiTenuti = null) {
   // davvero, non quelli previsti. Se il cronometro non c'è stato (serie chiusa
   // a mano) resta il bersaglio, come per le ripetizioni.
   const fatte = secondiTenuti != null ? Math.max(0, Math.round(secondiTenuti)) : target;
+  // Dentro un blocco il riposo è uno solo per giro, e cade prima del PRIMO
+  // esercizio della coppia: la serie del secondo non ha nessun riposo davanti,
+  // e giudicarla contro i due minuti del blocco significava contarle come
+  // «recupero saltato» una pausa che il programma non prevede.
+  const indiciQui = indiciBlocco();
+  const dentroBlocco = indiciQui.length > 1;
+  const primoDelBlocco = !dentroBlocco || indiciQui[0] === S.sed.progresso.indice;
   const rec = await store.registraSerie({
     sedutaId: S.sed.id,
     esercizioId: v.esercizioId,
@@ -1810,10 +1832,11 @@ async function completaSerie(v, def, numero, secondiTenuti = null) {
     ripTarget: target,
     aTempo: Boolean(v.aTempo),
     tsInizioSerie: S.tsInizioSerie,
-    recuperoTargetSec: recuperoDi(),
+    recuperoTargetSec: primoDelBlocco ? recuperoDi() : null,
+    misuraDallaSeduta: dentroBlocco,
   });
 
-  const durata = (S.recuperoTarget ?? recuperoDi()) * 1000;
+  const durata = recuperoDi() * 1000;
   S.serieCorrenteId = rec.id;
   S.tsInizioSerie = null;
 
@@ -1822,7 +1845,7 @@ async function completaSerie(v, def, numero, secondiTenuti = null) {
   // rispondendo si saltava il recupero, che è la parte che conta. Adesso sono
   // due schermate: prima si risponde, poi parte il cronometro con il prossimo
   // esercizio davanti.
-  const indici = indiciBlocco();
+  const indici = indiciQui;
   if (indici.length > 1) {
     // Dentro un blocco: se il compagno è indietro di una serie, si va da lui
     // SENZA riposo — è tutto il senso del blocco. Il recupero arriva solo dopo
@@ -1888,9 +1911,27 @@ async function completaSerie(v, def, numero, secondiTenuti = null) {
 
 async function saltaEsercizio(v, def) {
   const nome = def?.nome || v.esercizioId;
+  // Dentro un blocco si salta la coppia, non un pezzo solo: l'app va avanti
+  // oltre tutto il blocco, e il compagno restava senza nessuna riga — nel
+  // riepilogo risultava «mai iniziato», come un dato perso invece di una
+  // scelta. Qui viene scritto anche lui, con lo stesso motivo, ma solo se non
+  // ha già fatto il suo lavoro.
+  const ind = indiciBlocco();
+  const compagni = [];
+  for (const k of ind) {
+    if (k === S.sed.progresso.indice) continue;
+    const altro = S.esercizi[k];
+    if (!altro) continue;
+    const sue = await serieFatte(altro.esercizioId);
+    if (sue.length >= (altro.serie || 1)) continue;
+    compagni.push({ indice: k, voce: altro, nome: store.esercizio(altro.esercizioId)?.nome || altro.esercizioId });
+  }
+
   const motivo = await chiedi({
-    titolo: `Saltare ${nome}?`,
-    testo: "Il motivo distingue una scelta da un buco di dati.",
+    titolo: compagni.length ? `Saltare il blocco?` : `Saltare ${nome}?`,
+    testo: compagni.length
+      ? `${nome} va in coppia con ${compagni.map((c) => c.nome).join(" e ")}: si saltano insieme. Il motivo distingue una scelta da un buco di dati.`
+      : "Il motivo distingue una scelta da un buco di dati.",
     opzioni: [
       { etichetta: "Tempo", valore: "tempo" },
       { etichetta: "Dolore", valore: "dolore" },
@@ -1915,7 +1956,7 @@ async function saltaEsercizio(v, def) {
     const conferma = h(
       "button.btn",
       { disabled: true, onclick: () => close(ta.value.trim()) },
-      "Salta esercizio"
+      compagni.length ? "Salta il blocco" : "Salta esercizio"
     );
     ta.addEventListener("input", () => {
       conferma.disabled = ta.value.trim().length < 3;
@@ -1943,7 +1984,20 @@ async function saltaEsercizio(v, def) {
     motivo,
     nota,
   });
-  toast(`${nome} segnato come non eseguito.`);
+  for (const c of compagni) {
+    await store.registraSalto({
+      sedutaId: S.sed.id,
+      esercizioId: c.voce.esercizioId,
+      ordine: c.indice,
+      motivo,
+      nota: `${nota} (saltato insieme a ${nome}: stesso blocco)`,
+    });
+  }
+  toast(
+    compagni.length
+      ? `Blocco segnato come non eseguito: ${[nome, ...compagni.map((c) => c.nome)].join(", ")}.`
+      : `${nome} segnato come non eseguito.`
+  );
   await avanzaEsercizio();
 }
 
@@ -2064,15 +2118,22 @@ async function vistaRecupero(corpo, piede) {
     ),
     testoTimer
   );
+  // Dentro un blocco il riposo vuol dire sempre «un altro giro»: quando il
+  // blocco è finito non si passa di qui, si va alle valutazioni. Senza questa
+  // distinzione, una coppia con un numero di giri diverso fra i due esercizi
+  // faceva comparire «Esercizio finito» e il tasto saltava oltre il compagno,
+  // che restava indietro di un giro.
+  const dentroBlocco = inBlocco();
+  const ultimaSerie = !dentroBlocco && fatte.length >= v.serie;
   const sottotitolo = h(
     "p.target",
-    fatte.length >= v.serie
+    ultimaSerie
       ? "Esercizio finito: riposa prima del prossimo"
-      : `Prossima: serie ${fatte.length + 1} di ${v.serie}`
+      : dentroBlocco
+        ? `Poi si ricomincia il blocco: giro ${Math.min(fatte.length + 1, v.serie)} di ${v.serie}`
+        : `Prossima: serie ${fatte.length + 1} di ${v.serie}`
   );
   aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo));
-
-  const ultimaSerie = fatte.length >= v.serie;
 
   // campi della serie appena chiusa
   let rip = ultima?.ripFatte ?? bersaglio;
@@ -2205,7 +2266,9 @@ async function chiudiRecupero() {
   // (telefono in tasca, chiacchiere): registrarlo com'è falserebbe la media
   // dei recuperi e la densità dell'allenamento.
   const ultima = (await store.serieDi(S.sed.id)).at(-1);
-  const target = (ultima?.recuperoTargetSec || 120) * 1000;
+  // Dentro un blocco la serie appena chiusa non porta un riposo previsto — ce
+  // l'ha il giro, non lei — quindi il riferimento è quello del blocco.
+  const target = (ultima?.recuperoTargetSec || recuperoDi()) * 1000;
   const passato = ultima?.tsFineSerie ? Date.now() - ultima.tsFineSerie : 0;
   if (ultima && passato > target + 10 * 60000) {
     const scelta = await chiedi({
@@ -2236,7 +2299,6 @@ async function vistaQuestionario(corpo, piede) {
   // Servono alla correzione dell'ultima serie: i passi del carico devono
   // essere quelli montabili davvero, come nella schermata di recupero.
   const invQui = await store.inventario();
-  const bilanciereQui = def?.attrezzo === "bilanciere";
 
   // Se questo esercizio è già stato valutato (si torna indietro dal riepilogo,
   // o l'app è ripartita), il questionario riparte da quello che avevi scritto:

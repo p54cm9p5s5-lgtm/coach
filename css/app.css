@@ -649,7 +649,6 @@ input[type="checkbox"],
   color: var(--green);
 }
 
-.timer.done + .timer-ring .prog,
 .timer-wrap.done .timer-ring .prog {
   stroke: var(--green);
 }
@@ -1336,10 +1335,6 @@ textarea.note {
 .cal-giorno.fatto {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
   font-weight: 600;
-}
-
-.cal-giorno.saltato .n {
-  color: var(--label-tertiary);
 }
 
 .cal-giorno.oggi {
