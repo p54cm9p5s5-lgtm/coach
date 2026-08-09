@@ -4,7 +4,7 @@
     {
       "name": "coach",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8787"],
+      "runtimeArgs": ["tools/serve.py", "8787"],
       "port": 8787
     }
   ]
