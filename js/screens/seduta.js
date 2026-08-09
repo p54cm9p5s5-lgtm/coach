@@ -581,7 +581,7 @@ async function vistaRisultato(id, vaiA, da = null) {
       { style: "margin-top:26px" },
       h(
         "button.btn.secondary",
-        { style: "color:var(--red)", onclick: () => eliminaAllenamento(sed) },
+        { style: "color:var(--red)", onclick: () => eliminaAllenamento(sed, daStorico) },
         "Elimina questo allenamento"
       ),
       h(
@@ -601,7 +601,7 @@ function vaiAlProgramma() {
 }
 
 /** Serve per le prove: toglie un allenamento finto senza lasciare tracce nei numeri. */
-async function eliminaAllenamento(sed) {
+async function eliminaAllenamento(sed, daStorico = false) {
   const conferma = await chiedi({
     titolo: "Eliminare l'allenamento?",
     testo: `${sed.tipoNome} del ${dataLunga(sed.data)}. Spariscono anche le serie e i questionari, e le proposte vengono ricalcolate senza di esso.`,
@@ -611,6 +611,13 @@ async function eliminaAllenamento(sed) {
   await store.annullaSeduta(sed.id);
   await store.aggiornaMotore();
   toast("Allenamento eliminato.");
+  // Si torna dove si stava guardando. Chi arriva dallo Storico stava sfogliando
+  // l'elenco: buttarlo sul programma di oggi gli fa perdere il posto, e il
+  // tasto «Indietro» di questa stessa scheda rispetta già la provenienza.
+  if (daStorico) {
+    location.hash = "#/storico";
+    return;
+  }
   // L'hash può essere già «#/seduta»: in quel caso il router non riparte da
   // solo e va richiamato a mano.
   if (location.hash === "#/seduta") await ridisegna();
