@@ -121,11 +121,17 @@ def main():
     sx, sy = cx - lato // 2, cy - lato // 2
 
     # ritaglia e riempi gli angoli con il pixel opaco più vicino sulla riga
-    fuori = 0
-    out = bytearray(lato * lato * 3)
+    #
+    # Gli estremi opachi si calcolano PRIMA, per tutte le righe: una riga
+    # senza nessun pixel opaco — capita quando il ritaglio quadrato centrato
+    # prende una riga di margine sopra o sotto il contenuto — veniva riempita
+    # di nero, cioè esattamente il colore inventato che questo strumento dice
+    # di non voler mettere. Su un'icona iOS è una fascia nera sul bordo, ben
+    # visibile. Adesso quella riga prende i colori della riga opaca più
+    # vicina: si estende, non si inventa.
+    estremi = []
     for y in range(lato):
         riga_src = sy + y
-        # estremi opachi della riga
         sinistra = None
         destra = None
         for x in range(lato):
@@ -133,10 +139,31 @@ def main():
                 if sinistra is None:
                     sinistra = x
                 destra = x
+        estremi.append((sinistra, destra))
+
+    def riga_con_contenuto(y):
+        """La riga più vicina a `y` che ha almeno un pixel opaco."""
+        if estremi[y][0] is not None:
+            return y
+        for d in range(1, lato):
+            for k in (y - d, y + d):
+                if 0 <= k < lato and estremi[k][0] is not None:
+                    return k
+        return None
+
+    fuori = 0
+    righe_prestate = 0
+    out = bytearray(lato * lato * 3)
+    for y in range(lato):
+        sorgente_y = riga_con_contenuto(y)
+        if sorgente_y is None:
+            continue  # immagine tutta margine: non c'è niente da estendere
+        if sorgente_y != y:
+            righe_prestate += 1
+        riga_src = sy + sorgente_y
+        sinistra, destra = estremi[sorgente_y]
         for x in range(lato):
-            if sinistra is None:
-                r, g, b = 0, 0, 0
-            elif x < sinistra:
+            if x < sinistra:
                 r, g, b, _ = campiona(sx + sinistra, riga_src); fuori += 1
             elif x > destra:
                 r, g, b, _ = campiona(sx + destra, riga_src); fuori += 1
@@ -146,7 +173,10 @@ def main():
             out[i], out[i + 1], out[i + 2] = r, g, b
 
     scrivi_png(destinazione, lato, lato, out)
-    print(f"scritta {destinazione}: {lato}×{lato}, {fuori} pixel di bordo riempiti per estensione")
+    print(
+        f"scritta {destinazione}: {lato}×{lato}, {fuori} pixel di bordo riempiti per estensione"
+        + (f", {righe_prestate} righe prese dalla riga vicina" if righe_prestate else "")
+    )
 
 
 if __name__ == "__main__":
