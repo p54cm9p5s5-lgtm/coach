@@ -196,7 +196,12 @@ quella del **risveglio**. Le fasi (profondo, REM, veglia) si perdono, perché
 quelle le sa l'orologio e tu no: una durata giusta senza fasi vale più di una
 sbagliata con le fasi. Da lì la notte è **tua** — l'import da Salute non la
 sovrascrive, la riconciliazione non la cancella, e il riepilogo dell'import lo
-dice ogni volta. Si torna al dato dell'orologio con un tocco.
+dice ogni volta. Il dato dell'orologio però non si butta: resta da parte nella
+stessa riga, e ogni import lo aggiorna anche quando la notte è tua. Così il
+tasto per tornare indietro dice quanto misurava l'orologio e lo rimette davvero,
+fasi comprese; e quando l'orologio quella notte non l'ha mai registrata il tasto
+lo dichiara — «togli la correzione, l'orologio non ha un dato» — invece di
+promettere un ritorno che sarebbe una cancellazione.
 
 **Fondo del fumo**: oltre le sigarette tollerate la voce scende sotto zero, fino
 a **−50%** (`fumoQuotaMinima`). Tutte le altre voci si fermano al 100%.
