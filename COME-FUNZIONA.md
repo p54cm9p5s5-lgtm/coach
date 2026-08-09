@@ -666,7 +666,13 @@ si può leggere in tre modi diversi
 - **Proposte in sospeso**, con le quattro domande già compilate
 - **Segnali aperti**
 - **Fumo**: sigarette al giorno, media, giorni a zero
+- **Acqua**: la risposta di ogni giorno, e quanti giorni su quelli risposti
 - **Misure e indici**, se registrate
+
+Fumo e acqua sono dichiarati nel brief, uno per profilo: chi non conta le
+sigarette non vede la casella «Fumo», chi non conta l'acqua non vede quella
+dell'acqua. Un giorno senza risposta non vale «no»: è scritto «non risposto» e
+resta fuori dal conto.
 
 La giornata in corso è marcata **«giornata in corso, non finita»**: i suoi numeri
 non sono confrontabili con quelli dei giorni chiusi.
