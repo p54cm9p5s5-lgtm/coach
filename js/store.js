@@ -2678,6 +2678,15 @@ export const POSE = [
  * su file è JSON, e un Blob dentro JSON sparirebbe senza dire niente.
  */
 export async function registraFoto({ data = isoDate(), posa, immagine, checklist }) {
+  // La griglia disegna le pose del protocollo: una foto salvata sotto un nome
+  // di posa che non esiste entrerebbe in archivio e non si vedrebbe mai più,
+  // nemmeno per cancellarla. Meglio non accettarla.
+  if (!POSE.some((p) => p.id === posa)) {
+    throw new Error(`«${posa}» non è una posa del protocollo: la foto non è stata salvata.`);
+  }
+  if (typeof immagine !== "string" || !immagine.startsWith("data:image")) {
+    throw new Error("L'immagine non è in un formato che l'archivio sa tenere.");
+  }
   // Una foto per posa e per giorno: rifare uno scatto venuto male lasciava
   // anche il vecchio, e il confronto pescava quello sbagliato.
   const stesse = await db.byIndex("foto", "data", data);
