@@ -299,7 +299,11 @@ async function registraServiceWorker() {
     // proprio il file che decide gli aggiornamenti. Senza, GitHub Pages lo
     // tiene per dieci minuti e il telefono non si accorge delle novità.
     const reg = await navigator.serviceWorker.register("sw.js", { updateViaCache: "none" });
-    reg.update();
+    // Senza rete `update()` rifiuta, ed è la normalità: in palestra il telefono
+    // spesso non ha campo. Va ignorato in silenzio — l'app funziona offline e
+    // il controllo si rifà da solo alla prossima apertura.
+    const controlla = () => reg.update().catch(() => {});
+    controlla();
 
     // ricontrolla quando l'app torna in primo piano: su iPhone l'app viene
     // ripresa dalla memoria e senza questo non ci sarebbe nessun controllo
@@ -308,7 +312,7 @@ async function registraServiceWorker() {
       if (document.visibilityState !== "visible") return;
       if (Date.now() - ultimoControllo < 30_000) return;
       ultimoControllo = Date.now();
-      reg.update();
+      controlla();
     });
     // Quando la nuova versione prende il comando, la pagina si ricarica una
     // volta sola: così i moduli già in memoria non restano quelli vecchi.

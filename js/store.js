@@ -2465,6 +2465,20 @@ export async function conteggioFumo() {
   return per;
 }
 
+/** I soli campi di una notte: quello che serve per rimetterla com'era. */
+function soloDatiNotte(n) {
+  if (!n) return null;
+  return {
+    presente: true,
+    durataMin: n.durataMin ?? null,
+    profondoMin: n.profondoMin ?? null,
+    remMin: n.remMin ?? null,
+    vegliaMin: n.vegliaMin ?? null,
+    risvegli: n.risvegli ?? null,
+    inizio: n.inizio ?? null,
+  };
+}
+
 /**
  * Cancella quello che è ARRIVATO da Salute. Le notti scritte a mano restano:
  * non le ha portate l'import, reimportare non le riporterebbe indietro (anzi,
@@ -2549,21 +2563,11 @@ export async function notti() {
  * Le fasi (profondo, REM, veglia) si perdono, e va bene così: tu sai quando
  * sei andato a letto e quando ti sei svegliato, non quanto REM hai fatto.
  * Meglio una durata giusta senza fasi che una durata falsa con le fasi.
+ *
+ * Quello che diceva l'orologio non si butta: resta da parte in `orologio`,
+ * così togliere la correzione può rimettere il dato di prima invece di
+ * cancellare la notte.
  */
-/** I soli campi di una notte: quello che serve per rimetterla com'era. */
-function soloDatiNotte(n) {
-  if (!n) return null;
-  return {
-    presente: true,
-    durataMin: n.durataMin ?? null,
-    profondoMin: n.profondoMin ?? null,
-    remMin: n.remMin ?? null,
-    vegliaMin: n.vegliaMin ?? null,
-    risvegli: n.risvegli ?? null,
-    inizio: n.inizio ?? null,
-  };
-}
-
 export async function correggiNotte(data, { aLetto, sveglio, nota = null } = {}) {
   const oraValida = (x) => typeof x === "string" && /^\d{2}:\d{2}$/.test(x);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data))) throw new Error("Serve il giorno della notte.");
@@ -2616,12 +2620,10 @@ export async function scordaCorrezioneNotte(data) {
   const n = await db.get("notti", data);
   if (!n || n.fonte !== "mano") return false;
   if (n.orologio?.durataMin != null) {
-    await db.put("notti", {
-      data,
-      ...n.orologio,
-      fonte: "salute",
-      importatoIl: n.orologio.importatoIl || new Date().toISOString(),
-    });
+    // `importatoIl` non sta fra i campi messi da parte (vedi soloDatiNotte):
+    // la data giusta è adesso, cioè quando il dato dell'orologio è tornato in
+    // circolo. Scriverne una vecchia direbbe che è appena arrivato dall'import.
+    await db.put("notti", { data, ...n.orologio, fonte: "salute", importatoIl: new Date().toISOString() });
     return "orologio";
   }
   await db.del("notti", data);
