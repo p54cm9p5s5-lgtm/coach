@@ -4,6 +4,17 @@ import {
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 
+/**
+ * I messaggi degli errori a volte finiscono col punto e a volte no: incollati
+ * dentro una frase davano «…e ricarica..» oppure «…spazio finito Riapri».
+ * Un errore senza messaggio non lascia una frase monca: si dice che non si sa.
+ */
+const puntoFinale = (s) => {
+  const t = String(s || "").trim();
+  if (!t) return "non so dire perché.";
+  return /[.!?…]$/.test(t) ? t : `${t}.`;
+};
+
 // `caloBuono` dice da che parte è il miglioramento: scendere di vita è un
 // progresso, scendere di bicipite no. Senza, la pastiglia verde compariva
 // anche quando perdevi massa.
@@ -11,15 +22,6 @@ import * as store from "../store.js";
 // conferma. Un peso di 818 kg è quasi sempre 81,8 battuto male, e un numero
 // così sballato non si ferma dove l'hai scritto — sporca la media, gli indici,
 // il grafico e il pacchetto per il coach, e ritrovarlo dopo è un lavoro.
-/**
- * I messaggi degli errori a volte finiscono col punto e a volte no: incollati
- * dentro una frase davano «…e ricarica..» oppure «…spazio finito Riapri».
- */
-const puntoFinale = (s) => {
-  const t = String(s || "").trim();
-  return !t || /[.!?…]$/.test(t) ? t : `${t}.`;
-};
-
 const MISURE = [
   { id: "peso", nome: "Peso", unita: "kg", passo: 0.1, primaria: true, caloBuono: true, min: 30, max: 250 },
   { id: "vitaOmbelico", nome: "Vita ombelico", unita: "cm", passo: 0.5, primaria: true, caloBuono: true, min: 40, max: 200 },
@@ -362,7 +364,9 @@ async function registra(ridisegna) {
                   testo:
                     (entrate
                       ? `Ne sono entrate ${entrate} su ${scelte.size}: `
-                      : `Non ne è entrata nessuna delle ${scelte.size}: `) +
+                      : scelte.size === 1
+                        ? "L'unica misura non è entrata: "
+                        : `Non ne è entrata nessuna delle ${scelte.size}: `) +
                     // Il messaggio dell'errore finisce già col punto: aggiungerne
                     // un altro dava «…e ricarica..».
                     `${puntoFinale(e.message)} Riapri «Registra» e reinserisci quelle che mancano.`,
@@ -689,7 +693,11 @@ async function importaSet(ridisegna) {
       await chiedi({
         titolo: salvate ? "Foto salvate solo in parte" : "Foto non salvate",
         testo:
-          (salvate ? `Ne sono entrate ${salvate} su ${scelte.size}: ` : `Non ne è entrata nessuna delle ${scelte.size}: `) +
+          (salvate
+            ? `Ne sono entrate ${salvate} su ${scelte.size}: `
+            : scelte.size === 1
+              ? "L'unica foto non è entrata: "
+              : `Non ne è entrata nessuna delle ${scelte.size}: `) +
           `${puntoFinale(e.message)} Di solito è lo spazio del telefono. Libera spazio e ripeti solo le pose che mancano.`,
         opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
         annulla: false,
