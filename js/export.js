@@ -633,6 +633,40 @@ export function bloccoProposte(proposte, nomeLivello) {
 }
 
 /**
+ * L'acqua, per i profili che la contano. È l'altra metà del fumo: una
+ * abitudine dichiarata nel brief, chiesta ogni giorno e pesata nel punteggio
+ * di giornata. Senza questo blocco il coach vedeva un punteggio che l'acqua la
+ * conta e un pacchetto che non la nominava mai.
+ *
+ * Un giorno senza risposta non è un «no»: resta scritto che non c'è, come
+ * ovunque nell'app.
+ */
+export function bloccoAcqua({ perGiorno, litri }) {
+  if (!perGiorno?.length) return null;
+  const risposti = perGiorno.filter((g) => g.bevuto !== null);
+  if (!risposti.length) return null;
+  const si = risposti.filter((g) => g.bevuto).length;
+  return [
+    "ACQUA",
+    "",
+    tabella(
+      ["Data", "Giorno", `Almeno ${num(litri)} litri`],
+      perGiorno.map((g) => [
+        dataBreve(g.data),
+        GIORNI_ABBR[new Date(g.data + "T00:00:00").getDay()],
+        g.bevuto === null ? "non risposto" : g.bevuto ? "sì" : "no",
+      ])
+    ),
+    "",
+    `${si} ${si === 1 ? "giorno" : "giorni"} su ${risposti.length} ${risposti.length === 1 ? "risposto" : "risposti"} con almeno ${num(litri)} litri` +
+      (risposti.length < perGiorno.length
+        ? ` (${perGiorno.length - risposti.length} ${perGiorno.length - risposti.length === 1 ? "giorno senza risposta" : "giorni senza risposta"}, fuori dal conto).`
+        : "."),
+    "La risposta è binaria e manuale: vale quello che è stato segnato, i bicchieri non si contano.",
+  ].join("\n");
+}
+
+/**
  * Il fumo. È un dato clinico che cambia la lettura di tutto il resto — sonno,
  * recupero, frequenza a riposo — e tenerlo dentro l'app significherebbe far
  * commentare al coach dei numeri senza sapere una delle cause.

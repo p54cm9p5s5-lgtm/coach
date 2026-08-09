@@ -4,7 +4,7 @@ import * as store from "../store.js";
 import { nomeLivello } from "../segnali.js";
 import {
   logSeduta, bloccoSalute, bloccoProposte, bloccoAccettate, bloccoCorpo, bloccoSegnali,
-  bloccoFumo, intestazionePacchetto,
+  bloccoFumo, bloccoAcqua, intestazionePacchetto,
 } from "../export.js";
 
 const ETICHETTE_MISURE = {
@@ -23,14 +23,29 @@ const SCELTE = [
   { id: "proposte", nome: "Proposte in sospeso", sub: "con le quattro domande già compilate" },
   { id: "segnali", nome: "Segnali aperti", sub: "quello che l'app ha notato e non è una proposta" },
   { id: "fumo", nome: "Fumo", sub: "sigarette al giorno, se le stai contando" },
+  { id: "acqua", nome: "Acqua", sub: "una risposta al giorno, se la stai contando" },
   { id: "corpo", nome: "Misure e indici", sub: "solo se registrate" },
 ];
+
+/**
+ * Fumo e acqua sono dichiarati nel brief, uno per profilo: chi non conta le
+ * sigarette non deve vedere una casella «Fumo» che non accende niente. Una
+ * voce che non fa niente sembra una voce che non funziona.
+ */
+function scelteDelProfilo() {
+  const R = store.regole().salute || {};
+  return SCELTE.filter(
+    (s) =>
+      (s.id !== "fumo" || R.contaSigarette !== false) &&
+      (s.id !== "acqua" || R.contaAcqua === true)
+  );
+}
 
 export async function render({ vaiA }) {
   const wrap = h("div.screen");
   aggiungi(wrap, intestazione("Pacchetto", { etichetta: "Home", onclick: () => vaiA("oggi") }));
 
-  const stato = { seduta: true, salute: true, proposte: true, segnali: true, fumo: true, corpo: false };
+  const stato = { seduta: true, salute: true, proposte: true, segnali: true, fumo: true, acqua: true, corpo: false };
   const anteprima = h("pre", {
     style:
       "margin:0;padding:14px;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;" +
@@ -89,7 +104,7 @@ export async function render({ vaiA }) {
   };
 
   const lista = h("div.list");
-  for (const s of SCELTE) {
+  for (const s of scelteDelProfilo()) {
     const spunta = h("input", { type: "checkbox", checked: stato[s.id] });
     spunta.addEventListener("change", async () => {
       stato[s.id] = spunta.checked;
@@ -317,6 +332,28 @@ async function componi(stato) {
         const tot = perGiorno.reduce((t, g) => t + g.quante, 0);
         contenuto.push(`${tot} ${tot === 1 ? "sigaretta" : "sigarette"} in ${perGiorno.length} ${perGiorno.length === 1 ? "giorno" : "giorni"}`);
       }
+    }
+  }
+
+  if (stato.acqua && store.regole().salute?.contaAcqua === true) {
+    const oggi = isoDate();
+    const risposte = new Map((await store.giorniAcqua()).map((r) => [r.data, Boolean(r.bevuto)]));
+    // Gli stessi sette giorni del fumo e della tabella salute: il coach li
+    // legge insieme, e una finestra diversa per ogni blocco non si confronta.
+    const perGiorno = [];
+    const d = new Date(oggi + "T00:00:00");
+    for (let i = 0; i < 7; i++) {
+      const p = (n) => String(n).padStart(2, "0");
+      const data = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+      perGiorno.push({ data, bevuto: risposte.has(data) ? risposte.get(data) : null });
+      d.setDate(d.getDate() - 1);
+    }
+    const blocco = bloccoAcqua({ perGiorno, litri: store.regole().salute?.acquaLitriBersaglio ?? 2 });
+    if (blocco) {
+      pezzi.push(blocco);
+      const si = perGiorno.filter((g) => g.bevuto).length;
+      const risposti = perGiorno.filter((g) => g.bevuto !== null).length;
+      contenuto.push(`acqua ${si}/${risposti}`);
     }
   }
 
