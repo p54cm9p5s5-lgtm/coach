@@ -182,7 +182,14 @@ export function valida(dati, libreria) {
 
   const inv = dati.inventario;
   if (inv) {
-    if (!(inv.barra >= 0)) problemi.push("Peso della barra non valido nell'inventario.");
+    // La barra è facoltativa quanto i manubri: chi si allena con soli manubri
+    // fissi non ha nessun bilanciere, e le istruzioni per chi scrive il brief
+    // gli dicono proprio di omettere barra e dischi. Pretenderla faceva
+    // respingere in blocco un inventario legittimo, con un messaggio che
+    // parlava di un attrezzo che quella persona non possiede.
+    if (inv.barra != null && !(inv.barra >= 0)) {
+      problemi.push("Peso della barra non valido nell'inventario.");
+    }
     for (const [peso, q] of Object.entries(inv.dischi || {})) {
       if (!(Number(peso) > 0) || !(q >= 0)) problemi.push(`Disco non valido: ${peso} kg ×${q}.`);
       if (q % 2 !== 0) problemi.push(`Disco ${peso} kg in numero dispari (${q}): non è montabile a coppie.`);
