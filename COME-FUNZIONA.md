@@ -721,13 +721,24 @@ Sono la parte che conta più delle funzioni.
   dato non c'è, scrive «nessun dato». L'unica eccezione è il sonno, per un
   motivo vero: una notte comincia la sera prima.
 - **La giornata in corso non entra nelle medie**, perché entrerebbe come un
-  giorno fiacco e farebbe sembrare che stai peggiorando.
+  giorno fiacco e farebbe sembrare che stai peggiorando. Il sonno fa eccezione:
+  una notte è finita stamattina, non è a metà come la giornata, e nella media ci
+  entra.
 - **Non sovrascrive in silenzio.** Quando un giorno già chiuso cambia di molto,
   lo dice e spiega come tornare indietro.
 - **Non lascia un bottone spento senza spiegare cosa manca.**
 - **Non tratta pressione arteriosa né ECG**, non interpreta dati clinici, non
   calcola fabbisogni calorici e non dà indicazioni alimentari.
-- **Non manda niente fuori dal telefono.**
+- **Non manda fuori dal telefono nessun tuo dato.** Allenamenti, misure, foto,
+  sonno, sigarette: restano nell'archivio del telefono e non esistono altrove.
+  Non c'è nessun server, nessun account, nessuna statistica raccolta.
+  Le uniche richieste che escono sono per i **video di YouTube**: la copertina,
+  che parte solo quando il riquadro del video entra davvero sullo schermo, e il
+  player, solo se lo tocchi. Non portano con sé niente di tuo, ma dicono a
+  YouTube che qualcuno dal tuo indirizzo sta guardando quel video. Senza rete
+  non parte nemmeno quella: la copertina sparisce da sola e tutto il resto
+  funziona uguale. Misurato: aprire una scheda esercizio produce **una sola**
+  richiesta fuori dal telefono, e nessun'altra schermata dell'app ne produce.
 
 ---
 
