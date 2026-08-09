@@ -22,17 +22,26 @@
      scritta così non si legge. Qui sono gli stessi colori scuriti quanto basta
      per stare sopra 4,5:1 sia sul bianco sia sul grigio delle schede, hue
      invariata. Il tema scuro e il nero-lime restano com'erano: là il contrasto
-     era già alto. */
-  --accent: #006be0;
+     era già alto.
+     Il conto va fatto anche sul grigio traslucido dei tasti secondari e delle
+     frecce del calendario — rgba(118,118,128,0.12) sul bianco, che è più scuro
+     del grigio delle schede: lì #006be0 si fermava a 4,4:1. Il fondo peggiore è
+     quel grigio sopra il grigio di pagina — (227,227,233) — e su quello questo
+     blu sta a 4,7:1; sul bianco arriva a 6,0:1. */
+  --accent: #005fcc;
   /* Due usi opposti dello stesso colore: come TESTO deve staccare dal fondo
      della pagina, come SFONDO di un bottone deve reggere il bianco sopra. Nel
      tema chiaro basta un colore solo; nel tema scuro no, e per questo esiste
      «--accent-pieno». */
   --accent-pieno: var(--accent);
   --su-accent: #ffffff;
-  --red: #de0c00;
-  --green: #217f39;
-  --orange: #a25f00;
+  /* Stesso conto dell'accento: il fondo peggiore è il grigio traslucido dei
+     tasti (227,227,233), non la pagina. Tarati sulla pagina si fermavano tutti
+     e tre a 3,9:1 — e il tasto rosso «annulla l'allenamento», che sta proprio
+     su quel grigio, era il caso peggiore. */
+  --red: #c40b00;
+  --green: #1c6e31;
+  --orange: #8a5100;
   /* Il giallo esiste solo per il contatore delle sigarette: la soglia di mezzo
      va vista subito, e fra verde e arancione non c'era niente. Lì il numero
      riempie lo schermo — testo grande, soglia 3:1 — e resta più chiaro degli
@@ -104,8 +113,11 @@
     /* Il blu di sistema #0a84ff scritto sopra una scheda chiara dà 3,8:1, e il
        bianco scritto sopra di lui 3,6:1: nessuno dei due arriva a 4,5. Come
        testo va un filo più chiaro, come sfondo un filo più scuro — e sono due
-       colori diversi perché tirano da parti opposte. */
-    --accent: #2b94ff;
+       colori diversi perché tirano da parti opposte.
+       Anche qui il fondo peggiore non è la scheda ma il grigio traslucido dei
+       tasti sopra la scheda — (50,50,54) — dove #2b94ff si fermava a 4,2:1.
+       Questo sta a 5,0:1 lì, 6,4:1 sulla scheda, 8,2:1 sul nero. */
+    --accent: #4da6ff;
     --accent-pieno: #0068d6;
     --su-accent: #ffffff;
     --red: #ff453a;
