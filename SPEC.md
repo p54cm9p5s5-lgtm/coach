@@ -1,7 +1,7 @@
 # Coach — Specifica funzionale
 
 Documento di progetto. Fonte di verità per la costruzione dell'app.
-Ultimo aggiornamento: 3 agosto 2026.
+Ultimo aggiornamento: 9 agosto 2026 (modello dati e §2 riallineati al codice).
 
 ---
 
@@ -46,7 +46,7 @@ resta nella conversazione con Claude.
     importazione e caricamento del brief non conta.
 - **Offline:** service worker, tutto funzionante senza rete tranne i video YouTube.
 - **Schermo:** Wake Lock attivo per l'intera durata della Modalità Seduta.
-- **Test locale:** `python3 -m http.server` + browser.
+- **Test locale:** `python3 tools/serve.py 8787` (serve senza cache) + browser.
 
 ### Limiti accettati e dichiarati
 - Nessuna notifica push (i promemoria restano in Promemoria iOS).
@@ -65,16 +65,21 @@ resta nella conversazione con Claude.
   Accento: blu di sistema. Nessuna palette personalizzata.
 - Struttura: liste raggruppate in stile Impostazioni, `border-radius` 10px,
   separatori sottili, header grandi (Large Title) che si contraggono allo scroll.
-- Navigazione: **tab bar in basso, 5 voci** — Oggi · Seduta · Corpo · Salute · Storico.
-  Impostazioni raggiungibile dall'header di Oggi.
+- Navigazione: **tab bar in basso, 7 voci** — Home · Oggi · Corpo · Salute · Fumo ·
+  Acqua · Storico. Fumo e Acqua compaiono solo per chi le dichiara nel brief:
+  chi non conta le sigarette non vede la scheda, e viceversa per l'acqua.
+  Impostazioni raggiungibile dall'header di Home.
 - Safe area rispettata (notch e barra Home). Nessuno scroll orizzontale mai.
-- Tocco: target minimo 44px; in Modalità Seduta minimo 64px.
+- Tocco: target minimo 44px. In Modalità Seduta il tasto che porta avanti è a
+  54px e quelli di servizio a 44px, separati da un fosso di 10px: con i tasti
+  attaccati un tocco un po' alto su «Serie completata» finiva su «Salta
+  esercizio», e il polpastrello è largo quasi un centimetro.
 
 **Eccezione — Modalità Seduta.** Esce dallo stile "lista" e va a schermo pieno:
 un'informazione dominante per volta, numeri grandi (carico 52pt, timer 56pt in un
 anello di avanzamento), tasto principale ancorato in basso, tab bar nascosta, e
 una barra sottile che mostra a che punto è la seduta.
-I pulsanti restano contenuti: 50px il principale, 38px i secondari.
+I pulsanti restano contenuti: 54px il principale, 44px i secondari (vedi §2).
 Il contenuto dominante **alterna** secondo il momento:
 
 | Momento | Cosa domina |
@@ -116,16 +121,24 @@ resta a 0 serie, come nel brief.
 
 ### 3.2 Allenamento
 ```
-Seduta           id, data, tipoProgrammato, tipoEseguito, stato (inCorso|completata|interrotta),
-                 oraInizio, oraFine, riscaldamento { fatto, modalita, note },
-                 cardio { eseguito, kmh, durataMin, note }, notaGenerale
-SerieLog         id, sedutaId, esercizioId, numero, carico, ripFatte, ripTarget,
-                 tsFineSerie, recuperoRealeSec, recuperoTargetSec
-EsercizioLog     id, sedutaId, esercizioId, ordine,
+Seduta           id, data, tipoId, tipoNome, tipoProgrammatoId,
+                 stato (inCorso|completata), oraInizio, oraFine, oraInizioLavoro,
+                 durataLavoroSec, riscaldamento { fatto, modalita, note },
+                 cardio { previsto, eseguito, kmh, durataMin, durataPrevistaMin,
+                          finitoIl, saltatoMotivo, note, soglie },
+                 stretching { fatto }, previstiElenco[], progresso, completezza,
+                 notaGenerale
+SerieLog         id, sedutaId, esercizioId, numero, carico, caricoTarget,
+                 ripFatte, ripTarget, aTempo, tsInizioSerie, tsFineSerie,
+                 recuperoRealeSec, recuperoTargetSec
+EsercizioLog     id, sedutaId, esercizioId, ordine, punteggio,
                  rpe (1–10, riferito all'ultima serie), tecnica (1–10),
-                 dolorePolso: bool, dolorePolsoQuando (durante|dopo),
-                 dolorePolsoIntensita (lieve|medio|forte),
+                 dolori[] { id, nome, quando (durante|dopo),
+                            intensita (lieve|medio|forte) },
                  nota, saltato { motivo (tempo|dolore|attrezzo|altro), nota }
+
+I punti dolenti li dichiara il brief (`regole.dolori`), uno per uno: non sono
+fissi. I campi `dolorePolso*` restano solo per leggere gli archivi vecchi.
 ```
 `nota` vuota = **nessun segnale**, esplicito, non campo dimenticato:
 il questionario è obbligatorio per avanzare.
@@ -135,18 +148,22 @@ il questionario è obbligatorio per avanzare.
 Misura           id, data, tipo, valore, condizioniStandard: bool
                  tipo ∈ peso · vitaOmbelico (primaria) · vitaStretta · fianchi ·
                         petto · bicipiteRilassato · coscia
-Foto             id, data, posa (fronte|schiena|profiloDx|profiloSx), blob,
-                 checklist { mattina, digiuno, dopoBagno, stessaLuce, bracciaLungoFianchi }
+Foto             id, data, posa (fronte|profiloDx|schiena|profiloSx),
+                 immagine (data URL, NON un Blob: il backup è JSON e un Blob
+                           dentro JSON sparirebbe senza dire niente),
+                 checklist { protocollo, riferimento?, daLibreria? }
 ```
 
 ### 3.4 Salute (importata)
 ```
 GiornoSalute     data (PK), presente: bool, kcalAttive, obiettivoKcal, passi,
-                 minutiEsercizio, fcRiposo
+                 minutiEsercizio, minutiInPiedi, pianiSaliti, distanzaKm, fcRiposo
 Notte            data (PK, notte del), presente: bool, durataMin,
                  profondoMin, remMin, vegliaMin, risvegli
-AllenamentoWatch uuid (PK), inizio, fine, durataSec, kcalAttive, kcalTotali,
-                 fcMedia, fcMax, tipo, sedutaId (collegamento manuale o automatico per orario)
+AllenamentoWatch uuid (PK), inizio, durataSec, kcalAttive, kcalTotali,
+                 fcMedia, fcMax, tipo,
+                 sedutaId (collegato per DATA, solo quando quel giorno c'è una
+                           sola seduta chiusa; con due resta scollegato)
 ```
 **Invariante critica:** `presente: false` ≠ valore 0. Un giorno senza dati è
 escluso dalle medie e dal conteggio delle finestre, e segnalato.
@@ -241,7 +258,10 @@ recuperi reali su tutti gli esercizi, densità della seduta, tempo per esercizio
   riscrive i dati di Salute, **non tocca mai** note, RPE, carichi, misure manuali.
 - Tabelle movimento e sonno equivalenti a §9-bis e §9-ter, calcolate non digitate.
 - Stato delle finestre di 3 settimane con giorni mancanti evidenziati.
-- Collegamento allenamento Watch ↔ seduta per orario, correggibile a mano.
+- Collegamento allenamento Watch ↔ seduta **per data**, e solo quando quel
+  giorno c'è una sola seduta chiusa: con due non ne sceglie una a caso, lascia
+  «non collegato». Non è correggibile a mano; il collegamento si rifà da solo
+  quando la situazione diventa non ambigua.
 
 ### 4.5 Storico e progressione
 - Per esercizio: carico, ripetizioni, RPE, tecnica nel tempo.
