@@ -382,6 +382,12 @@ async function avvia() {
   const seCambiatoGiorno = () => {
     const adesso = new Date().toDateString();
     if (adesso === giornoDisegnato) return;
+    // Dentro un allenamento no. Ridisegnare rifà la schermata da capo e quello
+    // che hai scritto e non ancora salvato — la nota del questionario, il
+    // motivo di un salto — sparisce sotto le dita. E non serve a niente: la
+    // seduta ha già la sua data, quella di quando è cominciata, e non cambia a
+    // mezzanotte. Il giorno si aggiorna appena esci dall'allenamento.
+    if (rottaCorrente === "seduta") return;
     giornoDisegnato = adesso;
     ridisegna();
   };
