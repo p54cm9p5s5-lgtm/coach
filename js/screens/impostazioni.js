@@ -528,7 +528,11 @@ async function esportaBackup(ridisegna) {
 
 async function svuotaSalute(ridisegna) {
   const giorni = (await store.giorniSalute()).length;
-  const notti = (await store.notti()).length;
+  const tutteLeNotti = await store.notti();
+  // Le notti scritte a mano non le cancella: vanno tolte dal conto, se no il
+  // foglio annuncia un numero e ne tocca un altro.
+  const aMano = tutteLeNotti.filter((n) => n.fonte === "mano").length;
+  const notti = tutteLeNotti.length - aMano;
   if (!giorni && !notti) {
     toast("Non c'è niente da cancellare: nessun dato importato da Salute.");
     return;
@@ -537,6 +541,9 @@ async function svuotaSalute(ridisegna) {
     titolo: "Cancellare i dati importati da Salute?",
     testo:
       `Vengono cancellati ${giorni} ${giorni === 1 ? "giorno" : "giorni"} di movimento e ${notti} ${notti === 1 ? "notte" : "notti"} di sonno.\n\n` +
+      (aMano
+        ? `${aMano === 1 ? "La notte che hai scritto tu resta" : `Le ${aMano} notti che hai scritto tu restano`}: reimportare non ${aMano === 1 ? "la" : "le"} riporterebbe, tornerebbe il numero sbagliato dell'orologio.\n\n`
+        : "") +
       "Allenamenti, misure, foto e programma NON si toccano.\n\n" +
       "Poi riesegui il comando rapido e reimporta: tornano gli ultimi 30 giorni. " +
       "Quello che è più vecchio di 30 giorni non si può più rileggere e va perso.",
