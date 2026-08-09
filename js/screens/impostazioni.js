@@ -555,7 +555,20 @@ async function svuotaSalute(ridisegna) {
     opzioni: [{ etichetta: "Cancella e rileggo", valore: "si", stile: "danger" }],
   });
   if (conferma !== "si") return;
-  await store.svuotaSalute();
+  // Anche qui: se l'archivio non risponde, senza rete il tocco non faceva
+  // niente e il messaggio «cancellati» non arrivava mai — impossibile capire
+  // se erano stati cancellati o no.
+  try {
+    await store.svuotaSalute();
+  } catch (e) {
+    await chiedi({
+      titolo: "Cancellazione non riuscita",
+      testo: `${e.message}\n\nI dati sono rimasti dov'erano: non è stato cancellato niente a metà.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
+    });
+    return;
+  }
   toast("Dati salute cancellati. Ora reimporta col comando rapido.");
   await ridisegna();
 }
@@ -722,8 +735,12 @@ async function azzera(ridisegna) {
   // decisione presa una volta e messa dove due tocchi non possano disfarla.
   // «Elimina tutti i dati» era rimasta l'unica strada per annullarla senza
   // dirlo, e le due strade del ripristino sono già protette allo stesso modo.
-  const tettoPrima = await store.tettoFumoDichiarato();
   try {
+    // Anche la lettura del tetto sta dentro: legge l'archivio, e se l'archivio
+    // non risponde falliva qui fuori — l'errore usciva dal gestore e il tocco
+    // su «Elimina definitivamente» non faceva assolutamente niente, senza
+    // nemmeno un messaggio.
+    const tettoPrima = await store.tettoFumoDichiarato();
     await store.db.svuotaTutto();
     await store.proteggiTettoFumo(tettoPrima);
   } catch (e) {
