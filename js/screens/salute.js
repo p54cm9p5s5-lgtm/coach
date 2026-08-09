@@ -77,6 +77,10 @@ export async function render({ ridisegna }) {
 
   const giorni = await store.giorniSalute();
   const notti = await store.notti();
+  // Gli allenamenti dell'orologio sono dati importati quanto gli altri: senza
+  // contarli qui, un archivio che ne aveva soltanto quelli si presentava come
+  // «nessun dato importato» e non c'era modo di vederli.
+  const daWatch = await store.db.count("allenamentiWatch");
   const imp = await store.impostazioni();
 
   // Un solo periodo per tutta la schermata e per la Home: ogni selettore lo
@@ -94,7 +98,7 @@ export async function render({ ridisegna }) {
     };
   };
 
-  if (!giorni.length && !notti.length) {
+  if (!giorni.length && !notti.length && !daWatch) {
     aggiungi(wrap,
       h(
         "div.empty",

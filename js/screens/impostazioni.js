@@ -533,18 +533,23 @@ async function svuotaSalute(ridisegna) {
   // foglio annuncia un numero e ne tocca un altro.
   const aMano = tutteLeNotti.filter((n) => n.fonte === "mano").length;
   const notti = tutteLeNotti.length - aMano;
-  if (!giorni && !notti) {
+  // Anche gli allenamenti letti dall'orologio vengono cancellati: vanno contati
+  // qui, se no il foglio annuncia meno di quello che tocca.
+  const daWatch = await store.db.count("allenamentiWatch");
+  if (!giorni && !notti && !daWatch) {
     toast("Non c'è niente da cancellare: nessun dato importato da Salute.");
     return;
   }
   const conferma = await chiedi({
     titolo: "Cancellare i dati importati da Salute?",
     testo:
-      `Vengono cancellati ${giorni} ${giorni === 1 ? "giorno" : "giorni"} di movimento e ${notti} ${notti === 1 ? "notte" : "notti"} di sonno.\n\n` +
+      `Vengono cancellati ${giorni} ${giorni === 1 ? "giorno" : "giorni"} di movimento e ${notti} ${notti === 1 ? "notte" : "notti"} di sonno` +
+      (daWatch ? `, e ${daWatch} ${daWatch === 1 ? "allenamento letto" : "allenamenti letti"} dall'orologio` : "") +
+      ".\n\n" +
       (aMano
         ? `${aMano === 1 ? "La notte che hai scritto tu resta" : `Le ${aMano} notti che hai scritto tu restano`}: reimportare non ${aMano === 1 ? "la" : "le"} riporterebbe, tornerebbe il numero sbagliato dell'orologio.\n\n`
         : "") +
-      "Allenamenti, misure, foto e programma NON si toccano.\n\n" +
+      "Gli allenamenti che hai registrato nell'app, le misure, le foto e il programma NON si toccano.\n\n" +
       "Poi riesegui il comando rapido e reimporta: tornano gli ultimi 30 giorni. " +
       "Quello che è più vecchio di 30 giorni non si può più rileggere e va perso.",
     opzioni: [{ etichetta: "Cancella e rileggo", valore: "si", stile: "danger" }],
