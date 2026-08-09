@@ -882,7 +882,12 @@ async function menuSeduta() {
       // quando il programma non lo chiede faceva comparire una schermata di
       // cardio inventata dal nulla. E non si offre di andare dove sei già: una
       // voce che non fa niente sembra una voce che non funziona.
-      ...(S.sed.cardio?.previsto && fase !== "cardio" ? [{ etichetta: "Salta al cardio", valore: "cardio" }] : []),
+      // A cardio già registrato «salta al» è falso: il cardio l'hai fatto, e
+      // quella schermata serve semmai a rifarlo. La voce resta (serve a
+      // correggere una camminata sbagliata) ma dice quello che fa davvero.
+      ...(S.sed.cardio?.previsto && fase !== "cardio"
+        ? [{ etichetta: S.sed.cardio?.eseguito ? "Torna al cardio" : "Salta al cardio", valore: "cardio" }]
+        : []),
       ...(fase !== "stretching" ? [{ etichetta: "Vai allo stretching", valore: "stretching" }] : []),
       ...(fase !== "fine" ? [{ etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" }] : []),
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
