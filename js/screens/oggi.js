@@ -754,11 +754,15 @@ async function bloccoCalendario(vaiA, ridisegna) {
     if (data > oggi) continue;
     for (const a of voci) {
       const prec = ultimaVolta.get(a.testo);
-      if (!prec || data > prec.data) ultimaVolta.set(a.testo, { data, tipo: a.tipo });
+      if (!prec || data > prec.data) ultimaVolta.set(a.testo, { data, tipo: a.tipo, risolto: a.risolto });
     }
   }
+  // Un arretrato recuperato dopo — la pesata di giovedì fatta venerdì — resta
+  // segnato sul calendario ma non si rinfaccia qui: qui c'è quello che manca
+  // adesso. Prima restava scritto «in ritardo» per tutta la settimana, fino al
+  // giovedì successivo, con la misura già fatta.
   const inRitardo = [...ultimaVolta]
-    .filter(([, v]) => v.tipo === "scaduto")
+    .filter(([, v]) => v.tipo === "scaduto" && !v.risolto)
     .map(([testo]) => testo);
 
   return h(
