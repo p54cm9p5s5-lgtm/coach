@@ -156,7 +156,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       // in un riquadro a più righe e spezzava la tabella del coach.
       const motivo = `${inParole(log.saltato.motivo, MOTIVI_ESERCIZIO)}${log.saltato.nota ? `: ${String(log.saltato.nota).replace(/\s*\n+\s*/g, " · ")}` : ""}`;
       if (!righeSerie.length) {
-        righe.push([nome, "—", "—", "—", `NON ESEGUITO (${motivo})`]);
+        righe.push([nome, "—", "—", "—", "—", `NON ESEGUITO (${motivo})`]);
         continue;
       }
       // Interrotto a metà: le serie già fatte restano, altrimenti sparirebbe
@@ -167,13 +167,14 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
         c.carico,
         c.serie,
         log?.rpe != null ? String(log.rpe) : "non registrato",
+        log?.tecnica != null ? `${num(log.tecnica)}/10` : "non registrata",
         `INTERROTTO dopo ${righeSerie.length} ${righeSerie.length === 1 ? "serie" : "serie"} (${motivo})`,
       ]);
       continue;
     }
 
     if (!righeSerie.length && !log) {
-      righe.push([nome, "—", "—", "—", "NON INIZIATO (previsto dal programma)"]);
+      righe.push([nome, "—", "—", "—", "—", "NON INIZIATO (previsto dal programma)"]);
       continue;
     }
 
@@ -181,7 +182,6 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
 
     const note = [];
     for (const d of doloriDi(log)) note.push(`DOLORE ${d.nome.toUpperCase()} ${d.intensita || ""} ${d.quando || ""}`.trim());
-    if (log?.tecnica != null) note.push(`tecnica ${num(log.tecnica)}/10`);
     // Gli a capo dentro una cella spezzerebbero la tabella a formato fisso che
     // il coach si aspetta: diventano separatori.
     if (log?.nota) note.push(String(log.nota).replace(/\s*\n+\s*/g, " · "));
@@ -191,6 +191,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
       c.carico,
       c.serie,
       log?.rpe != null ? String(log.rpe) : "non registrato",
+      log?.tecnica != null ? `${num(log.tecnica)}/10` : "non registrata",
       note.join(" · ") || "—",
     ]);
   }
@@ -327,7 +328,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
   return [
     `SEDUTA — ${dataBreve(seduta.data)} — Giorno: ${seduta.tipoNome}`,
     "",
-    tabella(["Esercizio", "Carico", "Serie x Rip", "RPE", "Nota"], righe),
+    tabella(["Esercizio", "Carico", "Serie x Rip", "RPE", "Tecnica", "Nota"], righe),
     "",
     riga(
       "Recuperi reali (cronometrati dall'app)",
