@@ -90,6 +90,19 @@ export function valida(dati, libreria) {
         problemi.push(
           `Blocco "${lettera}" in ${dove}: gli esercizi non sono di seguito. Un blocco si fa attaccato, quindi vanno scritti uno dopo l'altro.`
         );
+      } else {
+        // Le serie di un blocco sono i suoi GIRI: se i compagni ne dichiarano
+        // un numero diverso, «giro 2 di 3» vuol dire due cose diverse nella
+        // stessa coppia, e uno dei due finisce prima lasciando l'altro a
+        // girare da solo. Le istruzioni per chi scrive il brief lo chiedono
+        // già; era l'unica delle tre regole del blocco che l'app non
+        // controllava, e un brief così veniva accettato in silenzio.
+        const serie = [...new Set(pos.map((i) => giorno.esercizi[i]?.serie))];
+        if (serie.length > 1) {
+          problemi.push(
+            `Blocco "${lettera}" in ${dove}: gli esercizi hanno un numero di serie diverso (${serie.join(", ")}). Le serie di un blocco sono i suoi giri e devono essere uguali.`
+          );
+        }
       }
     }
     if (!giorno.id || !giorno.nome) problemi.push("Un giorno dello split è senza id o nome.");
