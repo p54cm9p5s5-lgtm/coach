@@ -379,4 +379,7 @@ appartiene al repository pubblico.
   Il modello dati lascia lo spazio per aggiungerli in seguito senza rifare niente.
 - Non interpreta alcun dato clinico: mostra numeri, nessuna diagnosi.
 - Non calcola fabbisogni calorici né dà indicazioni alimentari.
-- Non manda dati fuori dal telefono.
+- Non manda dati fuori dal telefono. Le uniche richieste in uscita sono verso
+  YouTube: la copertina di un video all'apertura della scheda di un esercizio e
+  il player solo su tocco. Non trasportano dati dell'utente; senza rete non
+  partono e l'app funziona lo stesso.
