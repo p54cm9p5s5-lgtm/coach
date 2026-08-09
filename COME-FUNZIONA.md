@@ -529,13 +529,23 @@ testo che l'app importa. Formato:
 
 ```
 COACH-DATI v1
+FINESTRA 2026-07-06 2026-08-04
 GIORNO 2026-08-04 passi=… kcal=… obiettivo=… esercizio=… inpiedi=… piani=… km=… fc=…
 NOTTE  2026-08-04 durata=… profondo=… rem=… veglia=… risvegli=…
-ALLENAMENTO … / FINESTRA … / AGENDA …
+FASE   2026-08-03 23:14 2026-08-04 00:02 Core
+ALLENAMENTO 2026-08-04 uuid=… inizio=18:30 durata=… kcal=… kcaltot=… fcmedia=… fcmax=… tipo=…
+AGENDA 2026-08-05 titolo=Gambe e core nota=…
 ```
 
 Tutti i campi sono facoltativi: quelli che mancano restano «non registrato», mai
-zero.
+zero. Le unità: `durata` è in **secondi** su `ALLENAMENTO` e in **minuti** su
+`NOTTE`; `inpiedi` sono minuti (chi ha le ore usa `inpiediore`); la distanza
+si può scrivere in `km` o in `metri`; `fc` su `GIORNO` è la frequenza a riposo,
+su `ALLENAMENTO` è la media dell'allenamento (si può scrivere anche `fcmedia`).
+
+Un campo che l'app non conosce — `fcmed` invece di `fcmedia`, `step` invece di
+`passi` — non viene letto, e il riepilogo dell'import **lo dice**: un errore di
+battitura nel comando rapido si scopre solo così.
 
 **Un'avvertenza che vale la pena conoscere.** Il comando rapido, se non filtra
 l'origine, somma i campioni di iPhone **e** Apple Watch: passi, distanza e piani
