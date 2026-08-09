@@ -96,6 +96,12 @@ export function carichoPiuVicino(target, verso = 0, inv = INVENTARIO_DEFAULT) {
 
 export function descriviDischi(totale, grezzo = INVENTARIO_DEFAULT) {
   const inv = completa(grezzo);
+  // Chi si allena in palestra scrive solo i manubri fissi e omette barra e
+  // dischi: le istruzioni per il brief glielo dicono. Senza quei due dati
+  // l'app non sa cosa si monta, e diceva «bilanciere scarico (0 kg)» — una
+  // frase su un attrezzo di cui non sa niente. Meglio non dire niente: la
+  // schermata mostra comunque il carico previsto, che è il dato che serve.
+  if (!inv.barra && !Object.keys(inv.dischi).length) return null;
   const c = combinazioneEsatta(totale, inv);
   if (!c) return null;
   if (!c.perLato.length) return `bilanciere scarico (${inv.barra} kg)`;
