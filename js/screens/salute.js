@@ -901,6 +901,9 @@ function rigaCorrezioneNotte(notti, oggiIso, ridisegna) {
       const esito = h("p", {
         style: "margin:10px 16px 0;min-height:34px;font-size:13px;line-height:1.3;color:var(--label-secondary);text-align:center",
       });
+      // Due tasti diversi perché sono due cose diverse: rimettere il dato
+      // dell'orologio si può solo se quel dato c'è. Quando non c'è, togliere la
+      // correzione lascia la notte senza niente, e il tasto lo deve dire.
       const scorda = h("button.btn.secondary", { style: "display:none" }, "Torna al dato dell'orologio");
 
       const mostra = () => {
@@ -924,6 +927,10 @@ function rigaCorrezioneNotte(notti, oggiIso, ridisegna) {
                 : "";
         esito.textContent = `Dormito: ${quanto}.${prima}`;
         scorda.style.display = n?.fonte === "mano" ? "" : "none";
+        scorda.textContent =
+          n?.orologio?.durataMin != null
+            ? `Torna al dato dell'orologio (${durataUmana(n.orologio.durataMin * 60)})`
+            : "Togli la correzione (l'orologio non ha un dato)";
       };
       campoData.addEventListener("input", mostra);
       aLetto.addEventListener("input", mostra);
@@ -931,9 +938,13 @@ function rigaCorrezioneNotte(notti, oggiIso, ridisegna) {
       setTimeout(mostra, 0);
 
       scorda.onclick = async () => {
-        await store.scordaCorrezioneNotte(campoData.value);
+        const esitoScorda = await store.scordaCorrezioneNotte(campoData.value);
         close();
-        toast("Rimesso il dato dell'orologio.");
+        toast(
+          esitoScorda === "orologio"
+            ? "Rimesso il dato dell'orologio."
+            : "Correzione tolta: per quella notte non resta nessun dato."
+        );
         await ridisegna();
       };
 

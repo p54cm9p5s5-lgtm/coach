@@ -1751,6 +1751,10 @@ export async function importaSalute(pacchetto) {
     if (prec?.fonte === "mano") {
       conteggio.nottiAMano = (conteggio.nottiAMano || 0) + 1;
       conteggio.notti = nottiViste.size;
+      // La notte tua resta la tua, ma quella dell'orologio si tiene da parte:
+      // «torna al dato dell'orologio» deve avere un dato a cui tornare. Prima
+      // l'import la scartava e quel tasto finiva per cancellare la notte.
+      await db.put("notti", { ...prec, orologio: soloDatiNotte(n) });
       continue;
     }
     await db.put("notti", {
@@ -2521,6 +2525,20 @@ export async function notti() {
  * sei andato a letto e quando ti sei svegliato, non quanto REM hai fatto.
  * Meglio una durata giusta senza fasi che una durata falsa con le fasi.
  */
+/** I soli campi di una notte: quello che serve per rimetterla com'era. */
+function soloDatiNotte(n) {
+  if (!n) return null;
+  return {
+    presente: true,
+    durataMin: n.durataMin ?? null,
+    profondoMin: n.profondoMin ?? null,
+    remMin: n.remMin ?? null,
+    vegliaMin: n.vegliaMin ?? null,
+    risvegli: n.risvegli ?? null,
+    inizio: n.inizio ?? null,
+  };
+}
+
 export async function correggiNotte(data, { aLetto, sveglio, nota = null } = {}) {
   const oraValida = (x) => typeof x === "string" && /^\d{2}:\d{2}$/.test(x);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data))) throw new Error("Serve il giorno della notte.");
@@ -2537,6 +2555,11 @@ export async function correggiNotte(data, { aLetto, sveglio, nota = null } = {})
   if (!(minuti > 0)) throw new Error("Le due ore non tornano: controlla quale viene prima.");
   if (minuti > 20 * 60) throw new Error("Più di venti ore di sonno: probabilmente una delle due ore è sbagliata.");
   const p = (n) => String(n).padStart(2, "0");
+  // Quello che diceva l'orologio non si butta: si mette da parte, così togliere
+  // la correzione può davvero rimettere il dato di prima. Correggere due volte
+  // la stessa notte non deve far perdere l'originale.
+  const prec = await db.get("notti", data);
+  const orologio = prec?.fonte === "mano" ? prec.orologio ?? null : soloDatiNotte(prec);
   const rec = {
     data,
     presente: true,
@@ -2550,18 +2573,34 @@ export async function correggiNotte(data, { aLetto, sveglio, nota = null } = {})
     inizio: `${inizio.getFullYear()}-${p(inizio.getMonth() + 1)}-${p(inizio.getDate())}T${aLetto}`,
     nota,
     fonte: "mano",
+    orologio,
     correttoIl: new Date().toISOString(),
   };
   await db.put("notti", rec);
   return rec;
 }
 
-/** Toglie la correzione: la notte torna a quella dell'orologio, se c'è. */
+/**
+ * Toglie la correzione. Se il dato dell'orologio era stato messo da parte lo
+ * rimette; se non c'è mai stato, la notte sparisce — e chi chiama deve poterlo
+ * dire, perché «rimesso il dato dell'orologio» su una notte che l'orologio non
+ * ha mai registrato è falso.
+ * @returns "orologio" | "vuoto" | false (nessuna correzione da togliere)
+ */
 export async function scordaCorrezioneNotte(data) {
   const n = await db.get("notti", data);
   if (!n || n.fonte !== "mano") return false;
+  if (n.orologio?.durataMin != null) {
+    await db.put("notti", {
+      data,
+      ...n.orologio,
+      fonte: "salute",
+      importatoIl: n.orologio.importatoIl || new Date().toISOString(),
+    });
+    return "orologio";
+  }
   await db.del("notti", data);
-  return true;
+  return "vuoto";
 }
 
 /**
