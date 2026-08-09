@@ -2478,6 +2478,10 @@ export async function svuotaSalute() {
   const aMano = (await db.all("notti")).filter((n) => n.fonte === "mano");
   await db.clearStore("giorniSalute");
   await db.clearStore("notti");
+  // Anche gli allenamenti letti dall'orologio: arrivano da Salute come tutto
+  // il resto e si rileggono allo stesso modo. Restando indietro diventavano
+  // righe orfane, con il collegamento a sedute che intanto potevano cambiare.
+  await db.clearStore("allenamentiWatch");
   for (const n of aMano) {
     const { orologio, ...resto } = n;
     await db.put("notti", resto);
