@@ -299,6 +299,10 @@ export async function render({ ridisegna }) {
 
 function oraDi(ts) {
   const d = new Date(ts);
+  // Una riga senza istante — da un backup vecchio o rovinato — stampava
+  // «NaN:NaN» in mezzo agli orari veri. Un dato che manca si scrive come
+  // mancante, non come un guasto.
+  if (Number.isNaN(d.getTime())) return "—";
   const p = (n) => String(n).padStart(2, "0");
   return `${p(d.getHours())}:${p(d.getMinutes())}`;
 }
