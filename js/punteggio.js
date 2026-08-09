@@ -493,12 +493,18 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
     const rapporto = attesi ? fatti / attesi : 0;
     let quota = sottoBersaglio(rapporto, 1.6);
     let dettaglio = cardio.eseguito ? `${fatti} min su ${attesi}` : "non eseguito";
-    if (cardio.eseguito && soglie.kmhMax != null && cardio.kmh > soglie.kmhMax) {
+    // La velocità si giudica solo se è stata registrata. Senza questo controllo
+    // `null < 5` è vero — null vale zero in un confronto — e un cardio a cui non
+    // avevi segnato la velocità veniva dichiarato «sotto protocollo», con il
+    // trattino al posto del numero: «— km/h sotto protocollo». Un rimprovero
+    // per un dato che non esiste.
+    const velocita = cardio.eseguito && cardio.kmh != null ? cardio.kmh : null;
+    if (velocita != null && soglie.kmhMax != null && velocita > soglie.kmhMax) {
       quota = Math.min(quota, 0.7);
-      dettaglio += ` · ${num(cardio.kmh)} km/h sopra protocollo`;
-    } else if (cardio.eseguito && soglie.kmhMin != null && cardio.kmh < soglie.kmhMin) {
+      dettaglio += ` · ${num(velocita)} km/h sopra protocollo`;
+    } else if (velocita != null && soglie.kmhMin != null && velocita < soglie.kmhMin) {
       quota = Math.min(quota, 0.85);
-      dettaglio += ` · ${num(cardio.kmh)} km/h sotto protocollo`;
+      dettaglio += ` · ${num(velocita)} km/h sotto protocollo`;
     }
     voci.push({ nome: "Cardio", quota, peso: 20, dettaglio });
     if (rapporto < 0.5) tetti.push({ tetto: 60, perche: "cardio quasi non fatto" });
