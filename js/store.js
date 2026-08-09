@@ -279,7 +279,13 @@ export function origineGiorno(iso = isoDate()) {
     }
     // Dentro la finestra letta ma oltre l'ultimo allenamento programmato: il
     // calendario è aggiornato, è il coach che non ha ancora messo niente.
-    if (periodo?.ultimoEvento && iso > periodo.ultimoEvento) {
+    // «Dentro la finestra letta» va verificato davvero: un giorno che nessuna
+    // lettura ha coperto finiva qui lo stesso, e a schermo diventava «il coach
+    // ha programmato fino al …», cioè una cosa che l'app non può sapere di un
+    // giorno che non ha mai guardato. Succede nel buco fra due letture, quando
+    // il coach non ha ancora messo niente dopo l'ultimo allenamento.
+    const letto = FINESTRE_AGENDA.length ? dentroUnaFinestra(iso) : true;
+    if (letto && periodo?.ultimoEvento && iso > periodo.ultimoEvento) {
       return { fonte: "calendario", vuoto: true, oltreProgrammato: true, ultimoEvento: periodo.ultimoEvento };
     }
     // Un giorno che nessuna lettura ha coperto non è «niente sul calendario»:
