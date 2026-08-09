@@ -119,9 +119,16 @@ export function calcolaAttese({
     ...(cadenze || {}),
   };
   const attese = new Map();
-  const aggiungiA = (data, tipo, testo) => {
+  /**
+   * `risolto` distingue due domande diverse che finivano nella stessa risposta:
+   * «quel giorno eri in regola?» — che resta segnata sul calendario, ed è la
+   * costanza — e «manca ancora adesso?», che è quello che dice il piede della
+   * Home. Una pesata fatta venerdì invece che giovedì lascia il giovedì
+   * arretrato per sempre, ma adesso non manca più niente.
+   */
+  const aggiungiA = (data, tipo, testo, risolto = false) => {
     if (!attese.has(data)) attese.set(data, []);
-    attese.get(data).push({ tipo, testo });
+    attese.get(data).push({ tipo, testo, risolto: tipo === "scaduto" ? Boolean(risolto) : false });
   };
 
   // Le misure, le foto e il peso NON dipendono dal calendario: sono il
@@ -137,6 +144,15 @@ export function calcolaAttese({
     return migliore;
   };
 
+  // Come stanno le cose ADESSO: serve a dire se un arretrato è stato recuperato
+  // dopo, anche di un giorno solo.
+  const pesoOra = ultimaEntro(datePeso, ultimoPeso, oggi);
+  const vitaOra = ultimaEntro(dateVita, ultimaVita, oggi);
+  const fotoOra = ultimaEntro(dateFoto, ultimaFoto, oggi);
+  const misuraMancaOra =
+    !pesoOra || !vitaOra || giorniTra(pesoOra, oggi) >= 7 || giorniTra(vitaOra, oggi) >= 7;
+  const fotoMancanoOra = !fotoOra || giorniTra(fotoOra, oggi) >= 7 * (cad.fotoOgniSettimane || 1);
+
   const periodiche = () => {
     const d = parseIso(oggi);
     for (let i = -21; i <= 21; i++) {
@@ -149,7 +165,7 @@ export function calcolaAttese({
         // L'evento chiede DUE misure: basta che una manchi perché sia arretrato.
         const scaduto =
           data <= oggi && (!peso || !vita || giorniTra(peso, data) >= 7 || giorniTra(vita, data) >= 7);
-        aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita");
+        aggiungiA(data, scaduto ? "scaduto" : "misura", "Peso e circonferenza vita", !misuraMancaOra);
       }
       if (g.getDay() === cad.fotoGiornoSettimana) {
         const settimane = Math.round(giorniTra(cad.fotoAncora, iso(g)) / 7);
@@ -157,7 +173,7 @@ export function calcolaAttese({
           const data = iso(g);
           const foto = ultimaEntro(dateFoto, ultimaFoto, data);
           const scaduto = data <= oggi && (!foto || giorniTra(foto, data) >= 7 * cad.fotoOgniSettimane);
-          aggiungiA(data, scaduto ? "scaduto" : "foto", "Set di foto");
+          aggiungiA(data, scaduto ? "scaduto" : "foto", "Set di foto", !fotoMancanoOra);
         }
       }
     }
@@ -209,7 +225,16 @@ export function calcolaAttese({
           : richieste.filter(Boolean).sort()[0] || null;
         const scaduto =
           e.data <= oggi && tipo !== "info" && (!fattoDa || giorniTra(fattoDa, e.data) >= 1);
-        aggiungiA(e.data, scaduto ? "scaduto" : tipo, titolo);
+        // Recuperato dopo: tutto quello che l'evento chiedeva è stato fatto in
+        // un giorno successivo a quello scritto dal coach.
+        const recuperato = [
+          chiedeFoto ? fotoOra : null,
+          chiedePeso ? pesoOra : null,
+          chiedeVita ? vitaOra : null,
+        ]
+          .filter((_, i) => [chiedeFoto, chiedePeso, chiedeVita][i])
+          .every((d) => d && d > e.data);
+        aggiungiA(e.data, scaduto ? "scaduto" : tipo, titolo, recuperato);
       }
     }
   }
