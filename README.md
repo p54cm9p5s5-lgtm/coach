@@ -1,7 +1,10 @@
 # Coach
 
 App personale di allenamento. PWA, nessun build step, nessun server, nessuna dipendenza.
-I dati restano sul dispositivo (IndexedDB) e non vengono inviati da nessuna parte.
+I dati restano sul dispositivo (IndexedDB): nessun account, nessun server, niente
+che venga inviato. Le uniche richieste in uscita sono verso YouTube — la copertina
+di un video quando il riquadro entra sullo schermo, il player solo su tocco — e non
+trasportano dati dell'utente.
 
 Specifica funzionale: [SPEC.md](SPEC.md).
 
@@ -13,6 +16,7 @@ manifest.webmanifest  installazione sulla schermata Home
 sw.js                 service worker (offline + aggiornamenti)
 css/app.css           stile iOS nativo, chiaro/scuro automatico
 js/app.js             avvio e routing
+js/ui.js              mattoni comuni: DOM, fogli, suoni, date
 js/db.js              IndexedDB e backup
 js/store.js           logica di dominio
 js/brief.js           lettura del blocco COACH-DATA dal master brief
@@ -29,7 +33,8 @@ data/riscaldamento.json  protocolli di riscaldamento e stretching per giorno
 tools/icona.py        ritaglia e riquadra l'icona sorgente
 tools/icona-da-immagine.sh  genera le tre misure delle icone
 tools/serve.py        server di sviluppo senza cache
-tools/pubblica.sh     pubblica su GitHub Pages
+tools/pubblica.sh     pubblica su GitHub Pages, con i controlli anti-fuga dati
+tools/passa-file.py   passa i file personali al telefono sulla Wi-Fi di casa
 ```
 
 ## Sviluppo
