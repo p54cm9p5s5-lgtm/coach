@@ -2,13 +2,22 @@
 """Passa i file personali all'iPhone via rete locale, aggirando iCloud.
 
 Serve solo i due file indicati, forzandone il download invece della
-visualizzazione. Va tenuto acceso pochi minuti: i file sono personali e in
-quel lasso di tempo sono raggiungibili da chiunque sia sulla stessa Wi-Fi.
+visualizzazione.
+
+Sono file personali su una rete condivisa, quindi due protezioni che prima
+erano affidate alla memoria di chi lo lancia («tienilo acceso pochi minuti»):
+
+  - l'indirizzo contiene una chiave casuale, diversa a ogni avvio: senza
+    quella si riceve 404, e chi passa sulla stessa Wi-Fi non trova niente
+    nemmeno indovinando la porta;
+  - il server si spegne da solo dopo DURATA_MINUTI, anche se ci si dimentica.
 """
 import http.server
+import secrets
 import socket
 import subprocess
 import sys
+import threading
 from pathlib import Path
 from urllib.parse import quote, unquote
 
@@ -18,11 +27,22 @@ FILE = {
     "brief.md": PRIVATO / "master brief coaching.md",
 }
 PORTA = 8899
+DURATA_MINUTI = 10
+CHIAVE = secrets.token_urlsafe(9)
 
 
 class Consegna(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        nome = unquote(self.path.lstrip("/"))
+        # La query non fa parte del nome del file: «/dati.json?x=1» è la stessa
+        # richiesta di «/dati.json», e senza toglierla finiva in un 404.
+        percorso_pulito = unquote(self.path.split("?", 1)[0]).lstrip("/")
+        parti = percorso_pulito.split("/", 1)
+        if not parti or not secrets.compare_digest(parti[0], CHIAVE):
+            # Nessun indizio a chi non ha la chiave: la stessa risposta sia che
+            # la chiave sia sbagliata sia che il file non esista.
+            self.send_error(404, "File non disponibile")
+            return
+        nome = parti[1] if len(parti) > 1 else ""
         if nome in ("", "index.html"):
             return self.indice()
         percorso = FILE.get(nome)
@@ -76,6 +96,16 @@ if __name__ == "__main__":
     if mancanti:
         sys.exit("File mancanti:\n  " + "\n  ".join(mancanti))
     ip = indirizzo_locale()
-    print(f"Dall'iPhone, stessa Wi-Fi, apri:  http://{ip}:{PORTA}/")
-    print("Ctrl-C per spegnere.\n", flush=True)
-    http.server.ThreadingHTTPServer(("0.0.0.0", PORTA), Consegna).serve_forever()
+    server = http.server.ThreadingHTTPServer(("0.0.0.0", PORTA), Consegna)
+    print(f"Dall'iPhone, stessa Wi-Fi, apri:  http://{ip}:{PORTA}/{CHIAVE}/")
+    print(f"Si spegne da solo fra {DURATA_MINUTI} minuti. Ctrl-C per spegnerlo prima.\n", flush=True)
+
+    def spegni():
+        print(f"\nPassati {DURATA_MINUTI} minuti: spengo. I file non sono più raggiungibili.", flush=True)
+        threading.Thread(target=server.shutdown, daemon=True).start()
+
+    threading.Timer(DURATA_MINUTI * 60, spegni).start()
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()
