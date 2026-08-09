@@ -424,6 +424,10 @@ export async function render({ ridisegna }) {
         piede: "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali.",
       })
     );
+    // L'orologio il sonno lo indovina, e a volte lo sbaglia di ore. Questa è
+    // l'unica strada per rimettere il numero giusto: senza, un errore
+    // dell'Apple Watch restava nello storico per sempre.
+    aggiungi(wrap, rigaCorrezioneNotte(notti, oggiIso, ridisegna));
   }
 
   // ---- sigarette ----
@@ -703,6 +707,14 @@ async function incolla(ridisegna) {
     );
   }
   if (conteggio.notti) righe.push(`${conteggio.notti} ${conteggio.notti === 1 ? "notte" : "notti"} di sonno`);
+  // Una notte che hai corretto tu non viene sovrascritta: se non lo dicessi,
+  // vedresti «importato» e penseresti che il numero dell'orologio è tornato.
+  if (conteggio.nottiAMano) {
+    righe.push(
+      `${conteggio.nottiAMano} ${conteggio.nottiAMano === 1 ? "notte scritta" : "notti scritte"} da te: ` +
+        `${conteggio.nottiAMano === 1 ? "lasciata" : "lasciate"} com'${conteggio.nottiAMano === 1 ? "era" : "erano"}, l'orologio non la sovrascrive`
+    );
+  }
   if (conteggio.allenamenti) righe.push(`${conteggio.allenamenti} ${conteggio.allenamenti === 1 ? "allenamento" : "allenamenti"} dal Watch`);
   if (conteggio.agenda) {
     righe.push(`${conteggio.agenda} ${conteggio.agenda === 1 ? "giorno" : "giorni"} dal calendario`);
@@ -860,3 +872,131 @@ async function istruzioni() {
     )
   );
 }
+
+/**
+ * Correggere a mano una notte che l'orologio ha sbagliato.
+ *
+ * L'Apple Watch il sonno lo deduce: se lo togli, se perde il contatto, se ti
+ * addormenti prima che se ne accorga, registra un pezzo di notte e lo chiama
+ * «la notte». Otto ore diventano tre, e l'ora in cui sei andato a letto —
+ * che pesa da sola sul punteggio — diventa quella in cui l'orologio si è
+ * accorto di te.
+ *
+ * Qui si scrivono le due cose che sai per certo: quando sei andato a letto e
+ * quando ti sei svegliato. Da lì la notte è tua e nessun import la tocca più.
+ */
+function rigaCorrezioneNotte(notti, oggiIso, ridisegna) {
+  const perData = new Map(notti.map((n) => [n.data, n]));
+  const gia = notti.filter((n) => n.fonte === "mano").length;
+
+  const apri = () =>
+    sheet((close) => {
+      let data = oggiIso;
+      const campoData = h("input", { type: "date", value: data, style: STILE_CAMPO });
+      const aLetto = h("input", { type: "time", value: "23:30", style: STILE_CAMPO });
+      const sveglio = h("input", { type: "time", value: "07:30", style: STILE_CAMPO });
+      const esito = h("p", {
+        style: "margin:10px 16px 0;min-height:34px;font-size:13px;line-height:1.3;color:var(--label-secondary);text-align:center",
+      });
+      const scorda = h("button.btn.secondary", { style: "display:none" }, "Torna al dato dell'orologio");
+
+      const mostra = () => {
+        data = campoData.value || oggiIso;
+        const n = perData.get(data);
+        const [hL, mL] = (aLetto.value || "0:0").split(":").map(Number);
+        const [hS, mS] = (sveglio.value || "0:0").split(":").map(Number);
+        let minuti = hS * 60 + mS - (hL * 60 + mL);
+        if (minuti <= 0) minuti += 24 * 60;
+        const quanto = durataUmana(minuti * 60);
+        // Quando la notte è già corretta, il numero in archivio è il TUO: dire
+        // «l'orologio dice» un numero che hai scritto tu è una bugia piccola e
+        // fastidiosa, proprio nel pannello che serve a togliere una bugia.
+        const prima =
+          n?.fonte === "mano" && n.durataMin != null
+            ? ` Adesso è scritta da te: ${durataUmana(n.durataMin * 60)}.`
+            : n?.presente && n.durataMin != null
+              ? ` L'orologio dice ${durataUmana(n.durataMin * 60)}.`
+              : n
+                ? " Per quella notte l'orologio non ha registrato niente."
+                : "";
+        esito.textContent = `Dormito: ${quanto}.${prima}`;
+        scorda.style.display = n?.fonte === "mano" ? "" : "none";
+      };
+      campoData.addEventListener("input", mostra);
+      aLetto.addEventListener("input", mostra);
+      sveglio.addEventListener("input", mostra);
+      setTimeout(mostra, 0);
+
+      scorda.onclick = async () => {
+        await store.scordaCorrezioneNotte(campoData.value);
+        close();
+        toast("Rimesso il dato dell'orologio.");
+        await ridisegna();
+      };
+
+      return h(
+        "div",
+        h("h2", "Correggi una notte"),
+        h(
+          "p",
+          { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+          "La data è quella del RISVEGLIO. Le fasi (profondo, REM, veglia) si perdono: " +
+            "quelle l'orologio le sa e tu no, ma una durata giusta senza fasi vale più di una sbagliata con le fasi."
+        ),
+        h("div.field", h("label", "Notte del risveglio"), campoData),
+        h("div.field", h("label", "A letto"), aLetto),
+        h("div.field", h("label", "Sveglio"), sveglio),
+        esito,
+        h(
+          "div.btn-wrap",
+          h(
+            "button.btn",
+            {
+              onclick: async () => {
+                try {
+                  const r = await store.correggiNotte(campoData.value, {
+                    aLetto: aLetto.value,
+                    sveglio: sveglio.value,
+                  });
+                  close();
+                  toast(`Notte del ${dataBreve(r.data)}: ${durataUmana(r.durataMin * 60)}.`);
+                  await ridisegna();
+                } catch (e) {
+                  esito.textContent = e.message;
+                  esito.style.color = "var(--orange)";
+                }
+              },
+            },
+            "Salva questa notte"
+          ),
+          scorda
+        )
+      );
+    });
+
+  return h(
+    "div.group",
+    h(
+      "div.list",
+      h(
+        "a.row",
+        { href: "#/salute", onclick: (e) => { e.preventDefault(); apri(); } },
+        h(
+          "div.main",
+          h("span.title", "Correggi una notte"),
+          h(
+            "span.sub",
+            gia
+              ? `${gia} ${gia === 1 ? "notte scritta" : "notti scritte"} da te · l'import non le tocca`
+              : "quando l'orologio sbaglia le ore di sonno"
+          )
+        ),
+        h("span.chevron", "›")
+      )
+    )
+  );
+}
+
+const STILE_CAMPO =
+  "border:0;background:var(--fill-tertiary);border-radius:10px;padding:10px 12px;" +
+  "font:inherit;font-size:17px;color:var(--label);min-height:44px";
