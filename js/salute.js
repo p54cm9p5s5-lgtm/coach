@@ -62,6 +62,22 @@ const NUMERO = (v, intero = false) => {
   return Number.isFinite(n) ? n : null;
 };
 
+/**
+ * I campi che ogni tipo di riga sa leggere. Servono a dire quali sono stati
+ * ignorati: senza questo elenco un campo scritto male spariva in silenzio.
+ * AGENDA resta fuori: il suo titolo è testo libero e può contenere di tutto.
+ */
+const CHIAVI_NOTE = {
+  GIORNO: new Set([
+    "kcal", "obiettivo", "passi", "esercizio", "inpiedi", "inpiediore",
+    "piani", "km", "metri", "fc",
+  ]),
+  NOTTE: new Set(["durata", "profondo", "rem", "veglia", "risvegli"]),
+  ALLENAMENTO: new Set([
+    "uuid", "inizio", "durata", "kcal", "kcaltot", "fcmedia", "fc", "fcmax", "tipo",
+  ]),
+};
+
 function coppie(resto) {
   const out = {};
   // chiave=valore, con valore eventualmente tra virgolette
@@ -168,6 +184,20 @@ export function analizza(testo) {
       );
     }
 
+    // Una chiave che l'app non conosce — «fcmed» invece di «fcmedia», «step»
+    // invece di «passi» — veniva letta e buttata via senza una parola: il dato
+    // spariva e il comando rapido sembrava a posto. Un errore di battitura nel
+    // comando si scopre solo così.
+    const note = CHIAVI_NOTE[tipo];
+    if (note) {
+      const sconosciute = Object.keys(c).filter((k) => !note.has(k));
+      if (sconosciute.length) {
+        risultato.avvisi.push(
+          `${data}: ${sconosciute.join(", ")} non ${sconosciute.length === 1 ? "è un campo" : "sono campi"} che l'app conosce per ${tipo}, quindi ${sconosciute.length === 1 ? "è stato ignorato" : "sono stati ignorati"}.`
+        );
+      }
+    }
+
     if (tipo === "GIORNO") {
       // La distanza può arrivare in chilometri o in metri, a seconda di come è
       // impostata l'unità nel comando rapido: si accettano tutte e due invece
@@ -212,7 +242,11 @@ export function analizza(testo) {
         durataSec: NUMERO(c.durata),
         kcalAttive: NUMERO(c.kcal),
         kcalTotali: NUMERO(c.kcaltot),
-        fcMedia: NUMERO(c.fcmedia),
+        // Su una riga GIORNO «fc» è la frequenza a riposo, e chi scrive il
+        // comando rapido la riusa qui per la media dell'allenamento: è la cosa
+        // più naturale da fare. Su un allenamento «fc» non può voler dire
+        // altro, quindi vale come «fcmedia» invece di finire nel nulla.
+        fcMedia: NUMERO(c.fcmedia) ?? NUMERO(c.fc),
         fcMax: NUMERO(c.fcmax),
         tipo: c.tipo || null,
         sedutaId: null,
