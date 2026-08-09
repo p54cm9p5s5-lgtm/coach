@@ -2,9 +2,15 @@
 <html lang="it">
   <head>
     <meta charset="utf-8" />
+    <!-- Niente «maximum-scale=1»: in Safari iOS lo ignora, ma nell'app aggiunta
+         alla schermata Home lo rispetta, e lì toglieva il pizzico per
+         ingrandire. Serviva a evitare lo zoom automatico quando iOS mette a
+         fuoco un campo scritto sotto i 16px: nessun campo dell'app lo è
+         (il più piccolo è a 17px), quindi non serviva a niente e toglieva
+         l'unico modo di ingrandire un numero. -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <title>Coach</title>
     <meta name="description" content="Allenamento e salute, uso personale." />
