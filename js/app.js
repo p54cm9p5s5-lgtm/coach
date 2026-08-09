@@ -357,6 +357,23 @@ async function avvia() {
     return;
   }
 
+  // Rete di sicurezza per i tocchi che non passano da `unaVoltaSola` o da
+  // `azione`, che un messaggio loro ce l'hanno già.
+  //
+  // Quasi ogni tocco finisce in archivio, e se l'archivio non risponde —
+  // un'altra scheda che ha aggiornato l'app, la navigazione privata, lo spazio
+  // finito — l'errore usciva dal gestore e non succedeva NIENTE: nessun
+  // messaggio, il tasto sembrava rotto, e non c'era modo di sapere se il dato
+  // fosse stato salvato. Stessa frase degli altri due, perché per chi legge è
+  // la stessa cosa.
+  window.addEventListener("unhandledrejection", (e) => {
+    const messaggio = e.reason?.message || String(e.reason || "");
+    if (!messaggio) return;
+    e.preventDefault();
+    console.error(e.reason);
+    toast(`Qualcosa non ha funzionato: ${messaggio}`, 5000);
+  });
+
   window.addEventListener("hashchange", ridisegna);
 
   // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta

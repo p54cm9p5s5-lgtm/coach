@@ -63,7 +63,24 @@ export function open() {
       };
       resolve(database);
     };
-    req.onerror = () => reject(req.error);
+    req.onerror = () => {
+      // «The requested version (3) is less than the existing version (4)» è la
+      // frase del browser per una cosa che ha un significato preciso e una
+      // soluzione precisa: un'altra scheda ha già aggiornato l'app, e questa è
+      // rimasta a una versione che quell'archivio non sa più leggere. Detto in
+      // inglese e con due numeri non aiuta nessuno, e finisce a schermo tale e
+      // quale nella pagina «questa schermata non si è aperta».
+      if (req.error?.name === "VersionError") {
+        reject(
+          new Error(
+            "Questa scheda ha una versione dell'app più vecchia dell'archivio: " +
+              "un'altra scheda l'ha già aggiornata. Chiudi le altre schede di Coach e ricarica."
+          )
+        );
+        return;
+      }
+      reject(req.error);
+    };
   });
   // Un fallimento non resta memorizzato: senza questo, un errore momentaneo
   // (archivio occupato da un'altra scheda) rendeva l'app inutilizzabile fino
