@@ -182,9 +182,12 @@ export async function render({ ridisegna }) {
   // La media non viene arrotondata qui: la distanza si mostra con un decimale,
   // e arrotondando prima «5,8 km» diventava «6,0 km», cioè un numero che non è
   // mai stato vero. Arrotonda chi disegna, che sa quante cifre servono.
-  const media = (righe, campo) => {
+  // `includiOggi` esiste per il sonno: una notte è finita stamattina, non è a
+  // metà come la giornata. Escluderla faceva scrivere «20 notti con dati»
+  // accanto a un pannello finestre che ne contava 21, sulla stessa schermata.
+  const media = (righe, campo, { includiOggi = false } = {}) => {
     const v = righe
-      .filter((r) => r.presente && (soloOggi || r.data < oggiIso))
+      .filter((r) => r.presente && (soloOggi || includiOggi || r.data < oggiIso))
       .map((r) => r[campo])
       .filter((x) => x != null);
     return v.length ? { valore: v.reduce((a, b) => a + b, 0) / v.length, quanti: v.length } : null;
@@ -390,7 +393,7 @@ export async function render({ ridisegna }) {
         const v = nottiOrd.map((n) => n.durataMin).filter((x) => x != null);
         return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
       })()
-    : media(nottiOrd, "durataMin");
+    : media(nottiOrd, "durataMin", { includiOggi: true });
   if (notti.some((n) => n.presente && n.durataMin != null)) {
     aggiungi(wrap,
       schedaGrafico({
