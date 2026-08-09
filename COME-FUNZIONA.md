@@ -759,7 +759,7 @@ dichiarato, mai fatto in silenzio. Le notti scritte a mano non si toccano, e
 fuori dal periodo coperto non si tocca niente.
 
 Il ripristino è stato verificato: esportazione, archivio svuotato, ripristino →
-**identico byte a byte** su tutti e 15 gli archivi. Un file rovinato viene
+**identico byte a byte** su tutti e 16 gli archivi. Un file rovinato viene
 **rifiutato senza toccare niente**, con un messaggio che dice quale sezione non
 si legge.
 
