@@ -233,6 +233,11 @@ async function dettaglioEsercizio(id) {
     return wrap;
   }
 
+  // Su un esercizio a tempo il numero registrato sono secondi tenuti, non
+  // ripetizioni: sotto una colonna intitolata «Rip» un plank da 60 secondi si
+  // leggeva come sessanta ripetizioni.
+  const aTempo = esp.some((e) => e.serie.some((s) => s.aTempo)) || Boolean(def?.aTempo);
+
   const righe = esp.map((e) =>
     h(
       "tr",
@@ -252,7 +257,7 @@ async function dettaglioEsercizio(id) {
         "div.table-wrap",
         h(
           "table",
-          h("thead", h("tr", h("th", "Data"), h("th.num", "kg"), h("th.num", "Rip"), h("th.num", "RPE"), h("th.num", "Tec"))),
+          h("thead", h("tr", h("th", "Data"), h("th.num", "kg"), h("th.num", aTempo ? "Sec" : "Rip"), h("th.num", "RPE"), h("th.num", "Tec"))),
           h("tbody", ...righe)
         )
       ),
