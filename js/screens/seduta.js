@@ -2993,7 +2993,18 @@ async function vistaCardio(corpo, piede) {
           });
           if (!motivo) return;
           S.sed = await store.aggiornaSeduta(S.sed.id, {
-            cardio: { ...S.sed.cardio, eseguito: false, saltatoMotivo: motivo },
+            cardio: {
+              ...S.sed.cardio,
+              eseguito: false,
+              saltatoMotivo: motivo,
+              // Il foglio dice «quel dato sparisce»: allora deve sparire anche
+              // dal record. Punteggio e pacchetto lo ignorano già quando
+              // «eseguito» è falso, ma una durata che resta scritta accanto a
+              // «non eseguito» è una riga che si contraddice da sola — e la
+              // prima cosa che qualcuno ci leggerà dentro sarà il numero.
+              durataMin: null,
+              finitoIl: null,
+            },
           });
           await salvaProgresso({ fase: "stretching" });
           await disegna();
