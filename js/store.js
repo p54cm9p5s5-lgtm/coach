@@ -1744,6 +1744,15 @@ export async function importaSalute(pacchetto) {
     const n = scartaImpossibili(nGrezza, LIMITI_NOTTE, nGrezza.data, conteggio.impossibili);
     const prec = await db.get("notti", n.data);
     nottiViste.add(n.data);
+    // Una notte corretta a mano vince sull'orologio, sempre. È l'unica cosa
+    // che sappiamo per certo — l'hai scritta tu — e l'orologio è proprio la
+    // ragione per cui è stata corretta: lasciargliela sovrascrivere al primo
+    // import successivo vorrebbe dire correggerla per finta.
+    if (prec?.fonte === "mano") {
+      conteggio.nottiAMano = (conteggio.nottiAMano || 0) + 1;
+      conteggio.notti = nottiViste.size;
+      continue;
+    }
     await db.put("notti", {
       ...fondi(prec, n),
       fonte: "salute",
@@ -2492,6 +2501,67 @@ export async function giorniSalute() {
 export async function notti() {
   const n = await db.all("notti");
   return n.sort((a, b) => (a.data < b.data ? 1 : -1));
+}
+
+/**
+ * Correggere a mano una notte che l'orologio ha sbagliato.
+ *
+ * L'Apple Watch il sonno lo indovina: se lo togli, se perde il contatto, se ti
+ * addormenti col telefono in mano, registra un pezzo di notte e chiama quello
+ * «la notte». Otto ore diventano tre, e l'ora in cui sei andato a letto — che
+ * pesa da sola sul punteggio — diventa quella in cui l'orologio si è accorto
+ * di te. Finché non c'era modo di correggerla, quel numero sbagliato restava
+ * nello storico, nelle medie e nel pacchetto per il coach.
+ *
+ * Si scrive `fonte: "mano"`, e da lì è protetta: l'import da Salute non la
+ * sovrascrive e la riconciliazione non la cancella — quelle due strade
+ * guardavano già `fonte`, mancava solo un modo di scriverci dentro.
+ *
+ * Le fasi (profondo, REM, veglia) si perdono, e va bene così: tu sai quando
+ * sei andato a letto e quando ti sei svegliato, non quanto REM hai fatto.
+ * Meglio una durata giusta senza fasi che una durata falsa con le fasi.
+ */
+export async function correggiNotte(data, { aLetto, sveglio, nota = null } = {}) {
+  const oraValida = (x) => typeof x === "string" && /^\d{2}:\d{2}$/.test(x);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data))) throw new Error("Serve il giorno della notte.");
+  if (!oraValida(aLetto) || !oraValida(sveglio)) {
+    throw new Error("Servono l'ora in cui sei andato a letto e quella in cui ti sei svegliato.");
+  }
+  // «A letto» è quasi sempre il giorno prima del risveglio: alle 01:30 no.
+  const [hL, mL] = aLetto.split(":").map(Number);
+  const [hS, mS] = sveglio.split(":").map(Number);
+  const risveglio = new Date(`${data}T${sveglio}:00`);
+  const inizio = new Date(`${data}T${aLetto}:00`);
+  if (hL * 60 + mL >= hS * 60 + mS) inizio.setDate(inizio.getDate() - 1);
+  const minuti = Math.round((risveglio - inizio) / 60000);
+  if (!(minuti > 0)) throw new Error("Le due ore non tornano: controlla quale viene prima.");
+  if (minuti > 20 * 60) throw new Error("Più di venti ore di sonno: probabilmente una delle due ore è sbagliata.");
+  const p = (n) => String(n).padStart(2, "0");
+  const rec = {
+    data,
+    presente: true,
+    durataMin: minuti,
+    // Le fasi non le sappiamo: restano vuote invece di riportare quelle
+    // dell'orologio, che raccontavano un'altra notte.
+    profondoMin: null,
+    remMin: null,
+    vegliaMin: null,
+    risvegli: null,
+    inizio: `${inizio.getFullYear()}-${p(inizio.getMonth() + 1)}-${p(inizio.getDate())}T${aLetto}`,
+    nota,
+    fonte: "mano",
+    correttoIl: new Date().toISOString(),
+  };
+  await db.put("notti", rec);
+  return rec;
+}
+
+/** Toglie la correzione: la notte torna a quella dell'orologio, se c'è. */
+export async function scordaCorrezioneNotte(data) {
+  const n = await db.get("notti", data);
+  if (!n || n.fonte !== "mano") return false;
+  await db.del("notti", data);
+  return true;
 }
 
 /**

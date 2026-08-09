@@ -186,6 +186,18 @@ ritardo costa il **12%**, e quel fattore **moltiplica** la durata invece di
 sommarsi a lei. Andare a letto tardi non è una cosa che si ripaga dormendo di
 più: sposta tutta la notte, e la penalità resta addosso a qualunque durata.
 
+**Quando l'orologio sbaglia la notte.** L'Apple Watch il sonno lo deduce: se lo
+togli, se perde il contatto, se ti addormenti prima che se ne accorga, registra
+un pezzo di notte e chiama quello «la notte». Otto ore diventano tre, e l'ora in
+cui sei andato a letto — che pesa da sola — diventa quella in cui l'orologio si
+è accorto di te. In **Salute › Correggi una notte** si scrivono le due cose che
+sai per certo: quando sei andato a letto e quando ti sei svegliato. La data è
+quella del **risveglio**. Le fasi (profondo, REM, veglia) si perdono, perché
+quelle le sa l'orologio e tu no: una durata giusta senza fasi vale più di una
+sbagliata con le fasi. Da lì la notte è **tua** — l'import da Salute non la
+sovrascrive, la riconciliazione non la cancella, e il riepilogo dell'import lo
+dice ogni volta. Si torna al dato dell'orologio con un tocco.
+
 **Fondo del fumo**: oltre le sigarette tollerate la voce scende sotto zero, fino
 a **−50%** (`fumoQuotaMinima`). Tutte le altre voci si fermano al 100%.
 
