@@ -193,10 +193,16 @@ export function calcolaAttese({
         const tipo = chiedeFoto ? "foto" : chiedePeso || chiedeVita ? "misura" : "info";
         // Conta la cosa fatta più indietro nel tempo fra quelle chieste: se
         // una non è MAI stata fatta, l'evento resta da fare (niente data).
+        // Anche qui vale solo quello che era stato fatto ENTRO quel giorno: con
+        // l'ultima misura in assoluto, una pesata di oggi cancellava il ritardo
+        // di tutte le pesate chieste dal coach e mai fatte. Il giovedì del
+        // protocollo lo faceva già; l'evento scritto sul calendario no, e la
+        // stessa cosa mancante risultava scaduta in un posto e in ordine
+        // nell'altro.
         const richieste = [
-          chiedeFoto ? ultimaFoto : null,
-          chiedePeso ? ultimoPeso : null,
-          chiedeVita ? ultimaVita : null,
+          chiedeFoto ? ultimaEntro(dateFoto, ultimaFoto, e.data) : null,
+          chiedePeso ? ultimaEntro(datePeso, ultimoPeso, e.data) : null,
+          chiedeVita ? ultimaEntro(dateVita, ultimaVita, e.data) : null,
         ].filter((_, i) => [chiedeFoto, chiedePeso, chiedeVita][i]);
         const fattoDa = richieste.some((d) => !d)
           ? null
