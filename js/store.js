@@ -2465,10 +2465,25 @@ export async function conteggioFumo() {
   return per;
 }
 
+/**
+ * Cancella quello che è ARRIVATO da Salute. Le notti scritte a mano restano:
+ * non le ha portate l'import, reimportare non le riporterebbe indietro (anzi,
+ * tornerebbe il numero sbagliato dell'orologio, che è la ragione per cui erano
+ * state corrette) e cancellarle qui sarebbe una perdita silenziosa dentro
+ * un'azione che promette di toccare solo i dati importati.
+ * La misura dell'orologio messa da parte se ne va: quella sì era importata.
+ * @returns quante notti sono state tenute
+ */
 export async function svuotaSalute() {
+  const aMano = (await db.all("notti")).filter((n) => n.fonte === "mano");
   await db.clearStore("giorniSalute");
   await db.clearStore("notti");
+  for (const n of aMano) {
+    const { orologio, ...resto } = n;
+    await db.put("notti", resto);
+  }
   await setImpostazione("ultimoImportSalute", null);
+  return aMano.length;
 }
 
 export async function svuotaAgenda() {
