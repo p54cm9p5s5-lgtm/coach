@@ -43,7 +43,6 @@ function xNelDisegno(svg, clientX, clientY = 0) {
 const soloNumeri = (punti) =>
   (punti || []).map((p) => (Number.isFinite(p?.valore) ? p : { ...p, valore: null }));
 
-const GIORNI_CORTI = ["D", "L", "M", "M", "G", "V", "S"];
 const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
 /**
@@ -559,5 +558,3 @@ export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede, sel
     piede ? h("p.footnote", piede) : null
   );
 }
-
-export { GIORNI_CORTI };
