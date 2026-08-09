@@ -326,8 +326,17 @@ function settimaneDi(righe, campo) {
  * Scostamento sostenuto rispetto alla baseline delle prime 3 settimane
  * (master brief §9 e §9-ter): serve una soglia superata per due settimane
  * consecutive nello stesso verso, non un picco isolato.
+ *
+ * «Consecutive» e «da due settimane» vanno verificate, non date per buone:
+ * le settimane senza abbastanza giorni vengono scartate qui sopra, e quello
+ * che resta può essere separato da mesi di vuoto. Senza questi due controlli
+ * il segnale confrontava la settimana di luglio con quella di marzo e le
+ * annunciava come «le ultime due», e un calo finito a primavera continuava a
+ * presentarsi come in corso — anche dentro il pacchetto per il coach.
  */
-function scostamentoSostenuto(righe, campo, { minimoSettimana, soglia }) {
+const GIORNI_PER_DIRSI_ATTUALE = 14;
+
+function scostamentoSostenuto(righe, campo, { minimoSettimana, soglia, oggi }) {
   const sett = settimaneDi(righe, campo).filter((s) => s.giorni >= minimoSettimana);
   if (sett.length < 5) return null;
 
@@ -336,6 +345,10 @@ function scostamentoSostenuto(righe, campo, { minimoSettimana, soglia }) {
   if (!baseline) return null;
 
   const ultime = sett.slice(-2);
+  // Due settimane attaccate, non due settimane rimaste in piedi per caso.
+  if (ultime[1].indice - ultime[0].indice !== 1) return null;
+  // E devono essere le settimane di adesso: un dato vecchio non è una notizia.
+  if (oggi && giorniTra(ultime[1].a, oggi) > GIORNI_PER_DIRSI_ATTUALE) return null;
   const scarti = ultime.map((s) => (s.media - baseline) / baseline);
   if (!scarti.every((d) => d > soglia) && !scarti.every((d) => d < -soglia)) return null;
 
@@ -460,7 +473,10 @@ export function calcolaSegnali(ctx) {
   }
 
   // --- soglie ±20% ---------------------------------------------------------
-  const sogliaConf = { minimoSettimana: regole.finestra.minimoSettimana, soglia: regole.finestra.soglia };
+  const sogliaConf = { minimoSettimana: regole.finestra.minimoSettimana, soglia: regole.finestra.soglia, oggi };
+  // Le due settimane messe a confronto si scrivono con le loro date: «le ultime
+  // due» è vero solo se chi legge può controllarlo.
+  const periodo = (sc) => sc.settimane.map((s) => `${dataBreve(s.da)}-${dataBreve(s.a)}`).join(" e ");
   const scMov = scostamentoSostenuto(giorniSalute, "kcalAttive", sogliaConf);
   if (scMov) {
     agg({
@@ -468,7 +484,7 @@ export function calcolaSegnali(ctx) {
       tipo: "sogliaMovimento",
       gravita: "attenzione",
       messaggio: `Movimento ${scMov.verso} baseline del ${num(Math.abs(scMov.medio) * 100)}% da due settimane.`,
-      dettaglio: `Baseline delle prime tre settimane ${Math.round(scMov.baseline)} kcal attive al giorno; ultime due settimane ${scMov.settimane.map((s) => Math.round(s.media)).join(" e ")} kcal. Soglia ±${Math.round(regole.finestra.soglia * 100)}% superata in entrambe. La dieta resta di competenza del nutrizionista: qui è un dato d'ingresso.`,
+      dettaglio: `Baseline delle prime tre settimane ${Math.round(scMov.baseline)} kcal attive al giorno; ultime due settimane (${periodo(scMov)}) ${scMov.settimane.map((s) => Math.round(s.media)).join(" e ")} kcal. Soglia ±${Math.round(regole.finestra.soglia * 100)}% superata in entrambe. La dieta resta di competenza del nutrizionista: qui è un dato d'ingresso.`,
       riferimenti: [],
     });
   }
@@ -479,7 +495,7 @@ export function calcolaSegnali(ctx) {
       tipo: "sogliaSonno",
       gravita: "attenzione",
       messaggio: `Sonno ${scSonno.verso} baseline del ${num(Math.abs(scSonno.medio) * 100)}% da due settimane.`,
-      dettaglio: `Baseline ${Math.round(scSonno.baseline)} minuti a notte; ultime due settimane ${scSonno.settimane.map((s) => Math.round(s.media)).join(" e ")} minuti. Se il verso è in calo, il primo livello da toccare è il volume o i recuperi, non il carico.`,
+      dettaglio: `Baseline ${Math.round(scSonno.baseline)} minuti a notte; ultime due settimane (${periodo(scSonno)}) ${scSonno.settimane.map((s) => Math.round(s.media)).join(" e ")} minuti. Se il verso è in calo, il primo livello da toccare è il volume o i recuperi, non il carico.`,
       riferimenti: [],
     });
   }
