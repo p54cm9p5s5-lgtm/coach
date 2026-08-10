@@ -31,6 +31,26 @@ DURATA_MINUTI = 10
 CHIAVE = secrets.token_urlsafe(9)
 
 
+def file_da_passare(argomenti):
+    """I due file soliti, più quelli chiesti sulla riga di comando.
+
+    Serve quando quello che devi mandare sul telefono NON è il brief in corso:
+    per esempio il brief precedente, se quello nuovo è arrivato a settimana
+    cominciata e ti servono ancora gli allenamenti vecchi. Prima l'unica strada
+    era sovrascrivere la copia di lavoro, cioè perdere quella giusta.
+
+    Il nome sul telefono è solo il nome del file, mai il percorso: da fuori non
+    si deve poter indovinare dove stanno le cose su questo computer.
+    """
+    scelti = dict(FILE) if not argomenti else {}
+    for a in argomenti:
+        p = Path(a).expanduser().resolve()
+        if not p.is_file():
+            sys.exit(f"Non è un file: {a}")
+        scelti[p.name] = p
+    return scelti
+
+
 class Consegna(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         # La query non fa parte del nome del file: «/dati.json?x=1» è la stessa
@@ -60,7 +80,7 @@ class Consegna(http.server.BaseHTTPRequestHandler):
 
     def indice(self):
         voci = "".join(
-            f'<li><a href="/{n}" download>{p.name}</a> — {p.stat().st_size // 1024} KB</li>'
+            f'<li><a href="/{CHIAVE}/{quote(n)}" download>{p.name}</a> — {p.stat().st_size // 1024} KB</li>'
             for n, p in FILE.items()
             if p.exists()
         )
@@ -92,6 +112,7 @@ def indirizzo_locale():
 
 
 if __name__ == "__main__":
+    FILE = file_da_passare(sys.argv[1:])
     mancanti = [str(p) for p in FILE.values() if not p.exists()]
     if mancanti:
         sys.exit("File mancanti:\n  " + "\n  ".join(mancanti))
