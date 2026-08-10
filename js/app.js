@@ -393,13 +393,7 @@ async function avvia() {
     // mezzanotte. Il giorno si aggiorna appena esci dall'allenamento.
     if (rottaCorrente === "seduta") return;
     giornoDisegnato = adesso;
-    // Un programma rimandato entra in vigore la mattina che gli tocca, anche
-    // se l'app è rimasta aperta dalla sera prima: senza questo il cambio si
-    // vedeva solo alla prossima riapertura, cioè magari dopo l'allenamento.
-    store
-      .entraInVigoreSeDovuto()
-      .catch(() => {})
-      .finally(() => ridisegna());
+    ridisegna();
   };
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") seCambiatoGiorno();
