@@ -329,20 +329,6 @@ L'esito finisce nel registro decisioni.
   viene tolta: meglio niente che un consiglio scaduto.
 
 ### 4.7 Impostazioni
-- **Il brief nuovo vale da…** → sceglie il giorno da cui entra in vigore il
-  programma appena caricato. Fino a quel giorno resta quello di prima, e la
-  mattina giusta l'app cambia da sola, all'avvio o al cambio di giorno a app
-  aperta. Serve perché il brief arriva quando lo scrive il coach, non quando
-  finisce la tua settimana. Il programma in attesa si può far entrare in
-  anticipo dalla stessa riga. Il programma di prima si ritrova anche quando non
-  ne era stata tenuta una copia: la copia interna dell'app contiene tutti gli
-  archivi, `programma` compreso, e caricare un brief non la tocca.
-- **Torna al brief precedente** → rimette in vigore il programma da cui sei
-  arrivato, uno solo, e mette da parte quello attuale: lo scambio è reversibile
-  dallo stesso pulsante. Serve quando il brief nuovo arriva a settimana
-  cominciata e gli allenamenti che restano da fare sono ancora quelli vecchi.
-  Non tocca allenamenti, misure e note registrate, e `caricatoIl` torna quello
-  originale, così le proposte accettate col programma giusto restano valide.
 - **Carica master brief (.md)** → aggiorna **programma e regole**, mai i dati
   registrati. Mostra un riepilogo delle differenze prima di applicare.
   Esercizi rimossi vengono archiviati, non cancellati: lo storico resta.
