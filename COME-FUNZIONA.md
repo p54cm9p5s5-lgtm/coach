@@ -652,7 +652,10 @@ non trascritti a mano. Si sceglie cosa includere. Contiene:
   RPE / nota, più recuperi reali cronometrati (media, minimo, massimo **e per
   singolo esercizio**), velocità e durata del cardio, durata dell'allenamento,
   **densità sui pesi** (serie/min dalla prima all'ultima serie), riscaldamento
-  (con o senza tapis), stretching, numeri dall'orologio, nota generale, il
+  (con o senza tapis), stretching, il riquadro **«Letti dall'Apple Watch»**
+  con i numeri di pesi e cardio trascritti dall'atleta a fine seduta leggendo
+  il quadrante (durata, kcal attive e totali, FC media e massima, km e ritmo
+  sul cardio, sforzo), nota generale, il
   **punteggio che l'app si è data** con l'eventuale tetto che l'ha fermato, e
   gli **obiettivi chiesti dall'app diversi dal brief** (quando una proposta
   accettata ha cambiato il bersaglio)

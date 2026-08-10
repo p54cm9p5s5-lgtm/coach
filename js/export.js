@@ -432,8 +432,24 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     // Letti sull'orologio a fine allenamento: i Comandi Rapidi non sanno
     // leggere gli allenamenti dell'Apple Watch, quindi questi numeri li scrive
     // l'atleta a mano — e sono quelli esatti della seduta, non di una finestra.
-    riga("Dall'orologio (pesi)", descriviOrologio(seduta.orologio?.pesi || seduta.orologio, "pesi")),
-    riga("Dall'orologio (cardio)", descriviOrologio(seduta.orologio?.cardio, "cardio")),
+    //
+    // L'etichetta dice da dove vengono, per esteso. Erano due righe che
+    // dicevano «Dall'orologio», e chi legge il pacchetto non aveva modo di
+    // sapere che sono misure dell'Apple Watch trascritte dall'atleta e non
+    // numeri calcolati dall'app: la stessa durata poteva sembrare una stima.
+    ...(() => {
+      const pesi = descriviOrologio(seduta.orologio?.pesi || seduta.orologio, "pesi");
+      const cardio = descriviOrologio(seduta.orologio?.cardio, "cardio");
+      if (!pesi && !cardio) return [];
+      return [
+        "",
+        "LETTI DALL'APPLE WATCH (trascritti dall'atleta a fine seduta)",
+        riga("Pesi", pesi),
+        riga("Cardio", cardio),
+        "Sono le misure dell'orologio per questa seduta, non stime dell'app: i Comandi Rapidi non sanno leggere gli allenamenti dell'Apple Watch, quindi li scrive l'atleta leggendoli dal quadrante.",
+        "",
+      ];
+    })(),
     riga("Nota generale", seduta.notaGenerale),
     giornoSplit && seduta.tipoProgrammatoId && seduta.tipoProgrammatoId !== seduta.tipoId
       ? `Nota: in programma era ${giornoSplit(seduta.tipoProgrammatoId)?.nome || seduta.tipoProgrammatoId}`
@@ -567,6 +583,11 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
  * dell'orologio, non stime dell'app né numeri scritti a mano.
  */
 export function bloccoWatch(allenamenti, { giorni = 7, nomeSeduta = null } = {}) {
+  // Questa tabella esiste solo se il pacchetto di Salute porta righe
+  // ALLENAMENTO. Molti Comandi Rapidi non le mandano — l'Apple Watch non
+  // espone i suoi allenamenti a Comandi — e in quel caso i numeri
+  // dell'orologio arrivano lo stesso, ma dal riquadro «Letti dall'Apple Watch»
+  // dentro il log della seduta, che l'atleta compila leggendo il quadrante.
   if (!allenamenti?.length) return null;
   const righe = allenamenti.slice(0, 20).map((a) => [
     dataBreve(a.data),
