@@ -1415,6 +1415,32 @@ export async function obiettivoCorrente(esercizioId) {
 }
 
 /**
+ * Il carico che hai già deciso per questo esercizio, quando l'obiettivo è stato
+ * consumato ma la decisione vale ancora.
+ *
+ * Una proposta accettata vale per una esposizione sola, ed è giusto così: dopo
+ * quella il motore rivaluta sui dati nuovi. Ma il carico non è una cosa che si
+ * disfa da sé. Con lo stesso esercizio su due giorni della settimana — squat il
+ * mercoledì e il venerdì — succedeva questo: mercoledì accetti +2,5 kg e alzi
+ * 22,5, venerdì l'app te ne richiede 20, perché l'obiettivo era finito e il
+ * numero del brief tornava a comandare. Due giorni dopo, sullo stesso esercizio,
+ * senza che nessuno avesse deciso di tornare indietro.
+ *
+ * Qui torna solo il **carico**, e solo se viene da una decisione presa dopo il
+ * brief in vigore. Non il bersaglio di ripetizioni: quello deve restare libero
+ * di risalire dentro il range, che è la doppia progressione. E non vale per un
+ * carico semplicemente alzato di meno una volta: quello resta uno scarto dal
+ * programma, e il punteggio deve continuare a dirlo.
+ */
+export async function caricoDaDecisione(esercizioId) {
+  const decisioni = (await db.byIndex("proposte", "esercizioId", esercizioId))
+    .filter((p) => p.stato === "accettata" && p.a?.carico != null)
+    .filter((p) => !PROGRAMMA?.caricatoIl || (p.rispostoIl || p.creatoIl || "") > PROGRAMMA.caricatoIl)
+    .sort((a, b) => ((a.rispostoIl || a.creatoIl || "") < (b.rispostoIl || b.creatoIl || "") ? 1 : -1));
+  return decisioni[0]?.a.carico ?? null;
+}
+
+/**
  * Proposte accettate, ognuna con l'indicazione se l'app la sta ancora usando.
  * Una proposta vale per la prossima esposizione: dopo quella il motore rivaluta
  * sui dati nuovi. Dirle tutte «in vigore» farebbe credere al coach che il

@@ -1148,6 +1148,9 @@ async function vistaEsercizio(corpo, piede) {
   const caricoPrec =
     fatte.at(-1)?.carico ??
     obiettivo?.carico ??
+    // Una decisione già presa su questo carico viene prima del numero del
+    // brief: l'obiettivo si consuma dopo una esposizione, la decisione no.
+    (await store.caricoDaDecisione(v.esercizioId)) ??
     (v.carico > 0 ? v.carico : null) ??
     (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
   // L'ordine conta: prima quello che c'è in memoria, poi quello salvato nella
@@ -2213,6 +2216,7 @@ async function bloccoProssimo(inv) {
   const obiettivo = prossima.aTempo ? null : await store.obiettivoCorrente(prossima.esercizioId);
   const carico =
     obiettivo?.carico ??
+    (await store.caricoDaDecisione(prossima.esercizioId)) ??
     (prossima.carico > 0 ? prossima.carico : null) ??
     (await store.ultimoCarico(prossima.esercizioId, prossima.carico ?? null));
   const bersaglio = prossima.aTempo
