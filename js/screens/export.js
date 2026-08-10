@@ -4,8 +4,9 @@ import * as store from "../store.js";
 import { nomeLivello } from "../segnali.js";
 import {
   logSeduta, bloccoSalute, bloccoProposte, bloccoAccettate, bloccoCorpo, bloccoSegnali,
-  bloccoFumo, bloccoAcqua, intestazionePacchetto,
+  bloccoFumo, bloccoAcqua, bloccoWatch, intestazionePacchetto,
 } from "../export.js";
+import { inizioPeriodo } from "../grafico.js";
 
 const ETICHETTE_MISURE = {
   peso: "Peso",
@@ -275,6 +276,21 @@ async function componi(stato) {
         })
       );
       contenuto.push("dati salute");
+    }
+
+    // Gli allenamenti dell'orologio viaggiano insieme ai dati salute: vengono
+    // dallo stesso import, e senza di loro il coach vede l'allenamento
+    // registrato a mano ma non il resto del movimento della giornata.
+    const GIORNI_WATCH = 7;
+    const daQuando = inizioPeriodo({ giorni: GIORNI_WATCH }, isoDate());
+    const watch = (await store.db.all("allenamentiWatch"))
+      .filter((a) => a.data >= daQuando)
+      .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : (b.inizio || "").localeCompare(a.inizio || "")));
+    const perId = new Map((await store.allenamenti()).map((s) => [s.id, s.tipoNome]));
+    const bloccoW = bloccoWatch(watch, { giorni: GIORNI_WATCH, nomeSeduta: (id) => perId.get(id) || "sì" });
+    if (bloccoW) {
+      pezzi.push(bloccoW);
+      contenuto.push(`${watch.length} ${watch.length === 1 ? "allenamento" : "allenamenti"} dal Watch`);
     }
   }
 

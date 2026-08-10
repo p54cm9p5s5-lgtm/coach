@@ -673,6 +673,14 @@ l'esercizio ogni serie viene scritta per intero (`4 → 6 kg per manubrio` ·
 si può leggere in tre modi diversi
 - **Dati salute**: stato delle finestre a 3 settimane e la tabella giorno per
   giorno con movimento, percentuale sull'obiettivo, passi e note
+- **Allenamenti letti dall'Apple Watch** degli ultimi 7 giorni: data, ora,
+  tipo, durata, kcal attive e totali, FC media e massima, e se quell'attività
+  corrisponde a una seduta registrata nell'app o è movimento in più (una
+  camminata, la giornata). L'intestazione dice da dove vengono: sono misure
+  dell'orologio importate da Salute, non stime dell'app. Senza questa tabella
+  il coach vedeva l'allenamento registrato a mano ma non il resto della
+  giornata, e quello che l'atleta importava nell'app non arrivava a
+  destinazione
 - **Proposte in sospeso**, con le quattro domande già compilate
 - **Segnali aperti**
 - **Fumo**: sigarette al giorno, media, giorni a zero

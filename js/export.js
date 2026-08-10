@@ -554,6 +554,48 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
 }
 
 /**
+ * Gli allenamenti letti dall'Apple Watch, come sono.
+ *
+ * L'app li importa da Salute e li mostra, ma nel pacchetto per il coach non
+ * entravano: una camminata di 79 minuti a FC 87, o la pausa vera fra i pesi e
+ * il cardio, restavano dentro il telefono. Il coach vedeva l'allenamento
+ * registrato a mano e non il resto della giornata, e quello che l'atleta
+ * scriveva nell'app non arrivava a destinazione — che è il modo più sicuro di
+ * far nascere confusione su chi ha letto cosa.
+ *
+ * L'intestazione dice a chiare lettere da dove vengono: sono misure
+ * dell'orologio, non stime dell'app né numeri scritti a mano.
+ */
+export function bloccoWatch(allenamenti, { giorni = 7, nomeSeduta = null } = {}) {
+  if (!allenamenti?.length) return null;
+  const righe = allenamenti.slice(0, 20).map((a) => [
+    dataBreve(a.data),
+    GIORNI_ABBR[new Date(a.data + "T00:00:00").getDay()],
+    a.inizio || "—",
+    a.tipo || "—",
+    a.durataSec ? durataUmana(a.durataSec) : "—",
+    a.kcalAttive != null ? num(a.kcalAttive, 0) : "—",
+    a.kcalTotali != null ? num(a.kcalTotali, 0) : "—",
+    a.fcMedia != null ? num(a.fcMedia, 0) : "—",
+    a.fcMax != null ? num(a.fcMax, 0) : "—",
+    // Collegato a una seduta registrata o no: è la differenza fra «questo è
+    // l'allenamento che trovi nel log» e «questo è movimento in più».
+    a.sedutaId ? (nomeSeduta?.(a.sedutaId) || "sì") : "—",
+  ]);
+  return [
+    `ALLENAMENTI LETTI DALL'APPLE WATCH (ultimi ${giorni} giorni)`,
+    "",
+    tabella(
+      ["Data", "G", "Ora", "Tipo", "Durata", "Kcal att.", "Kcal tot.", "FC media", "FC max", "Nel log"],
+      righe
+    ),
+    "",
+    "Sono i dati misurati dall'orologio e importati da Salute, non stime dell'app.",
+    "«Nel log» dice se quell'allenamento corrisponde a una seduta registrata nell'app: dove c'è un trattino è movimento che sta fuori dal programma (camminate, attività della giornata).",
+  ].join("\n");
+}
+
+/**
  * Proposte accettate dall'atleta: l'app le usa come obiettivo alla prossima
  * esposizione, quindi il coach deve saperlo. Tacerlo significherebbe lasciare
  * che il carico allenato si scosti dal brief senza che nessuno lo veda.
