@@ -35,6 +35,10 @@ export async function init() {
   await caricaLibreria();
   await caricaRiscaldamento();
   PROGRAMMA = (await db.get("programma", "corrente")) || null;
+  // Un programma rimandato a una data entra in vigore da solo, appena quella
+  // data arriva: è il punto di tutto il meccanismo, e va fatto prima che
+  // qualunque schermata chieda cosa tocca oggi.
+  await entraInVigoreSeDovuto();
   await caricaAgenda();
   // Gli abbinamenti fra eventi del calendario e giorni dello split si rifanno a
   // ogni avvio. Costa un giro sulla lista già in memoria e scrive solo se
@@ -241,7 +245,82 @@ export async function applicaBrief(dati, { caricatoIl = null } = {}) {
 
 /** Il programma da cui sei arrivato, se ce n'è uno: serve per tornarci. */
 export async function briefPrecedente() {
-  return (await db.get("programma", "precedente")) || null;
+  const salvato = await db.get("programma", "precedente");
+  if (salvato) return salvato;
+  // Se il brief è stato caricato prima che l'app tenesse una copia, il
+  // programma di prima è comunque ancora qui: la copia interna salva tutti gli
+  // archivi, `programma` compreso, e caricare un brief non la tocca. È l'unico
+  // modo per non dover farsi rimandare un file che il telefono ha già.
+  const dump = await snapshotSalvato();
+  const vecchio = (dump?.dati?.programma || []).find((p) => p.id === "corrente");
+  if (!vecchio || !PROGRAMMA) return null;
+  const uguale =
+    JSON.stringify([vecchio.split, vecchio.regole, vecchio.inventario]) ===
+    JSON.stringify([PROGRAMMA.split, PROGRAMMA.regole, PROGRAMMA.inventario]);
+  return uguale ? null : vecchio;
+}
+
+/** Il programma che aspetta il suo turno, con il giorno da cui vale. */
+export async function programmaRimandato() {
+  return (await db.get("programma", "prossimo")) || null;
+}
+
+/**
+ * Rimanda il programma in vigore a una data, e nel frattempo rimette quello di
+ * prima.
+ *
+ * Il brief nuovo arriva quando il coach lo scrive: a settimana cominciata, o
+ * mentre siete via. Caricato, prende il comando subito, e gli allenamenti che
+ * ti restavano da fare non li conosceva più nessuno. Da qui invece si dice da
+ * quando vale: fino a quel giorno resta il programma di prima, e la mattina
+ * giusta l'app cambia da sola, senza che tu debba ricordarti niente né
+ * ricaricare un file.
+ */
+export async function rimandaProgramma(dal) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dal || "")) throw new Error("Data non valida.");
+  const nuovo = PROGRAMMA;
+  const vecchio = await briefPrecedente();
+  if (!nuovo || !vecchio) return null;
+  await db.put("programma", { ...nuovo, id: "prossimo", dal });
+  // Torna in vigore quello di prima, con la sua data di caricamento originale:
+  // le proposte accettate quando quel programma era in vigore restano valide.
+  await applicaBrief(vecchio, { caricatoIl: vecchio.caricatoIl });
+  await registraDecisione({
+    oggetto: "Programma nuovo rimandato",
+    livello: null,
+    testo: `Il brief del ${nuovo.aggiornatoIl} entra in vigore il ${dal}. Fino ad allora resta quello del ${vecchio.aggiornatoIl}.`,
+    fonte: "app",
+  });
+  return { dal, aggiornatoIl: nuovo.aggiornatoIl };
+}
+
+/** Annulla l'attesa: il programma rimandato entra in vigore adesso. */
+export async function annullaRinvio() {
+  const prossimo = await db.get("programma", "prossimo");
+  if (!prossimo) return null;
+  await db.del("programma", "prossimo");
+  const { dal, ...dati } = prossimo;
+  return applicaBrief(dati, { caricatoIl: prossimo.caricatoIl });
+}
+
+/**
+ * Il cambio automatico. Gira all'avvio e a ogni cambio di giorno: quando la
+ * data è arrivata, il programma che aspettava prende il comando e quello di
+ * prima resta da parte, come dopo un caricamento normale.
+ */
+export async function entraInVigoreSeDovuto(oggi = isoDate()) {
+  const prossimo = await db.get("programma", "prossimo");
+  if (!prossimo?.dal || prossimo.dal > oggi) return null;
+  await db.del("programma", "prossimo");
+  const { dal, ...dati } = prossimo;
+  const record = await applicaBrief(dati, { caricatoIl: prossimo.caricatoIl });
+  await registraDecisione({
+    oggetto: "Programma nuovo entrato in vigore",
+    livello: null,
+    testo: `Dal ${dal} vale il brief del ${record.aggiornatoIl}, come era stato deciso.`,
+    fonte: "app",
+  });
+  return record;
 }
 
 /**

@@ -36,6 +36,7 @@ export async function render({ vaiA, ridisegna }) {
 
   const prog = store.programma();
   const precedente = await store.briefPrecedente();
+  const rimandato = await store.programmaRimandato();
   const imp = await store.impostazioni();
   const giorniExport = await store.giorniDaUltimoExport();
 
@@ -69,7 +70,7 @@ export async function render({ vaiA, ridisegna }) {
         // restavano da fare sparivano e servivano il file vecchio e un'altra
         // importazione. Si torna indietro da qui, e con lo stesso pulsante si
         // torna avanti quando la settimana è chiusa.
-        precedente
+        precedente && !rimandato
           ? h(
               "button.row",
               { onclick: () => tornaIndietro(precedente, ridisegna) },
@@ -77,6 +78,34 @@ export async function render({ vaiA, ridisegna }) {
                 "div.main",
                 h("span.title", `Torna al brief del ${dataLunga(precedente.aggiornatoIl)}`),
                 h("span.sub", (precedente.split || []).map((g) => g.nome).join(" · "))
+              ),
+              h("span.chevron", "›")
+            )
+          : null,
+        // Il caso vero: il brief nuovo è arrivato mentre la settimana era
+        // cominciata. Non serve scegliere fra i due — si dice da quando vale
+        // quello nuovo, e fino a lì resta quello di prima. Il cambio lo fa
+        // l'app la mattina giusta.
+        precedente && !rimandato
+          ? h(
+              "button.row",
+              { onclick: () => rimanda(precedente, ridisegna) },
+              h(
+                "div.main",
+                h("span.title", "Il brief nuovo vale da…"),
+                h("span.sub", `fino a quel giorno resta quello del ${dataLunga(precedente.aggiornatoIl)}`)
+              ),
+              h("span.chevron", "›")
+            )
+          : null,
+        rimandato
+          ? h(
+              "button.row",
+              { onclick: () => annullaRinvio(rimandato, ridisegna) },
+              h(
+                "div.main",
+                h("span.title", `Il brief del ${dataLunga(rimandato.aggiornatoIl)} entra il ${dataLunga(rimandato.dal)}`),
+                h("span.sub", `${(rimandato.split || []).map((g) => g.nome).join(" · ")} — tocca per farlo entrare adesso`)
               ),
               h("span.chevron", "›")
             )
@@ -438,6 +467,72 @@ function righeManubri(manubri) {
     );
   }
   return righe;
+}
+
+async function rimanda(precedente, ridisegna) {
+  const nuovo = store.programma();
+  const oggi = isoDate();
+  // Le scelte pronte sono i giorni che servono davvero: domani, e i prossimi
+  // lunedì. Il campo data resta per tutto il resto.
+  const piu = (n) => {
+    const d = new Date(oggi + "T00:00:00");
+    d.setDate(d.getDate() + n);
+    const p = (x) => String(x).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  const lunediTra = (quante) => {
+    const d = new Date(oggi + "T00:00:00");
+    const avanti = ((8 - d.getDay()) % 7 || 7) + 7 * (quante - 1);
+    return piu(avanti);
+  };
+  const campo = h("input", {
+    type: "date",
+    value: piu(1),
+    min: piu(1),
+    style: "width:100%;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--separator);background:var(--bg-grouped);color:var(--label)",
+  });
+  const scelta = await sheet((close) =>
+    h(
+      "div",
+      h("h2", "Da quando vale il brief nuovo?"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
+        `Fino a quel giorno resta in vigore quello del ${dataLunga(precedente.aggiornatoIl)} — ` +
+          `${(precedente.split || []).map((g) => g.nome).join(", ")} — e la mattina giusta l'app cambia da sola.`
+      ),
+      h(
+        "div.btn-wrap",
+        { style: "display:grid;gap:12px" },
+        h("button.btn", { onclick: () => close(piu(1)) }, `Da domani, ${dataLunga(piu(1))}`),
+        // `dataLunga` scrive già il giorno della settimana: anteporre «lunedì»
+        // dava «Da lunedì lunedì 17 agosto».
+        h("button.btn.secondary", { onclick: () => close(lunediTra(1)) }, `Da ${dataLunga(lunediTra(1))}`),
+        h("p.footnote", { style: "margin:4px 0 0" }, "oppure scegli il giorno:"),
+        campo,
+        h("button.btn.secondary", { onclick: () => close(campo.value || null) }, "Usa questa data"),
+        h("button.btn.secondary", { onclick: () => close(undefined) }, "Annulla")
+      )
+    )
+  );
+  if (!scelta) return;
+  await store.rimandaProgramma(scelta);
+  await store.aggiornaMotore();
+  toast(`Il brief del ${dataLunga(nuovo.aggiornatoIl)} entra in vigore il ${dataLunga(scelta)}.`, 4000);
+  await ridisegna();
+}
+
+async function annullaRinvio(rimandato, ridisegna) {
+  const s = await chiedi({
+    titolo: `Far entrare adesso il brief del ${dataLunga(rimandato.aggiornatoIl)}?`,
+    testo: `Doveva entrare il ${dataLunga(rimandato.dal)}. Prende il comando subito e quello di adesso resta da parte.`,
+    opzioni: [{ etichetta: "Fallo entrare adesso", valore: "si" }],
+  });
+  if (s !== "si") return;
+  await store.annullaRinvio();
+  await store.aggiornaMotore();
+  toast("Programma nuovo in vigore.");
+  await ridisegna();
 }
 
 async function tornaIndietro(precedente, ridisegna) {
