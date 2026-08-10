@@ -265,7 +265,11 @@ recuperi reali su tutti gli esercizi, densità della seduta, tempo per esercizio
 
 ### 4.5 Storico e progressione
 - Per esercizio: carico, ripetizioni, RPE, tecnica nel tempo.
-- **Volume settimanale per pattern**, calcolato dallo split (tabella §5-ter automatica).
+- **Volume settimanale per pattern**, calcolato sui **prossimi sette giorni**
+  (tabella §5-ter automatica). Non è la somma dello split: nel brief possono
+  convivere due programmi — quello che finisce e quello che comincia — e a
+  decidere quale vale in un certo giorno è il calendario. Senza calendario ogni
+  giorno della settimana conta una volta sola, come per `giornoPrevisto`.
 - Elenco sedute, dati mancanti, esercizi saltati con motivo.
 - Registro decisioni con data di verifica e esito.
 

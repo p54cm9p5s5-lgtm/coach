@@ -131,7 +131,10 @@ async function elenco(vaiA) {
         ),
         h(
           "p.footnote",
-          `Calcolato dallo split. Rapporto spinta/tirata orizzontale ${tirata ? (spinta / tirata).toFixed(1).replace(".", ",") : "—"}:1. Tirata verticale ${verticale} serie.`
+          // «Dallo split» non era più vero da quando nel brief possono
+          // convivere due programmi: la somma di tutto lo split leggeva due
+          // settimane come una. Adesso conta i sette giorni che hai davanti.
+          `Calcolato sui prossimi sette giorni. Rapporto spinta/tirata orizzontale ${tirata ? (spinta / tirata).toFixed(1).replace(".", ",") : "—"}:1. Tirata verticale ${verticale} serie.`
         )
       )
     );
