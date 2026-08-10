@@ -71,7 +71,10 @@ async function bloccoGrafico(ridisegna) {
   const tutti = await store.allenamenti();
   const obiettivo = await store.impostazione("obiettivoMovimentoKcal");
 
-  const inizioProgramma = store.programma()?.aggiornatoIl || "0000-00-00";
+  // La stessa regola del calendario e del punteggio Salute: la data del brief
+  // da sola si sposta in avanti a ogni aggiornamento, e il grafico smetteva di
+  // segnare come previsti giorni che lo erano stati davvero.
+  const inizioProgramma = (await store.inizioProgramma()) || "0000-00-00";
   const perData = new Map(giorni.map((g) => [g.data, g]));
   const perNotte = new Map(notti.map((n) => [n.data, n]));
   const allenati = new Set(tutti.filter((s) => s.stato === "completata").map((s) => s.data));
@@ -680,9 +683,7 @@ async function bloccoCalendario(vaiA, ridisegna) {
   });
 
   // il programma comincia dal primo allenamento registrato, o dal brief
-  const primaData = tutte.map((s) => s.data).sort()[0] || null;
-  const dalBrief = store.programma()?.aggiornatoIl || null;
-  const dal = [primaData, dalBrief].filter(Boolean).sort()[0] || null;
+  const dal = await store.inizioProgramma();
 
   const cal = calendario({
     dal,

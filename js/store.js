@@ -241,6 +241,27 @@ export function agendaAttiva() {
   return Boolean(AGENDA && AGENDA.size);
 }
 
+/**
+ * Da quando vale il programma, per tutto quello che guarda indietro.
+ *
+ * **Non è `aggiornatoIl`**: quella è la data dell'ultimo brief, e si sposta in
+ * avanti ogni volta che il coach ne manda uno nuovo. Usata da sola, un
+ * allenamento saltato smetteva di risultare saltato appena arrivava un brief
+ * aggiornato — mentre sul calendario, che partiva dalla prima seduta
+ * registrata, quel giorno restava «saltato». Lo stesso giorno, due schermate,
+ * due risposte opposte.
+ *
+ * Vale la più indietro fra la prima seduta registrata e la data del brief:
+ * prima di quella non c'era niente da fare, e segnare quei giorni come saltati
+ * dipingerebbe di rosso un passato che non è mai esistito.
+ */
+export async function inizioProgramma() {
+  const p = programma();
+  if (!p) return null;
+  const primaSeduta = (await allenamenti()).map((s) => s.data).sort()[0] || null;
+  return [primaSeduta, p.aggiornatoIl].filter(Boolean).sort()[0] || null;
+}
+
 export function giornoPrevisto(iso = isoDate()) {
   if (!PROGRAMMA) return null;
   const ev = AGENDA?.get(iso);
@@ -2192,7 +2213,7 @@ export async function punteggiSalute(dal, al = isoDate()) {
     if (comp?.totale != null) perData.set(sed.data, Math.max(perData.get(sed.data) ?? 0, comp.totale));
   }
 
-  const inizio = programma()?.aggiornatoIl || null;
+  const inizio = await inizioProgramma();
   const out = [];
   const d = new Date(al + "T00:00:00");
   const fine = new Date(dal + "T00:00:00");
