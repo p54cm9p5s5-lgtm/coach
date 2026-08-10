@@ -35,6 +35,7 @@ export async function render({ vaiA, ridisegna }) {
   aggiungi(wrap, intestazione("Impostazioni", { etichetta: "Fine", onclick: () => vaiA("oggi") }));
 
   const prog = store.programma();
+  const precedente = await store.briefPrecedente();
   const imp = await store.impostazioni();
   const giorniExport = await store.giorniDaUltimoExport();
 
@@ -62,7 +63,24 @@ export async function render({ vaiA, ridisegna }) {
           { onclick: () => caricaBrief(ridisegna) },
           h("div.main", h("span.title", "Carica master brief (.md)")),
           h("span.chevron", "›")
-        )
+        ),
+        // Il brief nuovo arriva quando il coach lo scrive, non quando la tua
+        // settimana finisce: caricato di martedì, gli allenamenti che ti
+        // restavano da fare sparivano e servivano il file vecchio e un'altra
+        // importazione. Si torna indietro da qui, e con lo stesso pulsante si
+        // torna avanti quando la settimana è chiusa.
+        precedente
+          ? h(
+              "button.row",
+              { onclick: () => tornaIndietro(precedente, ridisegna) },
+              h(
+                "div.main",
+                h("span.title", `Torna al brief del ${dataLunga(precedente.aggiornatoIl)}`),
+                h("span.sub", (precedente.split || []).map((g) => g.nome).join(" · "))
+              ),
+              h("span.chevron", "›")
+            )
+          : null
       ),
       h(
         "p.footnote",
@@ -420,6 +438,23 @@ function righeManubri(manubri) {
     );
   }
   return righe;
+}
+
+async function tornaIndietro(precedente, ridisegna) {
+  const attuale = store.programma();
+  const scelta = await chiedi({
+    titolo: `Tornare al brief del ${dataLunga(precedente.aggiornatoIl)}?`,
+    testo:
+      `Torna in vigore lo split ${(precedente.split || []).map((g) => g.nome).join(", ")}. ` +
+      `Quello del ${dataLunga(attuale.aggiornatoIl)} resta da parte e si rimette da qui, con lo stesso pulsante. ` +
+      "Allenamenti, misure e note registrate non si toccano.",
+    opzioni: [{ etichetta: "Torna indietro", valore: "si" }],
+  });
+  if (scelta !== "si") return;
+  await store.tornaAlBriefPrecedente();
+  await store.aggiornaMotore();
+  toast(`Rimesso il brief del ${dataLunga(precedente.aggiornatoIl)}.`);
+  await ridisegna();
 }
 
 async function caricaBrief(ridisegna) {

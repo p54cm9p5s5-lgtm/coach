@@ -329,6 +329,12 @@ L'esito finisce nel registro decisioni.
   viene tolta: meglio niente che un consiglio scaduto.
 
 ### 4.7 Impostazioni
+- **Torna al brief precedente** → rimette in vigore il programma da cui sei
+  arrivato, uno solo, e mette da parte quello attuale: lo scambio è reversibile
+  dallo stesso pulsante. Serve quando il brief nuovo arriva a settimana
+  cominciata e gli allenamenti che restano da fare sono ancora quelli vecchi.
+  Non tocca allenamenti, misure e note registrate, e `caricatoIl` torna quello
+  originale, così le proposte accettate col programma giusto restano valide.
 - **Carica master brief (.md)** → aggiorna **programma e regole**, mai i dati
   registrati. Mostra un riepilogo delle differenze prima di applicare.
   Esercizi rimossi vengono archiviati, non cancellati: lo storico resta.
