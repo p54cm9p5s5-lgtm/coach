@@ -483,9 +483,41 @@ export function varianteDi(esercizioId) {
   return null;
 }
 
+/**
+ * I giorni dello split in ordine di quanto contano ADESSO: prima quello che il
+ * calendario mette per primo da oggi in avanti, poi gli altri.
+ *
+ * Serve perché nel brief possono convivere due programmi — quello che stai
+ * finendo e quello che comincia fra qualche giorno — e a decidere quale valga
+ * in un certo giorno è il calendario, non l'ordine in cui il coach li ha
+ * scritti. Senza questo, un esercizio presente in tutti e due prendeva sempre
+ * i numeri del primo scritto: cioè il programma vecchio continuava a comandare
+ * anche dopo essere finito.
+ */
+function giorniInOrdineDiValidita(oggi = isoDate()) {
+  const tutti = giorniSplit();
+  if (!agendaAttiva()) return tutti;
+  const prossimaVolta = new Map();
+  for (const [data, ev] of AGENDA) {
+    if (data < oggi || !ev?.giornoId || ev.giornoId === "riposo") continue;
+    const prec = prossimaVolta.get(ev.giornoId);
+    if (!prec || data < prec) prossimaVolta.set(ev.giornoId, data);
+  }
+  // Un giorno che il calendario non prevede più non sparisce: va in fondo, così
+  // resta disponibile per lo storico ma non detta le regole di oggi.
+  return [...tutti].sort((a, b) => {
+    const da = prossimaVolta.get(a.id);
+    const db2 = prossimaVolta.get(b.id);
+    if (da && db2) return da < db2 ? -1 : da > db2 ? 1 : 0;
+    if (da) return -1;
+    if (db2) return 1;
+    return 0;
+  });
+}
+
 export function varianti() {
   const m = new Map();
-  for (const g of giorniSplit()) {
+  for (const g of giorniInOrdineDiValidita()) {
     for (const v of g.esercizi || []) if (!m.has(v.esercizioId)) m.set(v.esercizioId, v);
   }
   return m;
@@ -1096,10 +1128,35 @@ export async function ultimoCarico(esercizioId, fallback = null) {
 
 // ---------- volumi ----------
 
-/** Serie settimanali per pattern, calcolate dallo split. */
-export function volumePerPattern() {
+/**
+ * Serie settimanali per pattern: quelle dei sette giorni che hai davanti.
+ *
+ * Non è la somma di tutto lo split. Nel brief possono esserci due programmi
+ * insieme — quello che stai finendo e quello che comincia — e sommarli dava
+ * 156 serie a settimana invece di 78: due settimane lette come una. Qui si
+ * guarda cosa tocca davvero da oggi ai prossimi sette giorni, che è la
+ * domanda che fa il titolo della tabella.
+ *
+ * Senza calendario ogni giorno della settimana conta una volta sola, come per
+ * `giornoPrevisto`: se due giorni dello split occupano lo stesso giorno della
+ * settimana, comanda il primo scritto.
+ */
+export function volumePerPattern(oggi = isoDate()) {
+  const giorni = [];
+  if (agendaAttiva()) {
+    for (let i = 0; i < 7; i++) {
+      const g = giornoPrevisto(piuGiorni(oggi, i));
+      if (g) giorni.push(g);
+    }
+  } else {
+    const perGiornoSettimana = new Map();
+    for (const g of giorniSplit()) {
+      if (!perGiornoSettimana.has(g.giorno)) perGiornoSettimana.set(g.giorno, g);
+    }
+    giorni.push(...perGiornoSettimana.values());
+  }
   const out = new Map();
-  for (const g of giorniSplit()) {
+  for (const g of giorni) {
     for (const v of g.esercizi || []) {
       const def = esercizio(v.esercizioId);
       if (!def) continue;
