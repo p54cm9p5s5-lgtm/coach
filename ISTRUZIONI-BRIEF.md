@@ -45,6 +45,7 @@ l'app lo toglie da sola.
 {
   "versione": 1,
   "aggiornatoIl": "2026-08-10",
+  "inVigoreDal": "2026-08-14",
   "atleta": { "nome": "Nome", "altezzaCm": 178 },
   "split": [ ... ],
   "inventario": { ... },
@@ -54,6 +55,14 @@ l'app lo toglie da sola.
 
 Solo `split` è obbligatorio. `inventario` serve a calcolare i dischi da montare,
 `regole` a spostare le soglie: senza, l'app usa i suoi valori.
+
+**`inVigoreDal` se il programma nuovo non parte subito.** Un brief entra in
+vigore nell'istante in cui viene caricato, e questo a settimana cominciata è un
+problema: gli allenamenti che restavano da fare erano quelli vecchi, e
+sparivano. Con questo campo l'app tiene il programma di prima fino a quel
+giorno e cambia da sola la mattina giusta — l'atleta non deve fare niente, né
+ricaricare niente. Scrivilo ogni volta che il programma nuovo parte da lunedì
+prossimo, dopo una pausa, o dopo le vacanze. Senza il campo, vale da subito.
 
 **Scrivi `altezzaCm`.** Non è un dettaglio anagrafico: senza, l'app non può
 calcolare il rapporto vita/altezza né il BMI, e quelle due righe spariscono
