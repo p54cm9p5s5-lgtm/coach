@@ -178,8 +178,16 @@ export async function inventario() {
 
 // ---------- programma ----------
 
-export async function applicaBrief(dati) {
+export async function applicaBrief(dati, { caricatoIl = null } = {}) {
   const precedente = PROGRAMMA;
+  // Il programma che esce resta da parte, uno solo, per poterci tornare.
+  //
+  // Il brief nuovo entra in vigore nell'istante in cui lo carichi, e questo è
+  // giusto — ma il coach lo scrive quando gli fa comodo, non quando la tua
+  // settimana finisce. Caricato di martedì, lo split vecchio spariva a metà
+  // settimana e gli allenamenti che ti restavano da fare non li conosceva più
+  // nessuno: l'unica via era farsi rimandare il file vecchio.
+  if (precedente) await db.put("programma", { ...precedente, id: "precedente" });
   const record = {
     id: "corrente",
     versione: dati.versione,
@@ -188,11 +196,12 @@ export async function applicaBrief(dati) {
     // tecnico: ricaricare lo stesso brief annullava tutte le proposte
     // accettate, che vengono scartate se più vecchie del brief in vigore.
     caricatoIl:
-      precedente &&
+      caricatoIl ??
+      (precedente &&
       JSON.stringify([precedente.split, precedente.regole, precedente.inventario]) ===
         JSON.stringify([dati.split || [], dati.regole || {}, dati.inventario || INVENTARIO_DEFAULT])
         ? precedente.caricatoIl
-        : new Date().toISOString(),
+        : new Date().toISOString()),
     atleta: dati.atleta || {},
     inventario: dati.inventario || INVENTARIO_DEFAULT,
     regole: dati.regole || {},
@@ -227,6 +236,38 @@ export async function applicaBrief(dati) {
     fonte: "app",
   });
 
+  return record;
+}
+
+/** Il programma da cui sei arrivato, se ce n'è uno: serve per tornarci. */
+export async function briefPrecedente() {
+  return (await db.get("programma", "precedente")) || null;
+}
+
+/**
+ * Rimette il programma di prima.
+ *
+ * Serve quando il brief nuovo è arrivato a settimana cominciata: gli
+ * allenamenti che ti restano da fare sono ancora quelli vecchi, e il coach il
+ * file lo manda quando lo scrive, non quando ti serve. Lo scambio è
+ * reversibile — quello che esce diventa a sua volta il precedente — quindi si
+ * torna avanti con lo stesso pulsante quando la settimana è finita.
+ *
+ * `caricatoIl` torna quello originale: è la data su cui l'app decide se una
+ * proposta accettata è più vecchia del brief in vigore, e rinfrescarla
+ * cancellerebbe decisioni che erano state prese col programma giusto sotto
+ * gli occhi.
+ */
+export async function tornaAlBriefPrecedente() {
+  const prec = await db.get("programma", "precedente");
+  if (!prec) return null;
+  const record = await applicaBrief(prec, { caricatoIl: prec.caricatoIl });
+  await registraDecisione({
+    oggetto: "Tornato al programma precedente",
+    livello: null,
+    testo: `Rimesso il brief del ${prec.aggiornatoIl}.`,
+    fonte: "app",
+  });
   return record;
 }
 
