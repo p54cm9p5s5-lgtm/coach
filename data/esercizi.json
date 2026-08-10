@@ -251,7 +251,7 @@
       "id": "calf",
       "nome": "Calf raise (polpacci)",
       "pattern": "polpacci",
-      "attrezzo": "manubri",
+      "attrezzo": "corpo libero",
       "sollecitaPolso": false,
       "recuperoDefaultSec": 60,
       "video": {

@@ -317,7 +317,13 @@ L'esito finisce nel registro decisioni.
 - *Corpo libero al tetto del range*: nessuna proposta automatica ma un segnale.
   La variante più difficile è una scelta da fare in conversazione, non un calcolo.
 - Una proposta **accettata** vale come obiettivo per la **prossima esposizione**:
-  compare in Modalità Seduta e poi il motore rivaluta sui dati nuovi.
+  compare in Modalità Seduta e poi il motore rivaluta sui dati nuovi. Il
+  **carico** deciso però resta: dopo che l'obiettivo è stato consumato comanda
+  ancora lui, prima del numero scritto nel brief, finché non arriva un brief
+  nuovo o una decisione più recente. Serve agli esercizi che tornano due volte
+  a settimana, dove altrimenti la seconda volta l'app richiedeva il carico
+  vecchio. Il bersaglio di **ripetizioni** non resta: deve poter risalire dentro
+  il range, che è la doppia progressione.
   **Rifiutata** non torna finché i dati restano quelli; **rimandata** torna dopo
   la prossima esposizione. Una proposta in sospeso che non regge più ai dati
   viene tolta: meglio niente che un consiglio scaduto.
