@@ -182,7 +182,34 @@ export async function inventario() {
 
 // ---------- programma ----------
 
-export async function applicaBrief(dati, { caricatoIl = null } = {}) {
+export async function applicaBrief(dati, { caricatoIl = null, rispettaDataDelBrief = false } = {}) {
+  // Il brief può dire da quando vale («inVigoreDal»). Se quel giorno deve
+  // ancora arrivare, non prende il comando adesso: si mette in attesa e ci
+  // entra da solo la mattina giusta, senza che tu debba toccare niente.
+  //
+  // Solo dal caricamento vero di un file: i richiami interni — tornare
+  // indietro, far entrare quello in attesa — passano di qui con la stessa
+  // struttura dati, e senza questa distinzione un programma con la data si
+  // sarebbe rimesso in attesa da solo, all'infinito.
+  if (rispettaDataDelBrief && dati.inVigoreDal && PROGRAMMA && dati.inVigoreDal > isoDate()) {
+    await db.put("programma", {
+      ...dati,
+      id: "prossimo",
+      dal: dati.inVigoreDal,
+      caricatoIl: new Date().toISOString(),
+      aggiornatoIl: dati.aggiornatoIl || isoDate(),
+      inventario: dati.inventario || INVENTARIO_DEFAULT,
+      regole: dati.regole || {},
+      split: dati.split || [],
+    });
+    await registraDecisione({
+      oggetto: "Programma nuovo in attesa",
+      livello: null,
+      testo: `Il brief del ${dati.aggiornatoIl} entra in vigore il ${dati.inVigoreDal}, come dice il brief stesso.`,
+      fonte: "app",
+    });
+    return { inAttesa: true, dal: dati.inVigoreDal, aggiornatoIl: dati.aggiornatoIl };
+  }
   const precedente = PROGRAMMA;
   // Il programma che esce resta da parte, uno solo, per poterci tornare.
   //

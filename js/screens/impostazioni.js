@@ -605,7 +605,9 @@ async function caricaBrief(ridisegna) {
       h(
         "p.footnote",
         { style: "margin:10px 16px 0" },
-        "Allenamenti, misure, foto e note registrate non vengono toccate."
+        dati.inVigoreDal && dati.inVigoreDal > isoDate()
+          ? `Il brief dice che vale dal ${dataLunga(dati.inVigoreDal)}: fino a quel giorno resta in vigore quello di adesso, e poi l'app cambia da sola. Allenamenti, misure, foto e note registrate non vengono toccate.`
+          : "Allenamenti, misure, foto e note registrate non vengono toccate."
       ),
       h(
         "div.btn-wrap",
@@ -618,8 +620,13 @@ async function caricaBrief(ridisegna) {
 
   if (conferma !== "si") return;
 
-  await store.applicaBrief(dati);
-  toast("Programma aggiornato.");
+  const esito = await store.applicaBrief(dati, { rispettaDataDelBrief: true });
+  toast(
+    esito?.inAttesa
+      ? `Messo in attesa: entra in vigore il ${dataLunga(esito.dal)}.`
+      : "Programma aggiornato.",
+    esito?.inAttesa ? 4000 : 2200
+  );
   await ridisegna();
 }
 

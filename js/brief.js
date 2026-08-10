@@ -69,6 +69,14 @@ export function valida(dati, libreria) {
     problemi.push("Manca lo split settimanale.");
   }
 
+  // Facoltativo: da quando vale questo programma. Serve quando il brief arriva
+  // a settimana cominciata — l'app tiene quello di prima fino a quel giorno e
+  // cambia da sola. Scritto storto sarebbe peggio che assente: un programma
+  // che entra in vigore mai, o subito senza dirlo.
+  if (dati.inVigoreDal != null && !/^\d{4}-\d{2}-\d{2}$/.test(String(dati.inVigoreDal))) {
+    problemi.push('«inVigoreDal» deve essere una data scritta come "2026-08-14".');
+  }
+
   for (const giorno of dati.split || []) {
     const visti = new Set();
     // I blocchi si fanno attaccati: gli esercizi di una stessa lettera devono
