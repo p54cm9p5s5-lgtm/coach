@@ -1,7 +1,7 @@
 /* Logica di dominio: programma, allenamenti, serie, questionari, volumi. */
 
 import * as db from "./db.js";
-import { isoDate, weekdayOf, giorniTra, dataBreve, num } from "./ui.js";
+import { isoDate, weekdayOf, giorniTra, dataBreve, num, durataUmana } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
 import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni } from "./segnali.js";
 import { punteggioEsercizio, punteggioAllenamento, doloriDi } from "./punteggio.js";
@@ -1769,6 +1769,10 @@ const LIMITI_GIORNO = {
   obiettivoKcal: { min: 50, max: 5000, nome: "obiettivo movimento", unita: "kcal" },
 };
 
+/* Sotto questo scarto due letture della stessa notte sono la stessa notte:
+   arrotondamenti fra fasi e totale, non un conteggio diverso. */
+const SCARTO_NOTTE_MIN = 15;
+
 const LIMITI_NOTTE = {
   durataMin: { min: 0, max: 1080, nome: "durata del sonno", unita: "min" },
   profondoMin: { min: 0, max: 1080, nome: "sonno profondo", unita: "min" },
@@ -1798,7 +1802,7 @@ function scartaImpossibili(riga, limiti, data, scartati) {
 }
 
 export async function importaSalute(pacchetto) {
-  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [] };
+  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [], nottiDiscordanti: [] };
 
   /**
    * Fonde solo i campi valorizzati: due righe per lo stesso giorno, una con le
@@ -1865,6 +1869,33 @@ export async function importaSalute(pacchetto) {
       // «torna al dato dell'orologio» deve avere un dato a cui tornare. Prima
       // l'import la scartava e quel tasto finiva per cancellare la notte.
       await db.put("notti", { ...prec, orologio: soloDatiNotte(n) });
+      continue;
+    }
+    // Una notte già passata e già in archivio non si riscrive da sola.
+    //
+    // Due pacchetti diversi hanno dato due durate diverse per la stessa notte
+    // — 6h43 e poi 5h45 — e vinceva l'ultimo arrivato, in silenzio. Il dato
+    // vero era il primo: su una notte finita i campioni di Salute non cambiano,
+    // quello che cambia è la finestra con cui il comando rapido li chiede, e
+    // una finestra tagliata restituisce meno sonno di quello che hai dormito.
+    //
+    // Quindi resta quello che c'è, la durata nuova si tiene da parte e la
+    // differenza viene detta: scegliere al posto tuo su un dato che il coach
+    // legge nel pacchetto sarebbe la cosa peggiore. Se quella giusta è la
+    // nuova, si corregge a mano dalla scheda della notte.
+    const scartoNotte =
+      prec?.presente &&
+      prec.fonte === "salute" &&
+      n.data < isoDate() &&
+      prec.durataMin != null &&
+      n.durataMin != null &&
+      Math.abs(prec.durataMin - n.durataMin) >= SCARTO_NOTTE_MIN;
+    if (scartoNotte) {
+      conteggio.nottiDiscordanti.push(
+        `${dataBreve(n.data)}: in archivio ${durataUmana(prec.durataMin * 60)}, nel pacchetto ${durataUmana(n.durataMin * 60)}`
+      );
+      await db.put("notti", { ...prec, scartata: soloDatiNotte(n), importatoIl: new Date().toISOString() });
+      conteggio.notti = nottiViste.size;
       continue;
     }
     await db.put("notti", {

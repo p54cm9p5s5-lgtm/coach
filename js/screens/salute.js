@@ -755,6 +755,24 @@ async function incolla(ridisegna) {
     });
   }
 
+  // Una notte già archiviata che arriva con un'altra durata: l'app non sceglie
+  // da sola quale credere, perché quel numero il coach lo legge nel pacchetto.
+  if (conteggio.nottiDiscordanti?.length) {
+    await chiedi({
+      titolo:
+        conteggio.nottiDiscordanti.length === 1
+          ? "Una notte già registrata arriva con un'altra durata"
+          : "Notti già registrate arrivano con altre durate",
+      testo:
+        `${conteggio.nottiDiscordanti.slice(0, 6).join("\n")}` +
+        (conteggio.nottiDiscordanti.length > 6 ? `\n…e altre ${conteggio.nottiDiscordanti.length - 6}.` : "") +
+        `\n\nHo tenuto quella che c'era. Su una notte finita i campioni di Salute non cambiano: quello che cambia è la finestra con cui il comando rapido li chiede, e una finestra tagliata restituisce meno sonno di quello che hai dormito.` +
+        `\n\nSe invece quella giusta è la durata nuova, aprila da Salute › Sonno e correggila a mano: lì trovi tutte e due.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
+    });
+  }
+
   if (conteggio.sospetti?.length) {
     await chiedi({
       titolo: "Numeri cambiati su giorni già registrati",
