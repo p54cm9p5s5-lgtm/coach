@@ -5,3 +5,12 @@ coach-backup-*.json
 coach-dati-iniziali.json
 
 .DS_Store
+
+# Impostazioni locali dello strumento con cui si lavora al progetto: contengono
+# permessi e percorsi di questo computer, non servono a nessun altro. Finora
+# restavano fuori solo grazie a un ignore globale del Mac — un file che il
+# progetto non contiene: su un altro computer sarebbero finite pubblicate al
+# primo `git add -A`. `launch.json` invece resta, è già pubblico e dice solo
+# come si avvia il server di prova.
+.claude/*
+!.claude/launch.json

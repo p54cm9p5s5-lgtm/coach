@@ -60,6 +60,22 @@ GitHub Pages su repository pubblico. Nel repository **non entra alcun dato perso
 programma e storico arrivano sul telefono importando i file generati in `_privato/`,
 che è escluso da git.
 
+`tools/pubblica.sh` mette in staging tutto (`git add -A`) e poi verifica quattro cose
+prima di lasciar passare: niente file di `_privato/`, niente backup o brief, nessuna
+immagine incorporata, nessuna delle parole dell'elenco personale — e una **lista
+bianca**: passa solo quello di cui l'app è fatta (`index.html`, `sw.js`, il manifest,
+`robots.txt`, `.nojekyll`, `.gitignore`, i `.md` in radice, e le cartelle `css/`,
+`js/`, `data/`, `icons/`, `tools/`). Qualunque altro file ferma la pubblicazione e
+viene stampato per nome: i primi quattro controlli sanno solo riconoscere il male che
+qualcuno ha già immaginato, la lista bianca ferma anche quello che non abbiamo previsto.
+Se serve pubblicare qualcosa di nuovo si aggiunge una riga alla lista, come decisione
+presa una volta.
+
+**L'elenco delle parole vietate sta in `_privato/parole-vietate.txt`**, perché le parole
+stesse sono dati personali. Senza quel file lo script si rifiuta di pubblicare: è voluto,
+ma vuol dire che da un computer che non ha `_privato/` non si pubblica finché non lo si
+rimette. Non esiste una scorciatoia per saltare il controllo, ed è giusto così.
+
 Un cambio di `VERSION` in `sw.js` pubblica un aggiornamento: la versione nuova prende
 il comando e l'app si ricarica **da sola**, senza chiedere niente — tranne mentre sei
 dentro un allenamento, dove l'aggiornamento resta in attesa e entra appena esci, per

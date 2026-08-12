@@ -1764,18 +1764,23 @@ function riquadroVideo(def) {
     );
   };
 
-  // I video verticali (gli Shorts degli allungamenti) hanno la loro anteprima:
-  // «hqdefault» per uno Short è un riquadro 4:3 quasi tutto barre nere, e in
-  // schermata si vedeva un rettangolo scuro col tasto play sopra.
+  // La copertina si disegna qui dentro, non si scarica.
+  //
+  // Prima era l'immagine di anteprima di YouTube (`i.ytimg.com`), e partiva da
+  // sola appena l'esercizio compariva a schermo: senza toccare niente, il
+  // telefono diceva a Google il tuo indirizzo e quale esercizio stavi facendo,
+  // ogni volta. Il player era già fatto per non farlo — «nocookie» e solo su
+  // richiesta — ma la copertina lo tradiva, e in fondo alle Impostazioni c'è
+  // scritto che da qui non esce niente.
+  //
+  // Disegnata costa zero, non dipende dalla rete (offline l'anteprima non
+  // arrivava comunque) e dice più di un fotogramma: cosa stai per guardare.
   const verticale = Boolean(def.video?.verticale);
-  const copertina = h("img", {
-    src: `https://i.ytimg.com/vi/${id}/${verticale ? "oardefault" : "hqdefault"}.jpg`,
-    alt: "",
-    loading: "lazy",
-    onerror: (e) => {
-      e.target.remove();
-    },
-  });
+  // Titolo e canale stanno già nella riga qui sotto, insieme a «Cambia»:
+  // ripeterli qui sopra era la stessa cosa scritta due volte a due centimetri
+  // di distanza. Sulla copertina resta l'unica cosa che lì sotto non c'è, ed è
+  // quella che serve prima di toccare: dove va a prenderlo.
+  const copertina = h("span.copertina", h("span.dove", "si apre su YouTube"));
 
   const riquadro = h(
     verticale ? "button.video.verticale" : "button.video",
