@@ -638,6 +638,43 @@ async function ripristinaSnapshot() {
   location.reload();
 }
 
+/**
+ * Cosa c'è nel file, accanto a cosa c'è adesso nel telefono.
+ *
+ * Si contano le tre cose che si perdono davvero — allenamenti, misure e
+ * attività extra — e si dice fin dove arriva ciascuna delle due parti. Se il
+ * file è più vecchio, la riga lo dice con le parole giuste: quello che hai
+ * registrato dopo non c'è là dentro.
+ */
+async function confrontoBackup(dump) {
+  const dati = dump?.dati && typeof dump.dati === "object" ? dump.dati : {};
+  const righe = [];
+  const ultimo = (elenco) => {
+    const date = (Array.isArray(elenco) ? elenco : []).map((x) => x?.data).filter(Boolean).sort();
+    return date.length ? date[date.length - 1] : null;
+  };
+  const conta = async (archivio, singolare, plurale) => {
+    const nel = Array.isArray(dati[archivio]) ? dati[archivio] : [];
+    let ora = [];
+    try {
+      ora = await store.db.all(archivio);
+    } catch {
+      ora = [];
+    }
+    if (!nel.length && !ora.length) return;
+    const parola = (n) => `${n} ${n === 1 ? singolare : plurale}`;
+    const fin = (elenco) => {
+      const d = ultimo(elenco);
+      return d ? `, fino al ${d.slice(8, 10)}/${d.slice(5, 7)}` : "";
+    };
+    righe.push(`${plurale.charAt(0).toUpperCase()}${plurale.slice(1)}: nel file ${parola(nel.length)}${fin(nel)} · adesso ${parola(ora.length)}${fin(ora)}`);
+  };
+  await conta("sedute", "allenamento", "allenamenti");
+  await conta("misure", "misura", "misure");
+  await conta("extra", "attività", "attività extra");
+  return righe.length ? righe.join("\n") : "Il file non contiene allenamenti, misure o attività.";
+}
+
 async function importaBackup(ridisegna) {
   const file = await scegliFile(".json,application/json");
   if (!file) return;
@@ -653,12 +690,19 @@ async function importaBackup(ridisegna) {
   const modo = dump.modo === "unisci" ? "unisci" : "sostituisci";
   const quando = dump.creatoIl ? new Date(dump.creatoIl).toLocaleString("it-IT") : "?";
 
+  // «I dati attuali vengono sostituiti» è vero ma cieco: non dice cosa stai
+  // per rimettere né cosa stai per togliere. Un backup di tre settimane fa si
+  // riconosce solo da lì, e chi lo apre per recuperare una cosa sola non si
+  // accorge di riportare indietro tutto il resto. La copia di sicurezza qui
+  // sotto rende l'errore rimediabile; questo lo rende evitabile.
+  const quantoCe = await confrontoBackup(dump);
+
   const scelta = await chiedi({
     titolo: modo === "unisci" ? "Importare questi dati?" : "Ripristinare il backup?",
     testo:
       modo === "unisci"
         ? `File del ${quando}. I dati vengono aggiunti a quelli già presenti. Le voci con lo stesso identificativo vengono sostituite da quelle del file; il resto resta com'è.`
-        : `Backup del ${quando}. I dati attuali vengono sostituiti.`,
+        : `Backup del ${quando}. I dati attuali vengono sostituiti.\n\n${quantoCe}`,
     opzioni: [
       {
         etichetta: modo === "unisci" ? "Importa" : "Sostituisci tutto",
