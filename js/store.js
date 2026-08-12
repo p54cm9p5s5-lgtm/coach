@@ -1055,6 +1055,12 @@ export async function completezzaSeduta(id) {
     cardio: sed.cardio,
     riscaldamento: Boolean(sed.riscaldamento?.fatto),
     stretching: Boolean(sed.stretching?.fatto),
+    // Quel giorno li prevede? Il riscaldamento c'è sempre — almeno la
+    // camminata, che non dipende dal giorno. Lo stretching finale no: sui
+    // giorni del nuovo split al suo posto c'è il blocco di mobilità, e una
+    // voce a zero per una cosa che il programma non chiede è una penalità
+    // inventata.
+    previstoStretching: Boolean(riscaldamento(sed.tipoId)?.stretchingFinale?.length),
     // La voce entra solo se quel giorno aveva un blocco di mobilità: sulle
     // sedute di prima, e sui giorni che non ne hanno, non deve comparire una
     // riga a zero per una cosa che non era prevista.
