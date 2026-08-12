@@ -676,7 +676,8 @@ l'esercizio ogni serie viene scritta per intero (`4 → 6 kg per manubrio` ·
 si può leggere in tre modi diversi
 - **Dati salute**: stato delle finestre a 3 settimane e la tabella giorno per
   giorno con movimento, percentuale sull'obiettivo, passi e note
-- **Extra — attività fuori scheda**: corse, camminate, bici, nuoto. Data,
+- **Extra — attività fuori scheda** (sezione sua nella barra in basso): corse,
+  camminate, bici, nuoto. Data,
   tipo, durata, km, ritmo, FC media e massima, kcal attive e totali, e il
   **talk-test** (frasi intere comode / frasi intere con fiatone / a fatica).
   Non sono esercizi tracciati — niente carico, tecnica o RPE — e nessun giorno
