@@ -261,6 +261,9 @@ async function componi(stato) {
         bloccoSalute({
           giorni,
           notti,
+          // Tante righe quanti sono i giorni della finestra: la tabella deve
+          // coprire quello che il conteggio sopra dichiara.
+          quantiGiorni: (r.movimento?.settimane ?? 3) * 7,
           obiettivo: await store.impostazione("obiettivoMovimentoKcal"),
           tipoGiorno,
           finestraMovimento: store.statoFinestra(giorni, {
