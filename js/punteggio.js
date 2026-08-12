@@ -546,12 +546,16 @@ export function punteggioAllenamento({
   const fatte = quali.filter((x) => x.fatto);
   const saltate = quali.filter((x) => !x.fatto);
   const maiuscola = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  // Il dettaglio parla della stessa cosa che nomina la voce: con il solo
+  // riscaldamento «non previsti» al plurale contraddiceva il titolo al
+  // singolare, e sembrava che mancasse qualcosa di non detto.
+  const nonPrevisti = quali.length === 1 ? "non previsto" : "non previsti";
   voci.push({
     nome: quali.length ? maiuscola(quali.map((x) => x.nome).join(" e ")) : "Riscaldamento e stretching",
     quota: soloMobilita || !quali.length ? null : fatte.length / quali.length,
     peso: 20,
     dettaglio: soloMobilita
-      ? "non previsti in un giorno di sola mobilità"
+      ? `${nonPrevisti} in un giorno di sola mobilità`
       : !quali.length
         ? "non previsti in questo giorno"
         : !saltate.length
