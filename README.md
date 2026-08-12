@@ -35,6 +35,7 @@ tools/icona-da-immagine.sh  genera le tre misure delle icone
 tools/serve.py        server di sviluppo senza cache
 tools/pubblica.sh     pubblica su GitHub Pages, con i controlli anti-fuga dati
 tools/passa-file.py   passa i file personali al telefono sulla Wi-Fi di casa
+tools/salute-da-export.py  dall'export di Salute al pacchetto, senza Comandi Rapidi
 ```
 
 ## Sviluppo
