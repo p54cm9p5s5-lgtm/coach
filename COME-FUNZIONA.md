@@ -908,11 +908,22 @@ una copia interna di com'era: se il ripristino va storto non è un vicolo cieco 
 e se non riesce nemmeno a rimettere a posto quella copia, **lo dice** invece di
 lasciarti credere che la rete di sicurezza sia intatta.
 
-**Se il telefono può cancellare l'archivio, l'app te lo dice.** iOS può
-considerare cancellabili i dati di un'app quando lo spazio scarseggia; l'app
-chiede di essere protetta all'avvio, ma la risposta può essere no. In
-Impostazioni, accanto ai backup, c'è la riga «Archivio protetto dal telefono»
-con sì o no: se dice no, il backup su file non è prudenza, è l'unica copia.
+**Dove vivono i dati, detto in Impostazioni.** Accanto ai backup c'è una riga che
+dice quanto è al sicuro l'archivio. Non mostra la risposta nuda del sistema
+(`navigator.storage.persist()`), perché su iPhone quella è **no per tutti** e
+spaventava per la cosa sbagliata. Mostra quello che conta davvero, cioè dove gira
+l'app:
+
+- **installata** dalla schermata Home → i dati restano finché non togli l'app.
+  Il telefono non promette niente, ma il rischio vero non c'è.
+- **dentro il browser** → «App non installata: archivio a rischio». Lì i dati di
+  un sito sono di passaggio e il sistema può cancellarli dopo qualche giorno che
+  non lo apri. La riga spiega come installarla (Condividi → «Aggiungi a Home»).
+- **sì** → il sistema si è impegnato a non cancellarlo (succede su altri
+  browser, non su iPhone).
+
+In tutti e tre i casi il **backup su file** resta l'unica copia che sopravvive
+alla perdita del telefono: quella riga cambia quanto è urgente, non se serve.
 
 ---
 
