@@ -722,6 +722,23 @@ diverse secondo da dove lo apri.
 
 ---
 
+### Se i Comandi Rapidi non funzionano
+
+Su una beta di iOS le azioni di Salute dentro Comandi Rapidi possono restare
+appese. L'app non dipende da loro: in **Salute → Aggiorna → «Ho già copiato» →
+«Scegli un file»** si può dare direttamente l'`export.xml` dell'app Salute
+(profilo → «Esporta tutti i dati», poi in File si estrae lo zip). Il file pesa
+centinaia di megabyte e non viene caricato in memoria: viene fatto **scorrere**
+a pezzi, tenendo solo i numeri che servono. Misurato su un export vero da
+852 MB: letto in un paio di secondi con meno di 30 MB di memoria occupata, e il
+pacchetto che ne esce è **identico byte per byte** a quello prodotto dallo
+stesso lavoro fatto su un computer (`tools/salute-da-export.py`).
+
+Restano fuori solo gli eventi del **calendario**, che nell'export di Salute non
+ci sono: quelli continuano ad arrivare dal comando «Coach Calendario».
+
+---
+
 ## 13. Il calendario
 
 Lo split del brief disegna i giorni per default. Se il coach mette un evento sul
