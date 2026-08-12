@@ -855,6 +855,275 @@
           "come": "Sdraiata a terra con le gambe verticali appoggiate alla parete. È il passaggio scelto per il drenaggio venoso: chiude bene una giornata seduta."
         }
       ]
+    },
+    "push": {
+      "mobilitaFinale": [
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        }
+      ]
+    },
+    "pull": {
+      "mobilitaFinale": [
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        }
+      ]
+    },
+    "legs": {
+      "mobilitaFinale": [
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
+        },
+        {
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        }
+      ]
+    },
+    "upper": {
+      "mobilitaFinale": [
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        }
+      ]
+    },
+    "lower": {
+      "mobilitaFinale": [
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
+        },
+        {
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        }
+      ]
+    },
+    "sabato": {
+      "mobilitaFinale": [
+        {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        },
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        },
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
+        },
+        {
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
+        }
+      ]
+    },
+    "domenica": {
+      "mobilitaFinale": [
+        {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        },
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        },
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
+        },
+        {
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
+        }
+      ]
     }
-  }
+  },
+  "notaMobilitaFinale": "Blocco di mobilità dopo lo stretching finale (master brief §17-bis, dal 24/08/2026). Dose fissa: nessun carico, nessuna soglia tecnica, nessuna progressione. Ogni giorno copre le zone che il suo riscaldamento non tocca già; sabato e domenica tutte e quattro."
 }

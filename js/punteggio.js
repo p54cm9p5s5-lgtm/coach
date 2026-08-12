@@ -459,7 +459,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
  * @param punteggi   punteggi degli esercizi effettivamente svolti
  * @param cardio     { previsto, eseguito, durataMin, durataPrevistaMin, kmh }
  */
-export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, riscaldamento, stretching, regole, regoleCardio = null }) {
+export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, riscaldamento, stretching, mobilita = null, regole, regoleCardio = null }) {
   const voci = [];
   const tetti = [];
 
@@ -513,12 +513,19 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
 
   // Riscaldamento e stretching sono la stessa voce: aprono e chiudono la
   // seduta, e nel brief valgono per lo stesso motivo.
+  //
+  // Su un giorno di sola mobilità non esistono: non c'è niente da scaldare e
+  // niente da allungare dopo. Contarli zero faceva sì che un sabato fatto per
+  // intero valesse 50 — cioè metà punteggio per non aver fatto due cose che
+  // quel giorno non prevede.
+  const soloMobilita = !quanti && Boolean(mobilita);
   voci.push({
     nome: "Riscaldamento e stretching",
-    quota: ((riscaldamento ? 1 : 0) + (stretching ? 1 : 0)) / 2,
+    quota: soloMobilita ? null : ((riscaldamento ? 1 : 0) + (stretching ? 1 : 0)) / 2,
     peso: 20,
-    dettaglio:
-      riscaldamento && stretching
+    dettaglio: soloMobilita
+      ? "non previsti in un giorno di sola mobilità"
+      : riscaldamento && stretching
         ? "tutti e due fatti"
         : riscaldamento
           ? "stretching saltato"
@@ -526,6 +533,23 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
             ? "riscaldamento saltato"
             : "saltati tutti e due",
   });
+
+  // Il blocco di mobilità, dove il giorno ne ha uno.
+  //
+  // È una dose fissa come il riscaldamento: entra per il fatto di essere stata
+  // fatta o saltata, non per quanto bene. Su un giorno di sola mobilità —
+  // sabato e domenica, che di esercizi non ne hanno — questa diventa l'unica
+  // voce con un valore, cioè tutto il punteggio: senza, quei giorni davano
+  // zero sia facendoli sia saltandoli, e non c'era modo di evitare la
+  // penalità di averli saltati.
+  if (mobilita) {
+    voci.push({
+      nome: "Mobilità",
+      quota: mobilita.fatto ? 1 : 0,
+      peso: 20,
+      dettaglio: mobilita.fatto ? "fatta" : "saltata",
+    });
+  }
 
   // Solo le voci che hanno un valore entrano nella media: una voce «non
   // applicabile» non deve contare come zero.

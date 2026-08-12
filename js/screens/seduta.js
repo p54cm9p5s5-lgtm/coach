@@ -787,6 +787,7 @@ async function disegna() {
   else if (fase === "cardio") await vistaCardio(corpo, piede);
   else if (fase === "valutazioneCardio") await vistaValutazioneCardio(corpo, piede);
   else if (fase === "stretching") await vistaStretching(corpo, piede);
+  else if (fase === "mobilita") await vistaMobilita(corpo, piede);
   else await vistaFine(corpo, piede);
 }
 
@@ -810,6 +811,11 @@ function testata() {
     const k = Math.min((S.sed.progresso?.strPasso ?? 0) + 1, Math.max(q, 1));
     passo = q ? `Stretching ${k} di ${q}` : "Stretching";
     avanzamento = q ? 96 + ((k - 1) / q) * 4 : 96;
+  } else if (fase === "mobilita") {
+    const q = passiMobilita().length;
+    const k = Math.min((S.sed.progresso?.mobPasso ?? 0) + 1, Math.max(q, 1));
+    passo = q ? `Mobilità ${k} di ${q}` : "Mobilità";
+    avanzamento = 100;
   } else if (fase === "fine") {
     passo = "Riepilogo";
     avanzamento = 100;
@@ -1028,6 +1034,11 @@ function avvicinamento(def, mobilita) {
     // «di Squat con bilanciere con bilanciere scarico».
     come: `Una serie da 8-10 ripetizioni con ${carico}.${nota} Non va registrata: serve solo a scaldare il movimento.`,
   };
+}
+
+function passiMobilita() {
+  const prot = store.riscaldamento(S.sed.tipoId);
+  return (prot?.mobilitaFinale || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video }));
 }
 
 function passiStretching() {
@@ -3256,7 +3267,7 @@ async function vistaStretching(corpo, piede) {
         {
           onclick: azione(async () => {
             S.sed = await store.aggiornaSeduta(S.sed.id, { stretching: { fatto: false } });
-            await salvaProgresso({ fase: "fine" });
+            await salvaProgresso({ fase: dopoLoStretching() });
             await disegna();
           }),
         },
@@ -3267,6 +3278,64 @@ async function vistaStretching(corpo, piede) {
       S.sed = await store.aggiornaSeduta(S.sed.id, {
         stretching: { fatto: true, quando: Date.now() },
       });
+      await salvaProgresso({ fase: dopoLoStretching() });
+      await disegna();
+    },
+  });
+}
+
+/** Dopo lo stretching c'è la mobilità, se quel giorno ne ha una. */
+const dopoLoStretching = () => (passiMobilita().length ? "mobilita" : "fine");
+
+/**
+ * Il blocco di mobilità di fine seduta.
+ *
+ * Non è un esercizio: niente carico, niente ripetizioni da registrare, niente
+ * RPE. È una dose fissa, come il riscaldamento — e come il riscaldamento entra
+ * nel punteggio solo per il fatto di essere stata fatta o saltata. Su sabato e
+ * domenica, che di esercizi non ne hanno, è tutto il contenuto della giornata.
+ */
+async function vistaMobilita(corpo, piede) {
+  const passi = passiMobilita();
+  await vistaGuidata(corpo, piede, {
+    chiave: "mob",
+    tenuta: true,
+    kicker: "Mobilità",
+    titolo: "Mobilità",
+    passi,
+    vuoto: "Nessuna mobilità prevista per questo giorno",
+    etichettaFine: "Mobilità fatta",
+    extra: (i) =>
+      i === 0
+        ? [
+            h(
+              "div.guida",
+              h(
+                "section",
+                h("h3", "Perché adesso"),
+                h(
+                  "p",
+                  "Dopo lo stretching, a lavoro finito. Copre le zone che il riscaldamento di oggi non ha toccato: caviglia, anca, colonna, spalle. Dose fissa, non si progredisce."
+                )
+              )
+            ),
+          ]
+        : [],
+    tastiExtra: () => [
+      h(
+        "button.btn.secondary",
+        {
+          onclick: azione(async () => {
+            S.sed = await store.aggiornaSeduta(S.sed.id, { mobilita: { fatto: false } });
+            await salvaProgresso({ fase: "fine" });
+            await disegna();
+          }),
+        },
+        "Salta"
+      ),
+    ],
+    onFine: async () => {
+      S.sed = await store.aggiornaSeduta(S.sed.id, { mobilita: { fatto: true, quando: Date.now() } });
       await salvaProgresso({ fase: "fine" });
       await disegna();
     },

@@ -674,6 +674,7 @@ compatta (`30 kg barra compresa` · `3x8/8/6`); se è cambiato durante
 l'esercizio ogni serie viene scritta per intero (`4 → 6 kg per manubrio` ·
 `s1 4 kg×12 · s2 6 kg×10`), perché una forma come «4/6 kg» accanto a «2x12/10»
 si può leggere in tre modi diversi
+- **Mobilità**: fatta o saltata, quando quel giorno ne prevede una
 - **Dati salute**: stato delle finestre a 3 settimane e la tabella giorno per
   giorno con movimento, percentuale sull'obiettivo, passi e note
 - **Extra — attività fuori scheda** (sezione sua nella barra in basso): corse,
@@ -744,6 +745,25 @@ l'archivio: il pavimento serve a non prendere di più, mai a tagliare.
 Restano fuori solo gli eventi del **calendario**, che nell'export di Salute non
 ci sono: quelli continuano ad arrivare dal comando «Coach Calendario», che non
 tocca Salute e infatti funziona.
+
+---
+
+### La mobilità di fine seduta
+
+Dal **24/08/2026**, dopo lo stretching finale, ogni giorno ha un blocco di
+mobilità a **dose fissa**: nessun carico, nessuna soglia tecnica, nessuna
+progressione. Copre le zone che il riscaldamento di quel giorno non tocca già —
+Push, Upper: anca, caviglia, colonna · Pull: anca, caviglia · Legs, Lower:
+spalle, colonna · **sabato e domenica: tutte e quattro**. I movimenti sono
+quelli che già conosci dal riscaldamento, con la stessa spiegazione e lo stesso
+video.
+
+Nel punteggio entra come il riscaldamento: per il fatto di essere stata fatta o
+saltata, non per quanto bene. **Sabato e domenica sono giorni di sola
+mobilità** — nello split ci sono, ma senza esercizi — e lì quella voce è tutto
+il punteggio: farla vale 100, saltarla vale 0, e non farsi vedere pesa come
+saltare un giorno di scheda. In quei due giorni riscaldamento e stretching non
+contano, perché non sono previsti.
 
 ---
 
