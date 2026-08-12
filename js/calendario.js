@@ -131,10 +131,6 @@ export function calcolaAttese({
     attese.get(data).push({ tipo, testo, risolto: tipo === "scaduto" ? Boolean(risolto) : false });
   };
 
-  // Le misure, le foto e il peso NON dipendono dal calendario: sono il
-  // protocollo dell'app, ed è l'app a registrarli. Prima, appena collegavi il
-  // calendario, sparivano tutti — restavano solo gli allenamenti scritti dal
-  // coach, e i giorni della pesata e delle foto non li ricordava più nessuno.
   // L'ultima data registrata che non sia successiva al giorno guardato: è
   // quella che conta per sapere se in quel giorno eri in regola.
   const ultimaEntro = (elenco, unica, data) => {
@@ -179,7 +175,19 @@ export function calcolaAttese({
     }
   };
 
-  periodiche();
+  // Le cadenze del protocollo — pesata, circonferenze, set di foto — valgono
+  // SOLO quando il calendario non c'è.
+  //
+  // Con il calendario collegato comanda lui, e non a metà: se decide cosa si
+  // allena, decide anche quando ti pesi e quando fai le foto. Sommandoci anche
+  // le cadenze dell'app uscivano due cose sbagliate insieme — un doppione, con
+  // «peso, vita, misure e foto» scritto dal coach e accanto «Peso e
+  // circonferenza vita» messo dall'app, e soprattutto roba inventata: foto
+  // «in ritardo» in un giorno in cui il coach non aveva chiesto nessuna foto.
+  // L'app non ha titolo per aggiungere scadenze a un programma che sta
+  // leggendo da qualcun altro.
+  const comandaIlCalendario = Array.isArray(eventi);
+  if (!comandaIlCalendario) periodiche();
 
   if (eventi) {
     // Calendario collegato: le cose da fare sono quelle che ci ha scritto il

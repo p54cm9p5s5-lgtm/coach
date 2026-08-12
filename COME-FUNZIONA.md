@@ -729,6 +729,17 @@ calendario del telefono, **comanda quello**, e l'app segnala quando l'evento è
 diverso da ciò che prevedeva lo split. Un giorno mai letto dal calendario non
 viene mai dichiarato «scaduto».
 
+**E comanda su tutto, non solo sugli allenamenti.** Con il calendario collegato,
+anche pesata, circonferenze e set di foto sono quelli che ci ha scritto il
+coach: l'app smette di aggiungere le proprie cadenze. Prima le sommava, e ne
+uscivano due cose sbagliate insieme — un doppione («peso, vita, misure e foto»
+scritto dal coach e accanto «Peso e circonferenza vita» messo dall'app) e
+scadenze inventate, tipo un set di foto «in ritardo» in un giorno in cui il
+coach non ne aveva chiesto nessuno. Senza calendario le cadenze del protocollo
+tornano a valere, perché lì non c'è nessun altro a dirle. Restano sempre
+dell'app soltanto due promemoria, che il coach non può conoscere: il backup su
+file e l'import dei dati salute.
+
 ---
 
 ## 14. Regole di condotta dell'app
