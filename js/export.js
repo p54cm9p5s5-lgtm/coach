@@ -479,8 +479,17 @@ const ore = (min) => (min == null ? "—" : `${Math.floor(min / 60)}h${String(mi
  * che il coach legge, e riformattarlo costringe a rileggere invece che a
  * confrontare.
  */
-export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, obiettivo, tipoGiorno }) {
-  const righeG = giorni.slice(0, 7).map((g) => {
+export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, obiettivo, tipoGiorno, quantiGiorni = 21 }) {
+  // Quante righe: tutta la finestra, non una settimana.
+  //
+  // Erano sette, e la finestra ne dichiara ventuno: il coach leggeva
+  // «11/21 notti» sopra una tabella che gliene mostrava sette, quindi le altre
+  // quattordici non poteva controllarle. Quando il conteggio è sceso da un
+  // pacchetto all'altro ha verificato «riga per riga» e ha trovato tutto
+  // identico — perché le notti sparite erano fuori dalle sette visibili. Una
+  // tabella che non copre quello che il numero sopra dichiara è una tabella
+  // che nasconde proprio l'errore che si sta cercando.
+  const righeG = giorni.slice(0, quantiGiorni).map((g) => {
     const giorno = GIORNI_ABBR[new Date(g.data + "T00:00:00").getDay()];
     if (!g.presente) return [dataBreve(g.data), giorno, tipoGiorno(g.data), "non registrato", "—", "—", ""];
     const obb = g.obiettivoKcal || obiettivo;
@@ -497,7 +506,7 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
     ];
   });
 
-  const righeN = notti.slice(0, 7).map((n) =>
+  const righeN = notti.slice(0, quantiGiorni).map((n) =>
     n.presente
       ? [
           dataBreve(n.data),
