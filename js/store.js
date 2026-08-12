@@ -1320,7 +1320,32 @@ export async function aggiornaProposte(cache = null) {
     const mie = esistenti.filter((p) => p.esercizioId === esercizioId);
     const sospese = mie.filter((p) => p.stato === "inSospeso");
 
-    if (!nuova) {
+    // Una proposta che il brief ha GIÀ realizzato non è più una proposta.
+    //
+    // Le proposte nascono da quello che hai alzato, non da quello che c'è
+    // scritto: se l'ultima volta hai fatto 30 kg, l'app propone 31 anche se
+    // nel frattempo il coach ha portato la scheda a 35. Chiedere di decidere
+    // una cosa già decisa — e decisa più in grande — è rumore, e soprattutto
+    // è una domanda a cui rispondere «sì» farebbe scendere il carico.
+    // Vale anche se non hai mai risposto: la proposta sparisce lo stesso.
+    const gia = (() => {
+      if (!nuova || variante.carico == null) return false;
+      const da = nuova.da?.carico;
+      const a = nuova.a?.carico;
+      if (a == null || da == null) return false;
+      // Salita già fatta dal brief, oppure discesa già fatta dal brief.
+      return a > da ? variante.carico >= a : variante.carico <= a;
+    })();
+
+    // Stessa cosa per le ripetizioni: se il brief chiede già almeno quelle
+    // che la proposta vorrebbe raggiungere, la proposta è superata.
+    const giaRip =
+      nuova?.tipo === "ripetizioni" &&
+      nuova.a?.rip != null &&
+      variante.ripMin != null &&
+      variante.ripMin >= nuova.a.rip;
+
+    if (!nuova || gia || giaRip) {
       for (const p of sospese) {
         await db.del("proposte", p.id);
         tolte++;

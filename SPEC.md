@@ -335,6 +335,11 @@ L'esito finisce nel registro decisioni.
   **Rifiutata** non torna finché i dati restano quelli; **rimandata** torna dopo
   la prossima esposizione. Una proposta in sospeso che non regge più ai dati
   viene tolta: meglio niente che un consiglio scaduto.
+- Una proposta che il **brief ha già realizzato** sparisce da sola, anche se
+  non le è mai stato risposto. Le proposte nascono da quello che è stato
+  alzato, non da quello che c'è scritto: dopo un brief che porta la panca da 30
+  a 35, l'app continuava a chiedere «30 → 31», cioè una decisione già presa —
+  e presa più in grande, tanto che accettarla avrebbe abbassato il carico.
 
 ### 4.7 Impostazioni
 - **Carica master brief (.md)** → aggiorna **programma e regole**, mai i dati
