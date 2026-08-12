@@ -34,6 +34,14 @@ resta nella conversazione con Claude.
   dei dati avviene sul telefono, importando i file.
 - **Persistenza:** IndexedDB sul dispositivo. Nessun server, nessun account,
   nessun dato in rete.
+- **Nessuna richiesta esterna a schermo.** Aprire una qualunque schermata non
+  produce richieste fuori dal telefono: verificato girando tutte le rotte. L'unica
+  eccezione è il **player di YouTube**, che parte solo se lo tocchi — la copertina
+  è disegnata dall'app, non scaricata, e porta scritto dove sta andando. Prima era
+  l'anteprima di YouTube e partiva da sola: bastava aprire un esercizio.
+- **iOS può cancellare l'archivio** quando lo spazio scarseggia. L'app chiede la
+  persistenza all'avvio; la risposta è mostrata in Impostazioni («Archivio
+  protetto dal telefono», sì/no), perché cambia quanto conta il backup su file.
 - **Backup, due livelli distinti e dichiarati come tali:**
   - *copia interna*, automatica a fine di ogni seduta, salvata nel dispositivo.
     Protegge da errori dell'app e cancellazioni accidentali, non dalla perdita
@@ -130,8 +138,9 @@ Seduta           id, data, tipoId, tipoNome, tipoProgrammatoId,
                  durataLavoroSec, riscaldamento { fatto, modalita, note },
                  cardio { previsto, eseguito, kmh, durataMin, durataPrevistaMin,
                           finitoIl, saltatoMotivo, note, soglie },
-                 stretching { fatto }, previstiElenco[], progresso, completezza,
-                 notaGenerale
+                 stretching { fatto }, mobilita { fatto },
+                 previstiElenco[], progresso, completezza, notaGenerale,
+                 orologio { … numeri copiati dal quadrante }
 SerieLog         id, sedutaId, esercizioId, numero, carico, caricoTarget,
                  ripFatte, ripTarget, aTempo, tsInizioSerie, tsFineSerie,
                  recuperoRealeSec, recuperoTargetSec
