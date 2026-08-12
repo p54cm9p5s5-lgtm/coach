@@ -1067,7 +1067,11 @@ textarea.note {
   gap: 3px;
   padding: 0 18px 12px;
   text-align: center;
-  background: linear-gradient(160deg, var(--bg-grouped), #000);
+  /* Colori fissi, non quelli del tema: il riquadro del video è nero in tutti e
+     due i temi (ci va dentro il player), e prendendo `--bg-grouped` in tema
+     chiaro la copertina partiva dal bianco — cerchio bianco del play invisibile
+     e scritta grigio scuro sul fondo nero, contrasto 1,67. */
+  background: linear-gradient(160deg, #2a2a2e, #000);
 }
 
 /* Detto dove si decide di toccare: il player è l'unico punto in cui l'app
@@ -1076,7 +1080,8 @@ textarea.note {
   font-size: 11px;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  color: var(--label-secondary);
+  /* Chiaro sempre, per lo stesso motivo del fondo qui sopra. */
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .video img,
