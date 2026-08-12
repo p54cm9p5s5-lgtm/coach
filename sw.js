@@ -22,6 +22,7 @@ const ASSETS = [
   "./js/ui.js",
   "./js/plates.js",
   "./js/salute.js",
+  "./js/salute-export.js",
   "./js/segnali.js",
   "./js/export.js",
   "./js/grafico.js",

@@ -666,18 +666,78 @@ async function incolla(ridisegna) {
       },
       "Leggi dagli appunti"
     );
+
+    // Da file, senza passare dagli appunti.
+    //
+    // Quando i Comandi Rapidi non funzionano — su una beta di iOS le azioni di
+    // Salute possono restare appese — il pacchetto lo prepara lo strumento sul
+    // Mac e arriva qui come file. Copiare ventimila caratteri a mano su un
+    // telefono è un supplizio che non ha ragione di esistere.
+    const daFile = h(
+      "button.btn.secondary",
+      {
+        onclick: () => {
+          const scelta = h("input", {
+            type: "file",
+            accept: ".txt,.md,.xml,text/plain,text/markdown,text/xml",
+            style: "display:none",
+          });
+          scelta.addEventListener("change", async () => {
+            const f = scelta.files?.[0];
+            scelta.remove();
+            if (!f) return;
+            try {
+              // L'export di Salute pesa centinaia di megabyte: non si legge
+              // tutto insieme, si fa scorrere. Un pacchetto già pronto invece
+              // è di pochi kilobyte e si legge e basta.
+              const grande = /\.xml$/i.test(f.name) || f.size > 2 * 1024 * 1024;
+              let t;
+              if (grande) {
+                const { pacchettoDaExport } = await import("../salute-export.js");
+                const mega = (f.size / 1048576).toFixed(0);
+                nota.textContent = `Leggo ${f.name} (${mega} MB): non lo carico tutto, lo scorro. Aspetta.`;
+                const esito = await pacchettoDaExport(f, {
+                  giorni: 30,
+                  onAvanzamento: (letti) => {
+                    const q = Math.min(99, Math.round((letti / f.size) * 100));
+                    nota.textContent = `Leggo ${f.name}: ${q}%`;
+                  },
+                });
+                t = esito.testo;
+                nota.textContent =
+                  `Letto ${mega} MB: ${esito.fasi} fasi di sonno, ${esito.allenamenti} allenamenti. ` +
+                  "Controlla e tocca Importa.";
+              } else {
+                t = await f.text();
+                const righe = t.split("\n").filter((r) => r.trim()).length;
+                nota.textContent = `Letto da ${f.name}: ${righe} righe. Controlla e tocca Importa.`;
+              }
+              area.value = t;
+            } catch (e) {
+              nota.textContent = `Il file non si è letto: ${e.message}`;
+            }
+          });
+          document.body.append(scelta);
+          scelta.click();
+        },
+      },
+      "Scegli un file"
+    );
+
     return h(
       "div",
       h("h2", "Incolla i dati"),
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        "Qui va il testo copiato dal comando rapido."
+        "Il testo del comando rapido, oppure un file preparato sul Mac."
       ),
       area,
       nota,
       h(
         "div.btn-wrap",
+        daFile,
+        h("div", { style: "height:8px" }),
         daAppunti,
         h("div", { style: "height:8px" }),
         h("button.btn", { onclick: () => close(area.value) }, "Importa")
