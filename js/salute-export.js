@@ -82,13 +82,19 @@ const piuGiorni = (iso, n) => {
  * @param onAvanzamento(byteLetti) per dire a chi guarda che sta lavorando
  * @returns il testo del pacchetto, pronto per `analizza()`
  */
-export async function pacchettoDaExport(file, { giorni = 30, oggi = null, onAvanzamento = null } = {}) {
+export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = null, oggi = null, onAvanzamento = null } = {}) {
   const al = oggi || (() => {
     const d = new Date();
     const p = (x) => String(x).padStart(2, "0");
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   })();
-  const dal = piuGiorni(al, -(Math.max(1, giorni) - 1));
+  // Il pavimento non è una finestra mobile ma il giorno in cui questa storia
+  // comincia: l'archivio di Salute contiene anni di dati, e importarli
+  // riempirebbe l'app di giornate che il programma non ha mai guardato — medie
+  // calcolate su un passato che non c'entra, grafici che partono da prima che
+  // l'app esistesse. Chi chiama passa `dal`; senza, si torna alla finestra.
+  const finestra = piuGiorni(al, -(Math.max(1, giorni) - 1));
+  const dal = daQuando && daQuando > finestra ? daQuando : daQuando || finestra;
 
   // I passi li registrano sia iPhone sia Watch, e sommarli conta due volte i
   // periodi in cui li avevi addosso entrambi. Si tengono separati e si sceglie

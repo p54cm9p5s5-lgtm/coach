@@ -215,6 +215,7 @@ def main():
     ap.add_argument("export", help="export.zip di Salute, oppure l'export.xml già estratto")
     ap.add_argument("--giorni", type=int, default=21, help="quanti giorni indietro (default 21)")
     ap.add_argument("--al", default=None, help="ultimo giorno, AAAA-MM-GG (default oggi)")
+    ap.add_argument("--dal", default=None, help="primo giorno, AAAA-MM-GG: niente di più vecchio")
     ap.add_argument("--out", default=None, help="dove scrivere (default _privato/pacchetto-salute.txt)")
     args = ap.parse_args()
 
@@ -224,6 +225,14 @@ def main():
     except ValueError:
         sys.exit(f"Data non valida: {al}")
     dal = (fine - dt.timedelta(days=max(0, args.giorni - 1))).isoformat()
+    # Un pavimento esplicito vince sulla finestra: l'archivio di Salute contiene
+    # anni, e non ha senso importare giornate precedenti all'inizio del programma.
+    if args.dal:
+        try:
+            dt.date.fromisoformat(args.dal)
+        except ValueError:
+            sys.exit(f"Data non valida: {args.dal}")
+        dal = max(dal, args.dal)
 
     print(f"Leggo {args.export} … (dal {dal} al {al})", flush=True)
     dati = leggi(args.export, dal, al)
