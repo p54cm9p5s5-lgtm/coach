@@ -265,6 +265,14 @@ riposo **fra una serie e l'altra** si correggono ripetizioni e carico davvero
 fatti, precompilati con l'obiettivo. Il carico si muove **a passi di dischi
 montabili davvero** e non supera l'inventario.
 
+Il carico si può anche scrivere a mano, con «Cambia carico». Un numero **fuori
+scala** rispetto a quello che l'app stava proponendo — la virgola dimenticata sul
+tastierino, `17,5` battuto `1750` — non viene rifiutato ma **chiesto una volta**:
+«1750 kg: prima erano 15. Se è giusto, tocca ancora». Una progressione normale
+non si fa chiedere niente. Senza questo un tocco storto diventava il carico di
+lavoro, la storia dell'esercizio, il numero che legge il coach e la base delle
+proposte.
+
 Nel riposo **dopo l'ultima serie** quei campi non ci sono: le serie si sono già
 corrette tutte nella scheda di valutazione, che viene prima, e quella pagina
 serve a un'altra cosa — il cronometro e il prossimo esercizio da preparare.
@@ -305,7 +313,14 @@ stavano insieme: il tasto che mandava le risposte chiudeva anche il riposo, e
 rispondendo si finiva per saltare il recupero — che è la parte che conta.
 
 **4. Cardio**, se previsto: si può eseguire o dichiarare non eseguito, **con
-motivo obbligatorio**.
+motivo obbligatorio**. Dichiarandolo non eseguito, la velocità e la durata
+impostate prima **non entrano**: resta scritto che non l'hai fatto, non un
+cardio inventato.
+
+Velocità e durata si scelgono con i tasti più e meno, dentro i limiti veri di un
+tapis roulant: **0,5-20 km/h** e **5-180 minuti**. Fuori dal protocollo si può
+andare e l'app lo dice, ma un numero impossibile non entra: prima si arrivava a
+0 km/h — un cardio «eseguito» da fermo — e la durata saliva senza fermarsi mai.
 
 Il cronometro del cardio **sale da zero e non si ferma da solo**: cammini quanto
 vuoi e tocchi «Ho finito» quando scendi: i minuti registrati sono quelli fra
@@ -327,6 +342,11 @@ il cronometro sulla durata che dice il protocollo (di solito 30 secondi per
 lato) che parte con «Avvia» e si chiude con «Fatto · altro lato». Chi vuole
 saltarlo può ancora farlo con un tocco.
 
+Sui giorni che lo stretching finale **non ce l'hanno** — push, pull, legs, upper
+e lower, dove al suo posto c'è il blocco di mobilità — questo passaggio non
+compare affatto: si va dritti alla mobilità. Prima ci si fermava su una pagina
+vuota che chiedeva «fatto o saltato?» di niente.
+
 **6. Riepilogo e chiusura.** Qui si copiano i numeri dall'orologio (durata, kcal
 attive e totali, FC media e massima, sforzo; per il cardio anche distanza e
 ritmo). Sono facoltativi, e finiscono nel pacchetto.
@@ -340,6 +360,14 @@ che gira solo mentre guardi lo schermo.
 Un esercizio si può **saltare**, ma il motivo (tempo / dolore / attrezzo / altro)
 e una **nota scritta sono obbligatori**: «saltato» senza spiegazione, fra tre
 settimane, non vuol dire niente.
+
+**Quello che scrivi a parole si rilegge.** Riaprendo un allenamento dallo Storico
+si ritrovano tutte e tre le cose scritte a mano: la nota generale, la nota su un
+esercizio e la frase con cui hai spiegato un salto. Prima finivano solo nel
+pacchetto per il coach, e dallo Storico restava il motivo secco — «attrezzo» —
+senza la frase che lo spiegava. Servono prima di tutto a te: «il ginocchio alla
+terza serie» va riletto la volta dopo, non ritrovato dentro un testo lungo dieci
+pagine.
 
 ---
 
@@ -387,6 +415,21 @@ quello.
 | Esercizi (media dei loro punteggi, sul numero previsto) | 60 |
 | Cardio | 20 |
 | Riscaldamento e stretching | 20 |
+| Mobilità di fine seduta | 20 |
+
+**Nel conto entra solo quello che quel giorno prevede davvero.** Una voce che
+non c'entra viene esclusa e il suo peso si ridistribuisce sulle altre, invece di
+contare zero:
+
+- I giorni del nuovo split (push, pull, legs, upper, lower) **non hanno lo
+  stretching finale**: al suo posto c'è il blocco di mobilità. Su quei giorni la
+  voce si chiama solo «Riscaldamento», e la schermata dello stretching non viene
+  nemmeno mostrata — prima ci si fermava su una pagina vuota che chiedeva «fatto
+  o saltato?» di niente, e rispondere «saltato» toglieva un quinto del punteggio
+  per una cosa che il programma non chiede.
+- I giorni di **sola mobilità** (sabato e domenica, che di esercizi non ne hanno)
+  escludono sia gli esercizi sia riscaldamento e stretching: lì la mobilità è
+  tutto il punteggio.
 
 **Tetti**: un esercizio saltato → max 75; cardio sotto metà → max 60; cardio più
 corto del previsto → max 85. Cardio oltre la velocità di protocollo → quota
@@ -646,7 +689,16 @@ pacchetto**.
 ## 12. Il pacchetto per il coach
 
 È **testo**, mai immagini o screenshot, e i numeri arrivano dai dati registrati,
-non trascritti a mano. Si sceglie cosa includere. Contiene:
+non trascritti a mano. Si sceglie cosa includere.
+
+**Un pacchetto contiene un allenamento solo**, il più recente chiuso: è pensato
+per essere mandato dopo la seduta. Se lo stesso giorno ne hai chiusi due, il
+pacchetto lo dice in cima — quale è rimasto fuori e con quante serie — così il
+coach non legge mezza giornata credendo di averla tutta, e tu sai che quello va
+mandato a parte. Un allenamento ancora **aperto** non entra (i dati non sono
+chiusi) e anche questo viene dichiarato.
+
+Contiene:
 
 - **Log della seduta** in formato §12: tabella esercizio / carico / serie×rip /
   RPE / nota, più recuperi reali cronometrati (media, minimo, massimo **e per
@@ -809,13 +861,20 @@ Sono la parte che conta più delle funzioni.
 - **Non manda fuori dal telefono nessun tuo dato.** Allenamenti, misure, foto,
   sonno, sigarette: restano nell'archivio del telefono e non esistono altrove.
   Non c'è nessun server, nessun account, nessuna statistica raccolta.
-  Le uniche richieste che escono sono per i **video di YouTube**: la copertina,
-  che parte solo quando il riquadro del video entra davvero sullo schermo, e il
-  player, solo se lo tocchi. Non portano con sé niente di tuo, ma dicono a
-  YouTube che qualcuno dal tuo indirizzo sta guardando quel video. Senza rete
-  non parte nemmeno quella: la copertina sparisce da sola e tutto il resto
-  funziona uguale. Misurato: aprire una scheda esercizio produce **una sola**
-  richiesta fuori dal telefono, e nessun'altra schermata dell'app ne produce.
+  L'unica richiesta che può uscire è il **player di YouTube**, e parte **solo se
+  tocchi il video**: fino a quel momento, aprire una scheda esercizio non produce
+  nessuna richiesta fuori dal telefono. La copertina del video è disegnata
+  dall'app e porta scritto «si apre su YouTube», così la scelta è tua e la fai
+  sapendo dove va a prendere il filmato.
+
+  Prima non era così: la copertina era l'anteprima di YouTube e partiva da sola
+  appena l'esercizio compariva a schermo. Non portava con sé niente di tuo, ma
+  bastava a dire a Google, a ogni serie, che da quell'indirizzo si stava facendo
+  quell'esercizio. Il player era già stato scelto nella versione «nocookie» e a
+  richiesta, proprio per non farlo: la copertina lo tradiva. Ora l'app tace
+  finché non sei tu a chiedere.
+
+  Misurato aprendo tutte le schermate: **zero** richieste fuori dal telefono.
 
 ---
 
@@ -836,9 +895,24 @@ dichiarato, mai fatto in silenzio. Le notti scritte a mano non si toccano, e
 fuori dal periodo coperto non si tocca niente.
 
 Il ripristino è stato verificato: esportazione, archivio svuotato, ripristino →
-**identico byte a byte** su tutti e 16 gli archivi. Un file rovinato viene
+**identico byte a byte** su tutti e 17 gli archivi. Un file rovinato viene
 **rifiutato senza toccare niente**, con un messaggio che dice quale sezione non
-si legge.
+si legge (provati nove file sbagliati: vuoti, di un'altra app, di una versione
+futura, rovinati a metà — nessuno ha tolto un dato).
+
+**Prima di sostituire, il ripristino dice cosa stai per rimettere e cosa stai per
+togliere**: quanti allenamenti, misure e attività ci sono nel file e quanti ce ne
+sono adesso sul telefono, con la data fino a cui arrivano. Un backup di tre
+settimane fa si riconosce da lì. E prima di sovrascrivere l'app tiene da parte
+una copia interna di com'era: se il ripristino va storto non è un vicolo cieco —
+e se non riesce nemmeno a rimettere a posto quella copia, **lo dice** invece di
+lasciarti credere che la rete di sicurezza sia intatta.
+
+**Se il telefono può cancellare l'archivio, l'app te lo dice.** iOS può
+considerare cancellabili i dati di un'app quando lo spazio scarseggia; l'app
+chiede di essere protetta all'avvio, ma la risposta può essere no. In
+Impostazioni, accanto ai backup, c'è la riga «Archivio protetto dal telefono»
+con sì o no: se dice no, il backup su file non è prudenza, è l'unica copia.
 
 ---
 

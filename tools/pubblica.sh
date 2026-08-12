@@ -130,6 +130,26 @@ fi
 echo "Lista bianca: nessun file estraneo all'app."
 echo "Controlli superati: nessun dato personale fra i file da pubblicare."
 
+# --- documentazione rimasta indietro (avviso, non blocco) ---------------------
+# COME-FUNZIONA.md è quello che si legge per sapere cosa fa l'app: quando cambia
+# il punteggio, il pacchetto o il flusso della seduta e la documentazione resta
+# ferma, da lì in poi descrive un'app che non esiste più. È successo: la tabella
+# dei pesi del punteggio è rimasta indietro di una notte.
+#
+# Avvisa e basta. Bloccare sarebbe sbagliato: ci sono modifiche a quei file che
+# la documentazione non deve seguire (una correzione di grammatica, un colore),
+# e un blocco che si impara ad aggirare è peggio di un avviso che si legge.
+CAMBIATI="$(git diff --cached --name-only)"
+if echo "$CAMBIATI" | grep -qE '^js/(punteggio|export)\.js$|^js/screens/(seduta|export)\.js$'; then
+  if ! echo "$CAMBIATI" | grep -qE '\.md$'; then
+    echo
+    echo "  NOTA: hai toccato punteggio, pacchetto o flusso della seduta"
+    echo "        senza toccare nessun .md. Se il comportamento è cambiato,"
+    echo "        COME-FUNZIONA.md adesso racconta un'app diversa da questa."
+    echo
+  fi
+fi
+
 if [ "$SOLO_CONTROLLI" -eq 1 ]; then
   annulla_staging
   echo "Solo controlli richiesti: niente è stato pubblicato."
