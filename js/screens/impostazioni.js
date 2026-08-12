@@ -258,9 +258,11 @@ export async function render({ vaiA, ridisegna }) {
       h("h2", "Cosa c'è in archivio"),
       h(
         "div.list",
-        h("div.row", h("div.main", h("span.title", "Allenamenti registrati"), h("span.sub", `${conta.serie} serie · ${conta.questionari} questionari`)), h("span.value", String(conta.allenamenti))),
+        // «1 questionari» e «1 notti»: il numero al singolare con la parola al
+        // plurale fa sembrare rotto un conto che è giusto.
+        h("div.row", h("div.main", h("span.title", "Allenamenti registrati"), h("span.sub", `${conta.serie} serie · ${conta.questionari} ${conta.questionari === 1 ? "questionario" : "questionari"}`)), h("span.value", String(conta.allenamenti))),
         h("div.row", h("div.main", h("span.title", "Misure del corpo"), h("span.sub", `${conta.foto} foto`)), h("span.value", String(conta.misure))),
-        h("div.row", h("div.main", h("span.title", "Giorni di salute"), h("span.sub", `${conta.notti} notti di sonno`)), h("span.value", String(conta.giorniSalute))),
+        h("div.row", h("div.main", h("span.title", "Giorni di salute"), h("span.sub", `${conta.notti} ${conta.notti === 1 ? "notte" : "notti"} di sonno`)), h("span.value", String(conta.giorniSalute))),
         conta.aperti
           ? h("div.row", h("div.main", h("span.title", "Allenamenti aperti e mai chiusi")), h("span.pill.warn", String(conta.aperti)))
           : null

@@ -478,7 +478,7 @@ async function bloccoFoto(ridisegna) {
     h(
       "p.footnote",
       ultimo
-        ? `Ultimo set ${giorni} giorni fa. Cadenza prevista: ogni 14 giorni.`
+        ? `${giorni === 0 ? "Ultimo set oggi" : `Ultimo set ${giorni} ${giorni === 1 ? "giorno" : "giorni"} fa`}. Cadenza prevista: ogni 14 giorni.`
         : "Senza protocollo identico le foto non sono confrontabili: è lo strumento meno sensibile che hai."
     )
   );
