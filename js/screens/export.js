@@ -201,6 +201,30 @@ async function componi(stato) {
       );
       contenuto.push("avviso allenamento aperto");
     }
+    // Nel pacchetto ci va un allenamento solo, il più recente. Finché se ne fa
+    // uno al giorno va bene; con due nello stesso giorno il primo restava
+    // fuori senza che niente lo dicesse, e il coach leggeva metà giornata
+    // credendo di averla tutta. Il pacchetto non cambia — cambia che lo dice,
+    // come già fa per un allenamento rimasto aperto.
+    const altriDelGiorno = ultima
+      ? tutte.filter((s) => s.stato === "completata" && s.data === ultima.data && s.id !== ultima.id)
+      : [];
+    if (altriDelGiorno.length) {
+      const elenco = [];
+      for (const s of altriDelGiorno) {
+        const quante = (await store.serieDi(s.id)).length;
+        elenco.push(`${s.tipoNome} (${quante} ${quante === 1 ? "serie" : "serie"})`);
+      }
+      const uno = altriDelGiorno.length === 1;
+      pezzi.push(
+        `NOTA: lo stesso giorno ${uno ? "c'è un altro allenamento chiuso" : "ci sono altri allenamenti chiusi"}: ` +
+          `${elenco.join(", ")}. Nel pacchetto ne entra uno solo, il più recente: ` +
+          `${uno ? "quello va mandato" : "quelli vanno mandati"} con un pacchetto a parte.`
+      );
+      contenuto.push(
+        altriDelGiorno.length === 1 ? "avviso allenamento non incluso" : "avviso allenamenti non inclusi"
+      );
+    }
     if (ultima) {
       const serie = await store.serieDi(ultima.id);
       const questionari = await store.questionariDi(ultima.id);
