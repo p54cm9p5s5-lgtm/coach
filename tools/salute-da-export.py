@@ -88,10 +88,17 @@ def apri(percorso):
         sys.exit(f"Non trovo {p}")
     if p.suffix.lower() == ".zip":
         z = zipfile.ZipFile(p)
-        nomi = [n for n in z.namelist() if n.endswith("export.xml") and "cda" not in n.lower()]
+        # Non per nome fisso: Salute lo chiama «export.xml» in inglese ma segue
+        # la lingua del telefono, e chi rinomina lo zip si porta dietro il file
+        # («dati esportati.xml»). Si prende il più grande fra gli XML, saltando
+        # «export_cda.xml», che è il riassunto clinico e non serve.
+        nomi = [
+            n
+            for n in z.namelist()
+            if n.lower().endswith(".xml") and "cda" not in n.lower() and not n.startswith("__MACOSX")
+        ]
         if not nomi:
-            sys.exit("Dentro lo zip non c'è nessun export.xml.")
-        # Il più grande: nello zip c'è anche «export_cda.xml», che è un'altra cosa.
+            sys.exit("Dentro lo zip non c'è nessun file .xml: è l'export di Salute?")
         nomi.sort(key=lambda n: z.getinfo(n).file_size, reverse=True)
         return z.open(nomi[0])
     return open(p, "rb")
