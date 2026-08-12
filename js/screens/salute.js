@@ -696,8 +696,13 @@ async function incolla(ridisegna) {
                 const { pacchettoDaExport } = await import("../salute-export.js");
                 const mega = (f.size / 1048576).toFixed(0);
                 nota.textContent = `Leggo ${f.name} (${mega} MB): non lo carico tutto, lo scorro. Aspetta.`;
+                // Mai dati più vecchi dell'inizio del programma: l'export di
+                // Salute contiene anni, e questa app guarda una storia che
+                // comincia il giorno della prima seduta registrata.
+                const inizio = await store.inizioProgramma();
                 const esito = await pacchettoDaExport(f, {
                   giorni: 30,
+                  dal: inizio,
                   onAvanzamento: (letti) => {
                     const q = Math.min(99, Math.round((letti / f.size) * 100));
                     nota.textContent = `Leggo ${f.name}: ${q}%`;
