@@ -725,8 +725,9 @@ diverse secondo da dove lo apri.
 ### Se i Comandi Rapidi non funzionano
 
 Su una beta di iOS le azioni di Salute dentro Comandi Rapidi possono restare
-appese. L'app non dipende da loro: in **Salute → Aggiorna → «Ho già copiato» →
-«Scegli un file»** si può dare direttamente l'`export.xml` dell'app Salute
+appese. L'app non dipende da loro — e per i dati salute il comando rapido non
+viene più nemmeno offerto: **Salute → Aggiorna → «Importa» → «Scegli un file»**
+prende direttamente l'`export.xml` dell'app Salute
 (profilo → «Esporta tutti i dati», poi in File si estrae lo zip). Il file pesa
 centinaia di megabyte e non viene caricato in memoria: viene fatto **scorrere**
 a pezzi, tenendo solo i numeri che servono. Misurato su un export vero da
@@ -734,8 +735,15 @@ a pezzi, tenendo solo i numeri che servono. Misurato su un export vero da
 pacchetto che ne esce è **identico byte per byte** a quello prodotto dallo
 stesso lavoro fatto su un computer (`tools/salute-da-export.py`).
 
+Non entra mai niente di più vecchio del **29 luglio 2026**, il giorno da cui
+comincia questa storia: la data è scritta nel codice, non dedotta dai dati del
+telefono, così sopravvive a un cambio di dispositivo, a un archivio svuotato e
+a un ripristino da backup. Se un archivio cominciasse ancora prima, comanda
+l'archivio: il pavimento serve a non prendere di più, mai a tagliare.
+
 Restano fuori solo gli eventi del **calendario**, che nell'export di Salute non
-ci sono: quelli continuano ad arrivare dal comando «Coach Calendario».
+ci sono: quelli continuano ad arrivare dal comando «Coach Calendario», che non
+tocca Salute e infatti funziona.
 
 ---
 

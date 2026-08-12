@@ -255,6 +255,32 @@ export function agendaAttiva() {
  * prima di quella non c'era niente da fare, e segnare quei giorni come saltati
  * dipingerebbe di rosso un passato che non è mai esistito.
  */
+/**
+ * Il giorno da cui comincia questa storia. Scritto qui, non dedotto.
+ *
+ * Serve a una cosa sola: non far entrare nell'app dati più vecchi di quando si
+ * è cominciato. L'archivio dell'app Salute contiene anni, e importarli
+ * riempirebbe medie e grafici di giornate che il programma non ha mai guardato.
+ *
+ * Perché una costante e non la prima seduta registrata: deve sopravvivere a un
+ * cambio di telefono, a un archivio svuotato e a un ripristino da backup —
+ * cioè proprio ai momenti in cui i dati locali non sanno più da quando si è
+ * partiti, ed è lì che il pavimento serve di più.
+ */
+export const INIZIO_STORIA = "2026-07-29";
+
+/**
+ * Il pavimento vero: la costante, oppure una storia ancora più lunga se c'è.
+ *
+ * Il pavimento serve a non prendere DI PIÙ, mai a tagliare: se un archivio
+ * comincia prima di quella data — un altro profilo, un altro atleta — comanda
+ * l'archivio.
+ */
+export async function inizioStoria() {
+  const dai = await inizioProgramma();
+  return dai && dai < INIZIO_STORIA ? dai : INIZIO_STORIA;
+}
+
 export async function inizioProgramma() {
   const p = programma();
   if (!p) return null;
