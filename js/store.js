@@ -2752,12 +2752,6 @@ export async function extra() {
   return r.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : (b.creatoIl || "").localeCompare(a.creatoIl || "")));
 }
 
-export async function extraDelGiorno(data) {
-  return (await db.byIndex("extra", "data", data)).sort((a, b) =>
-    (a.creatoIl || "").localeCompare(b.creatoIl || "")
-  );
-}
-
 export async function eliminaExtra(id) {
   await db.del("extra", id);
 }

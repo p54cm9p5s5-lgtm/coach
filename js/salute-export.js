@@ -238,9 +238,3 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
 
   return { testo: out.join("\n") + "\n", byte: letti, giorni: perGiorno.size + perGiornoWatch.size, fasi: fasi.length, allenamenti: allenamenti.length };
 }
-
-/** È un export di Salute e non un pacchetto già pronto? */
-export function sembraExportSalute(nome, primiCaratteri) {
-  if (/\.xml$/i.test(nome || "")) return true;
-  return /<HealthData|HKQuantityTypeIdentifier/.test(primiCaratteri || "");
-}
