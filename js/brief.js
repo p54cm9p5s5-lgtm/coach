@@ -230,6 +230,15 @@ const GIORNI_SETTIMANA = [
   "domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato",
 ];
 
+/**
+ * Un carico scritto come si scrive qui: 37,5 e non 37.5.
+ *
+ * Il punto arrivava dritto dal JSON del brief, e si vedeva solo sui mezzi
+ * chili — cioè proprio nelle righe che contano, perché una progressione di
+ * mezzo chilo è la modifica più frequente che il coach fa.
+ */
+const kg = (v) => (v == null ? "—" : String(v).replace(".", ","));
+
 export function confronta(corrente, nuovo, libreria) {
   const nome = (id) => libreria.find((e) => e.id === id)?.nome || id;
   const righe = [];
@@ -294,7 +303,7 @@ export function confronta(corrente, nuovo, libreria) {
       cambi.push(`rip ${vecchio.ripMin}-${vecchio.ripMax} → ${v.ripMin}-${v.ripMax}`);
     }
     if ((vecchio.carico ?? null) !== (v.carico ?? null)) {
-      cambi.push(`carico ${vecchio.carico ?? "—"} → ${v.carico ?? "—"} kg`);
+      cambi.push(`carico ${kg(vecchio.carico)} → ${kg(v.carico)} kg`);
     }
     // Su un esercizio a tempo la durata è la prescrizione: un plank che passa
     // da 60 a 90 secondi cambiava in silenzio.

@@ -287,7 +287,17 @@ export function chiedi({ titolo, testo, opzioni, annulla = true }) {
     h(
       "div",
       titolo && h("h2", titolo),
-      testo && h("p", { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" }, testo),
+      // `pre-line` e non `normal`: qui dentro arrivano elenchi già impaginati —
+      // i problemi trovati nel brief, il risultato di un import, le due parti
+      // di un avviso — scritti con gli a capo dentro il testo. In un paragrafo
+      // normale il browser li buttava via e sei righe diverse diventavano un
+      // muro unico, proprio dove bisogna leggere con attenzione.
+      testo &&
+        h(
+          "p",
+          { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px;white-space:pre-line" },
+          testo
+        ),
       h(
         // Dodici pixel fra una scelta e l'altra, non otto: qui dentro capita
         // che una delle opzioni cancelli un dato, e con i tasti appiccicati un
