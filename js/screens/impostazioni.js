@@ -640,15 +640,29 @@ async function ripristinaSnapshot() {
     // La copia di sicurezza appena fatta ha preso il posto di quella che
     // stavi ripristinando: se il ripristino fallisce va rimessa quella
     // originale, altrimenti resti senza la copia che volevi.
+    let copiaRimessa = true;
     try {
       await store.setImpostazione("snapshotAutomatico", JSON.stringify(dump));
       await store.setImpostazione("ultimoSnapshot", dump.creatoIl || new Date().toISOString());
     } catch {
-      /* niente */
+      // Se nemmeno rimettere a posto la copia riesce, tacere sarebbe la bugia
+      // peggiore di tutte: la schermata continuerebbe ad annunciare una copia
+      // interna che non c'è più, e la rete di sicurezza risulterebbe intatta
+      // proprio nel momento in cui non lo è.
+      copiaRimessa = false;
+      try {
+        await store.setImpostazione("ultimoSnapshot", null);
+      } catch {
+        /* qui non resta niente da fare: lo dice la frase qui sotto */
+      }
     }
     await chiedi({
       titolo: "Ripristino non riuscito",
-      testo: `${e.message}\n\nL'archivio è rimasto com'era e la copia interna è ancora quella di prima.`,
+      testo:
+        `${e.message}\n\nL'archivio è rimasto com'era` +
+        (copiaRimessa
+          ? " e la copia interna è ancora quella di prima."
+          : ".\n\nNon sono riuscito a rimettere a posto la copia interna: adesso non c'è. Fai subito un backup su file."),
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
       annulla: false,
     });
@@ -666,7 +680,13 @@ async function ripristinaSnapshot() {
       await store.setImpostazione("ultimoSnapshot", null);
     }
   } catch {
-    /* niente */
+    // Meglio «mai» che una data falsa: se la copia non è stata riscritta, la
+    // schermata deve dire che non c'è, non annunciarne una che non esiste.
+    try {
+      await store.setImpostazione("ultimoSnapshot", null);
+    } catch {
+      /* niente da fare */
+    }
   }
   location.reload();
 }
@@ -769,7 +789,12 @@ async function importaBackup(ridisegna) {
         // «di ieri» che in realtà è stata fatta un minuto fa.
         await store.setImpostazione("ultimoSnapshot", new Date().toISOString());
       } catch {
-        /* niente */
+        // Come sopra: se la copia non è stata riscritta, «mai» è la verità.
+        try {
+          await store.setImpostazione("ultimoSnapshot", null);
+        } catch {
+          /* niente da fare */
+        }
       }
     }
   } catch (e) {
@@ -863,11 +888,26 @@ async function forzaAggiornamento() {
     return;
   }
 
+  // Se svuotare la copia locale non riesce, ricaricare non serve a niente: si
+  // riparte dagli stessi file di prima. Tacere farebbe sembrare fatto un
+  // aggiornamento che non è avvenuto — ed è esattamente il tasto che si tocca
+  // quando si sospetta che l'app sia rimasta indietro.
+  let svuotata = true;
   try {
     for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
     for (const k of await caches.keys()) await caches.delete(k);
-  } catch {
-    /* niente service worker: si ricarica e basta */
+  } catch (e) {
+    // Niente service worker è normale (in locale senza https): in quel caso
+    // non c'è copia da svuotare e il ricarico basta davvero.
+    svuotata = !navigator.serviceWorker || !(await caches.keys().catch(() => [])).length;
+    if (!svuotata) {
+      await chiedi({
+        titolo: "Copia locale non svuotata",
+        testo: `Non sono riuscito a cancellare la copia dell'app su questo telefono (${e.message}). Ricarico lo stesso, ma se resta la versione vecchia chiudi l'app e riaprila.`,
+        opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+        annulla: false,
+      });
+    }
   }
   location.reload(true);
 }

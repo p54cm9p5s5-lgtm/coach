@@ -131,8 +131,16 @@ async function vistaProgramma(vaiA, ridisegna) {
           ? h(
               "p",
               { style: "margin:6px 0 0;font-size:13px;opacity:.72;text-align:center" },
-              `${previsto.esercizi.length} ${previsto.esercizi.length === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}` +
-                (fatteOggi.some((s) => s.tipoId === previsto.id) ? " · già completato oggi" : "")
+              // Sabato e domenica di esercizi non ne hanno: contarli dava
+              // «0 esercizi» su un giorno che di lavoro ne ha cinque passaggi,
+              // e sembrava una giornata vuota o un programma rotto.
+              (() => {
+                if (store.giornoDiSolaMobilita(previsto.id)) {
+                  const quanti = (store.riscaldamento(previsto.id)?.mobilitaFinale || []).length;
+                  return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità`;
+                }
+                return `${previsto.esercizi.length} ${previsto.esercizi.length === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}`;
+              })() + (fatteOggi.some((s) => s.tipoId === previsto.id) ? " · già completato oggi" : "")
             )
           : h(
               "p",
