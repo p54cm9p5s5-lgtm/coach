@@ -76,7 +76,6 @@ async function registra(precompilato = {}) {
       "button",
       {
         "aria-pressed": talkScelto === t.id ? "true" : "false",
-        style: "font-size:13px",
         onclick: (e) => {
           talkScelto = talkScelto === t.id ? null : t.id;
           for (const b of e.currentTarget.parentElement.children) {
@@ -116,13 +115,15 @@ async function registra(precompilato = {}) {
         { style: "padding:14px 16px 0" },
         h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:0 0 5px" }, "Giorno"),
         data,
-        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:14px 0 5px" }, "Tipo di attività"),
-        h("div.segmented", { style: "margin-left:0;margin-right:0;flex-wrap:wrap" }, ...bottoniTipo),
-        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:14px 0 5px" }, "Talk-test: riuscivi a parlare?"),
-        h("div.segmented", { style: "margin-left:0;margin-right:0;flex-wrap:wrap" }, ...bottoniTalk),
+        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:16px 0 0" }, "Tipo di attività"),
+        h("div.scelte", ...bottoniTipo),
+        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:16px 0 0" }, "Talk-test: riuscivi a parlare?"),
+        // Una per riga: sono frasi, non parole, e affiancate andavano a capo
+        // in mezzo («Frasi intere con / fiatone»).
+        h("div.scelte.righe", ...bottoniTalk),
         h(
-          "p.footnote",
-          { style: "margin:6px 0 14px" },
+          "p",
+          { style: "margin:8px 0 16px;font-size:12px;line-height:1.35;color:var(--label-tertiary)" },
           "Se lo rispondi, la giornata vale come allenamento nel punteggio Salute."
         ),
         durata.nodo,

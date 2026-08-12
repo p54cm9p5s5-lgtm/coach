@@ -771,6 +771,56 @@ input[type="checkbox"],
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
 }
 
+/* ---------- scelte a pastiglia ----------
+
+   Le barre «segmented» hanno colonne tutte uguali: vanno bene per due o tre
+   voci corte («Sistema / Nero e lime»), non per etichette di lunghezza diversa.
+   Con «Corsa» accanto a «Camminata» il testo lungo esce dalla sua colonna e si
+   sovrappone alle vicine: cambiando scelta le parole si spostano, e la riga
+   sembra ballare. Qui invece ogni pastiglia è larga quanto il suo testo, va a
+   capo quando serve, e il selezionato si accende dell'accento — sul tema nero
+   diventa lime, ed è visibile da un metro invece che da vicino. */
+.scelte {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 0;
+}
+
+.scelte button {
+  flex: 0 1 auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--separator);
+  background: var(--fill-tertiary);
+  color: var(--label);
+  font-size: 15px;
+  /* Lo stesso peso in tutti e due gli stati: se il selezionato diventasse
+     grassetto la pastiglia si allargherebbe e la riga si riordinerebbe sotto
+     le dita. A distinguere basta il colore, che si vede molto di più. */
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.scelte button[aria-pressed="false"] {
+  color: var(--label-secondary);
+}
+
+.scelte button[aria-pressed="true"] {
+  background: var(--accent-pieno);
+  border-color: var(--accent-pieno);
+  color: var(--su-accent);
+}
+
+/* Una scelta per riga, quando le etichette sono frasi e non parole. */
+.scelte.righe button {
+  flex: 1 0 100%;
+  text-align: left;
+}
+
 .btn.danger {
   background: var(--red);
   color: #fff;
