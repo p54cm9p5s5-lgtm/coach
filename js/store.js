@@ -2026,7 +2026,7 @@ export async function importaSalute(pacchetto) {
     // cui il comando rapido li ha messi in fila.
     const perData = new Map();
     for (const e of pacchetto.agenda) {
-      const giornoId = abbinaAlloSplit(e.titolo);
+      const giornoId = abbinaAlloSplit(e.titolo, e.data);
       const scelto = perData.get(e.data) || {
         data: e.data,
         titolo: null,
@@ -2188,24 +2188,39 @@ const paroleDi = (s) =>
  * parole in più nell'evento non danno fastidio, così «Coach — Gambe/Core (ore
  * 18)» funziona. Vince il giorno che ne azzecca di più.
  */
-export function abbinaAlloSplit(titolo) {
+/**
+ * @param data  giorno dell'evento (ISO). Serve a scegliere fra due giorni dello
+ *   split che si chiamano uguale: il weekend di mobilità ha sabato e domenica
+ *   con lo stesso nome, «Mobilità», e senza la data l'evento della domenica
+ *   finiva sul giorno «sabato» — la voce «domenica» non veniva usata mai, e
+ *   nello storico un allenamento di domenica risultava fatto di sabato.
+ */
+export function abbinaAlloSplit(titolo, data = null) {
   const t = chiaveTitolo(titolo);
   if (!t) return null;
   const parole = new Set(paroleDi(titolo));
+  const giornoDellEvento = data ? weekdayOf(data) : null;
 
   // Prima si cerca l'allenamento, poi il riposo: un evento come «Gambe/Core,
   // poi riposo attivo» nomina un allenamento e vale come allenamento. Prima
   // bastava la parola «riposo» in qualunque punto per cancellarlo.
   let migliore = null;
   let quantePiu = 0;
+  let miglioreDelGiorno = false;
   if (parole.size) {
     for (const g of giorniSplit()) {
       for (const insieme of [paroleDi(g.nome), paroleDi(g.id)]) {
         if (!insieme.length) continue;
         if (!insieme.every((p) => parole.has(p))) continue;
-        if (insieme.length > quantePiu) {
+        // A parità di parole vince quello che cade nel giorno della settimana
+        // dell'evento: è l'unica cosa che distingue due giorni omonimi.
+        const delGiorno = giornoDellEvento != null && g.giorno === giornoDellEvento;
+        const meglio =
+          insieme.length > quantePiu || (insieme.length === quantePiu && delGiorno && !miglioreDelGiorno);
+        if (meglio) {
           quantePiu = insieme.length;
           migliore = g;
+          miglioreDelGiorno = delGiorno;
         }
       }
     }
@@ -2298,7 +2313,7 @@ async function riabbinaAgenda() {
     let id = null;
     let vincitore = null;
     for (const t of titoli.map((x) => x.titolo)) {
-      const trovato = abbinaAlloSplit(t);
+      const trovato = abbinaAlloSplit(t, e.data);
       if (trovato && trovato !== "riposo") {
         id = trovato;
         vincitore = t;
