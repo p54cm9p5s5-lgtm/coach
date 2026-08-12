@@ -420,6 +420,12 @@ async function vistaRisultato(id, vaiA, da = null) {
                 ? `interrotto dopo ${fatte.length} ${fatte.length === 1 ? "serie" : "serie"} — ${l.saltato.motivo}`
                 : `saltato — ${l.saltato.motivo}`
             ),
+            // Il perché scritto a parole finiva solo nel pacchetto per il
+            // coach: riaprendo l'allenamento dallo storico restava il motivo
+            // secco («attrezzo») e spariva la frase che lo spiegava.
+            (l.saltato.nota || "").trim()
+              ? h("span.sub", { style: "white-space:pre-wrap" }, l.saltato.nota)
+              : null,
             fatte.length
               ? h(
                   "span.sub",
@@ -450,7 +456,11 @@ async function vistaRisultato(id, vaiA, da = null) {
         h(
           "div.main",
           h("span.title", def?.nome || l.esercizioId),
-          h("span.sub", [carico != null ? `${num(carico)} kg` : "corpo libero", `${mie.length}×${rip}`, confronto].filter(Boolean).join(" · "))
+          h("span.sub", [carico != null ? `${num(carico)} kg` : "corpo libero", `${mie.length}×${rip}`, confronto].filter(Boolean).join(" · ")),
+          // Stesso motivo della nota generale: quello che scrivi a parole
+          // sull'esercizio si rivedeva solo nel riepilogo di fine allenamento,
+          // e riaprendo la stessa seduta dallo storico non c'era più.
+          (l.nota || "").trim() ? h("span.sub", { style: "white-space:pre-wrap" }, l.nota) : null
         ),
         h("span.value", `RPE ${l.rpe ?? "—"}`),
         (() => {
@@ -472,9 +482,10 @@ async function vistaRisultato(id, vaiA, da = null) {
   aggiungi(wrap, h("div.group", h("h2", "Esercizio per esercizio"), righe));
 
   // La nota scritta chiudendo l'allenamento finiva solo nel pacchetto per il
-  // coach: qui dentro non si rivedeva più. È l'unica cosa che scrivi a parole,
-  // e serve prima di tutto a te — «il ginocchio alla terza serie» va riletto la
-  // volta dopo, non ritrovato dentro un testo lungo dieci pagine.
+  // coach: qui dentro non si rivedeva più. Vale per tutto quello che scrivi a
+  // parole (qui, sull'esercizio e sul salto): serve prima di tutto a te — «il
+  // ginocchio alla terza serie» va riletto la volta dopo, non ritrovato dentro
+  // un testo lungo dieci pagine.
   if ((sed.notaGenerale || "").trim()) {
     aggiungi(wrap,
       h(
@@ -773,6 +784,15 @@ async function disegna() {
     fase = S.sed.progresso.fase;
   }
 
+  // Sui giorni del nuovo split lo stretching finale non c'è: al suo posto c'è
+  // il blocco di mobilità. Ci si fermava lo stesso su una schermata vuota che
+  // chiedeva «fatto o saltato?» di niente — e rispondere «saltato» tirava giù
+  // il punteggio per una cosa che il programma non chiede.
+  if (fase === "stretching" && !passiStretching().length) {
+    await salvaProgresso({ fase: dopoLoStretching() });
+    fase = S.sed.progresso.fase;
+  }
+
   clear(S.contenitore);
   S.contenitore.append(testata());
 
@@ -901,7 +921,18 @@ async function menuSeduta() {
       ...(S.sed.cardio?.previsto && fase !== "cardio"
         ? [{ etichetta: S.sed.cardio?.eseguito ? "Torna al cardio" : "Salta al cardio", valore: "cardio" }]
         : []),
-      ...(fase !== "stretching" ? [{ etichetta: "Vai allo stretching", valore: "stretching" }] : []),
+      // Il nome dice dove si va davvero: senza stretching finale quella voce
+      // portava alla mobilità, e prometteva una schermata che non esiste.
+      ...(fase !== "stretching" &&
+      fase !== "mobilita" &&
+      (passiStretching().length || passiMobilita().length)
+        ? [
+            {
+              etichetta: passiStretching().length ? "Vai allo stretching" : "Vai alla mobilità",
+              valore: "stretching",
+            },
+          ]
+        : []),
       ...(fase !== "fine" ? [{ etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" }] : []),
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
     ],
@@ -1916,7 +1947,48 @@ async function modificaCarico(def, inv) {
         ? `Da montare: ${d}`
         : `${num(v)} kg non si compone con i dischi che hai. Puoi salvarlo lo stesso.`;
     };
-    campo.addEventListener("input", aggiorna);
+
+    // La virgola dimenticata sul tastierino: 17,5 battuto «1750». Veniva preso
+    // per buono in silenzio e diventava il carico di lavoro, la storia
+    // dell'esercizio, il numero che legge il coach e la base delle proposte.
+    // Non si vieta — un carico strano può essere vero — ma si chiede una volta,
+    // e solo quando è fuori scala rispetto a quello che l'app stava proponendo.
+    const fuoriScala = (v) => {
+      if (v == null || !(partenza > 0)) return null;
+      if (v > partenza * 3 && v - partenza >= 20) return true;
+      if (v * 3 < partenza && partenza - v >= 20) return true;
+      return null;
+    };
+
+    const conferma = h("button.btn");
+    let inAttesaDiConferma = false;
+    const rimettiAPosto = () => {
+      inAttesaDiConferma = false;
+      conferma.textContent = "Usa questo carico";
+      conferma.classList.remove("secondary");
+    };
+    conferma.onclick = () => {
+      const v = leggi();
+      if (v === null) {
+        toast("Numero non valido.");
+        return;
+      }
+      if (fuoriScala(v) && !inAttesaDiConferma) {
+        inAttesaDiConferma = true;
+        aiuto.textContent = `${num(v)} kg: prima erano ${num(partenza)}. Se è giusto, tocca ancora.`;
+        conferma.textContent = `Sì, ${num(v)} kg`;
+        conferma.classList.add("secondary");
+        return;
+      }
+      close(v);
+    };
+
+    // Se il numero cambia, la conferma appena chiesta non vale più: si riparte.
+    campo.addEventListener("input", () => {
+      rimettiAPosto();
+      aggiorna();
+    });
+    rimettiAPosto();
     setTimeout(aggiorna, 0);
 
     return h(
@@ -1933,23 +2005,7 @@ async function modificaCarico(def, inv) {
       ),
       campo,
       aiuto,
-      h(
-        "div.btn-wrap",
-        h(
-          "button.btn",
-          {
-            onclick: () => {
-              const v = leggi();
-              if (v === null) {
-                toast("Numero non valido.");
-                return;
-              }
-              close(v);
-            },
-          },
-          "Usa questo carico"
-        )
-      )
+      h("div.btn-wrap", conferma)
     );
   });
 
@@ -2853,6 +2909,16 @@ async function vistaQuestionario(corpo, piede) {
 
 // ---------- cardio ----------
 
+// I due tasti +/− non avevano fondo né tetto: a furia di toccare la velocità
+// arrivava a 0 km/h — un cardio «eseguito» da fermo, che non è un dato ma un
+// buco — e la durata saliva senza fermarsi mai (venticinque ore). I limiti sono
+// quelli veri di un tapis roulant, non del protocollo: fuori protocollo si può
+// andare e l'app lo dice, ma un numero impossibile non deve nemmeno entrare.
+const KMH_MIN = 0.5;
+const KMH_MAX = 20;
+const DURATA_MIN = 5;
+const DURATA_MAX = 180;
+
 async function vistaCardio(corpo, piede) {
   const r = store.regole().cardio;
   // Il cardio è in corso se è stato AVVIATO: prima si guardava l'ora di fine,
@@ -2923,9 +2989,9 @@ async function vistaCardio(corpo, piede) {
           h("label", "Velocità impostata sul tapis"),
           h(
             "div.stepper",
-            h("button", { onclick: () => { kmh = Math.max(0, Math.round((kmh - 0.1) * 10) / 10); valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "−"),
+            h("button", { onclick: () => { kmh = Math.max(KMH_MIN, Math.round((kmh - 0.1) * 10) / 10); valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "−"),
             valK,
-            h("button", { onclick: () => { kmh = Math.round((kmh + 0.1) * 10) / 10; valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "+")
+            h("button", { onclick: () => { kmh = Math.min(KMH_MAX, Math.round((kmh + 0.1) * 10) / 10); valK.textContent = `${num(kmh)} km/h`; controlla(); } }, "+")
           )
         ),
         h(
@@ -2933,9 +2999,9 @@ async function vistaCardio(corpo, piede) {
           h("label", "Durata"),
           h(
             "div.stepper",
-            h("button", { onclick: () => { durata = Math.max(5, durata - 5); valD.textContent = `${durata} min`; controlla(); } }, "−"),
+            h("button", { onclick: () => { durata = Math.max(DURATA_MIN, durata - 5); valD.textContent = `${durata} min`; controlla(); } }, "−"),
             valD,
-            h("button", { onclick: () => { durata += 5; valD.textContent = `${durata} min`; controlla(); } }, "+")
+            h("button", { onclick: () => { durata = Math.min(DURATA_MAX, durata + 5); valD.textContent = `${durata} min`; controlla(); } }, "+")
           )
         )
       ),
@@ -3315,7 +3381,9 @@ async function vistaMobilita(corpo, piede) {
                 h("h3", "Perché adesso"),
                 h(
                   "p",
-                  "Dopo lo stretching, a lavoro finito. Copre le zone che il riscaldamento di oggi non ha toccato: caviglia, anca, colonna, spalle. Dose fissa, non si progredisce."
+                  // Sui giorni che lo stretching finale non ce l'hanno, «dopo
+                  // lo stretching» mandava a cercare un passaggio mai visto.
+                  `${passiStretching().length ? "Dopo lo stretching, a lavoro finito." : "A lavoro finito: su questo giorno prende il posto dello stretching."} Copre le zone che il riscaldamento di oggi non ha toccato: caviglia, anca, colonna, spalle. Dose fissa, non si progredisce.`
                 )
               )
             ),

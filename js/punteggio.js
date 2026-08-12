@@ -459,7 +459,21 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
  * @param punteggi   punteggi degli esercizi effettivamente svolti
  * @param cardio     { previsto, eseguito, durataMin, durataPrevistaMin, kmh }
  */
-export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, riscaldamento, stretching, mobilita = null, regole, regoleCardio = null }) {
+export function punteggioAllenamento({
+  previsti,
+  punteggi,
+  saltati,
+  cardio,
+  riscaldamento,
+  stretching,
+  // Cosa quel giorno prevede davvero. Non passandoli si torna al
+  // comportamento di prima — le sedute già congelate non cambiano.
+  previstoRiscaldamento = true,
+  previstoStretching = true,
+  mobilita = null,
+  regole,
+  regoleCardio = null,
+}) {
   const voci = [];
   const tetti = [];
 
@@ -518,20 +532,37 @@ export function punteggioAllenamento({ previsti, punteggi, saltati, cardio, risc
   // niente da allungare dopo. Contarli zero faceva sì che un sabato fatto per
   // intero valesse 50 — cioè metà punteggio per non aver fatto due cose che
   // quel giorno non prevede.
+  //
+  // Lo stesso vale sui giorni del nuovo split: push, pull, legs, upper e lower
+  // non hanno né una lista di riscaldamento né una di stretching — al posto
+  // dello stretching finale hanno il blocco di mobilità. Contarli comunque
+  // toglieva un quinto del punteggio per due cose che il programma non chiede,
+  // o lo regalava a chi rispondeva «fatto» a una schermata vuota.
   const soloMobilita = !quanti && Boolean(mobilita);
+  const quali = [
+    previstoRiscaldamento ? { nome: "riscaldamento", fatto: Boolean(riscaldamento) } : null,
+    previstoStretching ? { nome: "stretching", fatto: Boolean(stretching) } : null,
+  ].filter(Boolean);
+  const fatte = quali.filter((x) => x.fatto);
+  const saltate = quali.filter((x) => !x.fatto);
+  const maiuscola = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   voci.push({
-    nome: "Riscaldamento e stretching",
-    quota: soloMobilita ? null : ((riscaldamento ? 1 : 0) + (stretching ? 1 : 0)) / 2,
+    nome: quali.length ? maiuscola(quali.map((x) => x.nome).join(" e ")) : "Riscaldamento e stretching",
+    quota: soloMobilita || !quali.length ? null : fatte.length / quali.length,
     peso: 20,
     dettaglio: soloMobilita
       ? "non previsti in un giorno di sola mobilità"
-      : riscaldamento && stretching
-        ? "tutti e due fatti"
-        : riscaldamento
-          ? "stretching saltato"
-          : stretching
-            ? "riscaldamento saltato"
-            : "saltati tutti e due",
+      : !quali.length
+        ? "non previsti in questo giorno"
+        : !saltate.length
+          ? quali.length > 1
+            ? "tutti e due fatti"
+            : "fatto"
+          : !fatte.length
+            ? quali.length > 1
+              ? "saltati tutti e due"
+              : "saltato"
+            : `${saltate[0].nome} saltato`,
   });
 
   // Il blocco di mobilità, dove il giorno ne ha uno.
