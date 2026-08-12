@@ -1,0 +1,272 @@
+/* Extra: le attività fuori scheda — una corsa, una camminata, la bici, il nuoto.
+
+   Non è un esercizio tracciato: niente carico, niente tecnica, niente RPE.
+   Non ha obblighi — nessun giorno la prevede, quindi non farla non toglie
+   niente. Ma farla conta: un giorno con un'attività registrata è un giorno in
+   cui ti sei allenato, e vale come tale nel punteggio Salute (pieno, se hai
+   risposto al talk-test).
+
+   Un campo che non scrivi resta «non registrato», mai zero: è la stessa regola
+   di tutte le altre tabelle dell'app. */
+
+import { h, dataBreve, dataLunga, isoDate, aggiungi, toast, chiedi, sheet, durataUmana, num, unaVoltaSola } from "../ui.js";
+import { intestazione } from "../app.js";
+import * as store from "../store.js";
+
+const campo = (nome, etichetta, opzioni = {}) => {
+  const input = h("input", {
+    name: nome,
+    type: opzioni.testo ? "text" : "number",
+    inputmode: opzioni.numerico || !opzioni.testo ? "decimal" : "text",
+    step: opzioni.step || "any",
+    min: opzioni.testo ? null : "0",
+    placeholder: opzioni.esempio || "",
+    value: opzioni.valore ?? "",
+    style:
+      "width:100%;font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--separator);" +
+      "background:var(--bg-grouped);color:var(--label)",
+  });
+  return {
+    input,
+    nodo: h(
+      "label",
+      { style: "display:block;margin:0 0 12px" },
+      h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:0 0 5px" }, etichetta),
+      input
+    ),
+  };
+};
+
+/** Il foglio che registra un'attività. Restituisce true se ha salvato. */
+async function registra(precompilato = {}) {
+  const oggi = isoDate();
+  let tipoScelto = precompilato.tipo || null;
+  let talkScelto = precompilato.talkTest || null;
+
+  const data = h("input", {
+    type: "date",
+    value: precompilato.data || oggi,
+    max: oggi,
+    style:
+      "width:100%;font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--separator);" +
+      "background:var(--bg-grouped);color:var(--label)",
+  });
+
+  const bottoniTipo = store.TIPI_EXTRA.map((t) =>
+    h(
+      "button",
+      {
+        "aria-pressed": tipoScelto === t ? "true" : "false",
+        onclick: (e) => {
+          tipoScelto = t;
+          for (const b of e.currentTarget.parentElement.children) {
+            b.setAttribute("aria-pressed", b === e.currentTarget ? "true" : "false");
+          }
+        },
+      },
+      t
+    )
+  );
+
+  // Il talk-test è la sola risposta soggettiva, e resta facoltativa: senza, il
+  // giorno non vale come allenamento nel punteggio, ma l'attività si registra
+  // lo stesso e arriva al coach.
+  const bottoniTalk = store.TALK_TEST.map((t) =>
+    h(
+      "button",
+      {
+        "aria-pressed": talkScelto === t.id ? "true" : "false",
+        style: "font-size:13px",
+        onclick: (e) => {
+          talkScelto = talkScelto === t.id ? null : t.id;
+          for (const b of e.currentTarget.parentElement.children) {
+            b.setAttribute("aria-pressed", b.dataset.id === talkScelto ? "true" : "false");
+          }
+        },
+        dataset: { id: t.id },
+      },
+      t.testo
+    )
+  );
+
+  const durata = campo("durataMin", "Durata (minuti)", { esempio: "45", valore: precompilato.durataMin });
+  // Testo, non numero: un campo numerico HTML scarta la virgola mentre la
+  // scrivi, e «18,4» arrivava vuoto. La conversione la fa lo store.
+  const km = campo("km", "Distanza (km)", { testo: true, numerico: true, esempio: "5,7", valore: precompilato.km });
+  const ritmo = campo("ritmo", "Ritmo medio", { testo: true, esempio: "6'40\"", valore: precompilato.ritmo });
+  const fcMedia = campo("fcMedia", "FC media", { esempio: "112", valore: precompilato.fcMedia });
+  const fcMax = campo("fcMax", "FC massima", { esempio: "141", valore: precompilato.fcMax });
+  const kcalAttive = campo("kcalAttive", "Kcal attive", { esempio: "320", valore: precompilato.kcalAttive });
+  const kcalTotali = campo("kcalTotali", "Kcal totali", { esempio: "450", valore: precompilato.kcalTotali });
+  const nota = campo("nota", "Nota", { testo: true, esempio: "facoltativa", valore: precompilato.nota });
+
+  const avviso = h("p.footnote", { style: "margin:0 0 10px;color:var(--orange)" }, "");
+
+  const salvato = await sheet((close) =>
+    h(
+      "div",
+      h("h2", "Registra un'attività"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
+        "Quello che non scrivi resta «non registrato», mai zero. Serve solo il tipo."
+      ),
+      h(
+        "div",
+        { style: "padding:14px 16px 0" },
+        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:0 0 5px" }, "Giorno"),
+        data,
+        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:14px 0 5px" }, "Tipo di attività"),
+        h("div.segmented", { style: "margin-left:0;margin-right:0;flex-wrap:wrap" }, ...bottoniTipo),
+        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:14px 0 5px" }, "Talk-test: riuscivi a parlare?"),
+        h("div.segmented", { style: "margin-left:0;margin-right:0;flex-wrap:wrap" }, ...bottoniTalk),
+        h(
+          "p.footnote",
+          { style: "margin:6px 0 14px" },
+          "Se lo rispondi, la giornata vale come allenamento nel punteggio Salute."
+        ),
+        durata.nodo,
+        km.nodo,
+        ritmo.nodo,
+        fcMedia.nodo,
+        fcMax.nodo,
+        kcalAttive.nodo,
+        kcalTotali.nodo,
+        nota.nodo,
+        avviso
+      ),
+      h(
+        "div.btn-wrap",
+        { style: "display:grid;gap:12px" },
+        h(
+          "button.btn",
+          {
+            onclick: unaVoltaSola(async () => {
+              if (!tipoScelto) {
+                avviso.textContent = "Scegli il tipo di attività: è l'unica cosa che serve per forza.";
+                return;
+              }
+              await store.registraExtra({
+                data: data.value,
+                tipo: tipoScelto,
+                talkTest: talkScelto,
+                durataMin: durata.input.value,
+                km: km.input.value,
+                ritmo: ritmo.input.value,
+                fcMedia: fcMedia.input.value,
+                fcMax: fcMax.input.value,
+                kcalAttive: kcalAttive.input.value,
+                kcalTotali: kcalTotali.input.value,
+                nota: nota.input.value,
+              });
+              close(true);
+            }),
+          },
+          "Registra"
+        ),
+        h("button.btn.secondary", { onclick: () => close(false) }, "Annulla")
+      )
+    )
+  );
+  return salvato === true;
+}
+
+const descrivi = (x) =>
+  [
+    x.durataMin != null ? durataUmana(x.durataMin * 60) : null,
+    x.km != null ? `${num(x.km, 2)} km` : null,
+    x.ritmo ? `${x.ritmo}/km` : null,
+    x.fcMedia != null ? `FC ${num(x.fcMedia, 0)}` : null,
+    x.kcalAttive != null ? `${num(x.kcalAttive, 0)} kcal` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ") || "nessun dato oltre al tipo";
+
+export async function render({ ridisegna }) {
+  const wrap = h("div.screen");
+  aggiungi(wrap, intestazione("Extra"));
+
+  const righe = await store.extra();
+  const oggi = isoDate();
+
+  aggiungi(wrap,
+    h(
+      "div.hero",
+      h("p.kicker", "Attività fuori scheda"),
+      h("h2", "Corse, camminate, bici, nuoto"),
+      h(
+        "p",
+        { style: "margin:8px 16px 0;color:var(--label-secondary);font-size:15px" },
+        "Non è previsto da nessun giorno e non farlo non toglie niente. Ma quello che fai conta, e arriva al coach."
+      )
+    ),
+    h(
+      "div.btn-wrap",
+      h(
+        "button.btn",
+        {
+          onclick: unaVoltaSola(async () => {
+            if (await registra()) {
+              toast("Attività registrata.");
+              await ridisegna();
+            }
+          }),
+        },
+        "Registra un'attività"
+      )
+    )
+  );
+
+  if (!righe.length) {
+    aggiungi(wrap,
+      h(
+        "div.empty",
+        h("h3", "Ancora niente"),
+        h("p", "Quello che registri qui finisce nel pacchetto per il coach, in una tabella sua.")
+      )
+    );
+    return wrap;
+  }
+
+  const lista = h("div.list");
+  for (const x of righe.slice(0, 60)) {
+    const talk = store.TALK_TEST.find((t) => t.id === x.talkTest);
+    aggiungi(lista,
+      h(
+        "button.row",
+        {
+          onclick: unaVoltaSola(async () => {
+            const scelta = await chiedi({
+              titolo: `${x.tipo} del ${dataBreve(x.data)}`,
+              testo: [descrivi(x), talk ? `Talk-test: ${talk.testo.toLowerCase()}` : "Talk-test non risposto", x.nota]
+                .filter(Boolean)
+                .join("\n"),
+              opzioni: [{ etichetta: "Elimina", valore: "elimina", stile: "danger" }],
+            });
+            if (scelta !== "elimina") return;
+            await store.eliminaExtra(x.id);
+            toast("Attività eliminata.");
+            await ridisegna();
+          }),
+        },
+        h(
+          "div.main",
+          h("span.title", `${x.tipo} · ${dataBreve(x.data)}${x.data === oggi ? " · oggi, giornata in corso" : ""}`),
+          h("span.sub", descrivi(x)),
+          talk ? h("span.sub", `talk-test: ${talk.testo.toLowerCase()}`) : h("span.sub", "talk-test non risposto")
+        ),
+        h("span.chevron", "›")
+      )
+    );
+  }
+
+  aggiungi(wrap,
+    h("div.group", h("h2", `Registrate (${righe.length})`), lista),
+    h(
+      "p.footnote",
+      "Una giornata con un'attività registrata vale come giornata di allenamento nel punteggio Salute, ma solo se il talk-test è stato risposto: senza, resta fuori dal conto invece di valere zero."
+    )
+  );
+
+  return wrap;
+}

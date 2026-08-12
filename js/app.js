@@ -12,6 +12,7 @@ const ROTTE = {
   storico: () => import("./screens/storico.js"),
   proposte: () => import("./screens/proposte.js"),
   acqua: () => import("./screens/acqua.js"),
+  extra: () => import("./screens/extra.js"),
   export: () => import("./screens/export.js"),
   impostazioni: () => import("./screens/impostazioni.js"),
 };

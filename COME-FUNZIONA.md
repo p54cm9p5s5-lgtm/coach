@@ -676,6 +676,15 @@ l'esercizio ogni serie viene scritta per intero (`4 → 6 kg per manubrio` ·
 si può leggere in tre modi diversi
 - **Dati salute**: stato delle finestre a 3 settimane e la tabella giorno per
   giorno con movimento, percentuale sull'obiettivo, passi e note
+- **Extra — attività fuori scheda**: corse, camminate, bici, nuoto. Data,
+  tipo, durata, km, ritmo, FC media e massima, kcal attive e totali, e il
+  **talk-test** (frasi intere comode / frasi intere con fiatone / a fatica).
+  Non sono esercizi tracciati — niente carico, tecnica o RPE — e nessun giorno
+  le prevede, quindi non farle non toglie niente. Ma una giornata con
+  un'attività registrata vale come giornata di allenamento nel **punteggio
+  Salute**, e vale pieno: solo però se il talk-test è stato risposto, altrimenti
+  resta fuori dal conto invece di valere zero. Dove c'è anche una seduta vera
+  comanda il punteggio della seduta, che dice di più
 - **Allenamenti letti dall'Apple Watch** degli ultimi 7 giorni: data, ora,
   tipo, durata, kcal attive e totali, FC media e massima, e se quell'attività
   corrisponde a una seduta registrata nell'app o è movimento in più (una
