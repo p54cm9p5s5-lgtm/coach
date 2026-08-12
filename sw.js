@@ -35,6 +35,7 @@ const ASSETS = [
   "./js/screens/salute.js",
   "./js/screens/fumo.js",
   "./js/screens/acqua.js",
+  "./js/screens/extra.js",
   "./js/screens/storico.js",
   "./js/screens/impostazioni.js",
 ];
