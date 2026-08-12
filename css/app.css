@@ -782,7 +782,18 @@ input[type="checkbox"],
    esce dal flusso: sta appoggiata al bordo destro e non sposta più niente. */
 input[type="date"],
 input[type="time"] {
+  /* Senza questo, iOS disegna il campo data col suo stile nativo: gli mette
+     una larghezza sua e dei margini interni asimmetrici, e il riquadro
+     risultava spostato rispetto a tutti gli altri campi della stessa colonna.
+     A schermo si vedeva un campo che «scappa» a destra. Tolto l'aspetto
+     nativo, la data è una casella come le altre e sta dove la mettiamo noi. */
+  -webkit-appearance: none;
+  appearance: none;
   position: relative;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin: 0 auto;
   text-align: center;
 }
 

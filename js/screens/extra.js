@@ -17,14 +17,14 @@ import * as store from "../store.js";
    tutto il resto: un valore allineato a sinistra dentro un pannello centrato
    sembra fuori posto. */
 const STILE_CAMPO =
-  "width:100%;border:0;background:var(--fill-tertiary);border-radius:10px;padding:10px 12px;" +
-  "font:inherit;font-size:17px;color:var(--label);min-height:44px;text-align:center";
+  "display:block;box-sizing:border-box;width:100%;margin:0 auto;border:0;background:var(--fill-tertiary);" +
+  "border-radius:10px;padding:10px 12px;font:inherit;font-size:17px;color:var(--label);min-height:44px;text-align:center";
 const ETICHETTA = "display:block;font-size:13px;color:var(--label-secondary);margin:0 0 5px;text-align:center";
 
 const campo = (nome, etichetta, opzioni = {}) => {
   const input = h("input", {
     name: nome,
-    type: opzioni.testo ? "text" : "number",
+    type: opzioni.data ? "date" : opzioni.testo ? "text" : "number",
     inputmode: opzioni.numerico || !opzioni.testo ? "decimal" : "text",
     step: opzioni.step || "any",
     min: opzioni.testo ? null : "0",
@@ -49,7 +49,12 @@ async function registra(precompilato = {}) {
   let tipoScelto = precompilato.tipo || null;
   let talkScelto = precompilato.talkTest || null;
 
-  const data = h("input", { type: "date", value: precompilato.data || oggi, max: oggi, style: STILE_CAMPO });
+  // Stesso involucro di tutti gli altri campi: un'etichetta sopra e la casella
+  // sotto. Prima il giorno era l'unico messo direttamente nel pannello, e
+  // bastava una differenza di resa per farlo sembrare fuori squadra.
+  const giorno = campo("data", "Giorno", { data: true, valore: precompilato.data || oggi });
+  giorno.input.max = oggi;
+  const data = giorno.input;
 
   // «Altro» da solo non dice niente: al coach arriverebbe una riga «Altro» e
   // basta, che è come non averla scritta. Scegliendolo si apre un campo per
@@ -125,8 +130,7 @@ async function registra(precompilato = {}) {
       h(
         "div",
         { style: "padding:14px 16px 0" },
-        h("span", { style: ETICHETTA }, "Giorno"),
-        data,
+        giorno.nodo,
         h("span", { style: ETICHETTA + ";margin:16px 0 0" }, "Tipo di attività"),
         h("div.scelte", ...bottoniTipo),
         altroQuale.nodo,
