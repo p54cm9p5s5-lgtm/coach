@@ -65,9 +65,13 @@ resta nella conversazione con Claude.
   Accento: blu di sistema. Nessuna palette personalizzata.
 - Struttura: liste raggruppate in stile Impostazioni, `border-radius` 10px,
   separatori sottili, header grandi (Large Title) che si contraggono allo scroll.
-- Navigazione: **tab bar in basso, 7 voci** — Home · Oggi · Corpo · Salute · Fumo ·
-  Acqua · Storico. Fumo e Acqua compaiono solo per chi le dichiara nel brief:
-  chi non conta le sigarette non vede la scheda, e viceversa per l'acqua.
+- Navigazione: **tab bar in basso, 6 voci** — Home · Oggi · Salute · Fumo ·
+  Acqua · Extra. Fumo e Acqua compaiono solo per chi le dichiara nel brief:
+  chi non conta le sigarette non vede la scheda, e viceversa per l'acqua, quindi
+  in pratica sono cinque. **Corpo e Storico si aprono da dentro Salute**, in
+  fondo alla schermata: sono due letture dei dati, non due posti dove si
+  registra qualcosa ogni giorno, e la barra resta per quello che si tocca
+  durante la giornata. Mentre sono aperti la scheda accesa resta Salute.
   Impostazioni raggiungibile dall'header di Home.
 - Safe area rispettata (notch e barra Home). Nessuno scroll orizzontale mai.
 - Tocco: target minimo 44px. In Modalità Seduta il tasto che porta avanti è a

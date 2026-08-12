@@ -553,6 +553,30 @@ export async function render({ ridisegna }) {
     );
   }
 
+  // Corpo e Storico stanno qui, non nella barra in basso: sono due letture dei
+  // dati, non due posti dove si registra qualcosa ogni giorno. La barra resta
+  // per quello che si tocca durante la giornata.
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h(
+        "div.list",
+        h(
+          "a.row",
+          { href: "#/corpo" },
+          h("div.main", h("span.title", "Corpo"), h("span.sub", "peso, circonferenze, indici e foto")),
+          h("span.chevron", "›")
+        ),
+        h(
+          "a.row",
+          { href: "#/storico" },
+          h("div.main", h("span.title", "Storico"), h("span.sub", "allenamenti, volumi e andamento per esercizio")),
+          h("span.chevron", "›")
+        )
+      )
+    )
+  );
+
   aggiungi(wrap,
     h(
       "div.group",
