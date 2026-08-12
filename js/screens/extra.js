@@ -13,6 +13,14 @@ import { h, dataBreve, dataLunga, isoDate, aggiungi, toast, chiedi, sheet, durat
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 
+/* Stessa forma dei campi degli altri pannelli dell'app, e testo al centro come
+   tutto il resto: un valore allineato a sinistra dentro un pannello centrato
+   sembra fuori posto. */
+const STILE_CAMPO =
+  "width:100%;border:0;background:var(--fill-tertiary);border-radius:10px;padding:10px 12px;" +
+  "font:inherit;font-size:17px;color:var(--label);min-height:44px;text-align:center";
+const ETICHETTA = "display:block;font-size:13px;color:var(--label-secondary);margin:0 0 5px;text-align:center";
+
 const campo = (nome, etichetta, opzioni = {}) => {
   const input = h("input", {
     name: nome,
@@ -22,16 +30,14 @@ const campo = (nome, etichetta, opzioni = {}) => {
     min: opzioni.testo ? null : "0",
     placeholder: opzioni.esempio || "",
     value: opzioni.valore ?? "",
-    style:
-      "width:100%;font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--separator);" +
-      "background:var(--bg-grouped);color:var(--label)",
+    style: STILE_CAMPO,
   });
   return {
     input,
     nodo: h(
       "label",
-      { style: "display:block;margin:0 0 12px" },
-      h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:0 0 5px" }, etichetta),
+      { style: "display:block;margin:0 0 12px;text-align:center" },
+      h("span", { style: ETICHETTA }, etichetta),
       input
     ),
   };
@@ -43,14 +49,19 @@ async function registra(precompilato = {}) {
   let tipoScelto = precompilato.tipo || null;
   let talkScelto = precompilato.talkTest || null;
 
-  const data = h("input", {
-    type: "date",
-    value: precompilato.data || oggi,
-    max: oggi,
-    style:
-      "width:100%;font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--separator);" +
-      "background:var(--bg-grouped);color:var(--label)",
-  });
+  const data = h("input", { type: "date", value: precompilato.data || oggi, max: oggi, style: STILE_CAMPO });
+
+  // «Altro» da solo non dice niente: al coach arriverebbe una riga «Altro» e
+  // basta, che è come non averla scritta. Scegliendolo si apre un campo per
+  // dire cos'era davvero, e quella parola prende il posto di «Altro» ovunque —
+  // nell'elenco, nel punteggio, nella tabella del pacchetto.
+  const altroQuale = campo("altroQuale", "Che attività?", { testo: true, esempio: "kayak, arrampicata, padel…" });
+  altroQuale.nodo.style.display = "none";
+  const mostraAltro = () => {
+    const serve = tipoScelto === "Altro";
+    altroQuale.nodo.style.display = serve ? "block" : "none";
+    if (serve) altroQuale.input.focus();
+  };
 
   const bottoniTipo = store.TIPI_EXTRA.map((t) =>
     h(
@@ -62,6 +73,7 @@ async function registra(precompilato = {}) {
           for (const b of e.currentTarget.parentElement.children) {
             b.setAttribute("aria-pressed", b === e.currentTarget ? "true" : "false");
           }
+          mostraAltro();
         },
       },
       t
@@ -99,31 +111,32 @@ async function registra(precompilato = {}) {
   const kcalTotali = campo("kcalTotali", "Kcal totali", { esempio: "450", valore: precompilato.kcalTotali });
   const nota = campo("nota", "Nota", { testo: true, esempio: "facoltativa", valore: precompilato.nota });
 
-  const avviso = h("p.footnote", { style: "margin:0 0 10px;color:var(--orange)" }, "");
+  const avviso = h("p.footnote", { style: "margin:0 0 10px;color:var(--orange);text-align:center" }, "");
 
   const salvato = await sheet((close) =>
     h(
       "div",
-      h("h2", "Registra un'attività"),
+      h("h2", { style: "text-align:center" }, "Registra un'attività"),
       h(
         "p",
-        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px;text-align:center" },
         "Quello che non scrivi resta «non registrato», mai zero. Serve solo il tipo."
       ),
       h(
         "div",
         { style: "padding:14px 16px 0" },
-        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:0 0 5px" }, "Giorno"),
+        h("span", { style: ETICHETTA }, "Giorno"),
         data,
-        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:16px 0 0" }, "Tipo di attività"),
+        h("span", { style: ETICHETTA + ";margin:16px 0 0" }, "Tipo di attività"),
         h("div.scelte", ...bottoniTipo),
-        h("span", { style: "display:block;font-size:13px;color:var(--label-secondary);margin:16px 0 0" }, "Talk-test: riuscivi a parlare?"),
+        altroQuale.nodo,
+        h("span", { style: ETICHETTA + ";margin:16px 0 0" }, "Talk-test: riuscivi a parlare?"),
         // Una per riga: sono frasi, non parole, e affiancate andavano a capo
         // in mezzo («Frasi intere con / fiatone»).
         h("div.scelte.righe", ...bottoniTalk),
         h(
           "p",
-          { style: "margin:8px 0 16px;font-size:12px;line-height:1.35;color:var(--label-tertiary)" },
+          { style: "margin:8px 0 16px;font-size:12px;line-height:1.35;color:var(--label-tertiary);text-align:center" },
           "Se lo rispondi, la giornata vale come allenamento nel punteggio Salute."
         ),
         durata.nodo,
@@ -147,9 +160,15 @@ async function registra(precompilato = {}) {
                 avviso.textContent = "Scegli il tipo di attività: è l'unica cosa che serve per forza.";
                 return;
               }
+              const scritto = altroQuale.input.value.trim();
+              if (tipoScelto === "Altro" && !scritto) {
+                avviso.textContent = "Hai scelto «Altro»: scrivi cos'era, altrimenti al coach arriva una riga che non dice niente.";
+                altroQuale.input.focus();
+                return;
+              }
               await store.registraExtra({
                 data: data.value,
-                tipo: tipoScelto,
+                tipo: tipoScelto === "Altro" ? scritto : tipoScelto,
                 talkTest: talkScelto,
                 durataMin: durata.input.value,
                 km: km.input.value,

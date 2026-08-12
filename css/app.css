@@ -783,6 +783,9 @@ input[type="checkbox"],
 .scelte {
   display: flex;
   flex-wrap: wrap;
+  /* Centrate come tutto il resto del pannello: allineate a sinistra, con
+     l'ultima riga spaiata, sembravano cadute lì per caso. */
+  justify-content: center;
   gap: 8px;
   margin: 8px 0 0;
 }
@@ -818,7 +821,6 @@ input[type="checkbox"],
 /* Una scelta per riga, quando le etichette sono frasi e non parole. */
 .scelte.righe button {
   flex: 1 0 100%;
-  text-align: left;
 }
 
 .btn.danger {
@@ -1116,6 +1118,13 @@ textarea.note {
   max-height: 86vh;
   max-height: 86dvh;
   overflow-y: auto;
+  /* In orizzontale non si va da nessuna parte, e non è pignoleria: dichiarando
+     solo «overflow-y», il browser mette l'altro asse su «auto», e bastava un
+     mezzo pixel di troppo per poter trascinare tutto il pannello di lato con
+     un dito. «pan-y» dice al sistema che qui dentro si scorre solo in su e in
+     giù: il gesto orizzontale non muove più niente. */
+  overflow-x: hidden;
+  touch-action: pan-y;
   overscroll-behavior: contain;
   background: var(--bg);
   border-radius: 14px 14px 0 0;
