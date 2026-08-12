@@ -766,8 +766,8 @@ async function incolla(ridisegna) {
       testo:
         `${conteggio.nottiDiscordanti.slice(0, 6).join("\n")}` +
         (conteggio.nottiDiscordanti.length > 6 ? `\n…e altre ${conteggio.nottiDiscordanti.length - 6}.` : "") +
-        `\n\nHo tenuto quella che c'era. Su una notte finita i campioni di Salute non cambiano: quello che cambia è la finestra con cui il comando rapido li chiede, e una finestra tagliata restituisce meno sonno di quello che hai dormito.` +
-        `\n\nSe invece quella giusta è la durata nuova, aprila da Salute › Sonno e correggila a mano: lì trovi tutte e due.`,
+        `\n\nFra le due ho tenuto la più lunga. Su una notte finita i campioni di Salute non cambiano più: quello che cambia è la finestra con cui il comando rapido li chiede, e una finestra tagliata può solo togliere sonno, mai aggiungerlo — quindi la durata corta è quella incompleta.` +
+        `\n\nSe per qualche motivo quella giusta era la corta, aprila da Salute › Sonno e scrivila a mano: una notte scritta da te non viene più toccata da nessun import.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
       annulla: false,
     });
