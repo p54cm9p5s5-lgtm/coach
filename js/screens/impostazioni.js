@@ -37,6 +37,15 @@ export async function render({ vaiA, ridisegna }) {
   const prog = store.programma();
   const imp = await store.impostazioni();
   const giorniExport = await store.giorniDaUltimoExport();
+  // `true` protetto, `false` cancellabile, `null` il telefono non risponde.
+  const archivioProtetto = await (async () => {
+    try {
+      const r = await navigator.storage?.persisted?.();
+      return typeof r === "boolean" ? r : null;
+    } catch {
+      return null;
+    }
+  })();
 
   // ---- programma ----
   aggiungi(wrap, 
@@ -287,6 +296,30 @@ export async function render({ vaiA, ridisegna }) {
             "span.value",
             imp.ultimoSnapshot ? new Date(imp.ultimoSnapshot).toLocaleString("it-IT") : "mai"
           )
+        ),
+        // L'app chiede a iOS di non considerare cancellabile l'archivio, ma la
+        // risposta può essere no — e finora nessuno lo diceva. È l'unica riga
+        // che cambia il peso di tutte le altre: se il telefono non lo protegge,
+        // il backup su file non è prudenza, è l'unica copia che resta.
+        h(
+          "div.row",
+          h(
+            "div.main",
+            h("span.title", "Archivio protetto dal telefono"),
+            h(
+              "span.sub",
+              archivioProtetto === true
+                ? "iOS non lo cancella per fare spazio"
+                : archivioProtetto === false
+                  ? "il telefono può cancellarlo se lo spazio finisce: tieni il backup su file aggiornato"
+                  : "questo telefono non sa dirlo"
+            )
+          ),
+          archivioProtetto === true
+            ? h("span.pill.ok", "sì")
+            : archivioProtetto === false
+              ? h("span.pill.warn", "no")
+              : h("span.value", "—")
         ),
         h(
           "button.row.accent",
