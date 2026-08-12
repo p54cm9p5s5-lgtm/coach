@@ -46,6 +46,7 @@ export async function render({ vaiA, ridisegna }) {
       return null;
     }
   })();
+  const installata = appInstallata();
 
   // ---- programma ----
   aggiungi(wrap, 
@@ -303,26 +304,18 @@ export async function render({ vaiA, ridisegna }) {
         // risposta può essere no — e finora nessuno lo diceva. È l'unica riga
         // che cambia il peso di tutte le altre: se il telefono non lo protegge,
         // il backup su file non è prudenza, è l'unica copia che resta.
-        h(
-          "div.row",
-          h(
-            "div.main",
-            h("span.title", "Archivio protetto dal telefono"),
-            h(
-              "span.sub",
-              archivioProtetto === true
-                ? "iOS non lo cancella per fare spazio"
-                : archivioProtetto === false
-                  ? "il telefono può cancellarlo se lo spazio finisce: tieni il backup su file aggiornato"
-                  : "questo telefono non sa dirlo"
-            )
-          ),
-          archivioProtetto === true
-            ? h("span.pill.ok", "sì")
-            : archivioProtetto === false
-              ? h("span.pill.warn", "no")
-              : h("span.value", "—")
-        ),
+        (() => {
+          const s = statoArchivio({ protetto: archivioProtetto, installata });
+          return h(
+            "div.row",
+            h("div.main", h("span.title", s.titolo), h("span.sub", s.testo)),
+            s.pillola === "ok"
+              ? h("span.pill.ok", s.etichetta)
+              : s.pillola === "warn"
+                ? h("span.pill.warn", s.etichetta)
+                : h("span.value", s.etichetta)
+          );
+        })(),
         h(
           "button.row.accent",
           { onclick: () => esportaBackup(ridisegna) },
@@ -691,6 +684,71 @@ async function ripristinaSnapshot() {
     }
   }
   location.reload();
+}
+
+/** L'app aperta dalla schermata Home, non dentro Safari. */
+export function appInstallata() {
+  try {
+    // `standalone` è la strada di iOS; `display-mode` quella standard.
+    if (navigator.standalone === true) return true;
+    if (navigator.standalone === false) return false;
+    if (window.matchMedia?.("(display-mode: standalone)")?.matches) return true;
+    return false;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Quanto è al sicuro l'archivio, detto in modo che significhi qualcosa.
+ *
+ * `navigator.storage.persist()` su iPhone risponde quasi sempre di no: non è un
+ * allarme, è la risposta normale di Safari a chiunque. Mostrarla nuda spaventava
+ * per una cosa che non è quella che conta.
+ *
+ * Quello che conta è **dove gira l'app**. Dentro Safari i dati di un sito sono
+ * roba di passaggio, e il sistema può farli fuori dopo qualche giorno che non la
+ * apri. Aggiunta alla schermata Home diventa un'app installata: i dati restano
+ * finché non la togli tu. Il consiglio non cambia mai — il backup su file è
+ * l'unica copia che sopravvive comunque — ma il pericolo sì, ed è giusto
+ * distinguerli.
+ *
+ * Sta fuori dalla schermata e si esporta apposta: così le sei combinazioni si
+ * possono provare una per una, invece che sperare di incontrarle.
+ */
+export function statoArchivio({ protetto, installata }) {
+  if (protetto === true) {
+    return {
+      titolo: "Archivio protetto dal telefono",
+      testo: "il telefono si è impegnato a non cancellarlo per fare spazio",
+      pillola: "ok",
+      etichetta: "sì",
+    };
+  }
+  if (installata === true) {
+    return {
+      titolo: "Archivio protetto dal telefono",
+      testo:
+        "il telefono non lo promette (su iPhone risponde così a tutti), ma l'app è installata dalla schermata Home: i dati restano finché non la togli. Il backup su file resta l'unica copia che sopravvive al telefono.",
+      pillola: "neutra",
+      etichetta: "installata",
+    };
+  }
+  if (installata === false) {
+    return {
+      titolo: "App non installata: archivio a rischio",
+      testo:
+        "stai usando Coach dentro il browser, e lì i dati di un sito possono essere cancellati dal sistema dopo qualche giorno che non lo apri. Aggiungi Coach alla schermata Home (Condividi → «Aggiungi a Home»): i dati diventano quelli di un'app installata.",
+      pillola: "warn",
+      etichetta: "da installare",
+    };
+  }
+  return {
+    titolo: "Archivio protetto dal telefono",
+    testo: "questo telefono non sa dirlo: tieni il backup su file aggiornato",
+    pillola: "neutra",
+    etichetta: "—",
+  };
 }
 
 /**
