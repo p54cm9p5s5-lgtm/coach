@@ -771,6 +771,36 @@ input[type="checkbox"],
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
 }
 
+/* ---------- campi data e ora ----------
+
+   Il valore di un campo data non segue «text-align» da solo: su WebKit sta in
+   un pezzo suo, e su Chromium accanto c'è l'icona del calendario che occupa
+   spazio solo a destra. Risultato: un buco a sinistra e l'icona a destra, e il
+   giorno che sembra spostato anche quando il campo è centrato.
+
+   Qui il valore si centra davvero (anche dentro il suo pezzo WebKit) e l'icona
+   esce dal flusso: sta appoggiata al bordo destro e non sposta più niente. */
+input[type="date"],
+input[type="time"] {
+  position: relative;
+  text-align: center;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: center;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  opacity: 0.5;
+}
+
 /* ---------- scelte a pastiglia ----------
 
    Le barre «segmented» hanno colonne tutte uguali: vanno bene per due o tre
