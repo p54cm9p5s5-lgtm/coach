@@ -28,7 +28,7 @@ const conAnno = (iso) => `${dataBreve(iso)}/${iso.slice(2, 4)}`;
 
 async function elenco(vaiA) {
   const wrap = h("div.screen");
-  aggiungi(wrap, intestazione("Storico"));
+  aggiungi(wrap, intestazione("Storico", { etichetta: "Salute", onclick: () => vaiA("salute") }));
 
   const allenamenti = await store.allenamenti();
   const completate = allenamenti.filter((s) => s.stato === "completata");
