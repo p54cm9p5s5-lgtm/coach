@@ -1054,6 +1054,31 @@ textarea.note {
   border-radius: 12px;
 }
 
+/* La copertina disegnata: prende il posto dell'anteprima scaricata da YouTube,
+   che partiva da sola e raccontava a Google cosa stavi allenando. */
+.video .copertina {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* In basso: il triangolo del play resta al centro, libero. */
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 0 18px 12px;
+  text-align: center;
+  background: linear-gradient(160deg, var(--bg-grouped), #000);
+}
+
+/* Detto dove si decide di toccare: il player è l'unico punto in cui l'app
+   contatta l'esterno, e chi tocca deve saperlo prima, non dopo. */
+.video .copertina .dove {
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--label-secondary);
+}
+
 .video img,
 .video iframe {
   position: absolute;

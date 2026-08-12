@@ -101,6 +101,33 @@ else
   errore "$VIETATE non trovato: senza l'elenco delle parole vietate non si pubblica."
 fi
 
+# --- 4. lista bianca: solo quello che l'app è --------------------------------
+# I tre controlli sopra dicono cosa NON deve passare, e funzionano finché
+# qualcuno ha immaginato la cosa da vietare. Un file nuovo — appunti, un export,
+# le impostazioni di uno strumento, una chiave — non somiglia a niente di
+# vietato e passa. Qui è il contrario: passa solo quello che l'app è fatta di, e
+# qualunque altra cosa ferma la pubblicazione e viene stampata per nome.
+#
+# Se un giorno serve pubblicare qualcosa di nuovo, si aggiunge una riga qui: è
+# una decisione, e va presa una volta, non subita a ogni pubblicazione.
+# `|| true`: quando non c'è niente fuori lista l'ultimo grep esce con 1, e con
+# `set -e` lo script moriva in silenzio proprio nel caso buono — un controllo
+# che ferma tutto quando va tutto bene è peggio di nessun controllo.
+FUORI_LISTA="$(
+  echo "$DA_PUBBLICARE" | grep -vE '^(index\.html|sw\.js|manifest\.webmanifest|robots\.txt|\.nojekyll|\.gitignore)$' \
+    | grep -vE '^[A-Z0-9-]+\.md$' \
+    | grep -vE '^(css|js|data|icons|tools)/' \
+    | grep -vE '^\.claude/launch\.json$' \
+    | grep -v '^$' || true
+)"
+
+if [ -n "$FUORI_LISTA" ]; then
+  echo "  file fuori dalla lista di quello che l'app pubblica:"
+  echo "$FUORI_LISTA" | head -10
+  errore "C'è roba che non fa parte dell'app fra i file da pubblicare (elenco sopra). Toglila, oppure aggiungila alla lista bianca in tools/pubblica.sh se è davvero dell'app."
+fi
+
+echo "Lista bianca: nessun file estraneo all'app."
 echo "Controlli superati: nessun dato personale fra i file da pubblicare."
 
 if [ "$SOLO_CONTROLLI" -eq 1 ]; then
