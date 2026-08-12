@@ -1871,18 +1871,23 @@ export async function importaSalute(pacchetto) {
       await db.put("notti", { ...prec, orologio: soloDatiNotte(n) });
       continue;
     }
-    // Una notte già passata e già in archivio non si riscrive da sola.
+    // Una notte già passata e già in archivio non si riscrive per il solo fatto
+    // che è arrivato un pacchetto dopo. Fra le due durate vince la PIÙ LUNGA.
     //
-    // Due pacchetti diversi hanno dato due durate diverse per la stessa notte
-    // — 6h43 e poi 5h45 — e vinceva l'ultimo arrivato, in silenzio. Il dato
-    // vero era il primo: su una notte finita i campioni di Salute non cambiano,
-    // quello che cambia è la finestra con cui il comando rapido li chiede, e
-    // una finestra tagliata restituisce meno sonno di quello che hai dormito.
+    // Non è una preferenza: su una notte finita i campioni di Salute non
+    // cambiano più: quello che cambia è la finestra con cui il comando rapido
+    // li chiede, e una finestra tagliata può solo TOGLIERE sonno, mai
+    // aggiungerlo. Quindi fra due letture della stessa notte quella corta è
+    // quella incompleta.
     //
-    // Quindi resta quello che c'è, la durata nuova si tiene da parte e la
-    // differenza viene detta: scegliere al posto tuo su un dato che il coach
-    // legge nel pacchetto sarebbe la cosa peggiore. Se quella giusta è la
-    // nuova, si corregge a mano dalla scheda della notte.
+    // Verificato su dati veri due volte, nei due versi: la notte del 2-3/08
+    // vale 6h43 ricalcolata dalle fasi grezze — e 6h43 è il numero controllato
+    // su Salute nativa. Prima arrivò per prima e fu sovrascritta da 5h45; poi
+    // 5h45 era in archivio e 6h43 arrivava nel pacchetto. Con «vince la più
+    // lunga» il numero giusto sopravvive in tutti e due i casi.
+    //
+    // La differenza viene detta comunque: una notte che cambia da sola, anche
+    // in meglio, è una cosa che chi legge il pacchetto deve sapere.
     const scartoNotte =
       prec?.presente &&
       prec.fonte === "salute" &&
@@ -1891,10 +1896,18 @@ export async function importaSalute(pacchetto) {
       n.durataMin != null &&
       Math.abs(prec.durataMin - n.durataMin) >= SCARTO_NOTTE_MIN;
     if (scartoNotte) {
+      const tengoQuellaInArchivio = prec.durataMin >= n.durataMin;
+      const tenuta = tengoQuellaInArchivio ? prec.durataMin : n.durataMin;
+      const scartata = tengoQuellaInArchivio ? n.durataMin : prec.durataMin;
       conteggio.nottiDiscordanti.push(
-        `${dataBreve(n.data)}: in archivio ${durataUmana(prec.durataMin * 60)}, nel pacchetto ${durataUmana(n.durataMin * 60)}`
+        `${dataBreve(n.data)}: tengo ${durataUmana(tenuta * 60)}, scarto ${durataUmana(scartata * 60)} (${tengoQuellaInArchivio ? "la più corta arrivava nel pacchetto" : "la più corta era in archivio"})`
       );
-      await db.put("notti", { ...prec, scartata: soloDatiNotte(n), importatoIl: new Date().toISOString() });
+      const base = tengoQuellaInArchivio ? prec : { ...fondi(prec, n), fonte: "salute" };
+      await db.put("notti", {
+        ...base,
+        scartata: soloDatiNotte(tengoQuellaInArchivio ? n : prec),
+        importatoIl: new Date().toISOString(),
+      });
       conteggio.notti = nottiViste.size;
       continue;
     }
