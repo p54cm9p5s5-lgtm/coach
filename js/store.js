@@ -1918,9 +1918,21 @@ export async function importaSalute(pacchetto) {
   // ripararsi ti chiede di perdere dati non è riparabile: fra sei mesi il costo
   // sarebbe insostenibile e il difetto resterebbe lì. Reimportare deve bastare.
   //
-  // Tre reti di sicurezza: si tocca solo dentro il periodo davvero coperto
-  // dalle fasi, solo quello che era stato importato (mai una notte scritta a
-  // mano), e quello che si toglie viene detto, mai fatto in silenzio.
+  // QUATTRO reti di sicurezza, e la quarta è quella che mancava.
+  //
+  // «Il periodo coperto dalle fasi» era il tratto fra la prima e l'ultima fase
+  // del pacchetto — ma le fasi non sono continue: il comando rapido ne manda
+  // per alcune notti e non per altre, e ogni notte in mezzo che il pacchetto
+  // non nominava veniva cancellata. Un pacchetto con le fasi dell'11 agosto e
+  // una fase vecchia del 4 ha tolto cinque notti buone fra le due, e nella
+  // finestra del sonno il conteggio è SCESO da un pacchetto all'altro invece di
+  // salire: il difetto si vedeva solo lì, perché la tabella del pacchetto mostra
+  // le ultime sette notti e quelle tolte erano più indietro.
+  //
+  // Quello che si vuole togliere è una cosa sola: la STESSA dormita archiviata
+  // sotto la data sbagliata da una versione vecchia dell'app. Ha una firma
+  // precisa — è attaccata a una notte che il pacchetto descrive davvero, e dura
+  // quanto quella. Senza quella firma, non si tocca.
   if (pacchetto.fasi?.length) {
     const inizi = pacchetto.fasi.map((f) => f.inizio.slice(0, 10)).sort();
     const fini = pacchetto.fasi.map((f) => f.fine.slice(0, 10)).sort();
@@ -1931,12 +1943,27 @@ export async function importaSalute(pacchetto) {
     primo.setDate(primo.getDate() - 1);
     const dal = isoDate(primo);
     const al = fini[fini.length - 1];
+    const nelPacchetto = new Map(
+      (pacchetto.notti || []).filter((n) => n.durataMin != null).map((n) => [n.data, n.durataMin])
+    );
+    const eLaStessaDormita = (vecchia) => {
+      if (vecchia.durataMin == null) return false;
+      const d = new Date(vecchia.data + "T00:00:00");
+      for (const scarto of [-1, 1]) {
+        const vicina = new Date(d);
+        vicina.setDate(vicina.getDate() + scarto);
+        const durata = nelPacchetto.get(isoDate(vicina));
+        if (durata != null && Math.abs(durata - vecchia.durataMin) < SCARTO_NOTTE_MIN) return true;
+      }
+      return false;
+    };
     for (const vecchia of await db.all("notti")) {
       if (vecchia.data < dal || vecchia.data > al) continue;
       if (nottiViste.has(vecchia.data)) continue;
       // Una notte scritta a mano (riga NOTTE, o inserita da te) non si tocca:
       // il pacchetto delle fasi non ha voce in capitolo su quella.
       if (vecchia.fonte !== "salute") continue;
+      if (!eLaStessaDormita(vecchia)) continue;
       await db.del("notti", vecchia.data);
       conteggio.nottiTolte.push(dataBreve(vecchia.data));
     }
