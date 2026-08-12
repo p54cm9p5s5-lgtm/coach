@@ -519,6 +519,35 @@ export async function render({ ridisegna }) {
     )
   );
 
+  // Le attività fuori scheda si registrano qui accanto ai dati salute: sono
+  // movimento, non programma, e chi le fa le cerca dove guarda il movimento.
+  const extra = await store.extra();
+  const ultimaExtra = extra[0];
+  aggiungi(wrap,
+    h(
+      "div.group",
+      h("h2", "Extra"),
+      h(
+        "div.list",
+        h(
+          "a.row",
+          { href: "#/extra" },
+          h(
+            "div.main",
+            h("span.title", "Attività fuori scheda"),
+            h(
+              "span.sub",
+              ultimaExtra
+                ? `${extra.length} ${extra.length === 1 ? "registrata" : "registrate"} · ultima ${ultimaExtra.tipo.toLowerCase()} il ${dataBreve(ultimaExtra.data)}`
+                : "corse, camminate, bici, nuoto — nessuna ancora registrata"
+            )
+          ),
+          h("span.chevron", "›")
+        )
+      )
+    )
+  );
+
   const allenamenti = (await store.db.all("allenamentiWatch")).sort((a, b) => (a.data < b.data ? 1 : -1));
   if (allenamenti.length) {
     aggiungi(wrap,

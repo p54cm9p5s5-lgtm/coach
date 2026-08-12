@@ -4,7 +4,7 @@ import * as store from "../store.js";
 import { nomeLivello } from "../segnali.js";
 import {
   logSeduta, bloccoSalute, bloccoProposte, bloccoAccettate, bloccoCorpo, bloccoSegnali,
-  bloccoFumo, bloccoAcqua, bloccoWatch, intestazionePacchetto,
+  bloccoFumo, bloccoAcqua, bloccoWatch, bloccoExtra, intestazionePacchetto,
 } from "../export.js";
 import { inizioPeriodo } from "../grafico.js";
 
@@ -291,6 +291,15 @@ async function componi(stato) {
     if (bloccoW) {
       pezzi.push(bloccoW);
       contenuto.push(`${watch.length} ${watch.length === 1 ? "allenamento" : "allenamenti"} dal Watch`);
+    }
+
+    // Le attività fuori scheda: log a sé, ma vanno dove il coach guarda il
+    // movimento della giornata.
+    const righeExtra = (await store.extra()).filter((x) => x.data >= daQuando);
+    const bloccoE = bloccoExtra(righeExtra, { talkTest: store.TALK_TEST, oggi: isoDate() });
+    if (bloccoE) {
+      pezzi.push(bloccoE);
+      contenuto.push(`${righeExtra.length} ${righeExtra.length === 1 ? "attività extra" : "attività extra"}`);
     }
   }
 

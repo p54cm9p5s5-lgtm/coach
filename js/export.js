@@ -570,6 +570,49 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
 }
 
 /**
+ * Le attività fuori scheda: corse, camminate, bici, nuoto.
+ *
+ * È un log a sé, non una parte del programma: nessun giorno le prevede e non
+ * farle non toglie niente. Ma farle conta, e il coach le deve poter confrontare
+ * voce per voce nel tempo — per questo è una tabella con colonne fisse e non
+ * una riga di prosa.
+ *
+ * Il talk-test è la sola risposta soggettiva: dice a che intensità si stava
+ * andando senza bisogno di una fascia cardio. Dove manca resta «non
+ * registrato», come ogni altro campo vuoto — mai zero.
+ */
+export function bloccoExtra(righe, { talkTest = [], oggi = isoDate() } = {}) {
+  if (!righe?.length) return null;
+  const parola = (id) => talkTest.find((t) => t.id === id)?.testo?.toLowerCase() || "—";
+  const tab = righe.slice(0, 30).map((x) => [
+    dataBreve(x.data),
+    GIORNI_ABBR[new Date(x.data + "T00:00:00").getDay()],
+    x.tipo || "—",
+    x.durataMin != null ? durataUmana(x.durataMin * 60) : "—",
+    x.km != null ? num(x.km, 2) : "—",
+    x.ritmo || "—",
+    x.fcMedia != null ? num(x.fcMedia, 0) : "—",
+    x.fcMax != null ? num(x.fcMax, 0) : "—",
+    x.kcalAttive != null ? num(x.kcalAttive, 0) : "—",
+    x.kcalTotali != null ? num(x.kcalTotali, 0) : "—",
+    parola(x.talkTest),
+    [x.data === oggi ? "giornata in corso, non finita" : null, x.nota].filter(Boolean).join(" · "),
+  ]);
+  return [
+    "EXTRA — ATTIVITÀ FUORI SCHEDA",
+    "",
+    tabella(
+      ["Data", "G", "Tipo", "Durata", "km", "Ritmo", "FC media", "FC max", "Kcal att.", "Kcal tot.", "Talk-test", "Note"],
+      tab
+    ),
+    "",
+    "Non sono esercizi tracciati: niente carico, niente tecnica, niente RPE. Nessun giorno le prevede, quindi non farle non toglie niente al punteggio.",
+    "Una giornata con un'attività qui vale come giornata di allenamento nel punteggio Salute, ma solo se il talk-test è stato risposto: senza resta fuori dal conto invece di valere zero.",
+    "Talk-test: «frasi intere comode» zona bassa · «frasi intere con fiatone» zona media · «a fatica» zona alta.",
+  ].join("\n");
+}
+
+/**
  * Gli allenamenti letti dall'Apple Watch, come sono.
  *
  * L'app li importa da Salute e li mostra, ma nel pacchetto per il coach non

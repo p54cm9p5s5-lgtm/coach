@@ -2353,6 +2353,18 @@ export async function punteggiSalute(dal, al = isoDate()) {
     const comp = await completezzaSeduta(sed.id);
     if (comp?.totale != null) perData.set(sed.data, Math.max(perData.get(sed.data) ?? 0, comp.totale));
   }
+  // Le attività fuori scheda contano come allenamento. Dove c'è anche una
+  // seduta vera vince il punteggio della seduta: dice molto di più di un sì.
+  const extraPerData = new Map();
+  for (const x of await db.all("extra")) {
+    if (!extraPerData.has(x.data)) extraPerData.set(x.data, []);
+    extraPerData.get(x.data).push(x);
+  }
+  for (const [data, righe] of extraPerData) {
+    if (perData.has(data)) continue;
+    const v = valoreExtra(righe);
+    if (v != null) perData.set(data, v);
+  }
 
   const inizio = await inizioProgramma();
   const out = [];
@@ -2618,6 +2630,94 @@ export async function cancellaAcqua(data = isoDate()) {
 export async function giorniAcqua() {
   const r = await db.all("acqua");
   return r.sort((a, b) => (a.data < b.data ? 1 : -1));
+}
+
+// ---------- extra ----------
+
+/**
+ * Attività fuori scheda: una corsa, una camminata, una nuotata, la bici.
+ *
+ * Non è un esercizio tracciato — niente carico, niente tecnica, niente RPE — e
+ * non ha obblighi: nessun giorno la prevede, quindi non farla non toglie mai
+ * niente. Ma farla conta: un giorno con un'attività registrata è un giorno in
+ * cui ti sei allenato, e nel punteggio Salute vale come tale.
+ *
+ * Il talk-test è la sola risposta soggettiva, ed è la stessa domanda che si fa
+ * un fisiologo per capire a che intensità stavi andando senza guardare un
+ * numero: se riesci a dire una frase intera comodo sei in zona bassa, se la
+ * dici col fiatone sei in mezzo, se non ci riesci sei alto.
+ */
+export const TALK_TEST = [
+  { id: "comode", testo: "Frasi intere comode" },
+  { id: "fiatone", testo: "Frasi intere con fiatone" },
+  { id: "fatica", testo: "A fatica" },
+];
+
+export const TIPI_EXTRA = ["Corsa", "Camminata", "Bici", "Nuoto", "Altro"];
+
+/**
+ * Un campo che non hai scritto resta «non registrato», mai zero.
+ *
+ * La virgola vale come il punto: in italiano si scrive «18,4 km», e un numero
+ * scritto così finiva a null — cioè il dato spariva invece di entrare.
+ */
+const NUM_O_NULL = (v) => {
+  if (v === "" || v == null) return null;
+  const n = Number(String(v).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+};
+
+export async function registraExtra(dati) {
+  const data = /^\d{4}-\d{2}-\d{2}$/.test(String(dati.data)) ? dati.data : isoDate();
+  if (!dati.tipo) throw new Error("Serve il tipo di attività.");
+  if (dati.talkTest && !TALK_TEST.some((t) => t.id === dati.talkTest)) {
+    throw new Error("Talk-test non riconosciuto.");
+  }
+  const rec = {
+    id: dati.id || db.nuovoId("ext"),
+    data,
+    tipo: String(dati.tipo),
+    durataMin: NUM_O_NULL(dati.durataMin),
+    fcMedia: NUM_O_NULL(dati.fcMedia),
+    fcMax: NUM_O_NULL(dati.fcMax),
+    kcalAttive: NUM_O_NULL(dati.kcalAttive),
+    kcalTotali: NUM_O_NULL(dati.kcalTotali),
+    km: NUM_O_NULL(dati.km),
+    // Il ritmo si scrive come lo legge l'orologio («6'40"»), non è un numero.
+    ritmo: dati.ritmo ? String(dati.ritmo).trim() : null,
+    talkTest: dati.talkTest || null,
+    nota: dati.nota ? String(dati.nota).trim() : null,
+    creatoIl: dati.creatoIl || new Date().toISOString(),
+  };
+  await db.put("extra", rec);
+  return rec;
+}
+
+export async function extra() {
+  const r = await db.all("extra");
+  return r.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : (b.creatoIl || "").localeCompare(a.creatoIl || "")));
+}
+
+export async function extraDelGiorno(data) {
+  return (await db.byIndex("extra", "data", data)).sort((a, b) =>
+    (a.creatoIl || "").localeCompare(b.creatoIl || "")
+  );
+}
+
+export async function eliminaExtra(id) {
+  await db.del("extra", id);
+}
+
+/**
+ * Quanto vale, per il punteggio Salute, l'attività extra di un giorno.
+ *
+ * Vale pieno solo se il talk-test è stato risposto: senza, l'attività resta
+ * registrata e finisce nel pacchetto, ma la voce Allenamento del punteggio
+ * resta fuori dal conto come ogni altro dato mancante — non vale zero, che
+ * vorrebbe dire «non ti sei mosso».
+ */
+function valoreExtra(righe) {
+  return righe.some((x) => x.talkTest) ? 100 : null;
 }
 
 /** Conteggio giorno per giorno, per il grafico e per il punteggio. */
