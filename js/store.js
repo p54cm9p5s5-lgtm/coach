@@ -89,7 +89,7 @@ const conVideoScelto = (p) => (p && VIDEO_PASSI[p.nome] ? { ...p, video: VIDEO_P
 /** Protocollo di riscaldamento per un giorno dello split. */
 export function riscaldamento(giornoId) {
   if (!RISCALDAMENTO) return null;
-  const giorno = RISCALDAMENTO.giorni?.[giornoId] || { mobilita: [], stretchingFinale: [] };
+  const giorno = RISCALDAMENTO.giorni?.[giornoId] || { mobilita: [], stretchingFinale: [], mobilitaFinale: [] };
   return {
     cardio: RISCALDAMENTO.cardio,
     serieDiAvvicinamento: RISCALDAMENTO.serieDiAvvicinamento,
@@ -98,7 +98,25 @@ export function riscaldamento(giornoId) {
     ...giorno,
     mobilita: (giorno.mobilita || []).map(conVideoScelto),
     stretchingFinale: (giorno.stretchingFinale || []).map(conVideoScelto),
+    // Il blocco di mobilità di fine seduta: dose fissa, nessun carico, nessuna
+    // progressione. Copre le zone che il riscaldamento di quel giorno non
+    // tocca già, così non si ripete due volte la stessa cosa.
+    mobilitaFinale: (giorno.mobilitaFinale || []).map(conVideoScelto),
   };
+}
+
+/**
+ * Un giorno di sola mobilità: nello split c'è, ma senza esercizi.
+ *
+ * Sabato e domenica sono voci vere del programma — compaiono sul calendario e
+ * saltarli pesa come saltare un giorno di scheda — ma il loro contenuto non
+ * sono esercizi tracciati: è la routine di mobilità. Serve saperlo distinguere
+ * per non chiedere carichi e ripetizioni a un giorno che non ne ha.
+ */
+export function giornoDiSolaMobilita(giornoId) {
+  const g = giornoSplit(giornoId);
+  if (!g) return false;
+  return !(g.esercizi || []).length && Boolean(riscaldamento(giornoId)?.mobilitaFinale?.length);
 }
 
 /**
@@ -1037,6 +1055,10 @@ export async function completezzaSeduta(id) {
     cardio: sed.cardio,
     riscaldamento: Boolean(sed.riscaldamento?.fatto),
     stretching: Boolean(sed.stretching?.fatto),
+    // La voce entra solo se quel giorno aveva un blocco di mobilità: sulle
+    // sedute di prima, e sui giorni che non ne hanno, non deve comparire una
+    // riga a zero per una cosa che non era prevista.
+    mobilita: sed.mobilita ? { fatto: Boolean(sed.mobilita.fatto) } : null,
     regole: reg,
   });
 

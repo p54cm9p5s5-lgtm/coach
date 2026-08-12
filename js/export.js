@@ -429,6 +429,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     // Lo stretching pesa nel punteggio quanto il riscaldamento: ometterlo dal
     // log lasciava il coach senza metà di quella voce.
     riga("Stretching finale", seduta.stretching ? (seduta.stretching.fatto ? "fatto" : "saltato") : "non registrato"),
+    riga("Mobilità", seduta.mobilita ? (seduta.mobilita.fatto ? "fatta" : "saltata") : null),
     // Letti sull'orologio a fine allenamento: i Comandi Rapidi non sanno
     // leggere gli allenamenti dell'Apple Watch, quindi questi numeri li scrive
     // l'atleta a mano — e sono quelli esatti della seduta, non di una finestra.
