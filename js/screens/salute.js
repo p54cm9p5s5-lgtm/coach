@@ -5,7 +5,6 @@ import { analizza } from "../salute.js";
 import { graficoLinea, schedaGrafico, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
 import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
 
-const NOME_SHORTCUT = "Coach Salute";
 
 /**
  * Il grafico delle sigarette al giorno.
@@ -601,8 +600,12 @@ export async function render({ ridisegna }) {
 async function aggiorna(ridisegna) {
   return apriImport(ridisegna, {
     titolo: "Aggiorna dati salute",
-    testo: "Il comando rapido legge gli ultimi 30 giorni e copia il risultato negli appunti. Poi torni qui e incolli.",
-    shortcut: NOME_SHORTCUT,
+    testo:
+      "Scegli l'esportazione di Salute (profilo → «Esporta tutti i dati», poi estrai lo zip in File) " +
+      "oppure incolla un pacchetto già pronto.",
+    // Nessun comando rapido: le azioni di Salute dentro Comandi Rapidi restano
+    // appese, e un tasto che apre una cosa che non risponde è peggio che
+    // nessun tasto. Il calendario, che invece funziona, il suo ce l'ha ancora.
   });
 }
 
@@ -610,15 +613,19 @@ async function aggiorna(ridisegna) {
  * Stesso flusso per qualunque pacchetto: il formato è uno solo e il testo
  * incollato può contenere salute, calendario o tutti e due insieme.
  */
-export async function apriImport(ridisegna, { titolo, testo, shortcut }) {
-  const scelta = await chiedi({
-    titolo,
-    testo,
-    opzioni: [
-      { etichetta: `Apri «${shortcut}»`, valore: "apri" },
-      { etichetta: "Ho già copiato: incolla adesso", valore: "incolla" },
-    ],
-  });
+/**
+ * @param shortcut  nome del comando rapido da offrire, oppure `null`.
+ *
+ * Per i dati salute è `null`: le azioni di Salute dentro Comandi Rapidi non
+ * funzionano, e offrire un tasto che apre un comando che resta appeso è peggio
+ * che non offrirlo. Resta per il calendario, che invece funziona.
+ */
+export async function apriImport(ridisegna, { titolo, testo, shortcut = null }) {
+  const opzioni = [];
+  if (shortcut) opzioni.push({ etichetta: `Apri «${shortcut}»`, valore: "apri" });
+  opzioni.push({ etichetta: shortcut ? "Ho già copiato: incolla adesso" : "Importa", valore: "incolla" });
+
+  const scelta = await chiedi({ titolo, testo, opzioni });
   if (!scelta) return;
 
   if (scelta === "apri") {
@@ -696,10 +703,16 @@ async function incolla(ridisegna) {
                 const { pacchettoDaExport } = await import("../salute-export.js");
                 const mega = (f.size / 1048576).toFixed(0);
                 nota.textContent = `Leggo ${f.name} (${mega} MB): non lo carico tutto, lo scorro. Aspetta.`;
-                // Mai dati più vecchi dell'inizio del programma: l'export di
-                // Salute contiene anni, e questa app guarda una storia che
-                // comincia il giorno della prima seduta registrata.
-                const inizio = await store.inizioProgramma();
+                // Mai dati più vecchi dell'inizio della storia. Il giorno è
+                // scritto qui, non dedotto dai dati del telefono: deve
+                // sopravvivere a un cambio di dispositivo, a un archivio
+                // svuotato e a un ripristino da backup — cioè proprio ai casi
+                // in cui i dati locali non sanno più da quando si è partiti.
+                //
+                // Se però l'app avesse una storia ancora più lunga di così
+                // (un altro profilo, un altro atleta), comanda quella: il
+                // pavimento serve a non prendere di più, mai a tagliare.
+                const inizio = await store.inizioStoria();
                 const esito = await pacchettoDaExport(f, {
                   giorni: 30,
                   dal: inizio,
