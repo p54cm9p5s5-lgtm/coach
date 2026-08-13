@@ -679,11 +679,11 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       punti di `ridisegna()` (fumo, acqua, schede della barra). Da verificare
       cosa succede se il programma non è caricato o è rotto: è la strada più
       corta verso una pagina vuota.
-- [ ] **11.G.4** **Aggiornamento che arriva mentre stai scrivendo.** Fuori
+- [x] **11.G.4** **Aggiornamento che arriva mentre stai scrivendo.** Fuori
       dall'allenamento, un cambio di versione ricarica **subito** la pagina: una
       nota a metà in un pannello aperto (Corpo, Storico, Salute) si perde. Solo
       la seduta è protetta. Da decidere se basta.
-- [ ] **11.G.5** **Aggiornamento in attesa durante la seduta**: si applica
+- [x] **11.G.5** **Aggiornamento in attesa durante la seduta**: si applica
       appena si esce, prima di caricare il modulo nuovo. Da provare pubblicando
       una versione mentre la seduta è aperta.
 - [x] **11.G.6** **Due tocchi rapidi su due schede diverse**: c'è il
