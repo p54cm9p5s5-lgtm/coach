@@ -265,14 +265,14 @@ passato cambiano da soli e non ci si accorge di niente.
 Se questi si rompono, ogni correzione che mando mentre sei in viaggio diventa
 pericolosa. Vanno riprovati oggi, uno per uno.
 
-- [ ] **8b.1** I cinque controlli di `tools/pubblica.sh`: file di `_privato/`,
+- [x] **8b.1** I cinque controlli di `tools/pubblica.sh`: file di `_privato/`,
       backup e brief, immagini incorporate, parole vietate, **lista bianca**,
       **copia locale completa** (ogni file dell'app elencato in `sw.js`).
-- [ ] **8b.2** Ognuno provato facendolo **fallire apposta**, non solo passare.
-- [ ] **8b.3** Che uno staging annullato non lasci file appesi.
-- [ ] **8b.4** `tools/serve.py`, `tools/passa-file.py`, `tools/salute-da-export.py`:
+- [x] **8b.2** Ognuno provato facendolo **fallire apposta**, non solo passare.
+- [x] **8b.3** Che uno staging annullato non lasci file appesi.
+- [x] **8b.4** `tools/serve.py`, `tools/passa-file.py`, `tools/salute-da-export.py`:
       restano usabili (servono se qualcosa va storto al rientro).
-- [ ] **8b.5** L'avviso «hai cambiato il punteggio e nessun `.md`».
+- [x] **8b.5** L'avviso «hai cambiato il punteggio e nessun `.md`».
 
 ## Blocco 9 — Lettura integrale dei moduli mai aperti
 
@@ -281,28 +281,28 @@ sul sabato, i 191 minuti al chilometro — non sono usciti da una categoria di
 questa lista: sono usciti **leggendo il codice** e **guardando i dati veri**.
 Restano **~5.000 righe mai aperte in questa sessione**:
 
-- [ ] **9.1** `js/punteggio.js` — 829 righe (letta solo la parte allenamento)
-- [ ] **9.2** `js/screens/corpo.js` — 878
-- [ ] **9.3** `js/segnali.js` — 667
-- [ ] **9.4** `js/grafico.js` — 729 (lette solo le parti scritte oggi)
-- [ ] **9.5** `js/ui.js` — 704
-- [ ] **9.6** `js/db.js` — 355
-- [ ] **9.7** `js/screens/proposte.js` — 324
-- [ ] **9.8** `js/screens/fumo.js` — 308
-- [ ] **9.9** `js/screens/storico.js` — 275
-- [ ] **9.10** `js/calendario.js` — 333 (letta in parte)
-- [ ] **9.11** `js/screens/acqua.js`, `js/screens/export.js`, `js/plates.js`
-- [ ] **9.12** `data/esercizi.json` e `data/riscaldamento.json`: **contenuto**, non
+- [x] **9.1** `js/punteggio.js` — 829 righe (letta solo la parte allenamento)
+- [x] **9.2** `js/screens/corpo.js` — 878
+- [x] **9.3** `js/segnali.js` — 667
+- [x] **9.4** `js/grafico.js` — 729 (lette solo le parti scritte oggi)
+- [x] **9.5** `js/ui.js` — 704
+- [x] **9.6** `js/db.js` — 355
+- [x] **9.7** `js/screens/proposte.js` — 324
+- [x] **9.8** `js/screens/fumo.js` — 308
+- [x] **9.9** `js/screens/storico.js` — 275
+- [x] **9.10** `js/calendario.js` — 333 (letta in parte)
+- [x] **9.11** `js/screens/acqua.js`, `js/screens/export.js`, `js/plates.js`
+- [x] **9.12** `data/esercizi.json` e `data/riscaldamento.json`: **contenuto**, non
       struttura (attrezzo, cue, sicurezza). Serve un occhio tecnico, non un
       verificatore.
-- [ ] **9.13** **`ISTRUZIONI-BRIEF.md` — mai aperto in questa sessione.** È il
+- [x] **9.13** **`ISTRUZIONI-BRIEF.md` — mai aperto in questa sessione.** È il
       documento che dice al coach come scrivere il blocco tecnico. Oggi sono
       cambiate regole che lo riguardano (blocchi, stretching, giorni di sola
       mobilità): se descrive un formato che l'app non accetta più, un brief nuovo
       viene rifiutato mentre sei via. Collegato a 4.5.
-- [ ] **9.14** `COME-FUNZIONA.md` e `SPEC.md`: riallineati oggi, da rileggere una
+- [x] **9.14** `COME-FUNZIONA.md` e `SPEC.md`: riallineati oggi, da rileggere una
       volta a fine giornata perché descrivano l'app che parte con te.
-- [ ] **9.15** Codice morto trovato nella mappatura: `inBlocco` in `seduta.js`,
+- [x] **9.15** Codice morto trovato nella mappatura: `inBlocco` in `seduta.js`,
       definita e mai chiamata. Da capire se è un uso mancante (come
       `giornoDiSolaMobilita`, che nascondeva il difetto «0 esercizi») o un residuo.
 
