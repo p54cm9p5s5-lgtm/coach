@@ -499,10 +499,10 @@ Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
       rifiuta quel primo gesto, per tutto l'allenamento l'allarme parte dai bip
       di riserva (o da niente). Da provare rifiutando/interrompendo il primo
       tocco d'avvio.
-- [ ] **11.C.3** **Allarme fermato prima di partire**: c'è la rete
+- [x] **11.C.3** **Allarme fermato prima di partire**: c'è la rete
       (`playInVolo` + `loop = false` in `fermaAllarme`). Da provare a fermare il
       recupero nell'istante esatto in cui suona.
-- [ ] **11.C.4** **La musica di chi ascolta deve ripartire.** Sessione
+- [x] **11.C.4** **La musica di chi ascolta deve ripartire.** Sessione
       `ambient` / `transient`, contesto chiuso da `rilasciaAudio()`. Da provare
       per davvero: musica in cuffia → allenamento → recupero → allarme → stop.
       La musica deve riprendere da sola.
@@ -511,22 +511,22 @@ Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
 - [x] **11.C.6** **`chiudiFogli()`** chiude ogni pannello aperto quando si cambia
       schermata, e chi stava aspettando riceve `undefined`. Da verificare che
       nessuna schermata interpreti quell'`undefined` come una scelta.
-- [ ] **11.C.7** **Chiusura del pannello trascinando**: parte solo dalla
+- [x] **11.C.7** **Chiusura del pannello trascinando**: parte solo dalla
       maniglia, soglia 90 px, `touchcancel` rimette a posto. Da provare con una
       nota lunga già scritta dentro (non deve perdersi).
 - [x] **11.C.8** **Tocco fuori dal pannello**: chiude solo se il tocco è
       *cominciato* sullo sfondo. Da provare con un pulsante che si sposta.
-- [ ] **11.C.9** **Wake lock**: si riprende solo se in pagina c'è un elemento
+- [x] **11.C.9** **Wake lock**: si riprende solo se in pagina c'è un elemento
       `.session` (verificato: è il contenitore della seduta). Da provare
       uscendo dall'app durante il recupero e rientrando.
 - [x] **11.C.10** **`h()` scrive sempre testo, mai markup** (niente `innerHTML`):
       da provare mettendo `<b>ciao</b>` in una nota, nel nome di un esercizio del
       brief e in un titolo, e verificare che si leggano i tag.
-- [ ] **11.C.11** **Date impossibili**: `parseIso("2026-13-45")` deve dare «—» e
+- [x] **11.C.11** **Date impossibili**: `parseIso("2026-13-45")` deve dare «—» e
       non «14 febbraio». Da provare da un backup con una data storta.
-- [ ] **11.C.12** **`num()`**: niente «-0», niente «Infinity», virgola e non
+- [x] **11.C.12** **`num()`**: niente «-0», niente «Infinity», virgola e non
       punto. `durataUmana()`: 1h 59m 40s non deve dare «1h 60m».
-- [ ] **11.C.13** **`unaVoltaSola`**: se il gestore fallisce esce un avviso e il
+- [x] **11.C.13** **`unaVoltaSola`**: se il gestore fallisce esce un avviso e il
       pulsante torna attivo. Da provare su un tocco che scrive nell'archivio.
 
 ## 11.D — `js/db.js` (356 righe, lette tutte)
