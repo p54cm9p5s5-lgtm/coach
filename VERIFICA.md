@@ -734,7 +734,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 
 ## 11.I — `js/calendario.js` (334 righe, lette tutte)
 
-- [ ] **11.I.1** ⚠️ **Le cose attese esistono solo entro ±21 giorni da oggi.**
+- [x] **11.I.1** ⚠️ **Le cose attese esistono solo entro ±21 giorni da oggi.**
       `periodiche()` gira da −21 a +21: sfogliando il calendario indietro di due
       mesi non compare nessun pallino, e i giovedì della pesata di giugno
       sembrano tutti in ordine. Da provare andando indietro di tre mesi.
@@ -759,7 +759,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [ ] **11.I.7** **«Recuperato dopo»**: un giovedì saltato resta segnato, ma il
       piede della Home non deve continuare a dire che manca. Da provare
       pesandosi il venerdì.
-- [ ] **11.I.8** **Giorni prima dell'inizio del programma**: niente rosso,
+- [x] **11.I.8** **Giorni prima dell'inizio del programma**: niente rosso,
       niente pallini. Da provare andando indietro fino a prima dell'inizio.
 - [ ] **11.I.9** **Data non valida** passata a `riassuntoGiorno`: deve dire
       «Giorno non riconosciuto» e non «undefined NaN».

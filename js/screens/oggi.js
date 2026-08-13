@@ -722,6 +722,10 @@ async function bloccoCalendario(vaiA, ridisegna) {
     // compito dell'app, che è l'unica a sapere quando li hai fatti davvero.
     eventi: store.agendaAttiva() ? await store.agenda() : null,
     cadenze: store.regole().cadenze,
+    // Niente arretrati prima del primo giorno di cui l'app sa qualcosa: il
+    // calendario si sfoglia indietro anche di mesi, e su quei giorni non c'era
+    // ancora niente da fare.
+    dal: await store.inizioStoria(),
   });
 
   // il programma comincia dal primo allenamento registrato, o dal brief
