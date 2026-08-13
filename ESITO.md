@@ -249,7 +249,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.K.10** | DA FARE |  | 11.K — `js/screens/storico.js` |
 | 5 |  | **11.K.11** | DA FARE |  | 11.K — `js/screens/storico.js` |
 | 5 |  | **11.K.12** | DA FARE |  | 11.K — `js/screens/storico.js` |
-| 5 | ! | **11.K.2** | DA FARE |  | 11.K — `js/screens/storico.js` |
+| 5 | ! | **11.K.2** | CORRETTO | **difetto riprodotto e corretto.** Tolto il Plank dallo split — cioe simulato un cambio di scheda del coach — la sua storia **spariva** dall'elenco «Per esercizio», pur restando in archivio: due esposizioni con carichi, RPE e tecnica raggiungibili solo conoscendo l'indirizzo a memoria. Ora gli esercizi su cui hai lavorato ma che il programma non chiede piu compaiono in fondo, marcati **«non piu in programma»**. Verificato nei due sensi: col Plank fuori dallo split la riga appare con la sua dicitura, e rimesso il programma vero torna una riga normale come le altre. La lettura in piu non costa niente: usa le serie gia lette per l'elenco (vedi 11.K.1) | 11.K — `js/screens/storico.js` |
 | 5 |  | **11.K.4** | DA FARE |  | 11.K — `js/screens/storico.js` |
 | 5 |  | **11.K.5** | DA FARE |  | 11.K — `js/screens/storico.js` |
 | 5 |  | **11.K.6** | DA FARE |  | 11.K — `js/screens/storico.js` |

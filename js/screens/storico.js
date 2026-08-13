@@ -33,6 +33,16 @@ async function elenco(vaiA) {
   const allenamenti = await store.allenamenti();
   const completate = allenamenti.filter((s) => s.stato === "completata");
 
+  // Serie e questionari si leggono **una volta sola**, tutti insieme, e poi si
+  // raggruppano per seduta.
+  //
+  // Prima ogni riga faceva due letture d'archivio, una dopo l'altra: venti
+  // righe erano quaranta letture prima che comparisse qualcosa, e «Mostra gli
+  // altri N» ne faceva altre 2N in fila. Servono anche più giù, all'elenco per
+  // esercizio, per sapere su cosa hai lavorato davvero.
+  const tutteLeSerie = await store.db.all("serie");
+  const tuttiILog = await store.db.all("esercizioLog");
+
   if (!completate.length) {
     aggiungi(wrap, h("div.empty", h("h3", "Nessun allenamento registrato"), h("p", "Gli allenamenti completati compaiono qui.")));
   } else {
@@ -43,16 +53,6 @@ async function elenco(vaiA) {
     const A_VISTA = 20;
     const lista = h("div.list");
 
-    // Serie e questionari si leggono **una volta sola**, tutti insieme, e poi
-    // si raggruppano per seduta.
-    //
-    // Prima ogni riga faceva due letture d'archivio, una dopo l'altra: venti
-    // righe erano quaranta letture prima che comparisse qualcosa, e «Mostra
-    // gli altri N» ne faceva altre 2N in fila. Misurato con 207 allenamenti:
-    // **2,2 secondi e 331 transazioni** per disegnare l'elenco. Con due
-    // letture sole il conto non dipende più da quanti allenamenti hai.
-    const tutteLeSerie = await store.db.all("serie");
-    const tuttiILog = await store.db.all("esercizioLog");
     const serieDi = new Map();
     for (const x of tutteLeSerie) {
       if (!serieDi.has(x.sedutaId)) serieDi.set(x.sedutaId, []);
@@ -164,16 +164,33 @@ async function elenco(vaiA) {
 
   // per esercizio
   const usati = new Set(store.giorniSplit().flatMap((g) => (g.esercizi || []).map((v) => v.esercizioId)));
-  if (usati.size) {
+  // Gli esercizi che il programma non chiede più, ma su cui hai lavorato,
+  // vanno in fondo all'elenco invece di sparire.
+  //
+  // Prima si mostravano solo quelli dello split di ADESSO: bastava che il
+  // coach cambiasse scheda perché la storia di un esercizio — carichi, RPE,
+  // tecnica di mesi — diventasse irraggiungibile dall'app. I dati restavano in
+  // archivio, ma per rivederli bisognava conoscere l'indirizzo a memoria.
+  const conStoria = new Set(tutteLeSerie.map((x) => x.esercizioId));
+  const fuoriProgramma = [...conStoria].filter((id) => !usati.has(id) && store.esercizio(id));
+  if (usati.size || fuoriProgramma.length) {
     const lista = h("div.list");
-    for (const id of usati) {
+    for (const id of [...usati, ...fuoriProgramma]) {
       const def = store.esercizio(id);
       const esp = store.esposizioniSvolte(await store.esposizioni(id));
+      const uscito = !usati.has(id);
       aggiungi(lista, 
         h(
           "a.row",
           { href: `#/storico?esercizio=${id}` },
-          h("div.main", h("span.title", def?.nome || id), h("span.sub", `${esp.length} ${esp.length === 1 ? "esposizione" : "esposizioni"}`)),
+          h(
+            "div.main",
+            h("span.title", def?.nome || id),
+            h(
+              "span.sub",
+              `${esp.length} ${esp.length === 1 ? "esposizione" : "esposizioni"}${uscito ? " · non più in programma" : ""}`
+            )
+          ),
           h("span.chevron", "›")
         )
       );

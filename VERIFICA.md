@@ -821,7 +821,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       letture d'archivio **per riga** (serie + questionari), una dopo l'altra: 20
       righe = 40 letture prima che compaia qualcosa, e «Mostra gli altri N» ne fa
       altre 2N di fila. Da misurare con tutti gli allenamenti che ci sono.
-- [ ] **11.K.2** ⚠️ **Gli esercizi usciti dal programma spariscono dallo
+- [x] **11.K.2** ⚠️ **Gli esercizi usciti dal programma spariscono dallo
       storico.** «Per esercizio» elenca solo quelli presenti nello split di
       adesso: cambiando scheda, la storia di un esercizio tolto diventa
       irraggiungibile dall'interfaccia (i dati restano nell'archivio). Da
