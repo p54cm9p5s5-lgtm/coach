@@ -579,7 +579,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
 - [x] **11.E.2** ⚠️ **Percentuale d'aumento con carico zero.** Se il carico di
       lavoro è `0` (non `null`), `passo / carico` fa infinito e la frase del
       coach diventa «+— %». Da provare con un esercizio registrato a 0 kg.
-- [ ] **11.E.3** ⚠️ **Tecnica vecchia trattata come attuale.** Il livello 1 usa
+- [x] **11.E.3** ⚠️ **Tecnica vecchia trattata come attuale.** Il livello 1 usa
       la prima esposizione con la tecnica dichiarata, **senza limite di tempo**:
       un esercizio con tecnica 6 fatto due mesi fa e mai più ripetuto continua a
       generare la proposta di scarico come se fosse di ieri. Da provare con un
@@ -615,9 +615,9 @@ l'app: fa dire una cosa falsa a una persona che decide.
       soglie km/h vengono dal brief. Ora che il cardio si può **rimandare**, da
       verificare che un cardio rimandato e mai fatto non entri in questi conti
       come se fosse stato fatto a zero.
-- [ ] **11.E.13** **`firmaProposta`**: due proposte identiche non si ripetono. Da
+- [x] **11.E.13** **`firmaProposta`**: due proposte identiche non si ripetono. Da
       provare rifiutando una proposta e ricalcolando.
-- [ ] **11.E.14** **Motivi dei salti tradotti** (`attrezzo` → «attrezzo non
+- [x] **11.E.14** **Motivi dei salti tradotti** (`attrezzo` → «attrezzo non
       disponibile») e note su più righe compattate con «·». Da provare con una
       nota di salto scritta su tre righe.
 

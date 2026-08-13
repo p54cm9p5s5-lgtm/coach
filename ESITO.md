@@ -188,10 +188,10 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.E.10** | DA FARE |  | 11.E — `js/segnali.js` |
 | 5 |  | **11.E.11** | DA FARE |  | 11.E — `js/segnali.js` |
 | 5 |  | **11.E.12** | DA FARE |  | 11.E — `js/segnali.js` |
-| 5 |  | **11.E.13** | DA FARE |  | 11.E — `js/segnali.js` |
-| 5 |  | **11.E.14** | DA FARE |  | 11.E — `js/segnali.js` |
+| 5 |  | **11.E.13** | NON RIPRODOTTO | la firma e `esercizio|tipo|caricoDa|ripDa|caricoA|ripA` (per esempio `x|carico|40|8|41|6`): due proposte identiche danno la **stessa** firma, e basta cambiare il carico d'arrivo o l'esercizio perche cambi. E il meccanismo che impedisce a una proposta gia rifiutata di tornare identica il giorno dopo, e che invece la lascia tornare se i dati la rifanno nascere diversa | 11.E — `js/segnali.js` |
+| 5 |  | **11.E.14** | NON RIPRODOTTO | i motivi dei salti sono tradotti prima di uscire: `attrezzo` diventa «attrezzo non disponibile», `tempo` «tempo finito», `dolore` e `altro` restano se stessi. La ragione e scritta nel codice e conta: quel testo **finisce nel pacchetto del coach**, e li dentro «attrezzo» da solo non vorrebbe dire niente. Verificato a schermo in 3.9: il riepilogo mostra «saltato — attrezzo · panca occupata, non ho aspettato» | 11.E — `js/segnali.js` |
 | 5 | ! | **11.E.2** | NON RIPRODOTTO | con `carico: 0` il motore non arriva mai al calcolo della percentuale: se la tecnica e bassa dice «non c'e carico da togliere», e se e alta la proposta di salita nasce dal ramo dei carichi realizzabili, non da una moltiplicazione. Nessuna divisione per zero e nessun «+Infinity%» nelle quattro domande | 11.E — `js/segnali.js` |
-| 5 | ! | **11.E.3** | DA FARE |  | 11.E — `js/segnali.js` |
+| 5 | ! | **11.E.3** | NON RIPRODOTTO | provata la distinzione che conta: una tecnica bassa **nell'ultima** esposizione fa scattare la riduzione di carico (livello 1); la stessa tecnica bassa **un mese fa**, con l'ultima buona, **non** la fa scattare - dice «sopra la soglia di allarme ma sotto 8, prima si consolida», cioe blocca la salita senza imporre una discesa per un gesto che nel frattempo e migliorato. Il livello 1 guarda l'ultima esposizione, i blocchi alla salita guardano la peggiore delle recenti: sono due domande diverse e hanno due risposte diverse, giustamente | 11.E — `js/segnali.js` |
 | 5 | ! | **11.E.4** | DA FARE |  | 11.E — `js/segnali.js` |
 | 5 |  | **11.E.5** | DA FARE |  | 11.E — `js/segnali.js` |
 | 5 |  | **11.E.6** | DA FARE |  | 11.E — `js/segnali.js` |
