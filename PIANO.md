@@ -629,7 +629,11 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   Misurato: la copertura dura **28 giorni** dall'ultima lettura. Se lo leggi
   oggi arrivi al 10 settembre e i dieci giorni sono coperti; se non lo leggi,
   scade mentre sei via e la Home smette di sapere quale allenamento tocca
-  (voce 11.P.3).
+  (voce 11.P.3). E c'è un secondo effetto, misurato dopo: con il calendario
+  collegato l'app **non aggiunge le sue scadenze** — pesata, circonferenze e
+  set di foto li decide il calendario. Quindi un calendario scaduto non ti
+  lascia solo senza allenamento del giorno: ti lascia anche senza i promemoria
+  delle foto e delle misure (voce 11.I.4).
 
 ### Decisioni che spettano a te (non le prendo io)
 

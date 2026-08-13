@@ -748,7 +748,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       finiscono **sempre sul giorno di oggi** come scaduti. In dieci giorni fuori
       casa saranno accesi tutti i giorni: da verificare quanto rumore fanno sulla
       Home e se coprono le cose vere.
-- [ ] **11.I.4** **Col calendario del coach collegato l'app non aggiunge
+- [x] **11.I.4** **Col calendario del coach collegato l'app non aggiunge
       scadenze sue.** Da verificare che sia vero anche col calendario scaduto
       (letto fino a una certa data) — il caso esatto di dieci giorni via.
 - [x] **11.I.5** **Riconoscimento di cosa chiede un evento** per parole intere:
