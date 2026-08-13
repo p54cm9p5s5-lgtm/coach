@@ -589,3 +589,31 @@ Non lo so, e dirti un numero sarebbe inventarlo. Quello che posso dire è come
 lavoro: in ordine di danno, e con le Fasi 1 e 2 — i quindici difetti che
 perdono dati o che ti si rompono in vacanza — **per prime e pubblicate subito**.
 Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
+
+---
+
+## 8. Lista per te — raccolta durante il lavoro
+
+### Da fare prima di partire (una cosa sola, e conta)
+
+- **Leggi il calendario con «Coach Calendario» prima di uscire di casa.**
+  Misurato: la copertura dura **28 giorni** dall'ultima lettura. Se lo leggi
+  oggi arrivi al 10 settembre e i dieci giorni sono coperti; se non lo leggi,
+  scade mentre sei via e la Home smette di sapere quale allenamento tocca
+  (voce 11.P.3).
+
+### Difetti confermati che ho scelto di non correggere
+
+- **11.P.4 — l'importazione da Salute non è una transazione** (8 scritture
+  separate). Racchiuderle in una sola richiede di riscrivere `importaSalute`:
+  IndexedDB chiude la transazione al primo `await` senza operazioni, e in mezzo
+  ci sono letture e un import dinamico. Il danno però è recuperabile:
+  l'importazione è idempotente (la chiave è la data), quindi un import
+  interrotto si ripara **reimportando lo stesso pacchetto**. Rischio della
+  riscrittura maggiore del difetto.
+
+- **La povertà di `tools/salute-da-export.py`** (scrive 4 campi contro i 12 del
+  lettore sul telefono). Non fa più danno — da adesso l'importazione fonde
+  invece di sostituire (13.1) — ma resta uno strumento che produce pacchetti
+  poveri. Allinearlo vuol dire riscriverne la lettura degli allenamenti:
+  lavoro vero, nessuna urgenza.

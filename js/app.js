@@ -452,5 +452,41 @@ async function avvia() {
 
 avvia().catch((e) => {
   console.error(e);
-  toast("Errore all'avvio: " + e.message, 6000);
+  // Un avviso che sparisce dopo sei secondi lascia lo schermo bianco e nessuna
+  // spiegazione: da lontano, senza computer, è il guasto peggiore possibile
+  // perché non si può nemmeno raccontare cosa si è visto. Qui resta a schermo
+  // quello che serve per rimediare: cosa è successo, come riprovare, e come
+  // mettere al sicuro i dati prima di toccare qualunque altra cosa.
+  try {
+    clear(view).append(
+      h(
+        "div.screen",
+        h("header.topbar", h("h1", "Coach")),
+        h(
+          "div.empty",
+          h("h3", "L'app non è partita"),
+          h("p", e?.message || "Errore sconosciuto."),
+          h(
+            "p",
+            "I tuoi dati non sono stati toccati: restano nell'archivio del telefono. " +
+              "Riprova a ricaricare; se non riparte, chiudi l'app e riaprila."
+          ),
+          h(
+            "div.btn-wrap",
+            h("button.btn", { onclick: () => location.reload() }, "Ricarica"),
+            h("div", { style: "height:8px" }),
+            h(
+              "button.btn.secondary",
+              { onclick: () => { location.hash = "#/impostazioni"; location.reload(); } },
+              "Vai alle impostazioni (backup)"
+            )
+          )
+        )
+      )
+    );
+  } catch {
+    // Se non si riesce nemmeno a disegnare questo, resta l'avviso: è l'ultima
+    // cosa che può ancora funzionare.
+    toast("Errore all'avvio: " + e.message, 6000);
+  }
 });

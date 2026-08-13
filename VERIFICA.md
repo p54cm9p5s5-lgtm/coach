@@ -669,7 +669,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       resta senza copia locale e senza rete non si apre più. Da verificare che
       nessun collegamento salvato sul telefono contenga `nosw`, e prendere
       l'abitudine di aprire sempre l'indirizzo pulito.
-- [ ] **11.G.2** ⚠️ **Errore all'avvio = schermo bianco più un avviso che
+- [x] **11.G.2** ⚠️ **Errore all'avvio = schermo bianco più un avviso che
       scompare.** Se `avvia()` fallisce **dopo** `store.init()` (per esempio
       perché `store.regole()` esplode o manca un elemento della pagina), l'unica
       cosa che si vede è un toast di 6 secondi e poi il vuoto. Da provare
@@ -1037,7 +1037,7 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
       decisione** — ma la sua conseguenza è che una giornata in cui non apri
       l'app prende il punteggio pieno sul fumo. Da decidere se è quello che
       vuoi, sapendo che in vacanza capiterà.
-- [ ] **11.O.4** ⚠️ **Dieci giorni senza importare rompono la finestra delle tre
+- [x] **11.O.4** ⚠️ **Dieci giorni senza importare rompono la finestra delle tre
       settimane.** `statoFinestra` conta a ritroso da **oggi**: senza import, la
       settimana in corso ha zero giorni registrati, `completa` torna falsa, e
       resta falsa fino a tre settimane dopo il rientro. Da verificare cosa
@@ -1098,7 +1098,7 @@ c'è modo di accorgersene se non dal risultato.
       a **elencare** i sospetti, e subito dopo `db.put` riscrive il giorno con i
       valori nuovi. Un conteggio raddoppiato entra lo stesso: viene solo
       segnalato in fondo al riepilogo. Da decidere se deve chiedere.
-- [ ] **11.P.3** ⚠️ **L'agenda scade, e in dieci giorni scadrà.** La copertura
+- [x] **11.P.3** ⚠️ **L'agenda scade, e in dieci giorni scadrà.** La copertura
       si allunga a ogni lettura a partire da **oggi**: senza import, dopo qualche
       giorno i giorni futuri diventano «calendario da aggiornare» / «non ancora
       programmato», e la Home non sa più quale allenamento proporre. Da
@@ -1149,7 +1149,7 @@ c'è modo di accorgersene se non dal risultato.
       punteggio spariscono. È lo stesso difetto che il commento dice di aver
       corretto per il primo livello, ma non per il secondo. Da provare con un
       brief che tocca un peso solo.
-- [ ] **11.Q.3** ⚠️ **Primo avvio senza rete = niente stretching e niente
+- [x] **11.Q.3** ⚠️ **Primo avvio senza rete = niente stretching e niente
       mobilità.** `caricaRiscaldamento` legge `data/riscaldamento.json` dalla
       rete: se fallisce, `RISCALDAMENTO` resta nullo, `riscaldamento()` torna
       `null`, e di conseguenza `previstoStretching` è falso e i giorni di sola
