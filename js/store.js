@@ -1366,6 +1366,48 @@ export async function proposta(id) {
  * esposizione. Una proposta in sospeso che non regge più ai dati viene tolta:
  * meglio niente che un consiglio scaduto.
  */
+/**
+ * Una proposta che il brief ha GIÀ realizzato non è più una proposta.
+ *
+ * Le proposte nascono da quello che hai alzato, non da quello che c'è scritto:
+ * se l'ultima volta hai fatto 30 kg, l'app propone 31 anche se nel frattempo
+ * il coach ha portato la scheda a 35. Chiedere di decidere una cosa già
+ * decisa — e decisa più in grande — è rumore, e soprattutto è una domanda a
+ * cui rispondere «sì» farebbe scendere il carico. Vale anche se non hai mai
+ * risposto: la proposta sparisce lo stesso. Lo stesso per le ripetizioni.
+ *
+ * Sta qui, in una funzione sola, perché la regola serve in due punti: a chi
+ * salva le proposte e a chi spiega perché non ce ne sono. Quando i due
+ * percorsi la applicavano in modo diverso, gli esercizi soppressi qui
+ * sparivano anche dall'elenco dei perché: né proposti né spiegati.
+ *
+ * @returns la frase da mostrare, oppure null se la proposta regge.
+ */
+export function propostaSuperataDalBrief(proposta, variante) {
+  if (!proposta) return null;
+  const da = proposta.da?.carico;
+  const a = proposta.a?.carico;
+  if (variante.carico != null && a != null && da != null) {
+    const gia = a > da ? variante.carico >= a : variante.carico <= a;
+    if (gia) {
+      // Tre casi diversi, tre frasi diverse: chiamare «discesa» una proposta
+      // che il carico non lo cambia affatto è peggio del silenzio.
+      if (a > da) return `Il brief chiede già ${num(variante.carico)} kg, cioè almeno quanto la proposta: superata.`;
+      if (a < da) return `Il brief è già sceso a ${num(variante.carico)} kg: la proposta è superata.`;
+      return `Il brief è già a ${num(variante.carico)} kg, che è il carico della proposta: non c'è niente da cambiare.`;
+    }
+  }
+  if (
+    proposta.tipo === "ripetizioni" &&
+    proposta.a?.rip != null &&
+    variante.ripMin != null &&
+    variante.ripMin >= proposta.a.rip
+  ) {
+    return `Il brief parte già da ${variante.ripMin} ripetizioni: la proposta è superata.`;
+  }
+  return null;
+}
+
 export async function aggiornaProposte(cache = null) {
   if (!PROGRAMMA) return { create: 0, tolte: 0 };
   const oggi = isoDate();
@@ -1403,24 +1445,9 @@ export async function aggiornaProposte(cache = null) {
     // una cosa già decisa — e decisa più in grande — è rumore, e soprattutto
     // è una domanda a cui rispondere «sì» farebbe scendere il carico.
     // Vale anche se non hai mai risposto: la proposta sparisce lo stesso.
-    const gia = (() => {
-      if (!nuova || variante.carico == null) return false;
-      const da = nuova.da?.carico;
-      const a = nuova.a?.carico;
-      if (a == null || da == null) return false;
-      // Salita già fatta dal brief, oppure discesa già fatta dal brief.
-      return a > da ? variante.carico >= a : variante.carico <= a;
-    })();
+    const superata = propostaSuperataDalBrief(nuova, variante);
 
-    // Stessa cosa per le ripetizioni: se il brief chiede già almeno quelle
-    // che la proposta vorrebbe raggiungere, la proposta è superata.
-    const giaRip =
-      nuova?.tipo === "ripetizioni" &&
-      nuova.a?.rip != null &&
-      variante.ripMin != null &&
-      variante.ripMin >= nuova.a.rip;
-
-    if (!nuova || gia || giaRip) {
+    if (!nuova || superata) {
       for (const p of sospese) {
         await db.del("proposte", p.id);
         tolte++;
@@ -1526,7 +1553,17 @@ export async function diagnosiProgressione() {
       inventario: inv,
       oggi: isoDate(),
     });
-    out.push({ esercizioId, nome: def.nome, esposizioni: esp.length, proposta, motivo });
+    // La stessa regola che impedisce di salvarla: se il brief l'ha già
+    // realizzata la proposta non esiste, e allora l'esercizio va spiegato
+    // invece di sparire.
+    const superata = propostaSuperataDalBrief(proposta, variante);
+    out.push({
+      esercizioId,
+      nome: def.nome,
+      esposizioni: esp.length,
+      proposta: superata ? null : proposta,
+      motivo: superata || motivo,
+    });
   }
   return out;
 }

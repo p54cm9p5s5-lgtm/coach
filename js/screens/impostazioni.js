@@ -758,10 +758,12 @@ export function statoArchivio({ protetto, installata }) {
 /**
  * Cosa c'è nel file, accanto a cosa c'è adesso nel telefono.
  *
- * Si contano le tre cose che si perdono davvero — allenamenti, misure e
- * attività extra — e si dice fin dove arriva ciascuna delle due parti. Se il
- * file è più vecchio, la riga lo dice con le parole giuste: quello che hai
- * registrato dopo non c'è là dentro.
+ * Si contano tutte le cose che si perdono davvero — allenamenti, misure, foto,
+ * sigarette, notti, giorni di salute, allenamenti letti dal Watch e attività
+ * extra — e si dice fin dove arriva ciascuna delle due parti. Se il file è più
+ * vecchio, la riga lo dice con le parole giuste: quello che hai registrato dopo
+ * non c'è là dentro. Le righe che sarebbero vuote da entrambe le parti non
+ * compaiono, così restano solo quelle che contano davvero.
  */
 async function confrontoBackup(dump) {
   const dati = dump?.dati && typeof dump.dati === "object" ? dump.dati : {};
@@ -788,8 +790,13 @@ async function confrontoBackup(dump) {
   };
   await conta("sedute", "allenamento", "allenamenti");
   await conta("misure", "misura", "misure");
+  await conta("foto", "foto", "foto");
+  await conta("fumo", "giorno di sigarette", "giorni di sigarette");
+  await conta("notti", "notte", "notti");
+  await conta("giorniSalute", "giorno di salute", "giorni di salute");
+  await conta("allenamentiWatch", "allenamento letto", "allenamenti letti");
   await conta("extra", "attività", "attività extra");
-  return righe.length ? righe.join("\n") : "Il file non contiene allenamenti, misure o attività.";
+  return righe.length ? righe.join("\n") : "Il file non contiene niente da confrontare.";
 }
 
 async function importaBackup(ridisegna) {

@@ -113,6 +113,10 @@ function tabella(intestazioni, righe) {
   const cella = (v) =>
     String(v ?? "")
       .replace(/\s*\n+\s*/g, " · ")
+      // Una tabulazione non spezza la riga come un a capo, ma sposta tutto
+      // quello che le sta dopo: le colonne a larghezza fissa si vedono
+      // sfasate, ed è lo stesso danno per chi legge.
+      .replace(/[\t\r\v\f]+/g, " ")
       .replace(/\|/g, "\\|");
   righe = righe.map((r) => r.map(cella));
   intestazioni = intestazioni.map(cella);

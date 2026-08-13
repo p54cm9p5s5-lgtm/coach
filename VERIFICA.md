@@ -167,51 +167,51 @@ passato cambiano da soli e non ci si accorge di niente.
 
 ## Blocco 2 — I dati che non si recuperano
 
-- [ ] **2.1** Backup → archivio svuotato → ripristino: 17 archivi identici byte
+- [x] **2.1** Backup → archivio svuotato → ripristino: 17 archivi identici byte
       per byte.
-- [ ] **2.2** File di ripristino sbagliati (vuoto, di un'altra app, di una
+- [x] **2.2** File di ripristino sbagliati (vuoto, di un'altra app, di una
       versione futura, rovinato a metà): rifiuto senza perdere niente.
-- [ ] **2.3** Ripristino in modalità «unisci».
-- [ ] **2.4** La conferma del ripristino dice cosa c'è nel file e cosa c'è adesso.
-- [ ] **2.5** Copia interna automatica a fine seduta, e il caso in cui non riesce.
-- [ ] **2.6** Eliminazioni: allenamento singolo, set di foto, attività extra, dati
+- [x] **2.3** Ripristino in modalità «unisci».
+- [x] **2.4** La conferma del ripristino dice cosa c'è nel file e cosa c'è adesso.
+- [x] **2.5** Copia interna automatica a fine seduta, e il caso in cui non riesce.
+- [x] **2.6** Eliminazioni: allenamento singolo, set di foto, attività extra, dati
       Salute, «elimina tutti i dati».
-- [ ] **2.7** Apertura con un archivio vecchio (migrazione) e con uno di una
+- [x] **2.7** Apertura con un archivio vecchio (migrazione) e con uno di una
       versione futura.
-- [ ] **2.8** Reimportare da Salute non deve cancellare niente di scritto a mano.
+- [x] **2.8** Reimportare da Salute non deve cancellare niente di scritto a mano.
 
 ## Blocco 3 — Le novità di oggi (codice con poche ore di vita)
 
-- [ ] **3.1** Sezione Watch: elenco, dettaglio, numeri, grafico del battito,
+- [x] **3.1** Sezione Watch: elenco, dettaglio, numeri, grafico del battito,
       lettura a tocco.
-- [ ] **3.2** ⚠️ **Sforzo**: non verificato sui dati veri — vedi 8.1.
-- [ ] **3.3** Indoor/outdoor nel nome, e allenamenti che quel dato non ce l'hanno.
-- [ ] **3.4** Grafici del passo (a piedi e di corsa): conto giusto, esclusioni
+- [x] **3.2** ⚠️ **Sforzo**: non verificato sui dati veri — vedi 8.1.
+- [x] **3.3** Indoor/outdoor nel nome, e allenamenti che quel dato non ce l'hanno.
+- [x] **3.4** Grafici del passo (a piedi e di corsa): conto giusto, esclusioni
       dichiarate, giorni-buco, i quattro periodi.
-- [ ] **3.5** Cardio rimandato: richiamo in Home, decadenza, avviso alla chiusura.
-- [ ] **3.6** Numeri dell'orologio tolti dalla seduta: quelli vecchi restano
+- [x] **3.5** Cardio rimandato: richiamo in Home, decadenza, avviso alla chiusura.
+- [x] **3.6** Numeri dell'orologio tolti dalla seduta: quelli vecchi restano
       leggibili e nel pacchetto.
-- [ ] **3.7** Blocco Watch in Home: un riquadro solo, tre righe più la porta.
-- [ ] **3.8** Punteggio con riscaldamento/stretching/mobilità sui cinque giorni
+- [x] **3.7** Blocco Watch in Home: un riquadro solo, tre righe più la porta.
+- [x] **3.8** Punteggio con riscaldamento/stretching/mobilità sui cinque giorni
       del nuovo split e su sabato/domenica.
-- [ ] **3.9** Note rileggibili dallo Storico (esercizio, salto, generale).
-- [ ] **3.10** Copertina video disegnata: zero richieste esterne su tutte le
+- [x] **3.9** Note rileggibili dallo Storico (esercizio, salto, generale).
+- [x] **3.10** Copertina video disegnata: zero richieste esterne su tutte le
       schermate.
 
 ## Blocco 4 — Il ciclo col coach (si userà da lontano)
 
-- [ ] **4.1** Pacchetto: si genera, 7 tabelle allineate, niente `undefined`, barre
+- [x] **4.1** Pacchetto: si genera, 7 tabelle allineate, niente `undefined`, barre
       verticali protette, a capo nelle note.
-- [ ] **4.2** Tutti i blocchi: seduta, dettaglio serie, salute, sonno, Watch,
+- [x] **4.2** Tutti i blocchi: seduta, dettaglio serie, salute, sonno, Watch,
       extra, sigarette, proposte, segnali, corpo.
-- [ ] **4.3** Due allenamenti nello stesso giorno: l'avviso di quello non incluso.
-- [ ] **4.4** Copia negli appunti e lunghezza del testo.
-- [ ] **4.5** ⚠️ **Un brief nuovo che arriva mentre sei via**: caricamento,
+- [x] **4.3** Due allenamenti nello stesso giorno: l'avviso di quello non incluso.
+- [x] **4.4** Copia negli appunti e lunghezza del testo.
+- [x] **4.5** ⚠️ **Un brief nuovo che arriva mentre sei via**: caricamento,
       validazione, «cosa cambia», applicazione, storico intatto. Se il coach manda
       una scheda nuova e l'app la rifiuta, si resta bloccati.
-- [ ] **4.6** Proposte: nascita, quattro domande, accetta/rimanda/rifiuta, registro
+- [x] **4.6** Proposte: nascita, quattro domande, accetta/rimanda/rifiuta, registro
       decisioni, obiettivo che sopravvive.
-- [ ] **4.7** Segnali: dolore ripetuto, buchi dati, cardio fuori protocollo.
+- [x] **4.7** Segnali: dolore ripetuto, buchi dati, cardio fuori protocollo.
 
 ## Blocco 5 — Salute e importazione (si farà da lontano)
 
