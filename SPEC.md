@@ -161,6 +161,11 @@ il questionario è obbligatorio per avanzare.
 Misura           id, data, tipo, valore, condizioniStandard: bool
                  tipo ∈ peso · vitaOmbelico (primaria) · vitaStretta · fianchi ·
                         petto · bicipiteRilassato · coscia
+AllenamentoWatch uuid (PK), data, inizio, fine, durataSec, tipo (nome di Apple),
+                 km, kcalAttive, kcalTotali, fcMedia, fcMin, fcMax,
+                 battito[] (un valore ogni ~30s, `null` dove non ha misurato),
+                 ruolo (seduta|cardio|extra), ruoloDeciso: bool, sedutaId
+                 Letti da Salute, mai scritti dall'app. Fuori da ogni punteggio.
 Foto             id, data, posa (fronte|profiloDx|schiena|profiloSx),
                  immagine (data URL, NON un Blob: il backup è JSON e un Blob
                            dentro JSON sparirebbe senza dire niente),

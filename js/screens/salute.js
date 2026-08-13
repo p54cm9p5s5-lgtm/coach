@@ -518,40 +518,6 @@ export async function render({ ridisegna }) {
     )
   );
 
-  const allenamenti = (await store.db.all("allenamentiWatch")).sort((a, b) => (a.data < b.data ? 1 : -1));
-  if (allenamenti.length) {
-    aggiungi(wrap,
-      h(
-        "div.group",
-        h("h2", "Allenamenti dal Watch"),
-        h(
-          "div.list",
-          ...allenamenti.slice(0, 8).map((a) =>
-            h(
-              "div.row",
-              h(
-                "div.main",
-                h("span.title", `${dataBreve(a.data)} · ${a.tipo || "allenamento"}`),
-                h(
-                  "span.sub",
-                  [
-                    a.durataSec ? durataUmana(a.durataSec) : null,
-                    a.kcalAttive != null ? `${Math.round(a.kcalAttive)} kcal attive` : null,
-                    a.fcMedia != null ? `FC ${Math.round(a.fcMedia)}` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")
-                )
-              ),
-              h("span.pill", { class: a.sedutaId ? "pill ok" : "pill" }, a.sedutaId ? "collegato" : "non collegato")
-            )
-          )
-        ),
-        h("p.footnote", "Il collegamento con l'allenamento avviene per data, quando quel giorno ce n'è una sola.")
-      )
-    );
-  }
-
   // Corpo e Storico stanno qui, non nella barra in basso: sono due letture dei
   // dati, non due posti dove si registra qualcosa ogni giorno. La barra resta
   // per quello che si tocca durante la giornata.
@@ -570,6 +536,20 @@ export async function render({ ridisegna }) {
           "a.row",
           { href: "#/storico" },
           h("div.main", h("span.title", "Storico"), h("span.sub", "allenamenti, volumi e andamento per esercizio")),
+          h("span.chevron", "›")
+        ),
+        // Gli allenamenti che l'orologio registra da solo: erano otto righe in
+        // fondo a questa schermata, senza dire che ce n'erano altre e senza
+        // potersi aprire. Adesso hanno una sezione loro, per giorno.
+        h(
+          "a.row",
+          { href: "#/allenamenti" },
+          h(
+            "div.main",
+            h("span.title", "Allenamenti dal Watch"),
+            h("span.sub", daWatch ? `${daWatch} registrati dall'orologio, giorno per giorno` : "quelli che l'orologio registra da solo")
+          ),
+          daWatch ? h("span.value", String(daWatch)) : null,
           h("span.chevron", "›")
         )
       )

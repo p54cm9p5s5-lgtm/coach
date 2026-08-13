@@ -374,6 +374,16 @@ export function graficoLinea({
   etichettaObiettivo = null,
   altezza = 104,
   invito = "Tocca un punto per vedere il giorno",
+  // Con l'asse che parte sempre da zero una curva di battito — che vive fra 70
+  // e 160 — si schiaccia in una striscia alta un dito. `minimo` la lascia
+  // respirare; a zero, che è il valore di prima, tutti gli altri grafici
+  // restano identici.
+  minimo = 0,
+  // Un punto non è per forza un giorno: dentro un allenamento è un istante, e
+  // «gio 13/08 · 132» sarebbe la data sbagliata ripetuta duecento volte. Chi
+  // chiama può dire come si legge un punto e cosa scrivere ai due estremi.
+  etichetta = null,
+  estremo = null,
 }) {
   punti = soloNumeri(punti);
   const L = 320;
@@ -391,8 +401,7 @@ export function graficoLinea({
   });
 
   const valori = punti.map((p) => p.valore).filter((v) => v != null);
-  const massimo = Math.max(obiettivo ? obiettivo * 1.08 : 0, ...valori, 1);
-  const minimo = 0;
+  const massimo = Math.max(obiettivo ? obiettivo * 1.08 : 0, ...valori, minimo + 1);
   const passo = L / Math.max(punti.length, 1);
   const x = (i) => i * passo + passo / 2;
   const y = (v) => margineAlto + area - ((v - minimo) / (massimo - minimo)) * area;
@@ -457,16 +466,17 @@ export function graficoLinea({
     );
   });
 
+  const aiBordi = estremo || ((p) => dataBreve(p.data));
   if (punti.length) {
     const primo = el("text", { x: 0, y: A - 5, "font-size": 8, fill: "currentColor", opacity: 0.4 });
-    primo.textContent = dataBreve(punti[0].data);
+    primo.textContent = aiBordi(punti[0]);
     svg.append(primo);
     // Un solo giorno: la stessa data ai due estremi sembrava un intervallo.
-    if (punti.length > 1 && punti[0].data !== punti[punti.length - 1].data) {
+    if (punti.length > 1 && aiBordi(punti[0]) !== aiBordi(punti[punti.length - 1])) {
       const ultimo = el("text", {
         x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
       });
-      ultimo.textContent = dataBreve(punti[punti.length - 1].data);
+      ultimo.textContent = aiBordi(punti[punti.length - 1]);
       svg.append(ultimo);
     }
   }
@@ -500,6 +510,10 @@ export function graficoLinea({
       scelto.setAttribute("opacity", "1");
     } else {
       scelto.setAttribute("opacity", "0");
+    }
+    if (etichetta) {
+      lettura.textContent = etichetta(p);
+      return;
     }
     const giorno = GIORNI_ABBR[weekdayOf(p.data)];
     lettura.textContent =

@@ -25,7 +25,20 @@ const QUANTITA = {
 };
 // La frequenza a riposo è una misura del giorno, non una somma.
 const FC_RIPOSO = "HKQuantityTypeIdentifierRestingHeartRate";
+const FC_ISTANTE = "HKQuantityTypeIdentifierHeartRate";
 const SONNO = "HKCategoryTypeIdentifierSleepAnalysis";
+
+/* Le statistiche scritte dentro un <Workout>: sono già calcolate da Salute su
+   quell'allenamento, non vanno ricostruite dai campioni. La distanza cambia
+   nome col tipo di attività (a piedi, in bici, in acqua) e finisce comunque nel
+   campo `km`: per chi legge è «quanta strada», qualunque fosse il mezzo. */
+const DENTRO_WORKOUT = {
+  HKQuantityTypeIdentifierActiveEnergyBurned: "kcal",
+  HKQuantityTypeIdentifierBasalEnergyBurned: "kcalBasale",
+  HKQuantityTypeIdentifierDistanceWalkingRunning: "km",
+  HKQuantityTypeIdentifierDistanceCycling: "km",
+  HKQuantityTypeIdentifierDistanceSwimming: "km",
+};
 
 // I nomi delle fasi come li scrive Apple, in quelli che l'app riconosce.
 const FASI = {
@@ -61,8 +74,25 @@ function istante(testo) {
     giorno: `${m[1]}-${m[2]}-${m[3]}`,
     ora: `${m[4]}:${m[5]}`,
     ordine: `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}`,
+    sec: Number(m[4]) * 3600 + Number(m[5]) * 60 + Number(m[6]),
   };
 }
+
+/* La curva del battito.
+
+   I campioni di frequenza sono righe a sé, e nell'esportazione di Apple stanno
+   PRIMA degli allenamenti: quando passano non si sa ancora dentro quale
+   allenamento cadranno. Tenerli tutti sarebbe decine di migliaia di oggetti,
+   quindi mentre scorrono vengono raccolti in caselle da mezzo minuto — somma e
+   quanti — e alla fine ogni allenamento si prende le caselle del suo intervallo.
+
+   Mezzo minuto non è una perdita: l'orologio scrive un battito ogni pochi
+   secondi, e una camminata di un'ora farebbe settecento punti per disegnare una
+   linea larga tre centimetri. La curva che si vede è la stessa; l'archivio e i
+   backup restano leggeri. */
+const CASELLA_SEC = 30;
+const CASELLE_AL_GIORNO = 86400 / CASELLA_SEC;
+const PUNTI_MAX = 120;
 
 const numero = (v) => {
   const n = Number(String(v).replace(",", "."));
@@ -102,6 +132,7 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
   const perGiorno = new Map();
   const perGiornoWatch = new Map();
   const fc = new Map();
+  const battiti = new Map();
   const fasi = [];
   const allenamenti = [];
 
@@ -122,11 +153,20 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     // perdevano le calorie di ogni allenamento, che è il numero che il coach
     // legge per primo.
     if (dentroWorkout) {
-      if (
-        r.indexOf("<WorkoutStatistics") >= 0 &&
-        ATTRIBUTO(r, "type") === "HKQuantityTypeIdentifierActiveEnergyBurned"
-      ) {
-        dentroWorkout.kcal = numero(ATTRIBUTO(r, "sum"));
+      if (r.indexOf("<WorkoutStatistics") >= 0) {
+        const t = ATTRIBUTO(r, "type");
+        const campo = DENTRO_WORKOUT[t];
+        if (campo) {
+          const v = numero(ATTRIBUTO(r, "sum"));
+          if (v != null) dentroWorkout[campo] = (dentroWorkout[campo] || 0) + v;
+        } else if (t === FC_ISTANTE) {
+          // Media, minimo e massimo li ha già calcolati Salute su tutto
+          // l'allenamento: sono più affidabili di quelli ricavati dalle caselle
+          // da mezzo minuto, che arrotondano.
+          dentroWorkout.fcMedia = numero(ATTRIBUTO(r, "average"));
+          dentroWorkout.fcMin = numero(ATTRIBUTO(r, "minimum"));
+          dentroWorkout.fcMax = numero(ATTRIBUTO(r, "maximum"));
+        }
       }
       if (r.indexOf("</Workout>") >= 0) {
         allenamenti.push(dentroWorkout);
@@ -136,12 +176,22 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     }
     if (r.indexOf("<Workout ") >= 0) {
       const i = istante(ATTRIBUTO(r, "startDate"));
+      const f = istante(ATTRIBUTO(r, "endDate"));
       const durata = numero(ATTRIBUTO(r, "duration"));
       if (i && i.giorno >= dal && i.giorno <= al) {
         dentroWorkout = {
           giorno: i.giorno,
           ora: i.ora,
           ordine: i.ordine,
+          da: { giorno: i.giorno, sec: i.sec },
+          // Senza `endDate` la fine si ricava dalla durata: serve a sapere
+          // quali caselle di battito appartengono a questo allenamento.
+          fine: f ? f.ora : null,
+          a: f
+            ? { giorno: f.giorno, sec: f.sec }
+            : durata != null
+              ? { giorno: i.giorno, sec: i.sec + Math.round(durata * 60) }
+              : null,
           durataSec: durata != null ? Math.round(durata * 60) : null,
           kcal: null,
           tipo: (ATTRIBUTO(r, "workoutActivityType") || "").replace("HKWorkoutActivityType", ""),
@@ -178,6 +228,19 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     if (tipo === FC_RIPOSO) {
       const v = numero(ATTRIBUTO(r, "value"));
       if (v != null) fc.set(i.giorno, v);
+      return;
+    }
+    if (tipo === FC_ISTANTE) {
+      const v = numero(ATTRIBUTO(r, "value"));
+      if (v == null) return;
+      const chiave = `${i.giorno}|${Math.floor(i.sec / CASELLA_SEC)}`;
+      const c = battiti.get(chiave);
+      if (c) {
+        c.somma += v;
+        c.quanti++;
+      } else {
+        battiti.set(chiave, { somma: v, quanti: 1 });
+      }
       return;
     }
     const campo = QUANTITA[tipo];
@@ -228,13 +291,71 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     out.push(`FASE ${f.da.giorno} ${f.da.ora} ${f.a.giorno} ${f.a.ora} ${f.fase}`);
   }
 
+  /* Le caselle di battito che cadono dentro un allenamento, ridotte a una
+     manciata di punti. Un allenamento può scavalcare la mezzanotte, quindi le
+     caselle si contano camminando avanti e cambiando giorno quando serve. */
+  const curvaDi = (a) => {
+    if (!a.da || !a.a) return null;
+    const valori = [];
+    let giorno = a.da.giorno;
+    let casella = Math.floor(a.da.sec / CASELLA_SEC);
+    const fineGiorno = a.a.giorno;
+    const fineCasella = Math.floor(a.a.sec / CASELLA_SEC);
+    // Un tetto di sicurezza: senza, un `endDate` sballato farebbe girare a
+    // vuoto per giorni invece di dare una curva sbagliata e visibile.
+    for (let passi = 0; passi <= CASELLE_AL_GIORNO * 2; passi++) {
+      const c = battiti.get(`${giorno}|${casella}`);
+      valori.push(c ? c.somma / c.quanti : null);
+      if (giorno === fineGiorno && casella >= fineCasella) break;
+      if (giorno > fineGiorno) break;
+      casella++;
+      if (casella >= CASELLE_AL_GIORNO) {
+        casella = 0;
+        giorno = piuGiorni(giorno, 1);
+      }
+    }
+    if (!valori.some((v) => v != null)) return null;
+    // Assottigliamento: gruppi uguali, media di quello che c'è dentro. Un
+    // gruppo tutto vuoto resta vuoto — la linea si spezza invece di inventare
+    // un tratto dritto dove l'orologio non ha misurato niente.
+    if (valori.length <= PUNTI_MAX) return valori.map((v) => (v == null ? "" : Math.round(v)));
+    const per = Math.ceil(valori.length / PUNTI_MAX);
+    const fuori = [];
+    for (let i = 0; i < valori.length; i += per) {
+      const gruppo = valori.slice(i, i + per).filter((v) => v != null);
+      fuori.push(gruppo.length ? Math.round(gruppo.reduce((s, v) => s + v, 0) / gruppo.length) : "");
+    }
+    return fuori;
+  };
+
   allenamenti.sort((a, b) => (a.ordine < b.ordine ? -1 : a.ordine > b.ordine ? 1 : 0));
   for (const a of allenamenti) {
     const pezzi = [`ALLENAMENTO ${a.giorno} inizio=${a.ora} durata=${a.durataSec ?? 0}`];
+    if (a.fine) pezzi.push(`fine=${a.fine}`);
     if (a.kcal != null) pezzi.push(`kcal=${Math.round(a.kcal)}`);
+    // «Totali» come le conta Salute: attive più quelle che bruceresti comunque.
+    if (a.kcal != null && a.kcalBasale != null) {
+      pezzi.push(`kcaltot=${Math.round(a.kcal + a.kcalBasale)}`);
+    }
+    if (a.km != null) pezzi.push(`km=${a.km.toFixed(2).replace(".", ",")}`);
+    if (a.fcMedia != null) pezzi.push(`fcmedia=${Math.round(a.fcMedia)}`);
+    if (a.fcMin != null) pezzi.push(`fcmin=${Math.round(a.fcMin)}`);
+    if (a.fcMax != null) pezzi.push(`fcmax=${Math.round(a.fcMax)}`);
     if (a.tipo) pezzi.push(`tipo="${a.tipo}"`);
     out.push(pezzi.join(" "));
+    const curva = curvaDi(a);
+    // Due punti sono un segmento, non un andamento: sotto quella soglia la
+    // riga non si scrive e il dettaglio dirà che la curva non c'è.
+    if (curva && curva.filter((v) => v !== "").length >= 3) {
+      out.push(`BATTITO ${a.giorno} ${a.ora} ${curva.join(",")}`);
+    }
   }
 
-  return { testo: out.join("\n") + "\n", byte: letti, giorni: perGiorno.size + perGiornoWatch.size, fasi: fasi.length, allenamenti: allenamenti.length };
+  return {
+    testo: out.join("\n") + "\n",
+    byte: letti,
+    giorni: perGiorno.size + perGiornoWatch.size,
+    fasi: fasi.length,
+    allenamenti: allenamenti.length,
+  };
 }
