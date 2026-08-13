@@ -102,6 +102,12 @@ export function descriviDischi(totale, grezzo = INVENTARIO_DEFAULT) {
   // frase su un attrezzo di cui non sa niente. Meglio non dire niente: la
   // schermata mostra comunque il carico previsto, che è il dato che serve.
   if (!inv.barra && !Object.keys(inv.dischi).length) return null;
+  // Dischi dichiarati ma **barra no**: non basta il controllo qui sopra, che
+  // chiede che manchino tutti e due. Con solo i dischi si finiva a scrivere
+  // «bilanciere 0 kg + 1×5 kg per lato», e un bilanciere da zero non esiste:
+  // chi legge monterebbe dieci chili al posto di venti. Se non si sa quanto
+  // pesa la barra, il montaggio non si può raccontare.
+  if (!inv.barra) return null;
   const c = combinazioneEsatta(totale, inv);
   if (!c) return null;
   if (!c.perLato.length) return `bilanciere scarico (${inv.barra} kg)`;

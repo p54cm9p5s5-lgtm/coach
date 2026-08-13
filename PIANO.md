@@ -670,6 +670,13 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   contare solo i giorni in cui hai davvero aperto la sezione: dimmelo e la
   cambio in cinque minuti.
 
+- **11.H.3 — la risposta sull'acqua si corregge solo per oggi.** Un giorno
+  passato non si può più toccare da nessuna parte. È coerente con la regola
+  scritta in cima alla schermata («rispondi a fine giornata: prima è una
+  previsione, non un dato») e con il fatto che una risposta ricordata il giorno
+  dopo vale poco. Ma è una scelta, non un vincolo: se vuoi poter correggere
+  all'indietro, si fa in poco.
+
 ### Difetti confermati che ho scelto di non correggere
 
 - **11.E.4 — i segnali portano la data di oggi, non quella del fatto.** Ogni
