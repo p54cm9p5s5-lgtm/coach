@@ -146,7 +146,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.AF.7** | DA FARE |  | 11.AF — Voci raccolte finendo i file già cominciati |
 | 5 |  | **11.AF.8** | DA FARE |  | 11.AF — Voci raccolte finendo i file già cominciati |
 | 5 |  | **11.AF.9** | DA FARE |  | 11.AF — Voci raccolte finendo i file già cominciati |
-| 5 |  | **11.B.10** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 5 |  | **11.B.10** | NON RIPRODOTTO | verificato misura per misura leggendo i colori veri: il **bicipite** che cresce di 1 cm è **verde** (`rgb(48,209,88)`), perché per un muscolo crescere è un progresso; il **peso** che scende sarebbe verde per la stessa ragione al contrario. Il verso è quello dichiarato in `caloBuono`, e non una regola unica per tutte le misure | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.11** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.12** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.13** | CORRETTO | **difetto trovato e corretto, e non era quello che la voce si aspettava.** 175 kg di peso **non** faceva scattare la conferma, e giustamente: la guardia era solo assoluta (30-250 kg) e 175 ci sta dentro. Il punto è che 175 al posto di 79 è un numero possibilissimo per un corpo umano ma non per il suo, e passava in silenzio mostrando «+95 kg». Aggiunta una **seconda guardia, relativa all'ultima misura**: uno scarto oltre il 15% chiede conferma, con parole sue («Un salto grosso — Peso 175 kg (l'ultima volta 80). È un cambiamento molto più grande di quello che un corpo fa fra due misure»). Verificato su tre casi: 175 chiede col messaggio del salto, **300 chiede col messaggio del fuori scala** (i due motivi restano distinti), 79,4 si salva senza domande. E 84,5 di vita, come chiedeva la voce, non chiede niente | 11.B — `js/screens/corpo.js` |
@@ -156,12 +156,12 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.B.17** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.18** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 | ! | **11.B.19** | CORRETTO | **difetto corretto.** `parseFloat` legge il prefisso e butta via il resto senza dire niente: «8a4» diventava **8**, il campo restava del colore normale e in archivio finivano 8 kg come se li avessi scritti tu — un errore di battitura travestito da misura. Ora si controlla che quello che resta scritto sia tutto un numero. Provati nove casi: «8a4», «80kg», «8.5.5», «-3» e «abc» diventano arancioni e «Salva» rifiuta dicendo quale campo; «79.4», «79,4», «82» e « 81 » con gli spazi restano validi | 11.B — `js/screens/corpo.js` |
-| 5 |  | **11.B.4** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 5 |  | **11.B.4** | NON RIPRODOTTO | cancellata una singola foto **mentre un allenamento era aperto in fase di recupero**. La pagina si ricarica davvero (è l'unico punto dell'app che lo fa), ma: si torna **su Corpo**, non in Home; la foto è sparita (4 → 3); e la seduta resta aperta **nella sua fase**, il recupero. Niente si perde | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.5** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 5 |  | **11.B.6** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 5 |  | **11.B.6** | NON RIPRODOTTO | verificato in 6.1 creando un secondo set datato 29/07: compare come **«set di riferimento»** accanto alla data, e in nessun punto della schermata — né nell'elenco né nella foto ingrandita — appare «fuori protocollo». Quella dicitura resta dov'è giusta: sulle **misure** prese senza tutte le condizioni | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.7** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 5 |  | **11.B.8** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 5 |  | **11.B.9** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 5 |  | **11.B.8** | NON RIPRODOTTO | tolta l'altezza dal programma (e ricaricata l'app, perché il programma vive in memoria e non si aggiorna scrivendo solo in archivio): la sezione **Indici sparisce del tutto**, invece di mostrare un BMI calcolato su un'altezza inventata o un «—» che sembra un dato mancante. Rimessa l'altezza, torna con BMI e vita/altezza. È il comportamento giusto anche per il secondo profilo, dove l'altezza potrebbe non essere dichiarata | 11.B — `js/screens/corpo.js` |
+| 5 |  | **11.B.9** | NON RIPRODOTTO | registrata una misura con **due condizioni su quattro**: entra in archivio ma è marcata «fuori protocollo · confronto non valido», e la variazione accanto è mostrata in **grigio** invece che nel colore del giudizio — cioè si vede, ma non pretende di valere. Una misura con tutte le condizioni mostra la variazione a colori | 11.B — `js/screens/corpo.js` |
 | 5 | ! | **11.C.1** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 |  | **11.C.10** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 |  | **11.C.11** | DA FARE |  | 11.C — `js/ui.js` |

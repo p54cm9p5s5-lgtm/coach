@@ -434,7 +434,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       scritto tu. Solo un testo che non comincia per cifra («abc») viene
       riconosciuto come non valido. Da chiudere con un controllo che accetti
       solo un numero intero: cifre, una virgola, cifre.
-- [ ] **11.B.4** **Cancellazione di una singola foto** → `location.reload()`
+- [x] **11.B.4** **Cancellazione di una singola foto** → `location.reload()`
       (unico punto dell'app che ricarica la pagina invece di ridisegnare). Da
       verificare che dopo il ricaricamento si torni davvero su Corpo e che una
       seduta aperta resti aperta.
@@ -442,7 +442,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       (`set.slice(0, 4)`), senza nessun «vedi tutti». Da verificare che i set più
       vecchi ci siano ancora nell'archivio e nel backup, e che nessuno li creda
       persi.
-- [ ] **11.B.6** **Il set del 29/07 resta «set di riferimento».** Da verificare a
+- [x] **11.B.6** **Il set del 29/07 resta «set di riferimento».** Da verificare a
       schermo che la dicitura sia quella (etichetta accanto alla data, testo
       dentro la foto ingrandita) e che **da nessuna parte** compaia «fuori
       protocollo».
@@ -453,13 +453,13 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       pieno stia sempre sull'azione **più** irreparabile — in particolare che
       «cancella tutti i dati» non sia grigia mentre «elimina un set di foto» è
       rossa piena.
-- [ ] **11.B.8** **Indici (BMI, vita/altezza)**: dipendono da
+- [x] **11.B.8** **Indici (BMI, vita/altezza)**: dipendono da
       `programma.atleta.altezzaCm`. Da verificare cosa mostra la sezione se
       l'altezza non è dichiarata nel brief (di lei come di lui).
-- [ ] **11.B.9** **«Confrontabile»**: il confronto fra due misure vale solo se
+- [x] **11.B.9** **«Confrontabile»**: il confronto fra due misure vale solo se
       entrambe hanno `condizioniStandard` vera. Da provare a registrare una
       misura togliendo una condizione e guardare la variazione mostrata.
-- [ ] **11.B.10** **Il verso della variazione** (`caloBuono`): per il peso e la
+- [x] **11.B.10** **Il verso della variazione** (`caloBuono`): per il peso e la
       vita scendere è verde, per le altre no. Da verificare misura per misura.
 - [ ] **11.B.11** **Misure di giorni diversi**: la nota `quando(id)` avvisa
       quando i numeri messi a confronto non sono dello stesso giorno. Da provare
