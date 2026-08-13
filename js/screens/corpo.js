@@ -265,7 +265,14 @@ async function registra(ridisegna) {
           val.style.color = "";
           return;
         }
-        if (!Number.isFinite(n) || n < 0) {
+        // `parseFloat` legge il PREFISSO e butta via il resto senza dire niente:
+        // «8a4» diventa 8, il campo resta del colore normale e in archivio
+        // finiscono 8 kg come se li avessi scritti tu. Un errore di battitura
+        // non deve poter entrare travestito da misura. Qui si controlla che
+        // quello che resta scritto sia davvero tutto un numero.
+        const scritto = val.value.trim().replace(",", ".");
+        const tuttoNumero = /^-?\d*\.?\d+$/.test(scritto);
+        if (!Number.isFinite(n) || n < 0 || !tuttoNumero) {
           nonValidi.set(def.id, def.nome);
           val.style.color = "var(--orange)";
           return;

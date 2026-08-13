@@ -427,7 +427,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       store.db.del("foto", x.id)` non ha nessuna rete: se una cancellazione
       fallisce restano dentro le foto rimanenti e il messaggio dice comunque
       «Set eliminato». Da provare con archivio in errore.
-- [ ] **11.B.19** ⚠️ **Un errore di battitura nelle misure viene troncato in
+- [x] **11.B.19** ⚠️ **Un errore di battitura nelle misure viene troncato in
       silenzio.** Trovato provando la 11.B.1: il campo usa `parseFloat`, che
       legge il prefisso numerico e butta il resto — «8a4» diventa **8**, campo
       color accento, nessun avviso, e 8 kg finisce in archivio come se l'avessi

@@ -155,7 +155,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.B.16** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.17** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.18** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 5 | ! | **11.B.19** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 5 | ! | **11.B.19** | CORRETTO | **difetto corretto.** `parseFloat` legge il prefisso e butta via il resto senza dire niente: «8a4» diventava **8**, il campo restava del colore normale e in archivio finivano 8 kg come se li avessi scritti tu — un errore di battitura travestito da misura. Ora si controlla che quello che resta scritto sia tutto un numero. Provati nove casi: «8a4», «80kg», «8.5.5», «-3» e «abc» diventano arancioni e «Salva» rifiuta dicendo quale campo; «79.4», «79,4», «82» e « 81 » con gli spazi restano validi | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.4** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.5** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.6** | DA FARE |  | 11.B — `js/screens/corpo.js` |
