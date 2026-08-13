@@ -577,6 +577,11 @@ Non sono dimenticanze: sono confini.
 - **Il telefono** — Blocco 8: il suono del timer col silenzioso, il wake lock,
   la fotocamera guidata, la riga «Archivio protetto», l'installazione dalla Home,
   e un allenamento vero fatto davvero.
+- **Le due prove del set di foto** (11.B.15 doppio tocco durante il conto alla
+  rovescia, 11.B.16 l'anteprima specchiata): nel browser di prova il permesso
+  alla fotocamera è negato e la vista guidata non si apre affatto, quindi
+  quelle due si vedono solo con la fotocamera vera in mano. Il ripiego —
+  «Scatta con la fotocamera di sistema» — è provato e funziona.
 
 ---
 
