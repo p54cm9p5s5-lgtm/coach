@@ -817,7 +817,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 
 ## 11.K — `js/screens/storico.js` (276) e `js/screens/proposte.js` (324)
 
-- [ ] **11.K.1** ⚠️ **Storico lento a crescere.** Per disegnare l'elenco fa due
+- [x] **11.K.1** ⚠️ **Storico lento a crescere.** Per disegnare l'elenco fa due
       letture d'archivio **per riga** (serie + questionari), una dopo l'altra: 20
       righe = 40 letture prima che compaia qualcosa, e «Mostra gli altri N» ne fa
       altre 2N di fila. Da misurare con tutti gli allenamenti che ci sono.

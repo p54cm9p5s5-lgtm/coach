@@ -1055,8 +1055,12 @@ export async function questionariDi(sedutaId) {
  * dai dati iniziali) viene calcolato adesso e congelato, così non esistono due
  * modi diversi di leggere lo stesso allenamento.
  */
-export async function completezzaSeduta(id) {
-  const sed = await db.get("sedute", id);
+export async function completezzaSeduta(id, gia = null) {
+  // Chi ha già la seduta in mano può passarla: rileggerla dall'archivio è una
+  // lettura per seduta, e il punteggio Salute le chiede tutte in fila. Con
+  // 207 allenamenti erano **207 letture** solo per questo, e lo Storico ci
+  // metteva 2,2 secondi ad aprirsi.
+  const sed = gia && gia.id === id ? gia : await db.get("sedute", id);
   if (!sed) return null;
   // Un allenamento chiuso è un fatto avvenuto: il suo punteggio viene congelato
   // alla chiusura. Ricalcolarlo sullo split di oggi lo farebbe cambiare da solo
@@ -2616,7 +2620,7 @@ export async function punteggiSalute(dal, al = isoDate()) {
   const chiuse = (await allenamenti()).filter((s) => s.stato === "completata");
   const perData = new Map();
   for (const sed of chiuse) {
-    const comp = await completezzaSeduta(sed.id);
+    const comp = await completezzaSeduta(sed.id, sed);
     if (comp?.totale != null) perData.set(sed.data, Math.max(perData.get(sed.data) ?? 0, comp.totale));
   }
   // Le attività fuori scheda contano come allenamento. Dove c'è anche una
