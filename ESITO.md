@@ -296,6 +296,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.P.11** | NON RIPRODOTTO | «Dimentica gli eventi letti» in Impostazioni svuota agenda, copertura e finestre: la Home torna subito a disegnare lo split del brief («Spalle» invece di «Non ancora programmato») | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 5 |  | **11.P.12** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 5 | ! | **11.P.2** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
+| 5 | ! | **11.P.13** | CORRETTO | trovato provando 1b.7: il pavimento valeva solo per l'export XML, non per il pacchetto incollato, e la riga FINESTRA creava 73 giorni vuoti più vecchi della storia. Corretto in `importaSalute` (punto unico) e nel ciclo della finestra; provato: 0 giorni prima del 29/07, riepilogo «1 riga più vecchia: lasciata fuori» | 11.P — importazione |
 | 5 | ! | **11.P.5** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 5 |  | **11.P.6** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 5 |  | **11.P.7** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
@@ -430,15 +431,15 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **15.B.3** | DA FARE |  | 15.B — Classificazioni da verificare |
 | 5 |  | **15.B.4** | DA FARE |  | 15.B — Classificazioni da verificare |
 | 5 |  | **15.B.5** | DA FARE |  | 15.B — Classificazioni da verificare |
-| 5 |  | **1b.1** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.2** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.3** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.4** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.5** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.6** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.7** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.8** | DA FARE |  | Blocco 1-bis — Gli invarianti |
-| 5 |  | **1b.9** | DA FARE |  | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.1** | NON RIPRODOTTO | provato davvero: caricato un brief che toglie il Plank da Spalle e ci mette il Crunch, poi aperto lo Storico (dove il ricalcolo scatterebbe). I cinque punteggi congelati — 0 · 10 · 27 · 48 · 59 — sono rimasti identici | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.2** | NON RIPRODOTTO | sulla stessa prova: il riepilogo della seduta da 59 mostra ancora **Plank**, cioè l'esercizio di allora, non il Crunch di adesso, e conta 3 previsti. `previstiElenco` congelato: military-press, alzate-laterali, plank | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.3** | NON RIPRODOTTO | le soglie del cardio nella seduta sono quelle di quel giorno (30 min · 4,5-5 km/h · FC 105-115 · limite 125) e il riepilogo scrive «previsto 4,5-5 km/h» leggendole da lì, non dalle regole correnti | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.4** | NON RIPRODOTTO | verificato a schermo: con il calendario attivo e nessun evento per oggi la Home dice «Non ancora programmato · il coach ha programmato fino al 04/08» e non offre nessun allenamento — non lo riempie con lo split | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.5** | NON RIPRODOTTO | provate tutte e tre le strade sul profilo di prova: dichiarato «da domani il massimo è zero» (il tasto sparisce subito e non torna), poi «il conteggio riparte da oggi» → tetto intatto, poi **ripristinata la copia interna fatta prima della dichiarazione** → tetto ancora intatto. `proteggiTettoFumo` regge anche sulla strada peggiore | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.6** | NON RIPRODOTTO | cercato in tutto il codice: la parola «protocollo» accanto alle foto compare solo come `checklist.protocollo` (un campo) e nella frase «Ripeti le stesse pose del set di riferimento». Il set con `daLibreria` è etichettato «set di riferimento» nella griglia e dentro la foto ingrandita. Nessuna occorrenza di «fuori protocollo» sulle foto: quella frase esiste solo per il cardio e per le misure con condizioni mancanti | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.7** | CORRETTO | provato incollando un pacchetto con giugno dentro: prima entrava, adesso no. Vedi 11.P.13, il difetto che questa prova ha fatto uscire | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.8** | NON RIPRODOTTO | confermato leggendo `aggiornaProposte`: se il brief ha già portato il carico a un valore pari o superiore a quello proposto (o le ripetizioni al bersaglio), la proposta viene tolta anche se non le è mai stato risposto | Blocco 1-bis — Gli invarianti |
+| 5 |  | **1b.9** | NON RIPRODOTTO | confermato leggendo `completezzaSeduta` e `punteggiSalute`: nessuna delle due tocca `allenamentiWatch`, che non compare in nessuna delle voci di punteggio. Nel pacchetto è una tabella a sé, con l'intestazione che dice di leggerla accanto al log e non al posto suo | Blocco 1-bis — Gli invarianti |
 | 5 |  | **2.1** | DA FARE |  | Blocco 2 — I dati che non si recuperano |
 | 5 |  | **2.2** | DA FARE |  | Blocco 2 — I dati che non si recuperano |
 | 5 |  | **2.3** | DA FARE |  | Blocco 2 — I dati che non si recuperano |

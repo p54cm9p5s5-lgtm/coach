@@ -1950,7 +1950,35 @@ function scartaImpossibili(riga, limiti, data, scartati) {
 }
 
 export async function importaSalute(pacchetto) {
-  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [], nottiDiscordanti: [] };
+  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [], nottiDiscordanti: [], troppoVecchi: 0 };
+
+  // Il pavimento vale per TUTTE le strade, non solo per l'export letto dal file.
+  //
+  // La regola è dichiarata («non entra niente di più vecchio dell'inizio di
+  // questa storia») e serve a non riempire medie e grafici di giornate che il
+  // programma non ha mai guardato — l'archivio di Salute contiene anni. Ma era
+  // applicata soltanto dentro `pacchettoDaExport`: un pacchetto **incollato**
+  // con dentro giugno entrava senza che nessuno lo fermasse. Provato: due
+  // giorni di giugno finiti in archivio.
+  //
+  // Qui è il punto unico da cui passano tutte le importazioni, quindi è qui che
+  // il pavimento deve stare.
+  const pavimento = await inizioStoria();
+  if (pavimento) {
+    const prima = (x) => x?.data && x.data < pavimento;
+    const contaEScarta = (elenco) => {
+      const tenuti = (elenco || []).filter((x) => !prima(x));
+      conteggio.troppoVecchi += (elenco || []).length - tenuti.length;
+      return tenuti;
+    };
+    pacchetto = {
+      ...pacchetto,
+      giorni: contaEScarta(pacchetto.giorni),
+      notti: contaEScarta(pacchetto.notti),
+      allenamenti: contaEScarta(pacchetto.allenamenti),
+      fasi: (pacchetto.fasi || []).filter((f) => String(f?.fine || "").slice(0, 10) >= pavimento),
+    };
+  }
 
   /**
    * Fonde solo i campi valorizzati: due righe per lo stesso giorno, una con le
@@ -2163,6 +2191,11 @@ export async function importaSalute(pacchetto) {
     const conDati = new Set(pacchetto.giorni.map((g) => g.data));
     const nottiConDati = new Set(pacchetto.notti.map((n) => n.data));
     for (const data of giorniDellaFinestra(pacchetto.finestra.da, pacchetto.finestra.a)) {
+      // Anche i giorni «senza dati» rispettano il pavimento: una finestra che
+      // parte da giugno riempiva l'archivio di settantatré giornate vuote più
+      // vecchie dell'inizio di questa storia, che poi comparivano nei grafici e
+      // nel conteggio delle finestre come buchi da riempire. Provato davvero.
+      if (pavimento && data < pavimento) continue;
       if (!conDati.has(data)) {
         const prec = await db.get("giorniSalute", data);
         if (!prec?.presente) {
