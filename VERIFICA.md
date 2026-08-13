@@ -589,10 +589,10 @@ l'app: fa dire una cosa falsa a una persona che decide.
       duplicarlo — che è giusto — ma nel pacchetto per il coach un segnale nato
       tre settimane fa si presenta con la data di oggi. Da verificare cosa legge
       davvero il coach.
-- [ ] **11.E.5** **«Le ultime due settimane» devono essere davvero le ultime
+- [x] **11.E.5** **«Le ultime due settimane» devono essere davvero le ultime
       due**: settimane consecutive (`indice` di seguito) e non più vecchie di 14
       giorni. Da provare con un buco di un mese in mezzo ai dati.
-- [ ] **11.E.6** **La baseline resta quella delle prime tre settimane
+- [x] **11.E.6** **La baseline resta quella delle prime tre settimane
       registrate**, per sempre. Da verificare che la frase lo dica e che sia la
       regola voluta (§9 del brief) e non un residuo.
 - [ ] **11.E.7** **Verificato**: le notti hanno davvero `presente: true`
@@ -608,7 +608,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
       backup.
 - [ ] **11.E.10** **Un esercizio a tempo** non deve mai ricevere proposte di
       carico o ripetizioni, solo il segnale «tetto tenuto pulito».
-- [ ] **11.E.11** **Dolore**: due sedute con lo stesso punto dolente su quattro
+- [x] **11.E.11** **Dolore**: due sedute con lo stesso punto dolente su quattro
       generano un segnale per **punto**, non uno cumulativo; e qualunque dolore
       recente blocca ogni progressione su quell'esercizio.
 - [x] **11.E.12** **Cardio fuori protocollo** e **inversione di intensità**: le
