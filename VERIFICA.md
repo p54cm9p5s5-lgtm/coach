@@ -487,13 +487,13 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
 
 Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
 
-- [ ] **11.C.1** ⚠️ **Versione mostrata sbagliata durante un aggiornamento.**
+- [x] **11.C.1** ⚠️ **Versione mostrata sbagliata durante un aggiornamento.**
       `versioneInstallata()`, se il service worker non risponde entro 1,2 s,
       ripiega sul nome della copia locale prendendo **la prima** che comincia per
       `coach-`. Le chiavi tornano in ordine di creazione: nella finestra in cui
       convivono vecchia e nuova, la prima è la **vecchia**. Da provare aprendo
       Impostazioni subito dopo una pubblicazione.
-- [ ] **11.C.2** ⚠️ **Sblocco audio che fallisce una volta sola.**
+- [x] **11.C.2** ⚠️ **Sblocco audio che fallisce una volta sola.**
       `sbloccaAudio()` mette `audioSbloccato = true` **prima** di sapere se il
       `play()` è riuscito, e non riprova mai più per tutta la sessione. Se iOS
       rifiuta quel primo gesto, per tutto l'allenamento l'allarme parte dai bip

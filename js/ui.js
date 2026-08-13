@@ -474,7 +474,15 @@ let audioSbloccato = false;
  */
 export function sbloccaAudio() {
   if (audioSbloccato) return Promise.resolve();
-  audioSbloccato = true;
+  // Attenzione all'ordine: «sbloccato» si scrive solo quando il `play()` è
+  // andato a buon fine davvero, in fondo a questa funzione.
+  //
+  // Segnandolo qui, un primo tentativo fallito — capita su iOS quando il gesto
+  // non viene riconosciuto o la sessione audio è occupata — lasciava l'app
+  // convinta di aver sbloccato l'audio, e **non riprovava più**: l'allarme di
+  // fine recupero restava muto per tutto l'allenamento, senza che niente lo
+  // dicesse. Riprovare non costa niente: è un play muto, e ogni tocco dentro
+  // la seduta è un gesto valido buono per riuscirci.
   // Qui la dichiarazione ci vuole, ed è "ambient".
   //
   // Senza, questo `play()` — muto, ma pur sempre un play — è il primo suono
@@ -501,7 +509,15 @@ export function sbloccaAudio() {
   const p = a.play();
   // Restituisce una promessa: chi vuole suonare subito dopo deve aspettare che
   // lo sblocco abbia finito, altrimenti si mettono in mezzo a vicenda.
-  if (p && typeof p.then === "function") return p.then(ripristina).catch(ripristina);
+  if (p && typeof p.then === "function") {
+    return p
+      .then(() => {
+        audioSbloccato = true;
+        ripristina();
+      })
+      .catch(ripristina);
+  }
+  audioSbloccato = true;
   ripristina();
   return Promise.resolve();
 }
