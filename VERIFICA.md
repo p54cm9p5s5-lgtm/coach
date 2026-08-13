@@ -928,7 +928,7 @@ e aggiornamento forzato. È la parte che conta di più mentre sei via.
       posto dopo, perché il ripristino cancella anche le impostazioni. Da provare
       tutte e due le strade e controllare che dopo la copia interna **esista** e
       abbia la data giusta.
-- [ ] **11.N.4** **Backup registrato solo se rispondi «sì, l'ho salvato».** Da
+- [x] **11.N.4** **Backup registrato solo se rispondi «sì, l'ho salvato».** Da
       verificare che il file finisca davvero in File/iCloud Drive dal telefono, e
       che la data «ultimo backup» non si sposti se annulli.
 - [x] **11.N.5** **Confronto prima del ripristino** («nel file N, adesso M, fino
@@ -940,14 +940,14 @@ e aggiornamento forzato. È la parte che conta di più mentre sei via.
 - [x] **11.N.7** **«Elimina tutti i dati»**: due conferme, e l'archivio o si
       svuota tutto o resta intatto. Da provare **solo** su un profilo di prova,
       mai su quello vero.
-- [ ] **11.N.8** ⚠️ **«Scarica l'ultima versione» è la strada giusta, `?nosw`
+- [x] **11.N.8** ⚠️ **«Scarica l'ultima versione» è la strada giusta, `?nosw`
       no.** `forzaAggiornamento` controlla che i file si scarichino **prima** di
       buttare le copie locali: senza rete non ti lascia a mani vuote. Da provare
       una volta prima di partire, così sai dov'è il tasto.
-- [ ] **11.N.9** **Riga «Archivio protetto»**: dice qualcosa di sensato in tutti
+- [x] **11.N.9** **Riga «Archivio protetto»**: dice qualcosa di sensato in tutti
       e quattro i casi (installata/non installata × protetto/no). Da guardare
       sul telefono, che è l'unico posto dove la risposta è quella vera.
-- [ ] **11.N.10** **«Cosa c'è in archivio»**: i conteggi devono corrispondere a
+- [x] **11.N.10** **«Cosa c'è in archivio»**: i conteggi devono corrispondere a
       quello che vedi nelle sezioni, e «allenamenti aperti e mai chiusi» deve
       essere zero prima di partire.
 
