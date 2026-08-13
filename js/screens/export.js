@@ -185,9 +185,21 @@ async function componi(stato) {
     const tutte = await store.allenamenti();
     // La più recente per orario, non la prima trovata: con due allenamenti
     // nello stesso giorno veniva esportato quello più vecchio.
+    // Ordinare per la sola ora di fine mandava in fondo — e quindi fuori dal
+    // pacchetto — ogni seduta chiusa **senza** `oraFine`: succede sui dati
+    // vecchi, e il coach si ritrovava il log di un altro giorno senza che
+    // niente glielo dicesse. Prima si guarda la data (che c'è sempre), poi
+    // l'ora di fine fra due dello stesso giorno, e da ultimo l'id, che nasce
+    // in ordine di tempo.
     const ultima = tutte
       .filter((s) => s.stato === "completata")
-      .sort((a, b) => (b.oraFine || 0) - (a.oraFine || 0))[0];
+      .sort((a, b) => {
+        if (a.data !== b.data) return a.data < b.data ? 1 : -1;
+        const oa = a.oraFine || 0;
+        const ob = b.oraFine || 0;
+        if (oa !== ob) return ob - oa;
+        return String(b.id).localeCompare(String(a.id));
+      })[0];
     // Un allenamento ancora aperto oggi non entra nel pacchetto (i dati non
     // sono chiusi), ma va detto: senza, il coach riceveva il log di ieri
     // credendo che fosse l'ultima cosa fatta.
