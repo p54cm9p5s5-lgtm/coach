@@ -1093,7 +1093,7 @@ c'è modo di accorgersene se non dal risultato.
       pacchetto senza battito o senza sforzo **svuota** quei campi su un
       allenamento che li aveva. Da provare importando due volte, la seconda con
       un pacchetto ridotto.
-- [ ] **11.P.2** ⚠️ **Il commento dice «un giorno già chiuso non cambia», il
+- [x] **11.P.2** ⚠️ **Il commento dice «un giorno già chiuso non cambia», il
       codice lo cambia.** Il controllo del raddoppio (righe 1919-1931) si limita
       a **elencare** i sospetti, e subito dopo `db.put` riscrive il giorno con i
       valori nuovi. Un conteggio raddoppiato entra lo stesso: viene solo
@@ -1117,7 +1117,7 @@ c'è modo di accorgersene se non dal risultato.
       vecchie dell'inizio della storia, che poi comparivano nei grafici e nel
       conteggio delle finestre come buchi da riempire. Corretto in tutte e due i
       punti; il riepilogo dell'import adesso dice quante righe ha lasciato fuori.
-- [ ] **11.P.5** ⚠️ **La riconciliazione delle notti CANCELLA notti**
+- [x] **11.P.5** ⚠️ **La riconciliazione delle notti CANCELLA notti**
       (`db.del("notti", …)`) in base a un'euristica: stessa durata a ±X minuti,
       un giorno prima o dopo, solo dentro il periodo delle fasi, solo fonte
       «salute». Quattro reti, ma resta una cancellazione automatica. Da provare
@@ -1134,12 +1134,12 @@ c'è modo di accorgersene se non dal risultato.
 - [x] **11.P.9** **Giorni dentro la finestra ma senza dati** vengono segnati
       `presente: false` (non zero). Da verificare che i dieci giorni di vacanza,
       se importi al rientro, non diventino zeri.
-- [ ] **11.P.10** **Due eventi lo stesso giorno**: l'allenamento vince sul
+- [x] **11.P.10** **Due eventi lo stesso giorno**: l'allenamento vince sul
       promemoria e sul «riposo», e la nota segue il titolo a cui appartiene. Da
       provare con un giorno che ha allenamento + promemoria.
 - [x] **11.P.11** **Un allenamento cancellato dal coach** deve sparire anche se
       era l'ultimo dell'intervallo letto. Da provare.
-- [ ] **11.P.12** **Valori impossibili** (`scartaImpossibili`) finiscono in un
+- [x] **11.P.12** **Valori impossibili** (`scartaImpossibili`) finiscono in un
       elenco a parte. Da leggere quell'elenco dopo un import vero.
 
 ## 11.Q — `js/store.js`, programma, regole e origine del giorno (righe 1-575)
