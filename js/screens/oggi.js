@@ -38,6 +38,7 @@ export async function render({ vaiA, ridisegna }) {
   aggiungi(wrap, grafici.salute);
   aggiungi(wrap, await bloccoAllenamento(vaiA, ridisegna, oggi));
   aggiungi(wrap, grafici.andamento);
+  aggiungi(wrap, await bloccoWatch());
   aggiungi(wrap, await bloccoProposte());
   aggiungi(wrap, await bloccoCalendario(vaiA, ridisegna));
 
@@ -787,5 +788,56 @@ async function bloccoCalendario(vaiA, ridisegna) {
           `${inRitardo.length === 1 ? "Una cosa" : `${inRitardo.length} cose`} in ritardo: ${inRitardo.join(", ").toLowerCase()}.`
         )
       : h("p.footnote", "Nessun arretrato.")
+  );
+}
+
+
+/**
+ * Gli allenamenti che l'orologio registra da solo.
+ *
+ * Sta in Home e non in fondo a Salute: là era una voce fra dodici sezioni e non
+ * la trovava nessuno. Qui sono le ultime tre righe, e il resto si apre toccando.
+ */
+async function bloccoWatch() {
+  const tutti = await store.allenamentiWatch();
+  if (!tutti.length) return null;
+  const GIORNI = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
+  const { nomeTipo } = await import("./allenamenti.js");
+  const righe = h("div.list");
+  for (const a of tutti.slice(0, 3)) {
+    const numeri = [
+      a.durataSec ? durataUmana(a.durataSec) : null,
+      a.kcalAttive != null ? `${Math.round(a.kcalAttive)} kcal` : null,
+      a.fcMedia != null ? `${Math.round(a.fcMedia)} bpm` : null,
+    ].filter(Boolean);
+    aggiungi(righe,
+      h(
+        "button.row.accent",
+        { onclick: () => (location.hash = `#/allenamenti?id=${encodeURIComponent(a.uuid)}`) },
+        h(
+          "div.main",
+          h("span.title", nomeTipo(a.tipo)),
+          h("span.sub", `${GIORNI[new Date(a.data + "T00:00:00").getDay()]} ${dataBreve(a.data)} · ${a.inizio || "—"}`),
+          h("span.sub", numeri.join(" · "))
+        ),
+        h("span.chevron", "›")
+      )
+    );
+  }
+  return h(
+    "div.group",
+    h("h2", "Watch"),
+    righe,
+    tutti.length > 3
+      ? h(
+          "div.list",
+          h(
+            "a.row",
+            { href: "#/allenamenti" },
+            h("div.main", h("span.title", `Tutti gli allenamenti dell'orologio`), h("span.sub", `${tutti.length} in archivio`)),
+            h("span.chevron", "›")
+          )
+        )
+      : null
   );
 }
