@@ -1047,17 +1047,17 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
       di **adesso**, mentre tutto il resto della funzione usa l'elenco congelato
       alla partenza. Se il brief cambia, una seduta non ancora congelata viene
       giudicata metà col programma vecchio e metà con quello nuovo.
-- [ ] **11.O.6** ⚠️ **Le sedute vecchie vengono congelate al primo sguardo, non
+- [x] **11.O.6** ⚠️ **Le sedute vecchie vengono congelate al primo sguardo, non
       alla chiusura**, e con le **regole di oggi** (`regole()` corrente). Aprire
       lo Storico dopo un cambio di brief fissa per sempre un punteggio calcolato
       con regole che quel giorno non c'erano. Da verificare quali sedute non
       hanno ancora `completezza`.
-- [ ] **11.O.7** ⚠️ **Due allenamenti nello stesso giorno**: `allenamenti()`
+- [x] **11.O.7** ⚠️ **Due allenamenti nello stesso giorno**: `allenamenti()`
       ordina solo per data e a parità lascia l'ordine dell'archivio, cioè il
       **più vecchio per primo**. Chi legge «l'ultimo allenamento» prende quello
       sbagliato — il pacchetto per il coach si è dovuto riordinare da solo per
       `oraFine`. Da verificare tutti gli altri posti che fanno `[0]`.
-- [ ] **11.O.8** **Serie senza orario**: `serieDi` ed `esposizioni` ordinano per
+- [x] **11.O.8** **Serie senza orario**: `serieDi` ed `esposizioni` ordinano per
       `tsFineSerie`; se manca, il confronto dà `NaN` e l'ordine diventa
       imprevedibile. Da verificare se in archivio esistono serie senza orario
       (dati vecchi o backup scritti a mano).
