@@ -2890,6 +2890,33 @@ export async function svuotaAgenda() {
 }
 
 /** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */
+/* Quando un allenamento può dire qualcosa sul passo al chilometro.
+
+   L'orologio registra anche allenamenti che una distanza non ce l'hanno
+   davvero: una camminata avviata e chiusa subito, una al chiuso dove il passo
+   non è stato calibrato, un tapis che la distanza non la manda. Restano
+   allenamenti veri — sono successi, e nell'elenco ci vanno — ma il rapporto fra
+   il loro tempo e i loro metri non è un passo: trenta metri in sei minuti danno
+   «191 minuti al chilometro», che non descrive niente.
+
+   Due condizioni, tutte e due necessarie:
+   - almeno mezzo chilometro, perché sotto quella soglia contano più i secondi
+     persi ad avviare e chiudere che il cammino;
+   - un passo dentro limiti umani. Fuori di lì non è che sei andato piano: è che
+     la distanza non è stata registrata.
+
+   Non si buttano via dati: si escludono da UN conto, e chi lo mostra lo dice. */
+export const PASSO_KM_MIN = 0.5;
+export const PASSO_MIN_AL_KM = 2;
+export const PASSO_MAX_AL_KM = 30;
+
+export function passoAttendibile(a) {
+  if (!(a?.km > 0) || !(a?.durataSec > 0)) return false;
+  if (a.km < PASSO_KM_MIN) return false;
+  const minAlKm = a.durataSec / 60 / a.km;
+  return minAlKm >= PASSO_MIN_AL_KM && minAlKm <= PASSO_MAX_AL_KM;
+}
+
 /**
  * Gli allenamenti che l'orologio ha registrato, dal più recente.
  *

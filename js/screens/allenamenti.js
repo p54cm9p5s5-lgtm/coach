@@ -74,10 +74,17 @@ function parolaSforzo(v) {
   return "Massimo";
 }
 
-/** Il passo medio: minuti e secondi per chilometro. */
-function passoMedio(km, sec) {
-  if (!km || !sec || km <= 0) return null;
-  const secPerKm = sec / km;
+/**
+ * Il passo medio: minuti e secondi per chilometro.
+ *
+ * Solo dove vuol dire qualcosa. Un allenamento di sei minuti con trenta metri
+ * registrati darebbe «191'40" al km»: un numero vero e inservibile, che sembra
+ * un errore dell'app mentre è un dato che l'orologio non ha misurato. La regola
+ * sta nello store ed è la stessa dei grafici del passo in Salute.
+ */
+function passoMedio(a) {
+  if (!store.passoAttendibile(a)) return null;
+  const secPerKm = a.durataSec / a.km;
   const m = Math.floor(secPerKm / 60);
   const s = Math.round(secPerKm % 60);
   return `${m}'${String(s).padStart(2, "0")}"`;
@@ -216,7 +223,7 @@ async function dettaglio(uuid) {
       nota ? h("p", { style: "margin:2px 0 0;font-size:12px;color:var(--label-tertiary)" }, nota) : null
     );
 
-  const passo = passoMedio(a.km, a.durataSec);
+  const passo = passoMedio(a);
   const coppie = [
     a.kcalTotali != null ? numeroGrande("Chilocalorie totali", String(Math.round(a.kcalTotali)), "KCAL", "var(--battito)") : null,
     a.fcMedia != null ? numeroGrande("Media battito", String(Math.round(a.fcMedia)), "BPM", "var(--orange)") : null,

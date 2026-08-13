@@ -382,15 +382,23 @@ export async function render({ ridisegna }) {
      hai chiesto: è sempre il tempo che ci metti a fare un chilometro. */
   const passoDi = (tipi) => {
     const perData = new Map();
+    let scartati = 0;
     for (const a of allenamentiOrologio) {
-      if (!tipi.has(a.tipo) || !(a.km > 0) || !(a.durataSec > 0)) continue;
+      if (!tipi.has(a.tipo)) continue;
+      // Un allenamento senza una distanza credibile non entra nel passo: la
+      // regola sta nello store, così la usano allo stesso modo questo grafico e
+      // il dettaglio dell'allenamento.
+      if (!store.passoAttendibile(a)) {
+        if (a.durataSec > 0) scartati++;
+        continue;
+      }
       const r = perData.get(a.data) || { km: 0, sec: 0, quanti: 0 };
       r.km += a.km;
       r.sec += a.durataSec;
       r.quanti++;
       perData.set(a.data, r);
     }
-    return perData;
+    return { perData, scartati };
   };
 
   const minutiAlKm = (sec, km) => sec / 60 / km;
@@ -401,7 +409,7 @@ export async function render({ ridisegna }) {
   };
 
   const schedaPasso = (nome, tipi, piede) => {
-    const perData = passoDi(tipi);
+    const { perData, scartati } = passoDi(tipi);
     if (!perData.size) return null;
     const f = conPeriodo();
     const dentro = [...perData.entries()].filter(([data]) => f.dentro({ data }));
@@ -437,13 +445,19 @@ export async function render({ ridisegna }) {
         punti: finali.map((p) => ({
           data: p.data,
           valore: p.valore,
-          nota: p.r ? `${num(p.r.km, 2)} km in ${durataUmana(p.r.sec)}` : null,
+          nota: p.r
+            ? `${num(p.r.km, 2)} km in ${durataUmana(p.r.sec)}${p.r.quanti > 1 ? ` · ${p.r.quanti} allenamenti` : ""}`
+            : null,
         })),
         minimo,
         formatta: (v) => `${scriviPasso(v)} al km`,
         invito: "Tocca un giorno per vedere il passo",
       }),
-      piede,
+      piede:
+        piede +
+        (scartati
+          ? ` ${scartati} ${scartati === 1 ? "allenamento è rimasto" : "allenamenti sono rimasti"} fuori dal conto: sotto ${num(store.PASSO_KM_MIN, 1)} km, o con una distanza che l'orologio non ha registrato bene. ${scartati === 1 ? "Resta" : "Restano"} nell'elenco, ${scartati === 1 ? "ma da solo non dice" : "ma da soli non dicono"} niente sul passo.`
+          : ""),
     });
   };
 
