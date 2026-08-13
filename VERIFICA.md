@@ -331,7 +331,7 @@ succederà questo documento si allunga.
 
 ## Cosa non è verificabile da qui
 
-- **Il profilo di [nome tolto]**: il suo brief sta in `_privato/`, che non si legge
+- **Il secondo profilo**: quel brief sta in `_privato/`, che non si legge
   mai. Le tre differenze che contano (acqua, giorni del vecchio split, id
   sconosciuti) sono state provate a parte.
 - **WebKit vero**: tutto gira in un browser desktop che si finge iPhone. L'unico
