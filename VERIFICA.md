@@ -506,20 +506,20 @@ Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
       `ambient` / `transient`, contesto chiuso da `rilasciaAudio()`. Da provare
       per davvero: musica in cuffia → allenamento → recupero → allarme → stop.
       La musica deve riprendere da sola.
-- [ ] **11.C.5** **Prova del suono** dalle Impostazioni due volte di fila
+- [x] **11.C.5** **Prova del suono** dalle Impostazioni due volte di fila
       (timer `ripristinoProva`), e con l'interruttore su silenzioso.
-- [ ] **11.C.6** **`chiudiFogli()`** chiude ogni pannello aperto quando si cambia
+- [x] **11.C.6** **`chiudiFogli()`** chiude ogni pannello aperto quando si cambia
       schermata, e chi stava aspettando riceve `undefined`. Da verificare che
       nessuna schermata interpreti quell'`undefined` come una scelta.
 - [ ] **11.C.7** **Chiusura del pannello trascinando**: parte solo dalla
       maniglia, soglia 90 px, `touchcancel` rimette a posto. Da provare con una
       nota lunga già scritta dentro (non deve perdersi).
-- [ ] **11.C.8** **Tocco fuori dal pannello**: chiude solo se il tocco è
+- [x] **11.C.8** **Tocco fuori dal pannello**: chiude solo se il tocco è
       *cominciato* sullo sfondo. Da provare con un pulsante che si sposta.
 - [ ] **11.C.9** **Wake lock**: si riprende solo se in pagina c'è un elemento
       `.session` (verificato: è il contenitore della seduta). Da provare
       uscendo dall'app durante il recupero e rientrando.
-- [ ] **11.C.10** **`h()` scrive sempre testo, mai markup** (niente `innerHTML`):
+- [x] **11.C.10** **`h()` scrive sempre testo, mai markup** (niente `innerHTML`):
       da provare mettendo `<b>ciao</b>` in una nota, nel nome di un esercizio del
       brief e in un titolo, e verificare che si leggano i tag.
 - [ ] **11.C.11** **Date impossibili**: `parseIso("2026-13-45")` deve dare «—» e

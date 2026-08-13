@@ -163,17 +163,17 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.B.8** | NON RIPRODOTTO | tolta l'altezza dal programma (e ricaricata l'app, perché il programma vive in memoria e non si aggiorna scrivendo solo in archivio): la sezione **Indici sparisce del tutto**, invece di mostrare un BMI calcolato su un'altezza inventata o un «—» che sembra un dato mancante. Rimessa l'altezza, torna con BMI e vita/altezza. È il comportamento giusto anche per il secondo profilo, dove l'altezza potrebbe non essere dichiarata | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.9** | NON RIPRODOTTO | registrata una misura con **due condizioni su quattro**: entra in archivio ma è marcata «fuori protocollo · confronto non valido», e la variazione accanto è mostrata in **grigio** invece che nel colore del giudizio — cioè si vede, ma non pretende di valere. Una misura con tutte le condizioni mostra la variazione a colori | 11.B — `js/screens/corpo.js` |
 | 5 | ! | **11.C.1** | DA FARE |  | 11.C — `js/ui.js` |
-| 5 |  | **11.C.10** | DA FARE |  | 11.C — `js/ui.js` |
+| 5 |  | **11.C.10** | NON RIPRODOTTO | conta più di quanto sembri, perché da lì passano le note che scrive lui e i titoli che arrivano dal calendario. Passato a `h()` un `<img src=x onerror=...>`: esce **testo letterale** (`&lt;img…`), zero elementi creati, **nessun codice eseguito**. Provato anche un attributo con dentro un tag di script: nessuno script creato, niente eseguito | 11.C — `js/ui.js` |
 | 5 |  | **11.C.11** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 |  | **11.C.12** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 |  | **11.C.13** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 | ! | **11.C.2** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 |  | **11.C.3** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 |  | **11.C.4** | DA FARE |  | 11.C — `js/ui.js` |
-| 5 |  | **11.C.5** | DA FARE |  | 11.C — `js/ui.js` |
-| 5 |  | **11.C.6** | DA FARE |  | 11.C — `js/ui.js` |
+| 5 |  | **11.C.5** | NON RIPRODOTTO | fatte **due prove del suono di fila** intercettando ogni `play()`: durante le prove il file parte con `loop: false` (una volta sola), alla fine resta **un solo** elemento audio, in pausa, con il loop rimesso a `true` — che è il valore giusto per l'allarme del recupero. Nessun timer orfano rimette il loop mentre la seconda prova sta ancora suonando | 11.C — `js/ui.js` |
+| 5 |  | **11.C.6** | NON RIPRODOTTO | aperto un pannello e cambiata schermata: il pannello si chiude e **anche lo sfondo scuro sparisce** (zero `.sheet`, zero `.sheet-backdrop`). Senza questo, uscendo da una schermata con un foglio aperto lo sfondo sarebbe rimasto sopra tutto, bloccando i tocchi | 11.C — `js/ui.js` |
 | 5 |  | **11.C.7** | DA FARE |  | 11.C — `js/ui.js` |
-| 5 |  | **11.C.8** | DA FARE |  | 11.C — `js/ui.js` |
+| 5 |  | **11.C.8** | NON RIPRODOTTO | provate le tre strade, con la sequenza vera dei tocchi e non un click sintetico. Tocco **dentro** il pannello: resta aperto. Tocco che **comincia sullo sfondo**: chiude. Tocco che **comincia dentro e finisce fuori** — cioè un trascinamento partito da un campo o da un elenco — **non chiude**: è la protezione che serve quando si scorre una lista lunga e il dito esce dal pannello | 11.C — `js/ui.js` |
 | 5 |  | **11.C.9** | DA FARE |  | 11.C — `js/ui.js` |
 | 5 | ! | **11.D.1** | DA FARE |  | 11.D — `js/db.js` |
 | 5 |  | **11.D.2** | DA FARE |  | 11.D — `js/db.js` |
