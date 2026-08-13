@@ -466,7 +466,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       con misure registrate in due giorni.
 - [ ] **11.B.12** **«I valori partono dall'ultima volta»** è scritto anche la
       primissima volta, quando i campi sono tutti vuoti.
-- [ ] **11.B.13** **Fuori scala**: la conferma scatta sotto il minimo o sopra il
+- [x] **11.B.13** **Fuori scala**: la conferma scatta sotto il minimo o sopra il
       massimo di ogni misura. Da provare 175 di peso (deve chiedere) e 84,5 di
       vita (non deve chiedere).
 - [ ] **11.B.14** **Salvataggio parziale delle misure**: il messaggio distingue

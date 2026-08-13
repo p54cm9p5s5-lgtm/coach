@@ -149,7 +149,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.B.10** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.11** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.12** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 5 |  | **11.B.13** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 5 |  | **11.B.13** | CORRETTO | **difetto trovato e corretto, e non era quello che la voce si aspettava.** 175 kg di peso **non** faceva scattare la conferma, e giustamente: la guardia era solo assoluta (30-250 kg) e 175 ci sta dentro. Il punto è che 175 al posto di 79 è un numero possibilissimo per un corpo umano ma non per il suo, e passava in silenzio mostrando «+95 kg». Aggiunta una **seconda guardia, relativa all'ultima misura**: uno scarto oltre il 15% chiede conferma, con parole sue («Un salto grosso — Peso 175 kg (l'ultima volta 80). È un cambiamento molto più grande di quello che un corpo fa fra due misure»). Verificato su tre casi: 175 chiede col messaggio del salto, **300 chiede col messaggio del fuori scala** (i due motivi restano distinti), 79,4 si salva senza domande. E 84,5 di vita, come chiedeva la voce, non chiede niente | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.14** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.15** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.16** | DA FARE |  | 11.B — `js/screens/corpo.js` |
