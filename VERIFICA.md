@@ -865,12 +865,12 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       kcal si accettano come vengono: 999 km o FC 400 entrano in silenzio e
       finiscono nel pacchetto del coach. È lo stesso difetto del carico 1750, già
       corretto altrove ma non qui.
-- [ ] **11.L.3** **Campo giorno svuotato**: da verificare cosa salva
+- [x] **11.L.3** **Campo giorno svuotato**: da verificare cosa salva
       `registraExtra` con `data: ""` (una riga senza data non si ordina e non si
       trova più).
 - [ ] **11.L.4** **Elenco tagliato a 60 righe** senza «mostra tutte»: da
       verificare che non sia già vicino al limite.
-- [ ] **11.L.5** **«Altro» senza spiegazione** viene rifiutato: da provare.
+- [x] **11.L.5** **«Altro» senza spiegazione** viene rifiutato: da provare.
 - [ ] **11.L.6** **Talk-test non risposto** = la giornata non vale come
       allenamento, ma **non vale zero**. Da provare che sia davvero così nel
       punteggio Salute.

@@ -1,7 +1,7 @@
 /* Logica di dominio: programma, allenamenti, serie, questionari, volumi. */
 
 import * as db from "./db.js";
-import { isoDate, weekdayOf, giorniTra, dataBreve, num, durataUmana } from "./ui.js";
+import { isoDate, weekdayOf, giorniTra, dataBreve, num, durataUmana, parseIso } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
 import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni } from "./segnali.js";
 import { punteggioEsercizio, punteggioAllenamento, doloriDi } from "./punteggio.js";
@@ -2976,7 +2976,15 @@ const NUM_O_NULL = (v) => {
 };
 
 export async function registraExtra(dati) {
-  const data = /^\d{4}-\d{2}-\d{2}$/.test(String(dati.data)) ? dati.data : isoDate();
+  // Il formato non basta: «2026-13-45» ha la faccia di una data ma il mese 13
+  // e il giorno 45 non esistono, e passando il solo controllo qui sopra
+  // finiva in archivio tale e quale — una riga che non si ordina e non si
+  // ritrova più. Come nel calendario (11.I.9), la data si costruisce e si
+  // controlla davvero; se non regge, vale oggi.
+  const dataScritta = String(dati.data ?? "");
+  const dataBuona =
+    /^\d{4}-\d{2}-\d{2}$/.test(dataScritta) && !Number.isNaN(parseIso(dataScritta).getTime());
+  const data = dataBuona ? dataScritta : isoDate();
   if (!dati.tipo) throw new Error("Serve il tipo di attività.");
   if (dati.talkTest && !TALK_TEST.some((t) => t.id === dati.talkTest)) {
     throw new Error("Talk-test non riconosciuto.");
