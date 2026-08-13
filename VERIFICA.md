@@ -571,12 +571,12 @@ Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
 È il motore che scrive quello che il coach leggerà. Qui un errore non rompe
 l'app: fa dire una cosa falsa a una persona che decide.
 
-- [ ] **11.E.1** ⚠️ **Proposta di scaricare fino a zero.** Su un attrezzo che non
+- [x] **11.E.1** ⚠️ **Proposta di scaricare fino a zero.** Su un attrezzo che non
       è né bilanciere né manubri, `riduciCarico` fa
       `max(0, carico − max(1, 10%))`: con 1 kg di partenza propone **0 kg**, e il
       controllo `nuovo >= carico` non lo ferma. Da provare con un esercizio a
       carico 1 e tecnica sotto soglia.
-- [ ] **11.E.2** ⚠️ **Percentuale d'aumento con carico zero.** Se il carico di
+- [x] **11.E.2** ⚠️ **Percentuale d'aumento con carico zero.** Se il carico di
       lavoro è `0` (non `null`), `passo / carico` fa infinito e la frase del
       coach diventa «+— %». Da provare con un esercizio registrato a 0 kg.
 - [ ] **11.E.3** ⚠️ **Tecnica vecchia trattata come attuale.** Il livello 1 usa
