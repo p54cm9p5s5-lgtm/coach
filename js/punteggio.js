@@ -252,6 +252,22 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolori, dolo
  * @param giorno       riga dei dati salute: kcalAttive, obiettivoKcal
  * @param sigarette    quante ne hai segnate (null = prima che tenessi il conto)
  */
+/* I pesi di base del punteggio Salute stanno qui, in un posto solo: le regole
+   del brief (store.js) li importano come base e il brief li sovrascrive voce
+   per voce. Prima la stessa lista era scritta due volte — qui e dentro le
+   regole — e bastava cambiarne una per far dire alle due strade due cose
+   diverse sullo stesso giorno. */
+export const PESI_SALUTE_BASE = Object.freeze({
+  sonno: 22,
+  allenamento: 22,
+  fumo: 20,
+  movimento: 12,
+  passi: 10,
+  esercizio: 8,
+  inPiedi: 6,
+  acqua: 12,
+});
+
 export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, sigaretteTollerate = null, acqua = null, regole }) {
   const R = (regole && regole.salute) || {};
   // I pesi dichiarati nel brief si FONDONO con quelli di base, non li
@@ -262,8 +278,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   // diventava `NaN` e il punteggio Salute spariva del tutto, `null`, senza una
   // parola. Un documento scritto dal coach mentre sei via non deve poter
   // spegnere un punteggio: quello che non dichiara resta com'era.
-  const PESI_BASE = { sonno: 22, allenamento: 22, fumo: 20, movimento: 12, passi: 10, esercizio: 8, inPiedi: 6, acqua: 12 };
-  const pesi = { ...PESI_BASE, ...(R.pesi || {}) };
+  const pesi = { ...PESI_SALUTE_BASE, ...(R.pesi || {}) };
   const oreBersaglio = R.sonnoOreBersaglio ?? 8;
   const oreMinime = R.sonnoOreMinime ?? 6;
   // Il limite può essere quello del giorno — scende man mano che si raggiungono
