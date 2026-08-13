@@ -413,7 +413,12 @@ export async function render({ ridisegna }) {
     if (!perData.size) return null;
     const f = conPeriodo();
     const dentro = [...perData.entries()].filter(([data]) => f.dentro({ data }));
-    if (!dentro.length) return null;
+    // Attenzione: qui la scheda NON deve sparire. Sparendo si porta via i suoi
+    // stessi tasti del periodo, e chi ha appena toccato «1 gg» in un giorno
+    // senza corse non ha più niente da toccare per tornare indietro: la
+    // sezione resta invisibile anche uscendo e rientrando, perché la scelta
+    // del periodo è ricordata. Senza dati nel periodo si mostra la scheda
+    // vuota — «nessun dato» — esattamente come fanno Movimento e Passi.
     const totali = dentro.reduce((t, [, r]) => ({ km: t.km + r.km, sec: t.sec + r.sec, quanti: t.quanti + r.quanti }), { km: 0, sec: 0, quanti: 0 });
     // Il grafico copre tutti i giorni del periodo, non solo quelli con
     // allenamenti: un buco di tre giorni deve vedersi come un buco.
@@ -437,22 +442,26 @@ export async function render({ ridisegna }) {
     return schedaGrafico({
       selettore: f.selettore,
       titolo: nome,
-      valore: scriviPasso(minutiAlKm(totali.sec, totali.km)),
+      valore: totali.km > 0 ? scriviPasso(minutiAlKm(totali.sec, totali.km)) : "—",
       // «al km» sta nella nota e non come unità: accanto a un numero già lungo
       // («12'19"») andava a capo da solo, e si leggeva «12'19" al» e sotto «km».
-      nota: `al km · ${totali.quanti} ${totali.quanti === 1 ? "allenamento" : "allenamenti"} · ${num(totali.km, 1)} km · ${f.etichetta}`,
-      grafico: graficoLinea({
-        punti: finali.map((p) => ({
-          data: p.data,
-          valore: p.valore,
-          nota: p.r
-            ? `${num(p.r.km, 2)} km in ${durataUmana(p.r.sec)}${p.r.quanti > 1 ? ` · ${p.r.quanti} allenamenti` : ""}`
-            : null,
-        })),
-        minimo,
-        formatta: (v) => `${scriviPasso(v)} al km`,
-        invito: "Tocca un giorno per vedere il passo",
-      }),
+      nota: totali.quanti
+        ? `al km · ${totali.quanti} ${totali.quanti === 1 ? "allenamento" : "allenamenti"} · ${num(totali.km, 1)} km · ${f.etichetta}`
+        : `nessun dato · ${f.etichetta}`,
+      grafico: finali.length
+        ? graficoLinea({
+            punti: finali.map((p) => ({
+              data: p.data,
+              valore: p.valore,
+              nota: p.r
+                ? `${num(p.r.km, 2)} km in ${durataUmana(p.r.sec)}${p.r.quanti > 1 ? ` · ${p.r.quanti} allenamenti` : ""}`
+                : null,
+            })),
+            minimo,
+            formatta: (v) => `${scriviPasso(v)} al km`,
+            invito: "Tocca un giorno per vedere il passo",
+          })
+        : null,
       piede:
         piede +
         (scartati
