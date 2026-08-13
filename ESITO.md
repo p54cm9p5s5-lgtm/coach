@@ -265,12 +265,12 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.L.7** | NON RIPRODOTTO | l'ordine e esplicito nel codice e va nel verso giusto: le sedute vere si mettono in mappa per prime, poi le attivita extra vengono aggiunte **solo dove non c'e gia una seduta** (`if (perData.has(data)) continue`). Quindi con una seduta e un'attivita nello stesso giorno vince il punteggio della seduta, che come dice il commento «dice molto di piu di un si» | 11.L — `js/screens/extra.js` |
 | 5 |  | **11.M.1** | DA FARE |  | 11.M — `js/grafico.js` |
 | 5 |  | **11.M.2** | DA FARE |  | 11.M — `js/grafico.js` |
-| 5 |  | **11.M.3** | DA FARE |  | 11.M — `js/grafico.js` |
+| 5 |  | **11.M.3** | NON RIPRODOTTO | provato un allenamento **dalle 23:30 all'00:30**: le etichette dell'asse escono «23:30 · 23:50 · **00:10**», cioe l'ora gira correttamente col modulo 24 invece di andare a «24:10». E un caso che in vacanza puo capitare, e regge | 11.M — `js/grafico.js` |
 | 5 |  | **11.M.4** | DA FARE |  | 11.M — `js/grafico.js` |
-| 5 |  | **11.M.5** | DA FARE |  | 11.M — `js/grafico.js` |
-| 5 |  | **11.M.6** | DA FARE |  | 11.M — `js/grafico.js` |
+| 5 |  | **11.M.5** | NON RIPRODOTTO | provati sei casi limite passando i punti direttamente al grafico: **un solo punto**, due punti uguali, **nessun punto**, tutti i valori a `null`, un valore **infinito** e un **NaN**. In tutti e sei il disegno esce senza errori e **nessuna coordinata contiene NaN, Infinity o undefined** — che era il modo in cui un grafico spariva tutto invece di mostrare un buco. Il punto singolo finisce al **centro** del riquadro (x=160 su 320), non appiccicato al bordo | 11.M — `js/grafico.js` |
+| 5 |  | **11.M.6** | NON RIPRODOTTO | il periodo sta in `localStorage` sotto **una sola chiave** (`coach-periodo`), quindi e davvero condiviso fra i grafici e **sopravvive alla chiusura dell'app**. E il punteggio Salute della Home resta indipendente: toccando «7 gg» su un grafico di Salute la chiave passa a 7, ma la Home continua a dire «media di 16 giorni · **tutto lo storico**», perche ha un suo selettore separato. Sono le due cose che la voce chiedeva | 11.M — `js/grafico.js` |
 | 5 |  | **11.M.7** | DA FARE |  | 11.M — `js/grafico.js` |
-| 5 |  | **11.M.8** | DA FARE |  | 11.M — `js/grafico.js` |
+| 5 |  | **11.M.8** | NON RIPRODOTTO | la linea dell'obiettivo si disegna e **porta la sua etichetta** («obiettivo 600») dentro il grafico, cosi il numero e leggibile senza incrociarlo con la nota sotto. E l'obiettivo passato dal chiamante, che in **11.G.10 / 5.5** si e visto essere quello giusto: l'anello del punteggio usa `movimentoBersaglio` delle regole, i grafici usano l'obiettivo dell'anello di Salute — due numeri diversi per due domande diverse, e ognuno dichiara il suo | 11.M — `js/grafico.js` |
 | 5 |  | **11.M.9** | DA FARE |  | 11.M — `js/grafico.js` |
 | 5 |  | **11.N.10** | DA FARE |  | 11.N — `js/screens/impostazioni.js` |
 | 5 | ! | **11.N.2** | DA FARE |  | 11.N — `js/screens/impostazioni.js` |
