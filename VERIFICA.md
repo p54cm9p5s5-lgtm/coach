@@ -1191,20 +1191,20 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.R — `js/store.js`, motore delle proposte (righe 1305-1560)
 
-- [ ] **11.R.1** **Una proposta già realizzata dal brief sparisce** (salita o
+- [x] **11.R.1** **Una proposta già realizzata dal brief sparisce** (salita o
       discesa). Da provare: il coach porta la scheda a 35 kg mentre l'app
       proponeva 31.
-- [ ] **11.R.2** **«Rimando» torna dopo una sola esposizione, «Rifiuto» e
+- [x] **11.R.2** **«Rimando» torna dopo una sola esposizione, «Rifiuto» e
       «Accetto» dopo quattro.** Il conto si fa sul **tempo**, non su un numero:
       cancellare un allenamento vecchio non deve far tornare una proposta.
-- [ ] **11.R.3** **`diagnosiProgressione` rilegge tutte le esposizioni di ogni
+- [x] **11.R.3** **`diagnosiProgressione` rilegge tutte le esposizioni di ogni
       esercizio senza cache**: sette esercizi = sette letture complete a ogni
       apertura di Proposte. Da misurare.
-- [ ] **11.R.4** **Un esercizio archiviato o tolto dal brief** non deve lasciare
+- [x] **11.R.4** **Un esercizio archiviato o tolto dal brief** non deve lasciare
       proposte appese. Da provare.
-- [ ] **11.R.5** **`obiettivoCorrente` si consuma quando fai l'esercizio**, non
+- [x] **11.R.5** **`obiettivoCorrente` si consuma quando fai l'esercizio**, non
       quando chiudi la seduta. Da provare accettando a metà allenamento.
-- [ ] **11.R.6** **Le scritture del motore non sono in transazione**: un giro
+- [x] **11.R.6** **Le scritture del motore non sono in transazione**: un giro
       interrotto lascia proposte cancellate e non ricreate. Da provare.
 
 ## 11.S — `js/screens/seduta.js` (3.607 righe; lette 642-830, 2059-2280, 2923-3075)
