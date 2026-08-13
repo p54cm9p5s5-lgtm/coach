@@ -906,7 +906,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       su schermo stretto che il giorno letto sia quello toccato.
 - [x] **11.M.8** **Obiettivo movimento**: la linea tratteggiata usa l'obiettivo
       **più recente**, non il primo. Da provare cambiandolo in Salute.
-- [ ] **11.M.9** **Giorni senza dato**: pallino, non barra a zero. Da verificare
+- [x] **11.M.9** **Giorni senza dato**: pallino, non barra a zero. Da verificare
       che i dieci giorni di vacanza (se non importi) si vedano come buchi e non
       come zeri.
 
@@ -919,11 +919,11 @@ e aggiornamento forzato. È la parte che conta di più mentre sei via.
       allenamenti del Watch**, e quello che è più vecchio di 30 giorni **non si
       può più rileggere**. In vacanza questo tasto non va toccato: da verificare
       che il testo lo dica abbastanza forte.
-- [ ] **11.N.2** ⚠️ **Modo «unisci» irraggiungibile?** `importaBackup` sceglie la
+- [x] **11.N.2** ⚠️ **Modo «unisci» irraggiungibile?** `importaBackup` sceglie la
       modalità da `dump.modo`, un campo che il backup dell'app non sembra
       scrivere: di fatto ogni ripristino da file è «sostituisci tutto». Da
       verificare aprendo un backup vero e cercando quel campo.
-- [ ] **11.N.3** **Prima di ogni sovrascrittura si fa una copia interna**
+- [x] **11.N.3** **Prima di ogni sovrascrittura si fa una copia interna**
       (`prima del ripristino` / `prima dell'import da file`) e la si rimette a
       posto dopo, perché il ripristino cancella anche le impostazioni. Da provare
       tutte e due le strade e controllare che dopo la copia interna **esista** e
@@ -931,13 +931,13 @@ e aggiornamento forzato. È la parte che conta di più mentre sei via.
 - [ ] **11.N.4** **Backup registrato solo se rispondi «sì, l'ho salvato».** Da
       verificare che il file finisca davvero in File/iCloud Drive dal telefono, e
       che la data «ultimo backup» non si sposti se annulli.
-- [ ] **11.N.5** **Confronto prima del ripristino** («nel file N, adesso M, fino
+- [x] **11.N.5** **Confronto prima del ripristino** («nel file N, adesso M, fino
       al …»): da leggere su un backup vecchio, è la riga che evita di riportare
       indietro tutto per recuperare una cosa sola.
-- [ ] **11.N.6** **«Ripristinato, ma non tutto»**: compare quando il file
+- [x] **11.N.6** **«Ripristinato, ma non tutto»**: compare quando il file
       contiene archivi che l'app non conosce. Da provare con un backup fatto
       oggi su una versione più vecchia (vedi 11.D.1).
-- [ ] **11.N.7** **«Elimina tutti i dati»**: due conferme, e l'archivio o si
+- [x] **11.N.7** **«Elimina tutti i dati»**: due conferme, e l'archivio o si
       svuota tutto o resta intatto. Da provare **solo** su un profilo di prova,
       mai su quello vero.
 - [ ] **11.N.8** ⚠️ **«Scarica l'ultima versione» è la strada giusta, `?nosw`
