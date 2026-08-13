@@ -533,7 +533,7 @@ Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
 
 È il pavimento: se cede qui, cede tutto. 17 archivi, versione 4.
 
-- [ ] **11.D.1** ⚠️ **La versione del backup non è mai salita.**
+- [x] **11.D.1** ⚠️ **La versione del backup non è mai salita.**
       `VERSIONE_BACKUP` è ferma a **1** da sempre, ma nel frattempo sono nati
       `allenamentiWatch`, `extra`, `acqua`. Un backup fatto oggi, ripristinato su
       un'app rimasta indietro, passa il controllo di versione (1 ≤ 1) e quegli
@@ -556,13 +556,13 @@ Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
       versione installata.
 - [ ] **11.D.6** **Spazio finito**: `t.onabort` dice «di solito è lo spazio
       finito». Da provare riempiendo l'archivio con un set di foto.
-- [ ] **11.D.7** **`nuovoId`**: `Date.now()` in base 36 più un contatore che
+- [x] **11.D.7** **`nuovoId`**: `Date.now()` in base 36 più un contatore che
       riparte da zero a ogni ricaricamento. Da verificare che nessuna schermata
       ordini per id invece che per data/ora (se l'orologio del telefono torna
       indietro, l'ordine per id mente).
 - [ ] **11.D.8** **`svuotaTutto`**: o tutto o niente, e restituisce l'elenco
       degli archivi svuotati. Da verificare che il messaggio finale lo usi.
-- [ ] **11.D.9** **Backup che pesa**: `esportaTutto({salta})` serve a non
+- [x] **11.D.9** **Backup che pesa**: `esportaTutto({salta})` serve a non
       rileggere le foto. Da verificare quali chiamate lo usano e che il backup
       «completo» le contenga davvero.
 
