@@ -632,7 +632,7 @@ async function ripristinaSnapshot() {
   try {
     // Il tetto dichiarato sulle sigarette non si perde ripristinando una copia
     // fatta prima della decisione: è la via più involontaria per annullarla.
-    const tettoPrima = await store.tettoFumoDichiarato();
+    const tettoPrima = await store.statoFumoDaProteggere();
     await store.db.importaTutto(dump, "sostituisci");
     await store.proteggiTettoFumo(tettoPrima);
   } catch (e) {
@@ -848,7 +848,7 @@ async function importaBackup(ridisegna) {
 
   let esito = null;
   try {
-    const tettoPrima2 = await store.tettoFumoDichiarato();
+    const tettoPrima2 = await store.statoFumoDaProteggere();
     esito = await store.db.importaTutto(dump, modo);
     await store.proteggiTettoFumo(tettoPrima2);
     if (indietro && modo === "sostituisci") {
@@ -913,7 +913,7 @@ async function azzera(ridisegna) {
     // non risponde falliva qui fuori — l'errore usciva dal gestore e il tocco
     // su «Elimina definitivamente» non faceva assolutamente niente, senza
     // nemmeno un messaggio.
-    const tettoPrima = await store.tettoFumoDichiarato();
+    const tettoPrima = await store.statoFumoDaProteggere();
     await store.db.svuotaTutto();
     await store.proteggiTettoFumo(tettoPrima);
   } catch (e) {

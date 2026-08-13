@@ -215,21 +215,21 @@ passato cambiano da soli e non ci si accorge di niente.
 
 ## Blocco 5 — Salute e importazione (si farà da lontano)
 
-- [ ] **5.1** Importazione da `export.xml`: file grande, pavimento 29/07,
+- [x] **5.1** Importazione da `export.xml`: file grande, pavimento 29/07,
       avanzamento, memoria.
-- [ ] **5.2** Importazione da testo incollato (comando rapido).
-- [ ] **5.3** Riconciliazione: notti discordanti, giorni già chiusi che cambiano,
+- [x] **5.2** Importazione da testo incollato (comando rapido).
+- [x] **5.3** Riconciliazione: notti discordanti, giorni già chiusi che cambiano,
       valori impossibili.
-- [ ] **5.4** Calendario: lettura, «dimentica gli eventi letti», giorni senza
+- [x] **5.4** Calendario: lettura, «dimentica gli eventi letti», giorni senza
       evento.
-- [ ] **5.5** Punteggio Salute e le sue voci.
-- [ ] **5.6** Grafici: movimento, passi, sonno, sigarette, i due nuovi del passo.
+- [x] **5.5** Punteggio Salute e le sue voci.
+- [x] **5.6** Grafici: movimento, passi, sonno, sigarette, i due nuovi del passo.
 
 ## Blocco 6 — Il resto delle sezioni
 
-- [ ] **6.1** Corpo: misure con guardia sul fuori scala, condizioni, indici, foto
+- [x] **6.1** Corpo: misure con guardia sul fuori scala, condizioni, indici, foto
       (4 pose, protocollo, confronto, eliminazione).
-- [ ] **6.2** Fumo: conteggio, tetto che scende, **irreversibilità dello zero**,
+- [x] **6.2** Fumo: conteggio, tetto che scende, **irreversibilità dello zero**,
       grafico, «il conteggio riparte da oggi».
 - [ ] **6.3** Acqua (dove è attiva nel brief).
 - [ ] **6.4** Extra: registrazione, «Altro» con testo libero, talk-test,
