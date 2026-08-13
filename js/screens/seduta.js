@@ -3047,6 +3047,7 @@ async function vistaCardio(corpo, piede) {
               eseguito: false,
               finitoIl: null,
               saltatoMotivo: null,
+              rimandato: false,
               note: qs("#nota-cardio")?.value ?? notaPrec ?? null,
             },
           });
@@ -3086,6 +3087,7 @@ async function vistaCardio(corpo, piede) {
               ...S.sed.cardio,
               eseguito: false,
               saltatoMotivo: motivo,
+              rimandato: false,
               // Il foglio dice «quel dato sparisce»: allora deve sparire anche
               // dal record. Punteggio e pacchetto lo ignorano già quando
               // «eseguito» è falso, ma una durata che resta scritta accanto a
@@ -3100,6 +3102,27 @@ async function vistaCardio(corpo, piede) {
         },
       },
       "Non eseguito"
+    ),
+    /* Il cardio si può rimandare senza dichiararlo saltato.
+       Capita di finire i pesi e di dover aspettare — il tapis occupato, un
+       impegno in mezzo — e siccome il cardio viene prima dello stretching, si
+       finiva per saltare lo stretching, che è la parte che non si recupera.
+       Rimandandolo si va dritti allo stretching; il cardio resta da fare e la
+       Home lo tiene lì, con l'allenamento aperto, finché non lo fai o non lo
+       dichiari non eseguito. */
+    h(
+      "button.btn.secondary",
+      {
+        onclick: azione(async () => {
+          S.sed = await store.aggiornaSeduta(S.sed.id, {
+            cardio: { ...S.sed.cardio, rimandato: true, saltatoMotivo: null },
+          });
+          toast("Cardio rimandato: lo trovi in Home finché non lo fai.");
+          await salvaProgresso({ fase: "stretching" });
+          await disegna();
+        }),
+      },
+      "Rimanda il cardio"
     )
   );
 }
@@ -3509,6 +3532,22 @@ async function vistaFine(corpo, piede) {
   aggiungiPiede(piede, 
     h("button.btn", {
       onclick: azione(async () => {
+        // Un cardio rimandato e mai fatto: chiudere qui lo trasforma in un
+        // cardio non eseguito, con quello che comporta sul punteggio. È una
+        // conseguenza, non una punizione, ma va detta prima e non dopo.
+        if (S.sed.cardio?.previsto && S.sed.cardio?.rimandato && !S.sed.cardio?.eseguito) {
+          const scelta = await chiedi({
+            titolo: "Il cardio è ancora da fare",
+            testo:
+              "L'avevi rimandato. Chiudendo adesso l'allenamento resta senza cardio, e nel punteggio conta come non eseguito.\n\n" +
+              "Se lo fai più tardi, lascia l'allenamento aperto: lo trovi in Home.",
+            opzioni: [
+              { etichetta: "Lascia aperto, lo faccio dopo", valore: "aspetta" },
+              { etichetta: "Chiudi senza cardio", valore: "chiudi", stile: "destructive" },
+            ],
+          });
+          if (scelta !== "chiudi") return;
+        }
         await store.chiudiSeduta(S.sed.id, { notaGenerale: qs("#nota-seduta")?.value || null });
         try {
           await store.snapshotAutomatico("fine allenamento");

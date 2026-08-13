@@ -312,8 +312,18 @@ esercizio** già in vista (nome, carico, dischi da montare). Prima le due cose
 stavano insieme: il tasto che mandava le risposte chiudeva anche il riposo, e
 rispondendo si finiva per saltare il recupero — che è la parte che conta.
 
-**4. Cardio**, se previsto: si può eseguire o dichiarare non eseguito, **con
-motivo obbligatorio**. Dichiarandolo non eseguito, la velocità e la durata
+**4. Cardio**, se previsto: si può eseguire, **rimandare**, o dichiarare non
+eseguito con motivo obbligatorio.
+
+**Rimandare** serve a un caso preciso: i pesi sono finiti ma il cardio non si può
+fare subito — il tapis occupato, un impegno in mezzo. Siccome il cardio viene
+prima dello stretching, aspettare significava saltare lo stretching, che è la
+parte che non si recupera. Con «Rimanda il cardio» si va dritti allo stretching e
+alla mobilità; l'allenamento resta aperto e in **Home compare «Cardio da fare»**
+con un tasto che porta lì. Rimandato non vuol dire saltato: nel punteggio non
+conta niente finché non lo fai o non lo dichiari non eseguito. Se si chiude
+l'allenamento con il cardio ancora in sospeso, l'app lo dice prima — da lì in poi
+conta come non eseguito. Dichiarandolo non eseguito, la velocità e la durata
 impostate prima **non entrano**: resta scritto che non l'hai fatto, non un
 cardio inventato.
 

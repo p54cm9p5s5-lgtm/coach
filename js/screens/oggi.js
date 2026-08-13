@@ -362,9 +362,16 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
       !inCorso.cardio?.eseguito &&
       !inCorso.riscaldamento?.fatto;
     const ora = new Date(inCorso.oraInizio).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+    /* Il cardio rimandato non è un cardio saltato: la parte pesi è finita, lo
+       stretching è stato fatto, e resta quello. Va tenuto davanti agli occhi
+       con un tasto che porta dritto lì, se no «lo faccio dopo» diventa «non
+       l'ho fatto» senza che nessuno l'abbia deciso. */
+    const cardioDaFare = Boolean(
+      inCorso.cardio?.previsto && inCorso.cardio?.rimandato && !inCorso.cardio?.eseguito
+    );
     return h(
       "div.group",
-      h("h2", vecchio ? "Allenamento rimasto aperto" : "Allenamento aperto"),
+      h("h2", cardioDaFare ? "Cardio da fare" : vecchio ? "Allenamento rimasto aperto" : "Allenamento aperto"),
       h(
         "div.list",
         h(
@@ -373,11 +380,36 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
           h(
             "div.main",
             h("span.title", inCorso.tipoNome),
-            h("span.sub", vecchio ? `iniziato ${dataLunga(inCorso.data).toLowerCase()} alle ${ora}` : `iniziato alle ${ora}`)
+            h(
+              "span.sub",
+              cardioDaFare
+                ? `pesi finiti alle ${ora === "Invalid Date" ? "—" : ora} · manca solo il cardio`
+                : vecchio
+                  ? `iniziato ${dataLunga(inCorso.data).toLowerCase()} alle ${ora}`
+                  : `iniziato alle ${ora}`
+            )
           ),
           h("span.chevron", "›")
         )
       ),
+      cardioDaFare
+        ? h(
+            "div.btn-wrap",
+            h(
+              "button.btn",
+              {
+                onclick: async () => {
+                  await store.aggiornaSeduta(inCorso.id, {
+                    progresso: { ...(inCorso.progresso || {}), fase: "cardio" },
+                  });
+                  store.invalidaCacheSedute();
+                  vaiA("seduta");
+                },
+              },
+              "Fai il cardio"
+            )
+          )
+        : null,
       vecchio
         ? h(
             "p.footnote",
@@ -387,7 +419,11 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         : null,
       h(
         "div.btn-wrap",
-        h("button.btn", { onclick: () => vaiA("seduta") }, vecchio ? `Riprendi (resta del ${dataBreve(inCorso.data)})` : "Riprendi allenamento"),
+        // Con il cardio da fare il tasto grande è già sopra e porta allo stesso
+        // posto: due tasti identici uno sotto l'altro fanno solo dubitare.
+        cardioDaFare
+          ? null
+          : h("button.btn", { onclick: () => vaiA("seduta") }, vecchio ? `Riprendi (resta del ${dataBreve(inCorso.data)})` : "Riprendi allenamento"),
         vecchio && vuoto
           ? h(
               "p.footnote",
@@ -824,20 +860,22 @@ async function bloccoWatch() {
       )
     );
   }
-  return h(
-    "div.group",
-    h("h2", "Watch"),
-    righe,
-    tutti.length > 3
-      ? h(
-          "div.list",
-          h(
-            "a.row",
-            { href: "#/allenamenti" },
-            h("div.main", h("span.title", `Tutti gli allenamenti dell'orologio`), h("span.sub", `${tutti.length} in archivio`)),
-            h("span.chevron", "›")
-          )
-        )
-      : null
+  // «Tutti gli allenamenti» sta DENTRO la stessa lista, non in una seconda:
+  // due liste attaccate lasciano in mezzo un gradino che sembra un errore di
+  // disegno. È una riga come le altre, e il riquadro è uno solo.
+  // Sempre, anche quando in archivio ce ne sono tre: è la porta della sezione,
+  // e nascondendola non ci si arrivava più da nessuna parte.
+  aggiungi(righe,
+    h(
+      "a.row",
+      { href: "#/allenamenti" },
+      h(
+        "div.main",
+        h("span.title", "Tutti gli allenamenti"),
+        h("span.sub", `${tutti.length} ${tutti.length === 1 ? "in archivio" : "in archivio"}`)
+      ),
+      h("span.chevron", "›")
+    )
   );
+  return h("div.group", h("h2", "Watch"), righe);
 }
