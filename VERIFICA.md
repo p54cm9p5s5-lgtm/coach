@@ -464,7 +464,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
 - [x] **11.B.11** **Misure di giorni diversi**: la nota `quando(id)` avvisa
       quando i numeri messi a confronto non sono dello stesso giorno. Da provare
       con misure registrate in due giorni.
-- [ ] **11.B.12** **«I valori partono dall'ultima volta»** è scritto anche la
+- [x] **11.B.12** **«I valori partono dall'ultima volta»** è scritto anche la
       primissima volta, quando i campi sono tutti vuoti.
 - [x] **11.B.13** **Fuori scala**: la conferma scatta sotto il minimo o sopra il
       massimo di ogni misura. Da provare 175 di peso (deve chiedere) e 84,5 di
