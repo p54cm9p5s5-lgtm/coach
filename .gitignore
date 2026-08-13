@@ -14,3 +14,8 @@ coach-dati-iniziali.json
 # come si avvia il server di prova.
 .claude/*
 !.claude/launch.json
+
+# Il file sentinella del controllo: c'è solo mentre un controllo è in corso, e
+# serve alla guardia in tools/non-fermarti.sh. Cancellarlo è il modo per
+# fermare tutto. Non è roba da pubblicare.
+.controllo-in-corso

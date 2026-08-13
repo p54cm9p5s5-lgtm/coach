@@ -177,6 +177,10 @@ const DEFAULT_IMPOSTAZIONI = {
   snapshotAutomatico: null,
   ultimoImportSalute: null,
   fumoContatoDal: null,
+  // La tacca del fumo sopravvissuta a un «riparti da oggi»: vedi
+  // `riparteConteggioFumo`. Un tetto che scende non deve poter risalire
+  // buttando via le righe che lo tenevano basso.
+  fumoPartenzaLimite: null,
 };
 
 export async function impostazione(chiave) {
@@ -2743,10 +2747,22 @@ export async function accendiConteggioFumo(data = isoDate()) {
  * Restituisce quante righe ha rimosso, perché una cancellazione va detta.
  */
 export async function riparteConteggioFumo(data = isoDate()) {
+  // La tacca raggiunta NON riparte con il conteggio.
+  //
+  // Il massimo scende dai minimi toccati, e quei minimi vivono nelle righe che
+  // qui stiamo per buttare via: senza questa riga il tetto tornava alla
+  // partenza del brief — da «il massimo è zero» a «su 10 tollerate» — con un
+  // tasto solo. Il tetto dichiarato in archivio resisteva (parte da domani),
+  // ma per una giornata intera la decisione risultava sospesa, e una tacca che
+  // risale non è più una tacca.
+  const { limiti, partenza } = await limitiFumo(data);
+  const inVigore = limiti.get(data);
+  if (inVigore != null && inVigore < partenza) await setImpostazione("fumoPartenzaLimite", inVigore);
+
   const vecchie = (await db.all("fumo")).filter((x) => x.data < data);
   for (const x of vecchie) await db.del("fumo", x.id);
   await setImpostazione("fumoContatoDal", data);
-  return { rimosse: vecchie.length, dal: data };
+  return { rimosse: vecchie.length, dal: data, taccaTenuta: inVigore };
 }
 
 /**
@@ -2832,10 +2848,23 @@ export async function dichiaraTettoFumo(massimo, dal) {
  */
 export async function proteggiTettoFumo(primaDelRipristino) {
   if (!primaDelRipristino) return null;
+  // Chi chiama può passare il solo tetto (come si faceva prima) o lo stato
+  // intero letto da `statoFumoDaProteggere()`. Le due forme convivono.
+  const tettoPrima = primaDelRipristino.tetto !== undefined ? primaDelRipristino.tetto : primaDelRipristino;
+  const taccaPrima = primaDelRipristino.tacca;
+
+  // La tacca raggiunta è severa quanto il tetto dichiarato, e un backup di
+  // ieri se la porterebbe via allo stesso modo. Si tiene la più bassa.
+  if (taccaPrima != null) {
+    const taccaDopo = await impostazione("fumoPartenzaLimite");
+    if (taccaDopo == null || taccaPrima < taccaDopo) await setImpostazione("fumoPartenzaLimite", taccaPrima);
+  }
+
+  if (!tettoPrima) return null;
   const dopo = await tettoFumoDichiarato();
   const piuSevero =
-    !dopo || primaDelRipristino.massimo < dopo.massimo || (primaDelRipristino.massimo === dopo.massimo && primaDelRipristino.dal < dopo.dal)
-      ? primaDelRipristino
+    !dopo || tettoPrima.massimo < dopo.massimo || (tettoPrima.massimo === dopo.massimo && tettoPrima.dal < dopo.dal)
+      ? tettoPrima
       : dopo;
   if (!dopo || JSON.stringify(dopo) !== JSON.stringify(piuSevero)) {
     await setImpostazione("fumoTettoDichiarato", piuSevero);
@@ -2844,8 +2873,21 @@ export async function proteggiTettoFumo(primaDelRipristino) {
   return null;
 }
 
+/**
+ * Quello che va salvato prima di un ripristino perché non si perda: il tetto
+ * dichiarato e la tacca già raggiunta. Si passa tale e quale a
+ * `proteggiTettoFumo` dopo.
+ */
+export async function statoFumoDaProteggere() {
+  return { tetto: await tettoFumoDichiarato(), tacca: await impostazione("fumoPartenzaLimite") };
+}
+
 export async function limitiFumo(al = isoDate(), base = null) {
-  const partenza = base ?? regole().salute?.sigaretteTollerate ?? 10;
+  const daBrief = regole().salute?.sigaretteTollerate ?? 10;
+  // La tacca ereditata da un conteggio fatto ripartire: vale come partenza se
+  // è più bassa di quella del brief, così il tetto non risale mai.
+  const ereditata = await impostazione("fumoPartenzaLimite");
+  const partenza = base ?? (ereditata != null ? Math.min(daBrief, ereditata) : daBrief);
   const limiti = new Map();
   const dal = await fumoContatoDal();
   if (!dal) return { limiti, corrente: partenza, partenza };

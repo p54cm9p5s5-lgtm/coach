@@ -34,6 +34,30 @@ senza ricominciare da capo. Quei due file sono il modo in cui questa regola
 sopravvive a un'interruzione: vanno tenuti aggiornati **mentre** lavoro, non
 alla fine.
 
+E il contesto che si riempie **non è** un'interruzione: la conversazione viene
+riassunta da sola e il lavoro riprende. Scrivere un resoconto perché «sta per
+finire lo spazio» è il modo esatto in cui questa regola è stata infranta due
+volte — a fine Fase 4 e a metà del blocco 5. Quel resoconto non protegge
+niente, perché la continuità sta già nei due file qui sopra: toglie solo colpi
+alle voci ancora aperte. Ogni riga scritta a lui prima della fine è una voce
+che resta da fare.
+
+### La guardia
+
+Questa regola non è più affidata alla buona volontà. `tools/non-fermarti.sh`
+gira a **ogni** tentativo di smettere di lavorare (hook `Stop`): finché in
+`ESITO.md` resta una sola voce `DA FARE`, risponde di no e il lavoro riprende
+da solo.
+
+- Agisce solo se esiste il file sentinella `.controllo-in-corso`, che si crea
+  all'inizio del controllo e si cancella quando il conto arriva a zero.
+- **Come si esce**: si cancella `.controllo-in-corso`. È la sua via di fuga e
+  deve restare a portata di mano — una guardia senza uscita sarebbe una gabbia
+  anche per lui.
+- Le voci che dipendono da una sua decisione **non** autorizzano a fermarsi:
+  si chiudono come `SOLO TELEFONO` con la domanda scritta nel campo «come», e
+  si consegnano tutte insieme in §8 alla fine.
+
 ---
 
 ## 1. Regole d'ingaggio
