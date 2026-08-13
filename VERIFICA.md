@@ -839,7 +839,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       **oggi**: se il programma è cambiato dopo la nascita della proposta, il
       «3×8» scritto lì può non essere più vero. Da provare dopo un cambio di
       scheda.
-- [ ] **11.K.7** **Rimando / Rifiuto**: la nota è facoltativa, annullare non
+- [x] **11.K.7** **Rimando / Rifiuto**: la nota è facoltativa, annullare non
       deve registrare niente. Da provare anche cambiando schermata mentre il
       pannello della nota è aperto (deve valere come «annullato»).
 - [ ] **11.K.8** **Verifica in scadenza**: la data mostrata è quella
