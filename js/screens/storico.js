@@ -42,9 +42,31 @@ async function elenco(vaiA) {
     // viene nascosto, solo rimandato.
     const A_VISTA = 20;
     const lista = h("div.list");
-    const riga = async (s) => {
-      const serie = await store.serieDi(s.id);
-      const logs = await store.questionariDi(s.id);
+
+    // Serie e questionari si leggono **una volta sola**, tutti insieme, e poi
+    // si raggruppano per seduta.
+    //
+    // Prima ogni riga faceva due letture d'archivio, una dopo l'altra: venti
+    // righe erano quaranta letture prima che comparisse qualcosa, e «Mostra
+    // gli altri N» ne faceva altre 2N in fila. Misurato con 207 allenamenti:
+    // **2,2 secondi e 331 transazioni** per disegnare l'elenco. Con due
+    // letture sole il conto non dipende più da quanti allenamenti hai.
+    const tutteLeSerie = await store.db.all("serie");
+    const tuttiILog = await store.db.all("esercizioLog");
+    const serieDi = new Map();
+    for (const x of tutteLeSerie) {
+      if (!serieDi.has(x.sedutaId)) serieDi.set(x.sedutaId, []);
+      serieDi.get(x.sedutaId).push(x);
+    }
+    const logDi = new Map();
+    for (const x of tuttiILog) {
+      if (!logDi.has(x.sedutaId)) logDi.set(x.sedutaId, []);
+      logDi.get(x.sedutaId).push(x);
+    }
+
+    const riga = (s) => {
+      const serie = serieDi.get(s.id) || [];
+      const logs = logDi.get(s.id) || [];
       // Interrotto a metà non è «saltato»: il lavoro c'è. Si contano solo gli
       // esercizi in cui non hai fatto proprio niente.
       const saltati = logs.filter(
@@ -64,7 +86,7 @@ async function elenco(vaiA) {
         h("span.chevron", "›")
       );
     };
-    for (const s of completate.slice(0, A_VISTA)) aggiungi(lista, await riga(s));
+    for (const s of completate.slice(0, A_VISTA)) aggiungi(lista, riga(s));
 
     const restanti = completate.slice(A_VISTA);
     if (restanti.length) {
@@ -74,7 +96,7 @@ async function elenco(vaiA) {
           onclick: async () => {
             altri.disabled = true;
             altri.querySelector(".title").textContent = "Carico…";
-            for (const s of restanti) lista.insertBefore(await riga(s), altri);
+            for (const s of restanti) lista.insertBefore(riga(s), altri);
             altri.remove();
           },
         },
