@@ -295,7 +295,16 @@ async function registraServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   if (location.protocol === "file:") return;
   // ?nosw serve in sviluppo: niente cache, così le modifiche si vedono subito.
-  if (location.search.includes("nosw")) {
+  //
+  // Solo in locale, però. Sul sito pubblicato quell'indirizzo disinstalla il
+  // service worker e svuota tutte le cache: chi lo aprisse dal telefono — un
+  // collegamento salvato, un indirizzo copiato male — resterebbe senza copia
+  // offline, e senza rete l'app non si aprirebbe più. In palestra o in
+  // vacanza è il posto peggiore per accorgersene, e non c'è modo di rimediare
+  // finché non torna la linea. Qui non serve a nessuno: fuori da localhost si
+  // ignora e basta.
+  const inLocale = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(location.hostname);
+  if (inLocale && location.search.includes("nosw")) {
     for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
     for (const k of await caches.keys()) await caches.delete(k);
     return;

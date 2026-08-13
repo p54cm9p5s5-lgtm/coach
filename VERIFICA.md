@@ -662,7 +662,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
 
 Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bianco.
 
-- [ ] **11.G.1** ⚠️ **`?nosw` cancella la copia offline.** Aprire l'app con
+- [x] **11.G.1** ⚠️ **`?nosw` cancella la copia offline.** Aprire l'app con
       `?nosw` nell'indirizzo **disinstalla il service worker e svuota tutte le
       cache**. È il trucco che uso io per provare in locale, ma vale
       identico sul sito pubblicato: se capita sul telefono in vacanza, l'app
@@ -743,7 +743,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       col set del 29/07 (+14 giorni), ma è un numero fisso dentro il programma:
       da verificare che sia ancora giusto fra dieci giorni e che il brief, se
       dichiara le sue cadenze, vinca su questo.
-- [ ] **11.I.3** ⚠️ **Il backup arretrato si accende ogni giorno.** «Backup su
+- [x] **11.I.3** ⚠️ **Il backup arretrato si accende ogni giorno.** «Backup su
       file (solo app)» dopo 7 giorni e «Dati salute da importare» dopo 2 giorni
       finiscono **sempre sul giorno di oggi** come scaduti. In dieci giorni fuori
       casa saranno accesi tutti i giorni: da verificare quanto rumore fanno sulla
@@ -915,7 +915,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 Lette per intero le sezioni «Dati», «Pericolo», backup, ripristino, azzeramento
 e aggiornamento forzato. È la parte che conta di più mentre sei via.
 
-- [ ] **11.N.1** ⚠️ **«Cancella i dati importati da Salute» cancella anche gli
+- [x] **11.N.1** ⚠️ **«Cancella i dati importati da Salute» cancella anche gli
       allenamenti del Watch**, e quello che è più vecchio di 30 giorni **non si
       può più rileggere**. In vacanza questo tasto non va toccato: da verificare
       che il testo lo dica abbastanza forte.
@@ -1104,7 +1104,7 @@ c'è modo di accorgersene se non dal risultato.
       programmato», e la Home non sa più quale allenamento proporre. Da
       verificare **prima di partire** quanto lontano arriva la copertura, e cosa
       mostra la Home quando è scaduta.
-- [ ] **11.P.4** ⚠️ **L'importazione non è una transazione**: sono decine di
+- [x] **11.P.4** ⚠️ **L'importazione non è una transazione**: sono decine di
       scritture una dopo l'altra (giorni, notti, riconciliazione, allenamenti,
       vuoti, agenda). Chiudere l'app a metà lascia un import fatto per metà,
       senza nessun segno. Da provare interrompendo di proposito.
@@ -1338,7 +1338,7 @@ c'è modo di accorgersene se non dal risultato.
       fare.
 - [ ] **11.U.5** **Un allenamento aperto e vuoto di ieri**: niente «chiudi e
       archivia», solo «elimina». Da provare.
-- [ ] **11.U.6** **«In ritardo» in fondo al calendario**: backup e import salute
+- [x] **11.U.6** **«In ritardo» in fondo al calendario**: backup e import salute
       non hanno un «risolto», quindi restano accesi finché non li fai. In dieci
       giorni saranno sempre accesi (vedi 11.I.3).
 - [ ] **11.U.7** **Il punteggio Salute con «1 gg» mostra oggi, con gli altri

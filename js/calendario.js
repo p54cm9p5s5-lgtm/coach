@@ -247,12 +247,31 @@ export function calcolaAttese({
     }
   }
 
-  // cose in ritardo, ancorate a oggi
-  if (!ultimoExport || giorniTra(ultimoExport.slice(0, 10), oggi) >= 7) {
-    aggiungiA(oggi, "scaduto", "Backup su file (solo app)");
+  // Cose in ritardo, ancorate a oggi.
+  //
+  // Quanto in ritardo lo dice il numero di giorni, non solo la parola: un
+  // backup di otto giorni e uno di due mesi non sono la stessa cosa, e finché
+  // il testo era identico l'avviso si leggeva una volta e poi diventava
+  // arredamento. Con i giorni scritti, il ritardo che cresce si vede crescere.
+  const giorniExport = ultimoExport ? giorniTra(ultimoExport.slice(0, 10), oggi) : null;
+  if (giorniExport === null || giorniExport >= 7) {
+    aggiungiA(
+      oggi,
+      "scaduto",
+      giorniExport === null
+        ? "Backup su file: mai fatto (solo app)"
+        : `Backup su file: ${giorniExport} giorni fa (solo app)`
+    );
   }
-  if (!ultimoImportSalute || giorniTra(ultimoImportSalute.slice(0, 10), oggi) >= 2) {
-    aggiungiA(oggi, "scaduto", "Dati salute da importare (solo app)");
+  const giorniImport = ultimoImportSalute ? giorniTra(ultimoImportSalute.slice(0, 10), oggi) : null;
+  if (giorniImport === null || giorniImport >= 2) {
+    aggiungiA(
+      oggi,
+      "scaduto",
+      giorniImport === null
+        ? "Dati salute: mai importati (solo app)"
+        : `Dati salute: ${giorniImport} giorni da importare (solo app)`
+    );
   }
 
   return attese;

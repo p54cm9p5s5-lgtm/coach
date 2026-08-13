@@ -578,8 +578,12 @@ async function svuotaSalute(ridisegna) {
         ? `${aMano === 1 ? "La notte che hai scritto tu resta" : `Le ${aMano} notti che hai scritto tu restano`}: reimportare non ${aMano === 1 ? "la" : "le"} riporterebbe, tornerebbe il numero sbagliato dell'orologio.\n\n`
         : "") +
       "Gli allenamenti che hai registrato nell'app, le misure, le foto e il programma NON si toccano.\n\n" +
-      "Poi riesegui il comando rapido e reimporta: tornano gli ultimi 30 giorni. " +
-      "Quello che è più vecchio di 30 giorni non si può più rileggere e va perso.",
+      "ATTENZIONE: tornano solo gli ultimi 30 giorni. Tutto quello che è più " +
+      "vecchio — giorni di movimento, notti, allenamenti dell'orologio — non si " +
+      "può più rileggere da nessuna parte e va perso per sempre.\n\n" +
+      "Se sei lontano da casa o senza il file di esportazione di Salute, non " +
+      "farlo adesso: questa cancellazione si ripara solo reimportando, e " +
+      "reimportare richiede il telefono con i dati sotto mano.",
     opzioni: [{ etichetta: "Cancella e rileggo", valore: "si", stile: "danger" }],
   });
   if (conferma !== "si") return;
