@@ -738,7 +738,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       `periodiche()` gira da −21 a +21: sfogliando il calendario indietro di due
       mesi non compare nessun pallino, e i giovedì della pesata di giugno
       sembrano tutti in ordine. Da provare andando indietro di tre mesi.
-- [ ] **11.I.2** ⚠️ **Ancora delle foto scritta nel codice**: `fotoAncora` vale
+- [x] **11.I.2** ⚠️ **Ancora delle foto scritta nel codice**: `fotoAncora` vale
       `"2026-08-12"` e la cadenza è ogni 2 settimane di **mercoledì**. Combacia
       col set del 29/07 (+14 giorni), ma è un numero fisso dentro il programma:
       da verificare che sia ancora giusto fra dieci giorni e che il brief, se
@@ -751,17 +751,17 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [ ] **11.I.4** **Col calendario del coach collegato l'app non aggiunge
       scadenze sue.** Da verificare che sia vero anche col calendario scaduto
       (letto fino a una certa data) — il caso esatto di dieci giorni via.
-- [ ] **11.I.5** **Riconoscimento di cosa chiede un evento** per parole intere:
+- [x] **11.I.5** **Riconoscimento di cosa chiede un evento** per parole intere:
       «evitare» non deve diventare una misura della vita, «fotocopia» non deve
       diventare un set di foto. Da provare con eventi scritti a mano.
-- [ ] **11.I.6** **Peso e vita sono due misure distinte**: un evento che le
+- [x] **11.I.6** **Peso e vita sono due misure distinte**: un evento che le
       chiede entrambe resta arretrato se ne manca una.
-- [ ] **11.I.7** **«Recuperato dopo»**: un giovedì saltato resta segnato, ma il
+- [x] **11.I.7** **«Recuperato dopo»**: un giovedì saltato resta segnato, ma il
       piede della Home non deve continuare a dire che manca. Da provare
       pesandosi il venerdì.
 - [x] **11.I.8** **Giorni prima dell'inizio del programma**: niente rosso,
       niente pallini. Da provare andando indietro fino a prima dell'inizio.
-- [ ] **11.I.9** **Data non valida** passata a `riassuntoGiorno`: deve dire
+- [x] **11.I.9** **Data non valida** passata a `riassuntoGiorno`: deve dire
       «Giorno non riconosciuto» e non «undefined NaN».
 
 ## 11.J — `js/screens/export.js` (441) e il blocco Watch di `js/export.js`

@@ -301,7 +301,11 @@ export function calcolaAttese({
 export function riassuntoGiorno({ data, previsto, allenamento, attese: atteseIn, dal, origine = null }) {
   // Senza una data vera non c'è niente da riassumere: meglio dirlo che
   // scrivere in testa al riquadro «undefined NaN undefined».
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data || "")) {
+  // Non basta la forma: «2026-13-45» ha la faccia di una data — quattro cifre,
+  // due, due — ma il mese 13 e il giorno 45 non esistono, e passando il solo
+  // controllo del formato finiva riassunto come una giornata di «Riposo».
+  // `parseIso` la data la costruisce davvero e rifiuta quelle impossibili.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data || "") || Number.isNaN(parseIso(data).getTime())) {
     return { titolo: "Giorno non riconosciuto", righe: [{ testo: "Data non valida", stato: "info" }] };
   }
   let attese = atteseIn || [];
