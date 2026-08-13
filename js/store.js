@@ -2068,11 +2068,26 @@ export async function importaSalute(pacchetto) {
 
   for (const a of pacchetto.allenamenti) {
     const prec = await db.get("allenamentiWatch", a.uuid);
+    // Si fonde, non si sostituisce.
+    //
+    // Un pacchetto più ricco riempie quello che mancava — distanza, battito,
+    // sforzo, indoor, ora di fine — ed è il motivo per cui questi numeri si
+    // riscrivono a ogni import. Ma un pacchetto più POVERO non deve svuotare
+    // quello che c'era: succede davvero, e non per un caso di scuola. Lo
+    // strumento sul Mac (`tools/salute-da-export.py`) scrive quattro campi,
+    // il lettore che gira sul telefono ne scrive dodici più la curva del
+    // battito: chi importava dal Mac dopo aver importato dal telefono si
+    // ritrovava gli allenamenti svuotati, e con la distanza se ne andava anche
+    // il passo al chilometro.
+    //
+    // La regola è la stessa che vale per i giorni di salute e per le notti:
+    // un campo assente vuol dire «non lo so», non «azzeralo».
+    const unito = { ...(prec || {}) };
+    for (const [k, v] of Object.entries(a)) {
+      if (v !== null && v !== undefined) unito[k] = v;
+    }
     await db.put("allenamentiWatch", {
-      ...a,
-      // I numeri si riscrivono sempre: è così che un allenamento importato con
-      // una versione più povera si riempie di distanza, battito, sforzo e
-      // frequenze quando si reimporta.
+      ...unito,
       fonte: "salute",
       importatoIl: new Date().toISOString(),
     });

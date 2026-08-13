@@ -71,13 +71,13 @@ sono compromessi. Il resto si aggira.
 
 ## Blocco 0 — Protezione (prima di ogni altra cosa)
 
-- [ ] **0.1** Backup su file adesso, prima di toccare qualunque cosa.
-- [ ] **0.2** Secondo backup a fine giornata, dopo tutte le correzioni.
-- [ ] **0.3** Verificare che la versione pubblicata sia **esattamente** quella
+- [x] **0.1** Backup su file adesso, prima di toccare qualunque cosa.
+- [x] **0.2** Secondo backup a fine giornata, dopo tutte le correzioni.
+- [x] **0.3** Verificare che la versione pubblicata sia **esattamente** quella
       provata: confronto file per file, byte per byte.
-- [ ] **0.4** **Leva di ritorno alla versione precedente** dal telefono (vedi
+- [x] **0.4** **Leva di ritorno alla versione precedente** dal telefono (vedi
       correzione 2). Da progettare e realizzare oggi.
-- [ ] **0.5** Piano di emergenza scritto: cosa non toccare, come ripristinare dal
+- [x] **0.5** Piano di emergenza scritto: cosa non toccare, come ripristinare dal
       backup, come continuare a registrare gli allenamenti anche ad app rotta.
 
 ## Blocco A — Il fuso orario ⚠️
@@ -797,7 +797,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       fatto», e un evento del coach che non è un allenamento non deve prendere il
       posto di «Riposo». Da provare sul giorno di oggi e su un giorno con un
       promemoria.
-- [ ] **11.J.11** **Copia negli appunti** su iOS installato: se fallisce deve
+- [x] **11.J.11** **Copia negli appunti** su iOS installato: se fallisce deve
       uscire la spiegazione «tieni premuto → Seleziona tutto». Da provare
       davvero, perché è l'unico modo di mandare il pacchetto da lontano.
 - [ ] **11.J.12** **«Salva come file»**: nome `coach-AAAA-MM-GG.md`, e da
@@ -1078,7 +1078,7 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
 È la strada che userai ogni giorno da lontano: se qui si rompe qualcosa, non
 c'è modo di accorgersene se non dal risultato.
 
-- [ ] **11.P.1** ⚠️ **Reimportare con un comando rapido più povero CANCELLA i
+- [x] **11.P.1** ⚠️ **Reimportare con un comando rapido più povero CANCELLA i
       dati dell'orologio.** Nel ciclo degli allenamenti il record vecchio viene
       letto (`const prec = …`) e poi **non usato**: si riscrive `{...a}` intero.
       Il commento accanto promette il contrario («si riempie di distanza,
@@ -1346,6 +1346,14 @@ c'è modo di accorgersene se non dal risultato.
 - [ ] **11.U.11** **Blocco Watch**: sempre tre righe più «Tutti gli
       allenamenti», anche con meno di tre in archivio. Da provare con zero (il
       blocco sparisce del tutto) e con uno solo.
+- [ ] **11.U.13** ⚠️ **«Rifai questo allenamento» non compare mai.** Trovato
+      eseguendo: chiusa una seduta oggi, `bloccoAllenamento` mostra il riquadro
+      col punteggio e **torna subito**, prima di arrivare al ramo che disegna
+      quel tasto. Perché il tasto compaia servirebbe una seduta «completata»
+      **senza** `oraFine`, che l'app non produce. Risultato: dopo un allenamento
+      chiuso, dalla Home e da Oggi non se ne può cominciare un altro lo stesso
+      giorno — l'unica strada è l'indirizzo `#/seduta?programma=1`, che nessuno
+      conosce. Rende inoffensiva la 11.S.16 e contraddice la 11.U.3.
 - [ ] **11.U.12** **Nota del coach sull'evento di oggi**: si vede in Home dentro
       un riquadro. Da provare con un evento che ha una nota lunga.
 
@@ -1802,7 +1810,7 @@ di tutte le tornate.
 Avevo detto che lì non mi aspettavo niente. Sbagliato di nuovo: il primo dei tre
 contiene il difetto con la conseguenza peggiore trovata in tutto il controllo.
 
-- [ ] **13.1** ⚠️⚠️ **Lo strumento sul Mac CANCELLA i dati dell'orologio.**
+- [x] **13.1** ⚠️⚠️ **Lo strumento sul Mac CANCELLA i dati dell'orologio.**
       `tools/salute-da-export.py` scrive righe ALLENAMENTO con **quattro campi
       soli**: `inizio`, `durata`, `kcal`, `tipo`. Il lettore che gira sul telefono
       (`js/salute-export.js`) ne scrive **dodici** — distanza, kcal totali, FC
