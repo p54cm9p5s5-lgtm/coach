@@ -39,10 +39,10 @@ senza che una riga sia stata davvero chiusa.
 | 2 | ! | **11.Q.3** | NON RIPRODOTTO | `data/riscaldamento.json` è dentro gli ASSETS di sw.js, quindi con il service worker attivo c'è anche senza rete; e al primissimo avvio senza rete non si carica nemmeno l'app. Resta il caso teorico del fetch che fallisce per altri motivi, senza ritentativo | 11.Q — `js/store.js`, programma, regole e origine del giorno |
 | 2 |  | **11.U.6** | CORRETTO | stessa correzione di 11.I.3: la riga in fondo al calendario adesso dice quanto sono in ritardo | 11.U — `js/screens/oggi.js` |
 | 3 | ! | **11.AD.1** | CORRETTO | ISTRUZIONI-BRIEF §7: stessa correzione di 12.C.5, sul documento che legge chi scrive il brief | 11.AD — `ISTRUZIONI-BRIEF.md` |
-| 3 | ! | **11.AD.2** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
+| 3 | ! | **11.AD.2** | CORRETTO | le istruzioni dentro l'app non descrivono più solo il comando rapido: adesso dicono che le azioni di Salute possono restare appese e spiegano la strada dell'esportazione, che funziona dal telefono senza computer. Titolo della sezione da «Comandi rapidi» a «Come arrivano i dati» | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 | ! | **11.AD.3** | CORRETTO | ISTRUZIONI-BRIEF §9: la riga «manca barra mentre c'è l'inventario» non era più vera; ora dice che ometterla è lecito | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 | ! | **11.AD.4** | CORRETTO | ISTRUZIONI-BRIEF §6: i giorni con protocollo sono 17, non 5; ed è scritto che i cinque nuovi e il fine settimana non hanno mobilità in riscaldamento né stretching finale | 11.AD — `ISTRUZIONI-BRIEF.md` |
-| 3 |  | **11.AD.5** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
+| 3 |  | **11.AD.5** | NON RIPRODOTTO | rifatto il confronto a macchina: i 38 esercizi della libreria sono tutti e soli quelli elencati nel documento, nessuno in più né in meno | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 |  | **11.AD.6** | CORRETTO | ISTRUZIONI-BRIEF §7: elencate le soglie che esistono e non erano nominate (finestra, sonnoOraLimite, sonnoCostoOraTardi, fumoQuotaMinima, esposizioniPerRiproporre, fotoAncora) | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 | ! | **11.J.1** | CORRETTO | js/export.js: le due frasi che rimandavano ai numeri «trascritti dall'atleta leggendo il quadrante» dicono ora che quel riquadro resta solo sulle sedute vecchie | 11.J — `js/screens/export.js` |
 | 3 | ! | **11.W.3** | CORRETTO | js/export.js: «Misure e indici, solo se aggiornati di recente» → dichiarato che non c'è nessun filtro di recenza e che la data è scritta accanto a ogni valore | 11.W — `js/export.js` |
@@ -58,7 +58,7 @@ senza che una riga sia stata davvero chiusa.
 | 3 |  | **12.B.8** | CORRETTO | SPEC §3.1: `giorni[5]` → 5-7, con sabato e domenica di sola mobilità | 12.B — `SPEC.md` |
 | 3 |  | **12.B.9** | CORRETTO | SPEC §4.4: il comando rapido per la salute non viene più offerto; resta quello del calendario | 12.B — `SPEC.md` |
 | 3 | ! | **12.C.1** | CORRETTO | COME-FUNZIONA §5.6: tolto «qui si copiano i numeri dall'orologio», che contraddiceva il §5.4-bis venti righe sopra | 12.C — `COME-FUNZIONA.md` |
-| 3 |  | **12.C.10** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
+| 3 |  | **12.C.10** | NON RIPRODOTTO | confermato: la scelta sulle sigarette è dichiarata per esteso in COME-FUNZIONA §10. Non è una svista ma una decisione, e resta in §8 come 11.O.3 | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.2** | CORRETTO | COME-FUNZIONA §12: tolta la colonna «cos'era» (il ruolo, rimosso), scritto che l'app non li interpreta e che vanno letti accanto al log | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.3** | CORRETTO | COME-FUNZIONA §12: tolto dal contenuto del pacchetto il riquadro «Letti dall'Apple Watch» trascritto a mano | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.4** | CORRETTO | COME-FUNZIONA §4: i pesi del punteggio Salute ora includono acqua 12 e dicono che le voci assenti ridistribuiscono il peso — combaciano col §6.3 | 12.C — `COME-FUNZIONA.md` |
@@ -67,13 +67,13 @@ senza che una riga sia stata davvero chiusa.
 | 3 |  | **12.C.7** | CORRETTO | COME-FUNZIONA §11: aggiunto il terzo indice, vita/fianchi, con la nota che 0,95 è la soglia maschile | 12.C — `COME-FUNZIONA.md` |
 | 3 |  | **12.C.8** | CORRETTO | COME-FUNZIONA §9: il formato ALLENAMENTO non promette più `uuid` e mostra i campi veri più la riga BATTITO | 12.C — `COME-FUNZIONA.md` |
 | 3 |  | **12.C.9** | CORRETTO | COME-FUNZIONA §14: la misura «zero richieste fuori dal telefono» è datata 13/08/2026, dopo le correzioni | 12.C — `COME-FUNZIONA.md` |
-| 3 |  | **12.D.1** | DA FARE |  | 12.D — Il resto degli strumenti |
-| 3 |  | **12.D.2** | DA FARE |  | 12.D — Il resto degli strumenti |
+| 3 |  | **12.D.1** | NON RIPRODOTTO | `serve.py` ascolta su 127.0.0.1: dal telefono non si raggiunge, ed è giusto così (per il telefono c'è passa-file.py, che lega su 0.0.0.0 con chiave casuale e spegnimento a 10 minuti) | 12.D — Il resto degli strumenti |
+| 3 |  | **12.D.2** | NON RIPRODOTTO | riletti i quattro strumenti pubblicati cercando percorsi personali: l'unico riferimento era il nome del brief in passa-file.py (chiuso come 13.5). `salute-da-export.py` nomina solo la cartella `_privato/`, che è già pubblica come concetto | 12.D — Il resto degli strumenti |
 | 3 | ! | **13.2** | CORRETTO | COME-FUNZIONA: tolto «identico byte per byte», che era falso e verificabile; scritto che lo strumento da computer produce un pacchetto più povero e che ormai non fa danno perché l'import fonde | Blocco 13 — I tre strumenti da computer |
 | 3 | ! | **14.C.1** | CORRETTO | manifest: background_color e theme_color da #08080a (il nero del tema lime) a #000000, il nero di sistema — la schermata d'avvio non impone più il tema scuro alternativo | 14.C — I file piccoli, mai aperti |
-| 3 |  | **14.C.2** | DA FARE |  | 14.C — I file piccoli, mai aperti |
-| 3 |  | **14.C.3** | DA FARE |  | 14.C — I file piccoli, mai aperti |
-| 3 |  | **14.C.4** | DA FARE |  | 14.C — I file piccoli, mai aperti |
+| 3 |  | **14.C.2** | NON RIPRODOTTO | riletto `.gitignore`: copre `_privato/`, i backup, i dati iniziali e `.claude/*` tranne launch.json. La cartella di lavoro del controllo (`_privato/controllo-2026-08/`) è coperta: verificato con `git check-ignore` | 14.C — I file piccoli, mai aperti |
+| 3 |  | **14.C.3** | NON CORREGGO | `robots.txt` è `Disallow: /` ma il repository GitHub resta pubblico e leggibile: il file scoraggia i motori, non protegge niente. È così per scelta e non c'è correzione possibile senza rendere privato il repository — che romperebbe GitHub Pages | 14.C — I file piccoli, mai aperti |
+| 3 |  | **14.C.4** | NON CORREGGO | `orientation: portrait` è voluto: l'app è disegnata per una colonna sola, e i grafici in orizzontale non guadagnerebbero abbastanza da giustificare il rifacimento delle schermate | 14.C — I file piccoli, mai aperti |
 | 4 |  | **11.F.5** | DA FARE |  | 11.F — `js/screens/fumo.js` |
 | 4 | ! | **11.K.3** | DA FARE |  | 11.K — `js/screens/storico.js` |
 | 4 | ! | **11.O.2** | DA FARE |  | 11.O — `js/store.js` |
@@ -403,7 +403,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.Z.6** | DA FARE |  | 11.Z — `js/screens/seduta.js`, quarta tornata |
 | 5 | ! | **13.3** | DA FARE |  | Blocco 13 — I tre strumenti da computer |
 | 5 |  | **13.4** | DA FARE |  | Blocco 13 — I tre strumenti da computer |
-| 5 |  | **13.5** | DA FARE |  | Blocco 13 — I tre strumenti da computer |
+| 5 |  | **13.5** | CORRETTO | `tools/passa-file.py` non contiene più il nome del documento privato: i percorsi arrivano da COACH_DATI e COACH_BRIEF o dalla riga di comando. Provato: senza variabili resta il solo dati.json, con COACH_BRIEF impostato compare il brief | Blocco 13 — I tre strumenti da computer |
 | 5 |  | **13.6** | DA FARE |  | Blocco 13 — I tre strumenti da computer |
 | 5 |  | **13.7** | DA FARE |  | Blocco 13 — I tre strumenti da computer |
 | 5 | ! | **14.A.1** | DA FARE |  | 14.A — `data/riscaldamento.json` |

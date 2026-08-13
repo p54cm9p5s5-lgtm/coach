@@ -1022,7 +1022,7 @@ async function istruzioni() {
   await sheet((close) =>
     h(
       "div",
-      h("h2", "Comandi rapidi"),
+      h("h2", "Come arrivano i dati"),
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
@@ -1085,9 +1085,9 @@ async function istruzioni() {
         h(
           "div.guida",
           { style: "margin:0" },
-          passo(1, "Automazione alle 5:00", "Comandi Rapidi → Automazione → Ora del giorno → 05:00 → esegui «Coach Salute», senza chiedere conferma."),
-          passo(2, "Ultima azione: Copia negli appunti", "Niente esce dal telefono."),
-          passo(3, "Qui: Aggiorna → Incolla", "Se salti dei giorni non perdi niente: la finestra è di 30 giorni e reimportare riscrive senza duplicare.")
+          passo(1, "Se il comando rapido funziona", "Automazione alle 5:00: Comandi Rapidi → Automazione → Ora del giorno → 05:00 → esegui «Coach Salute», senza chiedere conferma. Ultima azione: «Copia negli appunti». Poi qui: Aggiorna → Incolla."),
+          passo(2, "Se resta appeso — e capita", "Le azioni di Salute dentro Comandi Rapidi su alcune versioni di iOS non rispondono. Allora si passa dall'esportazione: Salute → foto profilo → «Esporta tutti i dati» → in File si estrae lo zip → qui: Aggiorna → Importa → «Scegli un file». Legge tutto dal telefono, senza computer."),
+          passo(3, "In tutti e due i casi", "Se salti dei giorni non perdi niente: la finestra è di 30 giorni e reimportare riscrive senza duplicare — e da adesso un pacchetto più povero non cancella più quello che c'era.")
         )
       ),
 
