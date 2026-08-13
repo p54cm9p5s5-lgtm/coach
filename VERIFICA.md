@@ -231,24 +231,24 @@ passato cambiano da soli e non ci si accorge di niente.
       (4 pose, protocollo, confronto, eliminazione).
 - [x] **6.2** Fumo: conteggio, tetto che scende, **irreversibilità dello zero**,
       grafico, «il conteggio riparte da oggi».
-- [ ] **6.3** Acqua (dove è attiva nel brief).
-- [ ] **6.4** Extra: registrazione, «Altro» con testo libero, talk-test,
+- [x] **6.3** Acqua (dove è attiva nel brief).
+- [x] **6.4** Extra: registrazione, «Altro» con testo libero, talk-test,
       eliminazione, tabella nel pacchetto.
-- [ ] **6.5** Storico: elenco, riepilogo di una seduta, dettaglio esercizio,
+- [x] **6.5** Storico: elenco, riepilogo di una seduta, dettaglio esercizio,
       volume per pattern.
-- [ ] **6.6** Impostazioni: brief, versione, suono del timer, obiettivo movimento,
+- [x] **6.6** Impostazioni: brief, versione, suono del timer, obiettivo movimento,
       tema, inventario, calendario, archivio, backup.
 
 ## Blocco 7 — Trasversali
 
-- [ ] **7.1** Offline: tutte le schermate a rete staccata, e copia locale completa.
-- [ ] **7.2** Aggiornamento: non entra durante una seduta, entra uscendo.
-- [ ] **7.3** Riavvio del telefono e app chiusa/riaperta a metà seduta.
-- [ ] **7.4** Tema chiaro e scuro, contrasti sui pezzi nuovi.
-- [ ] **7.5** Dati lunghi: 300 allenamenti, un anno di salute, molte foto.
-- [ ] **7.6** Testo ingrandito e VoiceOver sui controlli nuovi.
-- [ ] **7.7** Nessuno sbordo orizzontale su nessuna schermata.
-- [ ] **7.8** Niente `undefined`, `NaN`, «Invalid Date» in nessuna schermata.
+- [x] **7.1** Offline: tutte le schermate a rete staccata, e copia locale completa.
+- [x] **7.2** Aggiornamento: non entra durante una seduta, entra uscendo.
+- [x] **7.3** Riavvio del telefono e app chiusa/riaperta a metà seduta.
+- [x] **7.4** Tema chiaro e scuro, contrasti sui pezzi nuovi.
+- [x] **7.5** Dati lunghi: 300 allenamenti, un anno di salute, molte foto.
+- [x] **7.6** Testo ingrandito e VoiceOver sui controlli nuovi.
+- [x] **7.7** Nessuno sbordo orizzontale su nessuna schermata.
+- [x] **7.8** Niente `undefined`, `NaN`, «Invalid Date» in nessuna schermata.
 
 ## Blocco 8 — Solo sul telefono, prima di partire
 
