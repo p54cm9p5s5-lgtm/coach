@@ -167,6 +167,45 @@ export async function putMany(store, values) {
   return values;
 }
 
+/**
+ * Cancella righe da più archivi in **una sola transazione**: o spariscono
+ * tutte o non ne sparisce nessuna.
+ *
+ * Serve dove una cancellazione a metà lascia l'archivio in uno stato che non
+ * è mai esistito — annullare un allenamento, per esempio: cancellando serie e
+ * questionari uno per uno, un'interruzione a metà lasciava la seduta al suo
+ * posto con tre serie su cinque.
+ *
+ * @param gruppi { nomeArchivio: [chiavi...] }
+ */
+export async function delMulti(gruppi) {
+  const nomi = Object.keys(gruppi).filter((n) => (gruppi[n] || []).length);
+  if (!nomi.length) return 0;
+  const db = await open();
+  const { t, done } = tx(db, nomi, "readwrite");
+  let quante = 0;
+  try {
+    for (const nome of nomi) {
+      const os = t.objectStore(nome);
+      for (const k of gruppi[nome]) {
+        os.delete(k);
+        quante++;
+      }
+    }
+  } catch (e) {
+    // Senza abort esplicito la transazione si chiuderebbe da sola applicando
+    // le cancellazioni già accodate: esattamente il caso a metà da evitare.
+    try {
+      t.abort();
+    } catch {
+      /* già annullata */
+    }
+    throw e;
+  }
+  await done;
+  return quante;
+}
+
 export async function del(store, key) {
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
