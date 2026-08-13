@@ -1152,7 +1152,7 @@ c'è modo di accorgersene se non dal risultato.
       schermata della proposta usa quella del programma **vecchio**: serie e
       range mostrati non sono quelli su cui la proposta è stata decisa. Da
       provare con un brief a due programmi.
-- [ ] **11.Q.2** ⚠️ **Le regole si fondono a un livello solo.** `regole()` unisce
+- [x] **11.Q.2** ⚠️ **Le regole si fondono a un livello solo.** `regole()` unisce
       `salute` con la base, ma se il brief scrive `salute.pesi` con **una** voce,
       l'intero blocco dei pesi viene sostituito e tutte le altre voci del
       punteggio spariscono. È lo stesso difetto che il commento dice di aver
@@ -1164,10 +1164,10 @@ c'è modo di accorgersene se non dal risultato.
       `null`, e di conseguenza `previstoStretching` è falso e i giorni di sola
       mobilità non vengono riconosciuti. Da provare installando l'app e
       aprendola la prima volta in aereo.
-- [ ] **11.Q.4** ⚠️ **`INIZIO_STORIA = "2026-07-29"` è scritta nel codice**, ed è
+- [x] **11.Q.4** ⚠️ **`INIZIO_STORIA = "2026-07-29"` è scritta nel codice**, ed è
       una data personale. Da verificare che valga anche per il secondo profilo, o
       che il pavimento «più indietro dei due» basti a coprirlo.
-- [ ] **11.Q.5** **Correzione a 11.A.8**: il peso `acqua: 12` **c'è** fra i pesi
+- [x] **11.Q.5** **Correzione a 11.A.8**: il peso `acqua: 12` **c'è** fra i pesi
       di base (`store.js:430`) e combacia con il valore predefinito in
       `punteggio.js`. La voce era mia e non regge. Resta da verificare che le due
       liste restino allineate se una delle due cambia.
@@ -1180,12 +1180,12 @@ c'è modo di accorgersene se non dal risultato.
 - [x] **11.Q.7** **Con il calendario attivo e scaduto, `giornoPrevisto` torna
       `null`**: nessun allenamento proposto, per tutti i giorni oltre la
       copertura. Conferma diretta della 11.P.3.
-- [ ] **11.Q.8** **Ricaricare lo stesso brief non deve annullare le proposte
+- [x] **11.Q.8** **Ricaricare lo stesso brief non deve annullare le proposte
       accettate**: `caricatoIl` cambia solo se cambia davvero il contenuto
       tecnico. Da provare ricaricando due volte lo stesso file.
-- [ ] **11.Q.9** **Esercizi non più previsti**: archiviati, mai cancellati. Da
+- [x] **11.Q.9** **Esercizi non più previsti**: archiviati, mai cancellati. Da
       verificare che lo storico resti raggiungibile (vedi 11.K.2, dove non lo è).
-- [ ] **11.Q.10** **`sitiDolore` dal brief**: se il brief non li dichiara resta
+- [x] **11.Q.10** **`sitiDolore` dal brief**: se il brief non li dichiara resta
       il polso destro. Da verificare quali punti dolenti sono dichiarati nei due
       brief e che le domande a fine esercizio corrispondano.
 

@@ -4,7 +4,7 @@ import * as db from "./db.js";
 import { isoDate, weekdayOf, giorniTra, dataBreve, num, durataUmana, parseIso } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
 import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni } from "./segnali.js";
-import { punteggioEsercizio, punteggioAllenamento, doloriDi } from "./punteggio.js";
+import { punteggioEsercizio, punteggioAllenamento, doloriDi, PESI_SALUTE_BASE } from "./punteggio.js";
 
 let LIBRERIA = null;
 let PROGRAMMA = null;
@@ -205,6 +205,25 @@ export async function inventario() {
 
 // ---------- programma ----------
 
+/* Due brief con lo stesso contenuto tecnico devono avere la stessa firma anche
+   se le voci sono scritte in un altro ordine. Con il confronto testuale secco
+   bastava riscrivere il documento mettendo «serie» prima di «carico» perche
+   l'app lo prendesse per un programma nuovo: e un programma nuovo scarta tutte
+   le proposte accettate prima. Qui le chiavi si ordinano sempre allo stesso
+   modo, cosi conta quello che c'e scritto, non come e disposto. */
+function firmaTecnica(valore) {
+  const ordina = (v) => {
+    if (Array.isArray(v)) return v.map(ordina);
+    if (v && typeof v === "object") {
+      const out = {};
+      for (const k of Object.keys(v).sort()) out[k] = ordina(v[k]);
+      return out;
+    }
+    return v;
+  };
+  return JSON.stringify(ordina(valore));
+}
+
 export async function applicaBrief(dati) {
   const precedente = PROGRAMMA;
   const record = {
@@ -216,8 +235,8 @@ export async function applicaBrief(dati) {
     // accettate, che vengono scartate se più vecchie del brief in vigore.
     caricatoIl:
       precedente &&
-      JSON.stringify([precedente.split, precedente.regole, precedente.inventario]) ===
-        JSON.stringify([dati.split || [], dati.regole || {}, dati.inventario || INVENTARIO_DEFAULT])
+      firmaTecnica([precedente.split, precedente.regole, precedente.inventario]) ===
+        firmaTecnica([dati.split || [], dati.regole || {}, dati.inventario || INVENTARIO_DEFAULT])
         ? precedente.caricatoIl
         : new Date().toISOString(),
     atleta: dati.atleta || {},
@@ -303,9 +322,20 @@ export const INIZIO_STORIA = "2026-07-29";
  * comincia prima di quella data — un altro profilo, un altro atleta — comanda
  * l'archivio.
  */
+export function inizioDichiarato() {
+  const p = programma();
+  const d = p?.atleta?.dal || p?.regole?.inizioStoria || null;
+  return typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+}
+
 export async function inizioStoria() {
+  // Il pavimento scritto nel codice e la data in cui e cominciata QUESTA storia.
+  // Un secondo profilo comincia un altro giorno, e senza poterlo dire si
+  // porterebbe dentro settimane di dati precedenti al suo programma. Basta che
+  // il brief scriva «atleta.dal»: quello vince sul pavimento di partenza.
+  const pavimento = inizioDichiarato() || INIZIO_STORIA;
   const dai = await inizioProgramma();
-  return dai && dai < INIZIO_STORIA ? dai : INIZIO_STORIA;
+  return dai && dai < pavimento ? dai : pavimento;
 }
 
 export async function inizioProgramma() {
@@ -423,16 +453,7 @@ const REGOLE_BASE = {
     // Sette voci, nessuna capace di decidere da sola: con poche voci il
     // punteggio finiva a coincidere con quello dell'allenamento, che è una
     // cosa diversa. I pesi sono dichiarati qui, non nascosti nel codice.
-    pesi: {
-      sonno: 22,
-      allenamento: 22,
-      fumo: 20,
-      movimento: 12,
-      passi: 10,
-      esercizio: 8,
-      inPiedi: 6,
-      acqua: 12,
-    },
+    pesi: { ...PESI_SALUTE_BASE },
     sonnoOreBersaglio: 8,
     sonnoOreMinime: 6,
     // L'ora in cui vai a letto conta quanto la durata, e da sola: a letto entro
@@ -491,6 +512,17 @@ export function regole() {
   // Un brief può scrivere una soglia come numero invece che come oggetto: senza
   // questa rete ogni schermata che chiama regole() esploderebbe e l'app
   // resterebbe utilizzabile solo dalle Impostazioni.
+  // La fusione qui sopra e a un livello solo: un brief che scrive
+  // «salute.pesi» con una voce sostituirebbe l'intero blocco dei pesi e
+  // farebbe sparire tutte le altre. I pesi sono l'unica famiglia annidata,
+  // e si fondono voce per voce come tutto il resto.
+  if (fuse.salute && typeof fuse.salute === "object" && !Array.isArray(fuse.salute)) {
+    const p = fuse.salute.pesi;
+    fuse.salute = {
+      ...fuse.salute,
+      pesi: { ...REGOLE_BASE.salute.pesi, ...(p && typeof p === "object" && !Array.isArray(p) ? p : {}) },
+    };
+  }
   for (const [chiave, base] of Object.entries(REGOLE_BASE)) {
     if (!fuse[chiave] || typeof fuse[chiave] !== "object" || Array.isArray(fuse[chiave])) {
       fuse[chiave] = { ...base };
