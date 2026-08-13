@@ -438,7 +438,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       (unico punto dell'app che ricarica la pagina invece di ridisegnare). Da
       verificare che dopo il ricaricamento si torni davvero su Corpo e che una
       seduta aperta resti aperta.
-- [ ] **11.B.5** **Solo gli ultimi 4 set** di foto sono mostrati
+- [x] **11.B.5** **Solo gli ultimi 4 set** di foto sono mostrati
       (`set.slice(0, 4)`), senza nessun «vedi tutti». Da verificare che i set più
       vecchi ci siano ancora nell'archivio e nel backup, e che nessuno li creda
       persi.
@@ -461,7 +461,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       misura togliendo una condizione e guardare la variazione mostrata.
 - [x] **11.B.10** **Il verso della variazione** (`caloBuono`): per il peso e la
       vita scendere è verde, per le altre no. Da verificare misura per misura.
-- [ ] **11.B.11** **Misure di giorni diversi**: la nota `quando(id)` avvisa
+- [x] **11.B.11** **Misure di giorni diversi**: la nota `quando(id)` avvisa
       quando i numeri messi a confronto non sono dello stesso giorno. Da provare
       con misure registrate in due giorni.
 - [ ] **11.B.12** **«I valori partono dall'ultima volta»** è scritto anche la
