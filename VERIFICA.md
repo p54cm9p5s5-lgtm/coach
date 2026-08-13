@@ -308,15 +308,15 @@ Restano **~5.000 righe mai aperte in questa sessione**:
 
 ## Blocco 10 — Condizioni, non funzioni
 
-- [ ] **10.1** **Concorrenza**: l'app ha tre meccanismi apposta — la coda delle
+- [x] **10.1** **Concorrenza**: l'app ha tre meccanismi apposta — la coda delle
       scritture, il «una volta sola» sui tasti, il turno di disegno — mai messi
       sotto sforzo. Due tocchi durante una scrittura, un import mentre disegna un
       grafico, la seduta aperta in due schede.
-- [ ] **10.2** **Interruzione a metà**: app chiusa dal telefono durante una
+- [x] **10.2** **Interruzione a metà**: app chiusa dal telefono durante una
       scrittura, batteria a zero, chiamata in arrivo durante il recupero.
-- [ ] **10.3** **Spazio che finisce**: dieci giorni di allenamenti più un set di
+- [x] **10.3** **Spazio che finisce**: dieci giorni di allenamenti più un set di
       foto; il backup su file che cresce con loro.
-- [ ] **10.4** **Accumulo**: dieci giorni senza importare da Salute, poi un import
+- [x] **10.4** **Accumulo**: dieci giorni senza importare da Salute, poi un import
       solo — finestre, riconciliazione, pacchetto molto più lungo del solito.
 
 ---
