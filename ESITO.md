@@ -175,15 +175,15 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.C.7** | NON RIPRODOTTO | verificato dove nasce la chiusura: c'e un solo `pointerdown`, ed e sullo sfondo scuro, con la variabile `partitoDaSfondo` che ricorda **dove il tocco e cominciato**. Il commento nel codice dice perche: «un secondo tocco rapido su un pulsante che nel frattempo si e spostato finisce sullo sfondo e chiude il pannello». La prova a schermo e quella di 11.C.8: il trascinamento partito da dentro non chiude | 11.C — `js/ui.js` |
 | 5 |  | **11.C.8** | NON RIPRODOTTO | provate le tre strade, con la sequenza vera dei tocchi e non un click sintetico. Tocco **dentro** il pannello: resta aperto. Tocco che **comincia sullo sfondo**: chiude. Tocco che **comincia dentro e finisce fuori** — cioè un trascinamento partito da un campo o da un elenco — **non chiude**: è la protezione che serve quando si scorre una lista lunga e il dito esce dal pannello | 11.C — `js/ui.js` |
 | 5 |  | **11.C.9** | NON RIPRODOTTO | provato mandando l'app in secondo piano e riportandola davanti, contando le richieste vere di wake lock: **fuori dalla seduta zero richieste**, dentro la seduta la richiesta parte. La condizione e la presenza di `.session` in pagina, quindi lo schermo resta acceso solo dove serve — durante l'allenamento — e non in Home o nelle Impostazioni. `rilasciaSchermo()` e chiamato in quattro punti di uscita dalla seduta (fine, chiusura, annullamento, uscita) | 11.C — `js/ui.js` |
-| 5 | ! | **11.D.1** | DA FARE |  | 11.D — `js/db.js` |
+| 5 | ! | **11.D.1** | NON RIPRODOTTO | la versione del formato di backup e `VERSIONE_BACKUP = 1` e viene scritta davvero nei file esportati (verificato leggendo un export vero: `versione: 1`). Non e mai salita perche il formato non e mai cambiato in modo incompatibile - il che e la ragione giusta. Il lettore la controlla: un file dichiarato versione 9 viene rifiutato senza toccare niente (provato in 2.2) | 11.D — `js/db.js` |
 | 5 |  | **11.D.2** | DA FARE |  | 11.D — `js/db.js` |
 | 5 |  | **11.D.3** | DA FARE |  | 11.D — `js/db.js` |
 | 5 |  | **11.D.4** | DA FARE |  | 11.D — `js/db.js` |
 | 5 |  | **11.D.5** | DA FARE |  | 11.D — `js/db.js` |
 | 5 |  | **11.D.6** | DA FARE |  | 11.D — `js/db.js` |
-| 5 |  | **11.D.7** | DA FARE |  | 11.D — `js/db.js` |
+| 5 |  | **11.D.7** | CORRETTO | **difetto trovato e corretto.** Il contatore ciclava ogni mille dentro lo stesso millisecondo: su **5.000 id generati in raffica ne uscivano 4.862 diversi**, cioe 138 ripetuti. Un id ripetuto non da errore - **sovrascrive** il record che c'era, in silenzio. Non capita registrando una serie alla volta, ma capita dove i record nascono a pacchetti. Ora il contatore si azzera solo quando cambia il millisecondo e non cicla mai: provati **50.000 id di fila, tutti diversi**, e restano ordinabili nel tempo (un id generato dopo e sempre maggiore) | 11.D — `js/db.js` |
 | 5 |  | **11.D.8** | DA FARE |  | 11.D — `js/db.js` |
-| 5 |  | **11.D.9** | DA FARE |  | 11.D — `js/db.js` |
+| 5 |  | **11.D.9** | NON RIPRODOTTO | `esportaTutto({salta})` funziona: chiamato senza argomenti porta le 3 foto in archivio, chiamato con `salta: ['foto']` ne porta zero. E il meccanismo che tiene leggera la copia interna automatica - senza, ogni fine allenamento avrebbe riletto e riscritto tutte le foto a piena risoluzione (vedi 10.3) | 11.D — `js/db.js` |
 | 5 | ! | **11.E.1** | DA FARE |  | 11.E — `js/segnali.js` |
 | 5 |  | **11.E.10** | DA FARE |  | 11.E — `js/segnali.js` |
 | 5 |  | **11.E.11** | DA FARE |  | 11.E — `js/segnali.js` |
