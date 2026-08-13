@@ -645,7 +645,30 @@ const luminanza = ([r, g, b]) => {
 };
 
 /**
- * Gli stessi colori, visibili sul bianco.
+ * Il fondo su cui questi numeri stanno davvero, nel tema chiaro.
+ *
+ * Non è il bianco: i numeri stanno dentro le schede, che sono un grigio
+ * appena accennato. Mirare al bianco lasciava i numeri piccoli a 3,65:1 —
+ * sotto la soglia — mentre il conto diceva 4,5. Si legge la variabile del
+ * tema, e se per qualsiasi motivo non si può leggere si ripiega su un bianco
+ * un po' più scuro del vero, che è l'errore dalla parte giusta.
+ */
+function fondoDelleSchede() {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue("--bg-grouped").trim();
+    const n = (v.match(/[\d.]+/g) || []).map(Number);
+    if (n.length >= 3) {
+      const scala = /color\(srgb/.test(v) ? 255 : 1;
+      return luminanza([n[0] * scala, n[1] * scala, n[2] * scala]);
+    }
+  } catch {
+    /* nessun DOM, o variabile assente: si usa il ripiego qui sotto */
+  }
+  return luminanza([242, 242, 247]);
+}
+
+/**
+ * Gli stessi colori, visibili sul fondo chiaro.
  *
  * La scala qui sopra è un dato e non cambia: quello che cambia è solo quanto è
  * chiaro il colore, perché il giallo e il lime sul bianco danno 2:1 e il numero
@@ -653,7 +676,13 @@ const luminanza = ([r, g, b]) => {
  * — e questo vale solo dove il fondo è chiaro davvero.
  */
 function visibileSulBianco(rgb) {
-  const contrasto = (c) => (1.05) / (luminanza(c) + 0.05);
+  // Il velo della pastiglia. Questi numeri stanno spesso dentro una `pill`,
+  // che ha un fondo della stessa tinta al 16%: il fondo vero sotto il testo è
+  // più scuro della scheda, e mirare alla scheda lasciava il numero a 4,03:1
+  // invece dei 4,5 che il conto prometteva. Si mira un po' più in basso, che
+  // è l'errore dalla parte giusta anche dove la pastiglia non c'è.
+  const fondo = fondoDelleSchede() * 0.85 + 0.05;
+  const contrasto = (c) => fondo / (luminanza(c) + 0.05);
   if (contrasto(rgb) >= 4.5) return rgb;
   let basso = 0;
   let alto = 1;
