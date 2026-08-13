@@ -584,7 +584,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
       un esercizio con tecnica 6 fatto due mesi fa e mai più ripetuto continua a
       generare la proposta di scarico come se fosse di ieri. Da provare con un
       esercizio fermo da tanto.
-- [ ] **11.E.4** ⚠️ **Ogni segnale è timbrato con la data di oggi**
+- [x] **11.E.4** ⚠️ **Ogni segnale è timbrato con la data di oggi**
       (`agg` mette `data: oggi`). Ricalcolare aggiorna il segnale invece di
       duplicarlo — che è giusto — ma nel pacchetto per il coach un segnale nato
       tre settimane fa si presenta con la data di oggi. Da verificare cosa legge
@@ -602,7 +602,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
       (`esposizioniMinime`, `rpePerSalire`, `tecnicaMinima`, `tecnicaRiduzione`).
       Da verificare che i numeri nelle frasi delle quattro domande siano quelli
       del brief in vigore, per lui **e per lei** (i due brief possono differire).
-- [ ] **11.E.9** **Ordine delle esposizioni**: tutto il file dà per scontato che
+- [x] **11.E.9** **Ordine delle esposizioni**: tutto il file dà per scontato che
       `esposizioniPerEsercizio` e `allenamenti` siano ordinati dal più recente.
       Da verificare in `store.js` che sia vero anche dopo un ripristino da
       backup.
@@ -611,7 +611,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
 - [ ] **11.E.11** **Dolore**: due sedute con lo stesso punto dolente su quattro
       generano un segnale per **punto**, non uno cumulativo; e qualunque dolore
       recente blocca ogni progressione su quell'esercizio.
-- [ ] **11.E.12** **Cardio fuori protocollo** e **inversione di intensità**: le
+- [x] **11.E.12** **Cardio fuori protocollo** e **inversione di intensità**: le
       soglie km/h vengono dal brief. Ora che il cardio si può **rimandare**, da
       verificare che un cardio rimandato e mai fatto non entri in questi conti
       come se fosse stato fatto a zero.

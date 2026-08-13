@@ -663,6 +663,14 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
 
 ### Difetti confermati che ho scelto di non correggere
 
+- **11.E.4 — i segnali portano la data di oggi, non quella del fatto.** Ogni
+  segnale nasce timbrato con il giorno in cui è stato calcolato: il motore è
+  senza memoria e ogni giro riparte dai dati. Il fatto vero si legge lo stesso
+  nel testo («in 2 degli ultimi 4 allenamenti») e nei riferimenti alle sedute
+  che il segnale porta con sé. Dargli una data «vera» vorrebbe dire dare ai
+  segnali una memoria che oggi non hanno — un pezzo di motore nuovo, più
+  rischio che beneficio a due giorni dalla partenza.
+
 - **11.P.4 — l'importazione da Salute non è una transazione** (8 scritture
   separate). Racchiuderle in una sola richiede di riscrivere `importaSalute`:
   IndexedDB chiude la transazione al primo `await` senza operazioni, e in mezzo
