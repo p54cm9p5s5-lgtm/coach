@@ -860,9 +860,18 @@ export async function annullaSeduta(id) {
   invalidaCacheSedute();
   const serie = await db.byIndex("serie", "sedutaId", id);
   const logs = await db.byIndex("esercizioLog", "sedutaId", id);
-  for (const r of serie) await db.del("serie", r.id);
-  for (const r of logs) await db.del("esercizioLog", r.id);
-  await db.del("sedute", id);
+  // Tutto in una transazione sola: o sparisce tutto o non sparisce niente.
+  //
+  // Cancellando uno per uno, un'interruzione a metà lasciava la seduta al suo
+  // posto **senza una parte delle sue serie** — un allenamento che dice di
+  // avere fatto tre serie invece di cinque, e nessuno se ne accorge. È il
+  // tasto che si tocca quando si apre una seduta per sbaglio, quindi si usa
+  // di fretta.
+  await db.delMulti({
+    serie: serie.map((r) => r.id),
+    esercizioLog: logs.map((r) => r.id),
+    sedute: [id],
+  });
 }
 
 // ---------- serie ----------

@@ -1064,7 +1064,7 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
 - [ ] **11.O.9** **«Carico di lavoro» = l'ultima serie**, non il massimo né la
       media. Da verificare che sia la definizione voluta anche quando l'ultima
       serie è più leggera (scalata).
-- [ ] **11.O.10** **`annullaSeduta` cancella serie, questionari e seduta uno per
+- [x] **11.O.10** **`annullaSeduta` cancella serie, questionari e seduta uno per
       uno**, fuori da una transazione: un'interruzione a metà lascia serie
       orfane. Da provare (è il tasto che si usa quando si apre per sbaglio).
 - [ ] **11.O.11** **Cache delle sedute di 1,5 secondi**: si invalida a ogni
