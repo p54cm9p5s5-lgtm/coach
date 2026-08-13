@@ -128,6 +128,24 @@ if [ -n "$FUORI_LISTA" ]; then
 fi
 
 echo "Lista bianca: nessun file estraneo all'app."
+
+# --- 5. nessun file dell'app fuori dalla copia locale ------------------------
+# L'elenco dentro sw.js è quello che il telefono si porta dietro per funzionare
+# senza rete. Un file nuovo che non entra lì continua a funzionare online — la
+# rete lo va a prendere — e sparisce solo in palestra, dove il campo non c'è:
+# il posto peggiore per accorgersene. È già successo con la sezione degli
+# allenamenti dell'orologio, aggiunta e non elencata.
+MANCANTI=""
+for f in $(echo "$DA_PUBBLICARE" | grep -E '^(js|css|data)/.*\.(js|css|json)$'); do
+  grep -q "\"\./$f\"" sw.js || MANCANTI="$MANCANTI $f"
+done
+if [ -n "$MANCANTI" ]; then
+  echo "  file dell'app non elencati in sw.js:"
+  for f in $MANCANTI; do echo "    $f"; done
+  errore "Questi file non entrerebbero nella copia locale: senza rete l'app non li troverebbe. Aggiungili all'elenco in sw.js."
+fi
+echo "Copia locale: tutti i file dell'app sono elencati in sw.js."
+
 echo "Controlli superati: nessun dato personale fra i file da pubblicare."
 
 # --- documentazione rimasta indietro (avviso, non blocco) ---------------------
