@@ -1028,7 +1028,7 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
       `giornoPrevisto(data)`, cioè **lo split di oggi**. Se il coach cambia il
       programma, i punteggi Salute di giugno cambiano da soli. Da decidere se è
       voluto (in Home c'è un grafico che li mostra).
-- [ ] **11.O.3** ⚠️ **Un giorno non contato vale zero sigarette e prende punti
+- [x] **11.O.3** ⚠️ **Un giorno non contato vale zero sigarette e prende punti
       pieni — e la scelta è dichiarata.** `punteggiSalute` fa
       `fumate.get(data) ?? 0`, la schermata Fumo fa `conteggi.get(data) || 0`, il
       pacchetto del coach pure, e in `screens/salute.js:30` c'è scritto per
@@ -1061,22 +1061,22 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
       `tsFineSerie`; se manca, il confronto dà `NaN` e l'ordine diventa
       imprevedibile. Da verificare se in archivio esistono serie senza orario
       (dati vecchi o backup scritti a mano).
-- [ ] **11.O.9** **«Carico di lavoro» = l'ultima serie**, non il massimo né la
+- [x] **11.O.9** **«Carico di lavoro» = l'ultima serie**, non il massimo né la
       media. Da verificare che sia la definizione voluta anche quando l'ultima
       serie è più leggera (scalata).
 - [x] **11.O.10** **`annullaSeduta` cancella serie, questionari e seduta uno per
       uno**, fuori da una transazione: un'interruzione a metà lascia serie
       orfane. Da provare (è il tasto che si usa quando si apre per sbaglio).
-- [ ] **11.O.11** **Cache delle sedute di 1,5 secondi**: si invalida a ogni
+- [x] **11.O.11** **Cache delle sedute di 1,5 secondi**: si invalida a ogni
       scrittura che passa da `aggiornaSeduta`. Da verificare che ogni scrittura
       diretta su `sedute` la invalidi davvero.
 - [x] **11.O.12** **Doppio avvio di una seduta**: c'è la coda. Da provare
       toccando due volte «Inizia» in un istante.
-- [ ] **11.O.13** **Le soglie del cardio si congelano alla partenza**
+- [x] **11.O.13** **Le soglie del cardio si congelano alla partenza**
       (`cardio.soglie`), l'elenco degli esercizi anche (`previstiElenco`). Da
       verificare che il riepilogo di una seduta vecchia non cambi cambiando il
       brief.
-- [ ] **11.O.14** **`conNomeDelGiorno`**: una seduta senza nome non deve mai
+- [x] **11.O.14** **`conNomeDelGiorno`**: una seduta senza nome non deve mai
       scrivere «undefined». Da provare su una seduta ripristinata da un backup
       vecchio.
 
