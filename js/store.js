@@ -2070,7 +2070,14 @@ export async function importaSalute(pacchetto) {
     const prec = await db.get("allenamentiWatch", a.uuid);
     await db.put("allenamentiWatch", {
       ...a,
-      sedutaId: prec?.sedutaId ?? null, // il collegamento a una seduta non si perde
+      // Quello che ha deciso l'atleta non lo riscrive un import: il
+      // collegamento a una seduta, il ruolo scelto a mano e il fatto stesso di
+      // averlo scelto. I NUMERI invece sì, e devono: è così che gli
+      // allenamenti importati con una versione più povera si riempiono di
+      // distanza, battito e frequenze quando si reimporta.
+      sedutaId: prec?.sedutaId ?? null,
+      ruolo: prec?.ruolo ?? null,
+      ruoloDeciso: prec?.ruoloDeciso ?? false,
       fonte: "salute",
       importatoIl: new Date().toISOString(),
     });

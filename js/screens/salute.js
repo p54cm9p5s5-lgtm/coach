@@ -504,6 +504,32 @@ export async function render({ ridisegna }) {
     );
   }
 
+  // Gli allenamenti dell'orologio stanno qui, subito dopo il movimento: sono
+  // la stessa domanda («cosa ho fatto con il corpo in questi giorni»), solo
+  // guardata per allenamento invece che per giornata. In fondo alla schermata,
+  // dopo le finestre dati e la manutenzione, non li trovava nessuno.
+  if (daWatch) {
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h(
+          "div.list",
+          h(
+            "a.row",
+            { href: "#/allenamenti" },
+            h(
+              "div.main",
+              h("span.title", "Watch"),
+              h("span.sub", "gli allenamenti che l'orologio registra da solo, giorno per giorno")
+            ),
+            h("span.value", String(daWatch)),
+            h("span.chevron", "›")
+          )
+        )
+      )
+    );
+  }
+
   aggiungi(wrap,
     h(
       "div.group",
@@ -536,20 +562,6 @@ export async function render({ ridisegna }) {
           "a.row",
           { href: "#/storico" },
           h("div.main", h("span.title", "Storico"), h("span.sub", "allenamenti, volumi e andamento per esercizio")),
-          h("span.chevron", "›")
-        ),
-        // Gli allenamenti che l'orologio registra da solo: erano otto righe in
-        // fondo a questa schermata, senza dire che ce n'erano altre e senza
-        // potersi aprire. Adesso hanno una sezione loro, per giorno.
-        h(
-          "a.row",
-          { href: "#/allenamenti" },
-          h(
-            "div.main",
-            h("span.title", "Allenamenti dal Watch"),
-            h("span.sub", daWatch ? `${daWatch} registrati dall'orologio, giorno per giorno` : "quelli che l'orologio registra da solo")
-          ),
-          daWatch ? h("span.value", String(daWatch)) : null,
           h("span.chevron", "›")
         )
       )
