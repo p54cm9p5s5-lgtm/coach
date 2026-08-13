@@ -648,7 +648,10 @@ export function bloccoExtra(righe, { talkTest = [], oggi = isoDate() } = {}) {
  * L'intestazione dice a chiare lettere da dove vengono: sono misure
  * dell'orologio, non stime dell'app né numeri scritti a mano.
  */
-export function bloccoWatch(allenamenti, { giorni = 7, nomeSeduta = null } = {}) {
+// `nomeSeduta` non c'è più: era un parametro che questa funzione riceveva e
+// non usava da quando i ruoli sono spariti. Chi la chiamava costruiva una
+// mappa di tutte le sedute solo per passarglielo.
+export function bloccoWatch(allenamenti, { giorni = 7 } = {}) {
   // Questa tabella esiste solo se il pacchetto di Salute porta righe
   // ALLENAMENTO. Molti Comandi Rapidi non le mandano — l'Apple Watch non
   // espone i suoi allenamenti a Comandi — e in quel caso la strada è

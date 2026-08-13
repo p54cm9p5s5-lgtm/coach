@@ -797,10 +797,10 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       quale periodo sta guardando.
 - [ ] **11.J.8** **Watch tagliato a 20 righe**, con la frase che dice quanti ne
       restano fuori. Da provare con più di 20 allenamenti in 7 giorni.
-- [ ] **11.J.9** **`nomeSeduta` è un parametro morto**: `bloccoWatch` non lo usa
+- [x] **11.J.9** **`nomeSeduta` è un parametro morto**: `bloccoWatch` non lo usa
       più da quando i ruoli sono spariti, ma la schermata continua a passarlo.
       Da togliere.
-- [ ] **11.J.10** **Riga «Tipo giorno»**: oggi non deve mai risultare «non
+- [x] **11.J.10** **Riga «Tipo giorno»**: oggi non deve mai risultare «non
       fatto», e un evento del coach che non è un allenamento non deve prendere il
       posto di «Riposo». Da provare sul giorno di oggi e su un giorno con un
       promemoria.
@@ -811,7 +811,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       verificare dove finisce su iPhone (e che si possa allegare in chat).
 - [ ] **11.J.13** **Un blocco che esplode** non deve lasciare «Sto
       ricomponendo…» per sempre: c'è la rete, va provata togliendo una sezione.
-- [ ] **11.J.14** **Spunte di profilo**: Fumo e Acqua non devono comparire
+- [x] **11.J.14** **Spunte di profilo**: Fumo e Acqua non devono comparire
       nell'elenco per chi non le conta. Da verificare su **tutti e due** i
       profili.
 

@@ -277,7 +277,13 @@ async function componi(stato) {
       const previsto = store.giornoPrevisto(data);
       // Un giorno non ancora finito non è «non fatto»: il controllo di oggi
       // deve venire PRIMA, altrimenti l'allenamento di stasera risulta saltato.
-      if (data >= isoDate()) return previsto ? `Oggi (previsto ${previsto.nome})` : "Oggi";
+      //
+      // Oggi e domani però non sono la stessa cosa. Con `>=` ogni data futura
+      // si chiamava «Oggi», e in una tabella con dei giorni avanti — capita se
+      // un pacchetto arriva con date sbagliate o da un altro fuso — il coach
+      // leggeva «Oggi» su sei righe diverse.
+      if (data === isoDate()) return previsto ? `Oggi (previsto ${previsto.nome})` : "Oggi";
+      if (data > isoDate()) return previsto ? `In programma: ${previsto.nome}` : "Giorno futuro";
       if (previsto) return `Non fatto (era previsto ${previsto.nome})`;
       const org = store.origineGiorno(data);
       // Un evento in calendario che non è un allenamento — un promemoria per la
@@ -325,8 +331,7 @@ async function componi(stato) {
     const watch = (await store.db.all("allenamentiWatch"))
       .filter((a) => a.data >= daQuando)
       .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : (b.inizio || "").localeCompare(a.inizio || "")));
-    const perId = new Map((await store.allenamenti()).map((s) => [s.id, s.tipoNome]));
-    const bloccoW = bloccoWatch(watch, { giorni: GIORNI_WATCH, nomeSeduta: (id) => perId.get(id) || "sì" });
+    const bloccoW = bloccoWatch(watch, { giorni: GIORNI_WATCH });
     if (bloccoW) {
       pezzi.push(bloccoW);
       contenuto.push(`${watch.length} ${watch.length === 1 ? "allenamento" : "allenamenti"} dal Watch`);
