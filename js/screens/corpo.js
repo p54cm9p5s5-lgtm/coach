@@ -205,9 +205,13 @@ export async function render({ ridisegna }) {
 
 async function registra(ridisegna) {
   const valori = {};
+  // Quanto valeva prima: serve a riconoscere i salti impossibili. Va letto
+  // adesso, perché `valori` viene riscritto man mano che si tocca.
+  const partenza = {};
   for (const def of MISURE) {
     const m = await store.ultimaMisura(def.id);
     valori[def.id] = m ? m.valore : null;
+    partenza[def.id] = m ? m.valore : null;
   }
 
   const scelte = new Set();
@@ -340,16 +344,45 @@ async function registra(ridisegna) {
               }
               // Fuori scala non vuol dire sbagliato: chiede e basta, la
               // decisione resta di chi misura.
+              //
+              // Due guardie, non una. La prima è assoluta (30-250 kg per il
+              // peso) e prende i tocchi di troppo sulla tastiera. La seconda è
+              // relativa a quello che pesavi l'ultima volta, e prende gli
+              // errori che stanno DENTRO la scala: 175 al posto di 79 è un
+              // numero perfettamente possibile per un corpo umano, ma non per
+              // il tuo, e passava in silenzio mostrando «+95 kg».
+              const SALTO = 0.15;
               const fuoriScala = [...scelte]
-                .map((id) => ({ def: MISURE.find((m) => m.id === id), valore: valori[id] }))
-                .filter(({ def, valore }) => def && (valore < def.min || valore > def.max));
+                .map((id) => ({ def: MISURE.find((m) => m.id === id), valore: valori[id], prima: partenza[id] }))
+                .filter(({ def, valore, prima }) =>
+                  def &&
+                  (valore < def.min ||
+                    valore > def.max ||
+                    (prima != null && prima > 0 && Math.abs(valore - prima) / prima > SALTO))
+                );
               if (fuoriScala.length) {
                 const elenco = fuoriScala
-                  .map(({ def, valore }) => `${def.nome} ${num(valore)} ${def.unita}`)
+                  .map(({ def, valore, prima }) =>
+                    prima != null && (valore >= def.min && valore <= def.max)
+                      ? `${def.nome} ${num(valore)} ${def.unita} (l'ultima volta ${num(prima)})`
+                      : `${def.nome} ${num(valore)} ${def.unita}`
+                  )
                   .join(", ");
+                // Il testo cambia con il motivo: «lontano da una misura del
+                // corpo» non ha senso davanti a un peso possibilissimo che è
+                // solo lontano dal tuo.
+                const soloSalto = fuoriScala.every(({ def, valore }) => valore >= def.min && valore <= def.max);
                 const scelta = await chiedi({
-                  titolo: fuoriScala.length === 1 ? "Numero fuori scala" : "Numeri fuori scala",
-                  testo: `${elenco}. È molto lontano da una misura del corpo: di solito è un tocco di troppo sulla tastiera. Se è giusto lo salvo, ma prima te lo chiedo.`,
+                  titolo: soloSalto
+                    ? fuoriScala.length === 1
+                      ? "Un salto grosso"
+                      : "Salti grossi"
+                    : fuoriScala.length === 1
+                      ? "Numero fuori scala"
+                      : "Numeri fuori scala",
+                  testo: soloSalto
+                    ? `${elenco}. È un cambiamento molto più grande di quello che un corpo fa fra due misure: di solito è una cifra sbagliata. Se è giusto lo salvo, ma prima te lo chiedo.`
+                    : `${elenco}. È molto lontano da una misura del corpo: di solito è un tocco di troppo sulla tastiera. Se è giusto lo salvo, ma prima te lo chiedo.`,
                   opzioni: [
                     { etichetta: "È giusto, salva", valore: "salva" },
                     { etichetta: "Torno a correggere", valore: "correggi" },
