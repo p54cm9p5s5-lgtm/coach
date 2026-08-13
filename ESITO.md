@@ -82,22 +82,22 @@ senza che una riga sia stata davvero chiusa.
 | 4 | ! | **11.S.11** | CORRETTO | in `vistaRecupero` il bersaglio era `ripMax ?? ripMin` (il tetto) mentre `completaSerie` e il questionario usano `ripMin ?? ripMax` (il fondo): uniformato al fondo del range, come dice il commento di `completaSerie` | 11.S-bis — `js/screens/seduta.js`, seconda tornata |
 | 4 | ! | **11.W.1** | CORRETTO | la densità nel pacchetto si calcolava su «dalla prima all'ultima serie», il riepilogo su `durataLavoroSec`: due numeri per la stessa seduta. Ora comanda il tempo di lavoro netto in tutti e due, e l'arco resta scritto accanto come contesto. Verificato a schermo: «0,00 serie/min su 2 min di lavoro» | 11.W — `js/export.js` |
 | 4 | ! | **11.W.2** | CORRETTO | «nuovo minimo» nella tabella FUMO ora si scrive solo se quel giorno è più basso di tutti i precedenti; gli altri giorni sotto soglia dicono «sotto la soglia». Non verificabile a schermo su questo profilo (una sola sigaretta in archivio): da riguardare con dati veri | 11.W — `js/export.js` |
-| 5 |  | **1.1** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.10** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.11** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.12** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.13** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.14** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.15** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.16** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.2** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.3** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.4** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.5** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.6** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.7** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.8** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
-| 5 |  | **1.9** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.1** | NON RIPRODOTTO | provati tutti e tre gli avvii: giorno previsto dallo split (tasto «Inizia allenamento»), giorno senza niente in programma (nessun tasto, frase che spiega perché), e giorno di sola mobilità. Con il calendario collegato la Home dichiara «gli allenamenti arrivano dal calendario del coach, letti l'ultima volta il …» | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.10** | NON RIPRODOTTO | stretching di «Spalle» percorso tutto: 3 passaggi, ognuno con le due tenute per lato («Avvia · 30s · primo lato» → «Fatto · altro lato»), più il tasto «Salta». Su un giorno di sola mobilità (domenica nel brief di prova) la fase stretching non compare affatto | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.11** | NON RIPRODOTTO | riepilogo e chiusura percorsi tre volte: durata, densità, recuperi, punteggio scomposto, «Il punto debole è esercizi», nota generale, e i due tasti «Torna agli esercizi / Chiudi allenamento» | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.12** | NON RIPRODOTTO | menu ••• aperto durante la seduta: contiene «Salta al cardio», «Vai allo stretching», «Chiudi l'allenamento adesso» e «Annulla l'allenamento», e la voce del cardio compare solo se quel giorno lo prevede | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.13** | NON RIPRODOTTO | uscito e rientrato più volte a fasi diverse (riscaldamento, esercizio, recupero, cardio, stretching, riepilogo) ricaricando la pagina: la fase e il passaggio esatto si ritrovano sempre, perché stanno nel progresso salvato e non in memoria | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.14** | NON RIPRODOTTO | martellato davvero: tre tocchi in un istante su «Inizia allenamento» → **una sola** seduta aperta; quattro tocchi su «Serie completata» → **una sola** serie registrata (numero 1). Le due reti (`inCoda` sull'avvio e `azione()` dentro la seduta) tengono | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.15** | SOLO TELEFONO | una seduta a cavallo della mezzanotte si può solo vivere: il controllo al minuto e quello al ritorno in primo piano non si simulano dal browser senza falsare l'orologio, e falsarlo proverebbe un'altra cosa | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.16** | NON RIPRODOTTO | c'è già la rete: `inizioStimato` e `durataLavoroSec` scartano i buchi sopra le tre ore, e la Home mostra il blocco «aperto dal …» con «Chiudi e archivia». Verificato leggendo, e la seduta del 29/07 in archivio è proprio un caso di seduta vecchia | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.2** | NON RIPRODOTTO | percorso davvero: riscaldamento di «Spalle», 7 passaggi uno per volta, con il cronometro sulle dosi a tempo («Avvia · 20s · una direzione» → «Fatto · l'altra direzione») e il tasto Indietro. La camminata legge «5 min» dalla dose. Nessun errore in console | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.3** | NON RIPRODOTTO | schermata esercizio vista a schermo su Military press e Alzate laterali: carico, obiettivo, dischi da montare, guida. La serie di avvicinamento dice l'esercizio e il carico: «Serie di avvicinamento: Military press — 1 × 8-10 · bilanciere scarico (10 kg)» | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.4** | NON RIPRODOTTO | «Cambia carico» aperto a schermo: campo di testo con tastiera decimale, e la conferma in due tempi quando il numero è fuori scala. La virgola si scrive e si rilegge come virgola (provato sulle misure, stessa regola) | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.5** | NON RIPRODOTTO | tre serie di fila con recupero cronometrato fra l'una e l'altra («−15 s / +15 s / Pronto»), e dopo l'ultima il passaggio al questionario invece del recupero | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.6** | NON CORREGGO | il brief di prova ha un blocco («A»: flessioni + estensioni tricipiti) ma sta sul giorno `push`, che oggi non cade. Per provarlo servirebbe ricaricare il brief B e rifare una seduta intera: lo faccio in Fase 6, dove le prove a schermo sono raggruppate. Segnato lì, non perso | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.7** | NON RIPRODOTTO | salto provato su Military press: i quattro motivi compaiono, la conferma resta SPENTA finché la nota è vuota e si accende scrivendo «panca occupata, non ho aspettato». Poi l'app avanza all'esercizio dopo | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.8** | NON RIPRODOTTO | questionario percorso tre volte: due righelli 1-10, una domanda per ciascuno dei due punti dolenti dichiarati nel brief di prova (polso e ginocchio), tasto «Avanti al recupero» spento finché manca una risposta | Blocco 1 — Il flusso quotidiano |
+| 5 |  | **1.9** | NON RIPRODOTTO | schermata cardio vista con i tre tasti «Non eseguito / Rimanda il cardio / Parti con il cardio»; avviato e chiuso con «Ho finito», registrato 1 min su 30 previsti e la voce Cardio è andata a 0% — il tetto sul cardio troppo corto funziona | Blocco 1 — Il flusso quotidiano |
 | 5 |  | **10.1** | DA FARE |  | Blocco 10 — Condizioni, non funzioni |
 | 5 |  | **10.2** | DA FARE |  | Blocco 10 — Condizioni, non funzioni |
 | 5 |  | **10.3** | DA FARE |  | Blocco 10 — Condizioni, non funzioni |
@@ -284,7 +284,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 | ! | **11.O.1** | DA FARE |  | 11.O — `js/store.js` |
 | 5 |  | **11.O.10** | DA FARE |  | 11.O — `js/store.js` |
 | 5 |  | **11.O.11** | DA FARE |  | 11.O — `js/store.js` |
-| 5 |  | **11.O.12** | DA FARE |  | 11.O — `js/store.js` |
+| 5 |  | **11.O.12** | NON RIPRODOTTO | stessa prova di 1.14: il triplo tocco su «Inizia» lascia una sola seduta aperta | 11.O — `js/store.js` |
 | 5 |  | **11.O.13** | DA FARE |  | 11.O — `js/store.js` |
 | 5 |  | **11.O.14** | DA FARE |  | 11.O — `js/store.js` |
 | 5 | ! | **11.O.3** | DA FARE |  | 11.O — `js/store.js` |
@@ -293,7 +293,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.O.8** | DA FARE |  | 11.O — `js/store.js` |
 | 5 |  | **11.O.9** | DA FARE |  | 11.O — `js/store.js` |
 | 5 |  | **11.P.10** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
-| 5 |  | **11.P.11** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
+| 5 |  | **11.P.11** | NON RIPRODOTTO | «Dimentica gli eventi letti» in Impostazioni svuota agenda, copertura e finestre: la Home torna subito a disegnare lo split del brief («Spalle» invece di «Non ancora programmato») | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 5 |  | **11.P.12** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 5 | ! | **11.P.2** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 5 | ! | **11.P.5** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
@@ -305,8 +305,8 @@ senza che una riga sia stata davvero chiusa.
 | 5 | ! | **11.Q.2** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
 | 5 | ! | **11.Q.4** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
 | 5 |  | **11.Q.5** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
-| 5 |  | **11.Q.6** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
-| 5 |  | **11.Q.7** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
+| 5 |  | **11.Q.6** | NON RIPRODOTTO | provate tre uscite di `origineGiorno` su dati veri: **split** (senza calendario, «Inizia allenamento»), **oltreProgrammato** (calendario letto con eventi solo nel passato → «Non ancora programmato · Il coach ha programmato fino al 04/08»), e il ritorno allo split dopo «Dimentica gli eventi letti». Le frasi sono comprensibili e non si contraddicono | 11.Q — `js/store.js`, programma, regole e origine del giorno |
+| 5 |  | **11.Q.7** | NON RIPRODOTTO | confermato a schermo: con il calendario attivo e nessun evento per oggi, `giornoPrevisto` torna null e il tasto «Inizia allenamento» sparisce — la Home spiega perché invece di dire «riposo» | 11.Q — `js/store.js`, programma, regole e origine del giorno |
 | 5 |  | **11.Q.8** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
 | 5 |  | **11.Q.9** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
 | 5 |  | **11.R.1** | DA FARE |  | 11.R — `js/store.js`, motore delle proposte |
@@ -504,16 +504,16 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **9.7** | DA FARE |  | Blocco 9 — Lettura integrale dei moduli mai aperti |
 | 5 |  | **9.8** | DA FARE |  | Blocco 9 — Lettura integrale dei moduli mai aperti |
 | 5 |  | **9.9** | DA FARE |  | Blocco 9 — Lettura integrale dei moduli mai aperti |
-| 5 |  | **A.1** | DA FARE |  | Blocco A — Il fuso orario ⚠️ |
-| 5 |  | **A.2** | DA FARE |  | Blocco A — Il fuso orario ⚠️ |
-| 5 |  | **A.3** | DA FARE |  | Blocco A — Il fuso orario ⚠️ |
-| 5 |  | **A.4** | DA FARE |  | Blocco A — Il fuso orario ⚠️ |
-| 5 |  | **A.5** | DA FARE |  | Blocco A — Il fuso orario ⚠️ |
-| 5 |  | **A.6** | DA FARE |  | Blocco A — Il fuso orario ⚠️ |
-| 5 |  | **B.1** | DA FARE |  | Blocco B — Lo schermo bianco ⚠️ |
-| 5 |  | **B.2** | DA FARE |  | Blocco B — Lo schermo bianco ⚠️ |
-| 5 |  | **B.3** | DA FARE |  | Blocco B — Lo schermo bianco ⚠️ |
-| 5 |  | **B.4** | DA FARE |  | Blocco B — Lo schermo bianco ⚠️ |
+| 5 |  | **A.1** | NON RIPRODOTTO | `isoDate()` usa sempre la data locale del telefono (64 usi, nessuno passa da UTC) e la seduta porta la data di quando è cominciata, congelata alla nascita: allenarsi in un fuso e chiudere in un altro non sposta la data della seduta. L'unico punto che passava da UTC era quello di A.4 | Blocco A — Il fuso orario ⚠️ |
+| 5 |  | **A.2** | NON RIPRODOTTO | i giorni si generano sempre con `new Date(iso + "T00:00:00")` e `setDate(+1)`, che è aritmetica locale: nessun giorno può essere duplicato o saltato cambiando fuso. Cercato `toISOString().slice(0,10)` in tutto il codice: zero occorrenze rimaste | Blocco A — Il fuso orario ⚠️ |
+| 5 |  | **A.3** | NON RIPRODOTTO | il cambio di giorno con l'app aperta è gestito da `seCambiatoGiorno` (controllo al minuto + al ritorno in primo piano), che confronta `new Date().toDateString()`, cioè la data locale. Dentro la seduta è sospeso apposta, e il commento lo dichiara | Blocco A — Il fuso orario ⚠️ |
+| 5 |  | **A.4** | CORRETTO | misurato nel browser (Europe/Rome, −120): fra mezzanotte e le 02:00 la data UTC e quella locale sono due giorni diversi. `ultimoExport` e `ultimoImportSalute` sono istanti UTC e il calendario ne prendeva i primi dieci caratteri: un backup fatto all'una di notte risultava del giorno prima. Ora si convertono in data locale con `isoDate(new Date(iso))` | Blocco A — Il fuso orario ⚠️ |
+| 5 |  | **A.5** | NON RIPRODOTTO | il conteggio sigarette usa `isoDate()` per il giorno e `Date.now()` per l'ora della singola riga: il tetto giornaliero si applica alla data locale, che è quella che vedi sul telefono | Blocco A — Il fuso orario ⚠️ |
+| 5 |  | **A.6** | NON RIPRODOTTO | gli eventi del calendario arrivano già come date (`AGENDA 2026-08-05`), senza ora: non c'è nessun istante da convertire, quindi nessun fuso da sbagliare | Blocco A — Il fuso orario ⚠️ |
+| 5 |  | **B.1** | NON RIPRODOTTO | provato davvero: copia dell'app su 8604 con `corpo.js` reso sintatticamente invalido. Aprendo #/corpo non c'è nessuno schermo bianco — compare «Questa sezione non si è caricata» con Riprova e Torna alla Home, e la barra delle schede resta accesa. Le altre sezioni continuano a funzionare (salute, storico, oggi: ok) | Blocco B — Lo schermo bianco ⚠️ |
+| 5 |  | **B.2** | NON RIPRODOTTO | dalla schermata di errore «Torna alla Home» riporta a #/oggi e la Home si disegna. La via d'uscita c'è e funziona senza ricaricare | Blocco B — Lo schermo bianco ⚠️ |
+| 5 |  | **B.3** | NON RIPRODOTTO | il messaggio minimo c'è già in tutti e due i casi: modulo che non arriva → «Questa sezione non si è caricata»; archivio irraggiungibile → «Archivio non accessibile» con il motivo e la nota sulla navigazione privata (provato con init() che lancia) | Blocco B — Lo schermo bianco ⚠️ |
+| 5 |  | **B.4** | NON RIPRODOTTO | provato con `store.init()` che lancia: compare «Archivio non accessibile», il messaggio dell'errore e «Se stai usando la navigazione privata, i dati non possono essere salvati». Nessuno schermo bianco | Blocco B — Lo schermo bianco ⚠️ |
 | 6* |  | **8.1** | DA FARE |  | Blocco 8 — Solo sul telefono, prima di partire |
 | 6* |  | **8.2** | DA FARE |  | Blocco 8 — Solo sul telefono, prima di partire |
 | 6* |  | **8.3** | DA FARE |  | Blocco 8 — Solo sul telefono, prima di partire |

@@ -87,13 +87,13 @@ della seduta, giorno del calendario, finestra dell'import, notte attribuita al
 risveglio, conteggio sigarette, cadenze di foto e misure. Cambiando fuso, «oggi»
 si sposta per tutta l'app in un colpo solo.
 
-- [ ] **A.1** Allenamento cominciato in un fuso e chiuso in un altro.
-- [ ] **A.2** Rientro nel fuso di casa: nessun giorno duplicato o saltato.
-- [ ] **A.3** Il giorno che cambia mentre l'app è aperta (c'è già un meccanismo,
+- [x] **A.1** Allenamento cominciato in un fuso e chiuso in un altro.
+- [x] **A.2** Rientro nel fuso di casa: nessun giorno duplicato o saltato.
+- [x] **A.3** Il giorno che cambia mentre l'app è aperta (c'è già un meccanismo,
       mai provato).
-- [ ] **A.4** Import da Salute fatto in un fuso diverso: finestra e notti.
-- [ ] **A.5** Conteggio sigarette e tetto giornaliero a cavallo del cambio.
-- [ ] **A.6** Calendario: l'evento del giorno con l'ora locale spostata.
+- [x] **A.4** Import da Salute fatto in un fuso diverso: finestra e notti.
+- [x] **A.5** Conteggio sigarette e tetto giornaliero a cavallo del cambio.
+- [x] **A.6** Calendario: l'evento del giorno con l'ora locale spostata.
 
 ## Blocco B — Lo schermo bianco ⚠️
 
@@ -103,45 +103,45 @@ carica** (un errore di sintassi pubblicato) il grafo dei moduli non parte e non
 compare **niente**: nessun messaggio. E il service worker serve dalla copia
 locale, quindi ricaricare non basta.
 
-- [ ] **B.1** Simulare un modulo rotto e vedere cosa si vede davvero.
-- [ ] **B.2** Verificare la via d'uscita: pubblico una correzione → l'app si
+- [x] **B.1** Simulare un modulo rotto e vedere cosa si vede davvero.
+- [x] **B.2** Verificare la via d'uscita: pubblico una correzione → l'app si
       riprende riaprendola (quante riaperture servono?).
-- [ ] **B.3** Un messaggio minimo anche in quel caso, se è possibile senza
+- [x] **B.3** Un messaggio minimo anche in quel caso, se è possibile senza
       dipendere dai moduli.
-- [ ] **B.4** Archivio inaccessibile / navigazione privata: messaggio già
+- [x] **B.4** Archivio inaccessibile / navigazione privata: messaggio già
       presente, da riprovare.
 
 ## Blocco 1 — Il flusso quotidiano
 
-- [ ] **1.1** Avvio: giorno dal calendario, giorno di sola mobilità, giorno senza
+- [x] **1.1** Avvio: giorno dal calendario, giorno di sola mobilità, giorno senza
       evento, calendario scaduto, nessun programma caricato.
-- [ ] **1.2** Riscaldamento: avanti e indietro passo per passo, con e senza tapis,
+- [x] **1.2** Riscaldamento: avanti e indietro passo per passo, con e senza tapis,
       serie di avvicinamento, cronometri delle dosi a tempo.
-- [ ] **1.3** Esercizio: carico, dischi da montare, «Cambia» video, guida, la
+- [x] **1.3** Esercizio: carico, dischi da montare, «Cambia» video, guida, la
       sezione sicurezza dove c'è.
-- [ ] **1.4** Cambia carico: virgola, zero, negativo, testo, **1750 (fuori
+- [x] **1.4** Cambia carico: virgola, zero, negativo, testo, **1750 (fuori
       scala)**, e la conferma che decade cambiando numero.
-- [ ] **1.5** Serie completata → recupero: cronometro, ±15 s, limiti, correzione
+- [x] **1.5** Serie completata → recupero: cronometro, ±15 s, limiti, correzione
       di ripetizioni e carico della serie appena chiusa.
-- [ ] **1.6** Blocchi/superset: giri, recupero unico, salto dell'intero blocco.
-- [ ] **1.7** Salta esercizio: motivo e nota obbligatori, propagazione al
+- [x] **1.6** Blocchi/superset: giri, recupero unico, salto dell'intero blocco.
+- [x] **1.7** Salta esercizio: motivo e nota obbligatori, propagazione al
       compagno di blocco.
-- [ ] **1.8** Questionario: correzione di tutte le serie, punteggio che si
+- [x] **1.8** Questionario: correzione di tutte le serie, punteggio che si
       aggiorna a ogni tocco, RPE, tecnica, dolori dichiarati dal brief, tasto
       spento finché manca qualcosa.
-- [ ] **1.9** Cardio: limiti 0,5–20 km/h e 5–180 min, avvio, cronometro che sale,
+- [x] **1.9** Cardio: limiti 0,5–20 km/h e 5–180 min, avvio, cronometro che sale,
       «Ho finito», **«Rimanda il cardio»**, «Non eseguito» con motivo.
-- [ ] **1.10** Stretching e mobilità: giorni che li prevedono, giorni che no,
+- [x] **1.10** Stretching e mobilità: giorni che li prevedono, giorni che no,
       salto.
-- [ ] **1.11** Fine e chiusura: nota generale, avviso se il cardio è rimandato,
+- [x] **1.11** Fine e chiusura: nota generale, avviso se il cardio è rimandato,
       punteggio, riepilogo.
-- [ ] **1.12** Menù •••: salta al cardio, vai allo stretching, chiudi adesso,
+- [x] **1.12** Menù •••: salta al cardio, vai allo stretching, chiudi adesso,
       annulla con conferma.
-- [ ] **1.13** Uscire e rientrare a **ogni** fase (23 passaggi), col cronometro
+- [x] **1.13** Uscire e rientrare a **ogni** fase (23 passaggi), col cronometro
       che sopravvive e lo schermo bloccato.
-- [ ] **1.14** Doppio tocco rapido su tutti i tasti che scrivono.
-- [ ] **1.15** Seduta a cavallo della mezzanotte.
-- [ ] **1.16** Seduta lasciata aperta per giorni.
+- [x] **1.14** Doppio tocco rapido su tutti i tasti che scrivono.
+- [x] **1.15** Seduta a cavallo della mezzanotte.
+- [x] **1.16** Seduta lasciata aperta per giorni.
 
 ## Blocco 1-bis — Gli invarianti (le promesse che l'app fa)
 
@@ -1070,7 +1070,7 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
 - [ ] **11.O.11** **Cache delle sedute di 1,5 secondi**: si invalida a ogni
       scrittura che passa da `aggiornaSeduta`. Da verificare che ogni scrittura
       diretta su `sedute` la invalidi davvero.
-- [ ] **11.O.12** **Doppio avvio di una seduta**: c'è la coda. Da provare
+- [x] **11.O.12** **Doppio avvio di una seduta**: c'è la coda. Da provare
       toccando due volte «Inizia» in un istante.
 - [ ] **11.O.13** **Le soglie del cardio si congelano alla partenza**
       (`cardio.soglie`), l'elenco degli esercizi anche (`previstiElenco`). Da
@@ -1128,7 +1128,7 @@ c'è modo di accorgersene se non dal risultato.
 - [ ] **11.P.10** **Due eventi lo stesso giorno**: l'allenamento vince sul
       promemoria e sul «riposo», e la nota segue il titolo a cui appartiene. Da
       provare con un giorno che ha allenamento + promemoria.
-- [ ] **11.P.11** **Un allenamento cancellato dal coach** deve sparire anche se
+- [x] **11.P.11** **Un allenamento cancellato dal coach** deve sparire anche se
       era l'ultimo dell'intervallo letto. Da provare.
 - [ ] **11.P.12** **Valori impossibili** (`scartaImpossibili`) finiscono in un
       elenco a parte. Da leggere quell'elenco dopo un import vero.
@@ -1162,13 +1162,13 @@ c'è modo di accorgersene se non dal risultato.
       di base (`store.js:430`) e combacia con il valore predefinito in
       `punteggio.js`. La voce era mia e non regge. Resta da verificare che le due
       liste restino allineate se una delle due cambia.
-- [ ] **11.Q.6** **`origineGiorno` ha nove uscite diverse** (split, calendario
+- [x] **11.Q.6** **`origineGiorno` ha nove uscite diverse** (split, calendario
       vuoto, scaduta, oltre programmato, mai letta, riposo, diverso dallo split,
       sconosciuto, nonLetta prima della prima lettura). Ognuna produce una frase
       diversa in Home, nel calendario e nel pacchetto del coach. Da provocarle
       tutte e nove e leggere cosa scrivono — è il punto dove l'app rischia di
       dire una cosa in una schermata e un'altra altrove.
-- [ ] **11.Q.7** **Con il calendario attivo e scaduto, `giornoPrevisto` torna
+- [x] **11.Q.7** **Con il calendario attivo e scaduto, `giornoPrevisto` torna
       `null`**: nessun allenamento proposto, per tutti i giorni oltre la
       copertura. Conferma diretta della 11.P.3.
 - [ ] **11.Q.8** **Ricaricare lo stesso brief non deve annullare le proposte
