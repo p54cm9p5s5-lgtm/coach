@@ -879,19 +879,19 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 
 ## 11.M — `js/grafico.js` (729 righe; lette per intero le parti nuove e i punti di rottura)
 
-- [ ] **11.M.1** **Grafico del battito senza dati**: verificato che non può
+- [x] **11.M.1** **Grafico del battito senza dati**: verificato che non può
       esplodere — la scheda lo disegna solo con almeno 3 caselle piene
       (`allenamenti.js:300`), e senza quel controllo `Math.max(...[])` darebbe
       `-Infinity` e il disegno sparirebbe tutto. Resta da provare un allenamento
       con **esattamente 3** caselle e uno con una casella sola.
-- [ ] **11.M.2** **Asse dei tempi del battito**: le etichette usano le frazioni
+- [x] **11.M.2** **Asse dei tempi del battito**: le etichette usano le frazioni
       della larghezza, la lettura al tocco usa l'indice della casella. Su una
       curva assottigliata a 120 punti lo scarto è di mezza casella (una decina di
       secondi). Da guardare su un allenamento lungo che l'ora letta sia
       plausibile.
 - [x] **11.M.3** **Allenamento a cavallo di mezzanotte**: l'ora gira col modulo
       24h. Da provare (in vacanza può capitare).
-- [ ] **11.M.4** **`minimo` nel grafico a linea**: verificato che il passo al km
+- [x] **11.M.4** **`minimo` nel grafico a linea**: verificato che il passo al km
       lo calcola come `max(0, floor(minimo − 1))`, quindi nessun punto finisce
       sotto il bordo. Da confermare a schermo con un solo giorno di dati.
 - [x] **11.M.5** **Un solo punto** in un grafico a linea (un giorno solo di
@@ -901,7 +901,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       punteggio Salute in Home, e sta in `localStorage`. Da verificare che
       cambiarlo in Salute non sposti quello della Home, e che sopravviva alla
       chiusura dell'app.
-- [ ] **11.M.7** **Tocco sul grafico dell'attività**: la conversione delle
+- [x] **11.M.7** **Tocco sul grafico dell'attività**: la conversione delle
       coordinate parte dal disegno, non dal riquadro. Da provare in orizzontale e
       su schermo stretto che il giorno letto sia quello toccato.
 - [x] **11.M.8** **Obiettivo movimento**: la linea tratteggiata usa l'obiettivo
