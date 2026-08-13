@@ -74,7 +74,8 @@ const CHIAVI_NOTE = {
   ]),
   NOTTE: new Set(["durata", "profondo", "rem", "veglia", "risvegli"]),
   ALLENAMENTO: new Set([
-    "uuid", "inizio", "durata", "kcal", "kcaltot", "fcmedia", "fc", "fcmax", "tipo",
+    "uuid", "inizio", "fine", "durata", "kcal", "kcaltot", "km",
+    "fcmedia", "fc", "fcmin", "fcmax", "tipo",
   ]),
 };
 
@@ -112,7 +113,7 @@ export function analizza(testo) {
     throw new Error(`Pacchetto in versione v${intestazione[1]}, l'app legge la v${VERSIONE}.`);
   }
 
-  const risultato = { finestra: null, giorni: [], notti: [], allenamenti: [], agenda: [], fasi: [], avvisi: [] };
+  const risultato = { finestra: null, giorni: [], notti: [], allenamenti: [], agenda: [], fasi: [], battiti: [], avvisi: [] };
 
   for (const grezza of righe.slice(1)) {
     // Tolleranza allo spazio perso: costruendo il comando rapido capita di
@@ -161,6 +162,33 @@ export function analizza(testo) {
         fine: `${d2}T${o2.padStart(5, "0")}`,
         fase: (resto2.join(" ") || "").trim(),
       });
+      continue;
+    }
+
+    if (tipo === "BATTITO") {
+      // La curva del battito di un allenamento, come la scrive il lettore
+      // dell'export:  BATTITO 2026-08-13 07:12 68,72,,75,79
+      // Non sono coppie chiave=valore ma un elenco, quindi si legge qui prima
+      // che ci provi il lettore generico. Una casella vuota è un buco vero —
+      // l'orologio lì non ha misurato — e resta vuota: la linea si spezzerà.
+      const [d, ora, ...coda2] = resto;
+      // La forma non basta: «09:99» ha la forma di un orario e non esiste. È lo
+      // stesso controllo delle righe FASE, per lo stesso motivo.
+      const mOra = /^(\d{1,2}):(\d{2})$/.exec(ora || "");
+      const oraVera = Boolean(mOra) && Number(mOra[1]) < 24 && Number(mOra[2]) < 60;
+      if (!dataVera(d) || !oraVera) {
+        risultato.avvisi.push(`Riga BATTITO senza data o ora valida, ignorata: «${riga.slice(0, 44)}»`);
+        continue;
+      }
+      const valori = coda2
+        .join("")
+        .split(",")
+        .map((v) => (v === "" ? null : NUMERO(v)));
+      if (valori.filter((v) => v != null).length < 3) {
+        risultato.avvisi.push(`Riga BATTITO del ${d} ${ora} con troppi pochi valori: ignorata.`);
+        continue;
+      }
+      risultato.battiti.push({ data: d, inizio: ora, valori });
       continue;
     }
 
@@ -239,7 +267,10 @@ export function analizza(testo) {
         uuid: c.uuid || `${data}-${c.inizio || "00:00"}-${c.durata || 0}`,
         data,
         inizio: c.inizio || null,
+        fine: c.fine || null,
         durataSec: NUMERO(c.durata),
+        km: NUMERO(c.km),
+        fcMin: NUMERO(c.fcmin),
         kcalAttive: NUMERO(c.kcal),
         kcalTotali: NUMERO(c.kcaltot),
         // Su una riga GIORNO «fc» è la frequenza a riposo, e chi scrive il
@@ -337,6 +368,19 @@ export function analizza(testo) {
     // tutte e due, quella esplicita vince.
     const gia = new Set(risultato.notti.map((n) => n.data));
     for (const n of perNotte.values()) if (!gia.has(n.data)) risultato.notti.push(n);
+  }
+
+  // Ogni curva va attaccata al suo allenamento: si riconoscono per giorno e ora
+  // d'inizio, che è la stessa coppia con cui è stata scritta. Una curva che non
+  // trova il suo allenamento viene detta invece di sparire: vuol dire che le due
+  // righe non si corrispondono, ed è un errore di chi ha scritto il pacchetto.
+  for (const b of risultato.battiti) {
+    const suo = risultato.allenamenti.find((a) => a.data === b.data && a.inizio === b.inizio);
+    if (!suo) {
+      risultato.avvisi.push(`Curva del battito del ${b.data} ${b.inizio} senza un allenamento a cui riferirsi: ignorata.`);
+      continue;
+    }
+    suo.battito = b.valori;
   }
 
   if (

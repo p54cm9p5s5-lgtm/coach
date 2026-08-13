@@ -628,6 +628,47 @@ una via obbligata per correggere un errore.
 
 ---
 
+## 9-bis. Gli allenamenti che l'orologio registra da solo
+
+Da quando i dati arrivano dall'esportazione di Salute, ogni sessione avviata
+sull'Apple Watch entra nell'app per conto suo: le camminate, la sessione di
+pesi, tutto. Stanno in **Salute → Allenamenti dal Watch**, e si leggono su tre
+livelli: i **giorni** (col numero di allenamenti di quel giorno), gli
+**allenamenti di quel giorno** in ordine d'orario, e il **dettaglio** di uno.
+
+Nel dettaglio c'è quello che il file di Salute contiene davvero: orario
+inizio-fine, durata, distanza e passo medio, kcal attive e totali, frequenza
+media, minima e massima, e la **curva del battito** — si tocca per leggere il
+valore in un dato momento, e dove la linea si interrompe è perché l'orologio lì
+non ha misurato. La curva viene raccolta a caselle da mezzo minuto: l'orologio
+scrive un battito ogni pochi secondi, e una camminata di un'ora farebbe
+settecento punti per disegnare una linea larga tre centimetri.
+
+**Cos'era.** Ogni allenamento può essere una di tre cose: **la seduta** del
+programma, **il cardio** che le va dietro, o un'**attività a parte**. Lo decidi
+tu con un tocco. L'app propone — riconosce la sessione di forza che si
+sovrappone d'orario alla seduta registrata, e la camminata attaccata alla fine
+con la durata del cardio previsto — ma scrive da sola **solo** il caso certo: la
+sessione di forza che è avvenuta nello stesso momento della seduta.
+
+Prima la regola era un'altra: se quel giorno c'era una sola seduta chiusa, ogni
+allenamento dell'orologio di quel giorno le veniva attaccato. Due camminate e
+una sessione di pesi risultavano tutte «la seduta Push», e quell'etichetta
+finiva nel pacchetto per il coach, che leggeva una camminata di 57 minuti come
+se fosse l'allenamento di forza. I collegamenti scritti da quella regola vengono
+**rifatti una volta sola**, al primo avvio dopo l'aggiornamento: sono numeri che
+l'app si era calcolata da sola, non scelte di chi si allena. Quello che hai
+deciso tu non viene toccato.
+
+**Non entrano in nessun punteggio.** Né in quello della seduta, né in quello
+Salute, né nelle proposte di progressione. Sono l'osservazione di quello che è
+successo, non la misura di quanto hai seguito il programma — che resta il
+mestiere dei due punteggi. L'unica cosa che possono fare è riempire i numeri
+della seduta al posto tuo, e solo se sei tu a dire che quell'allenamento è
+quella seduta.
+
+---
+
 ## 10. Il conteggio delle sigarette
 
 Un contatore: un tocco per sigaretta, con l'orario. Il «−» serve per i tocchi
@@ -739,7 +780,10 @@ si può leggere in tre modi diversi
   Salute**, e vale pieno: solo però se il talk-test è stato risposto, altrimenti
   resta fuori dal conto invece di valere zero. Dove c'è anche una seduta vera
   comanda il punteggio della seduta, che dice di più
-- **Allenamenti letti dall'Apple Watch** degli ultimi 7 giorni: data, ora,
+- **Allenamenti letti dall'Apple Watch** — vedi §9-bis: nel pacchetto ognuno
+  porta scritto **cos'era** (la seduta, il cardio che le va dietro, o movimento
+  fuori programma), perché sommare due volte lo stesso lavoro è l'errore più
+  facile da fare leggendo questa tabella. Degli ultimi 7 giorni: data, ora,
   tipo, durata, kcal attive e totali, FC media e massima, e se quell'attività
   corrisponde a una seduta registrata nell'app o è movimento in più (una
   camminata, la giornata). L'intestazione dice da dove vengono: sono misure

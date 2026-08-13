@@ -642,31 +642,54 @@ export function bloccoWatch(allenamenti, { giorni = 7, nomeSeduta = null } = {})
   // dell'orologio arrivano lo stesso, ma dal riquadro «Letti dall'Apple Watch»
   // dentro il log della seduta, che l'atleta compila leggendo il quadrante.
   if (!allenamenti?.length) return null;
+  // Cosa rappresenta quell'allenamento, con le parole giuste.
+  //
+  // Prima qui compariva il nome della seduta ogni volta che c'era un
+  // collegamento, e il collegamento lo metteva una regola che attaccava alla
+  // seduta del giorno OGNI allenamento dell'orologio: il coach leggeva una
+  // camminata di 57 minuti chiamata «Push». Adesso il collegamento c'è solo
+  // dove i due orari si sovrappongono davvero, e la colonna dice il ruolo —
+  // che è la cosa che il coach deve sapere per non sommare due volte lo stesso
+  // lavoro.
+  const RUOLI = { seduta: "la seduta", cardio: "cardio della seduta", extra: "fuori programma" };
+  const dove = (a) => {
+    if (a.ruolo === "seduta" || a.ruolo === "cardio") {
+      const nome = a.sedutaId ? nomeSeduta?.(a.sedutaId) : null;
+      return nome ? `${RUOLI[a.ruolo]}: ${nome}` : RUOLI[a.ruolo];
+    }
+    if (a.ruolo === "extra") return RUOLI.extra;
+    return "da assegnare";
+  };
   const righe = allenamenti.slice(0, 20).map((a) => [
     dataBreve(a.data),
     GIORNI_ABBR[new Date(a.data + "T00:00:00").getDay()],
     a.inizio || "—",
     a.tipo || "—",
     a.durataSec ? durataUmana(a.durataSec) : "—",
+    a.km != null ? num(a.km, 2) : "—",
     a.kcalAttive != null ? num(a.kcalAttive, 0) : "—",
     a.kcalTotali != null ? num(a.kcalTotali, 0) : "—",
     a.fcMedia != null ? num(a.fcMedia, 0) : "—",
     a.fcMax != null ? num(a.fcMax, 0) : "—",
-    // Collegato a una seduta registrata o no: è la differenza fra «questo è
-    // l'allenamento che trovi nel log» e «questo è movimento in più».
-    a.sedutaId ? (nomeSeduta?.(a.sedutaId) || "sì") : "—",
+    dove(a),
   ]);
+  const quantiTagliati = Math.max(0, allenamenti.length - 20);
   return [
     `ALLENAMENTI LETTI DALL'APPLE WATCH (ultimi ${giorni} giorni)`,
     "",
     tabella(
-      ["Data", "G", "Ora", "Tipo", "Durata", "Kcal att.", "Kcal tot.", "FC media", "FC max", "Nel log"],
+      ["Data", "G", "Ora", "Tipo", "Durata", "km", "Kcal att.", "Kcal tot.", "FC media", "FC max", "Cos'era"],
       righe
     ),
     "",
     "Sono i dati misurati dall'orologio e importati da Salute, non stime dell'app.",
-    "«Nel log» dice se quell'allenamento corrisponde a una seduta registrata nell'app: dove c'è un trattino è movimento che sta fuori dal programma (camminate, attività della giornata).",
-  ].join("\n");
+    "«Cos'era» lo dice l'atleta: la seduta del programma, il cardio che le va dietro, oppure movimento fuori programma. «Da assegnare» vuol dire che nessuno l'ha ancora detto, quindi non è dato per scontato.",
+    quantiTagliati
+      ? `Ce ne sono altri ${quantiTagliati} nel periodo, non elencati qui per non allungare la tabella.`
+      : null,
+  ]
+    .filter((r) => r !== null)
+    .join("\n");
 }
 
 /**
