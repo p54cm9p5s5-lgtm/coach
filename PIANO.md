@@ -661,6 +661,15 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   l'etichetta da sola non dice cosa fa. È il nome che hai scelto tu per il
   coach, quindi non lo tocco.
 
+- **11.F.2 e 11.F.4 — la media delle sigarette dice una cosa più bella del
+  vero.** Un giorno in cui non apri l'app entra nella media come **zero**, e la
+  media include **oggi**, che a metà giornata è mezza. Tutti e due gli effetti
+  spingono il numero verso il basso. È la stessa cosa già registrata come
+  11.O.3, ed è dichiarata nel codice — l'app non può sapere quello che non le
+  hai detto — ma in dieci giorni di vacanza capiterà. Se vuoi, la media può
+  contare solo i giorni in cui hai davvero aperto la sezione: dimmelo e la
+  cambio in cinque minuti.
+
 ### Difetti confermati che ho scelto di non correggere
 
 - **11.E.4 — i segnali portano la data di oggi, non quella del fatto.** Ogni

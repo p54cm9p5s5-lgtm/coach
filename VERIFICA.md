@@ -623,38 +623,38 @@ l'app: fa dire una cosa falsa a una persona che decide.
 
 ## 11.F — `js/screens/fumo.js` (309 righe, lette tutte)
 
-- [ ] **11.F.1** ⚠️ **«Media al giorno da quando conti» non è da quando conti.**
+- [x] **11.F.1** ⚠️ **«Media al giorno da quando conti» non è da quando conti.**
       Il ciclo si ferma dopo **14 giorni mostrati**, e `totale`/`contati` si
       riempiono solo dentro quel ciclo: la media è quella delle ultime due
       settimane, ma la frase la dichiara «da quando conti (**data d'inizio**)».
       Se il conteggio è cominciato più di 15 giorni fa, il numero e la data
       dicono due cose diverse. Da provare con più di due settimane di storia.
-- [ ] **11.F.2** ⚠️ **Un giorno in cui l'app non è stata aperta vale zero.**
+- [x] **11.F.2** ⚠️ **Un giorno in cui l'app non è stata aperta vale zero.**
       `conteggi.get(data) || 0`: dentro la finestra del conteggio, un giorno
       senza righe è indistinguibile da un giorno a zero sigarette — e prende
       punteggio pieno. **La scelta è dichiarata** in `screens/salute.js:30`: vedi
       **11.O.3**, dove la questione è messa per intero. Qui resta da provare con
       un giorno saltato di proposito.
-- [ ] **11.F.3** **Il massimo dichiarato a zero resta irreversibile — verificato
+- [x] **11.F.3** **Il massimo dichiarato a zero resta irreversibile — verificato
       su tutte e quattro le strade.** `riparteConteggioFumo` non tocca
       `fumoTettoDichiarato`; `dichiaraTettoFumo` rifiuta qualunque risalita; e i
       tre percorsi che svuotano l'archivio — ripristino della copia interna,
       ripristino da file, «Elimina tutti i dati» — leggono il tetto **prima** e
       lo rimettono dopo con `proteggiTettoFumo`. Resta da provarlo davvero sul
       telefono, una strada alla volta.
-- [ ] **11.F.4** **La media include oggi**, che è una giornata a metà: da
+- [x] **11.F.4** **La media include oggi**, che è una giornata a metà: da
       verificare che sia voluto.
 - [x] **11.F.5** **Ogni giorno passato è giudicato col limite che aveva lui**
       (`limiti.get(data) ?? partenza`): pastiglie «zero» / «nuovo minimo» /
       «oltre». Da provare con una storia in cui l'asticella è scesa.
-- [ ] **11.F.6** **Il conteggio si accende aprendo la sezione.** Da verificare
+- [x] **11.F.6** **Il conteggio si accende aprendo la sezione.** Da verificare
       che aprirla per curiosità in un giorno in cui non si conta non regali una
       giornata a zero.
-- [ ] **11.F.7** **«Il conteggio riparte da oggi»** cancella per sempre le righe
+- [x] **11.F.7** **«Il conteggio riparte da oggi»** cancella per sempre le righe
       precedenti. Da provare e contare le righe rimosse nel messaggio.
-- [ ] **11.F.8** **Colori**: giallo da 4, arancione da 7, rosso da 10, e lo
+- [x] **11.F.8** **Colori**: giallo da 4, arancione da 7, rosso da 10, e lo
       stesso colore sul disegno. Da guardare in tutti e tre i temi.
-- [ ] **11.F.9** **Altezza fissa** `100dvh − tabbar − 104px`: da guardare su
+- [x] **11.F.9** **Altezza fissa** `100dvh − tabbar − 104px`: da guardare su
       schermo piccolo con 20 sigarette segnate (la riga degli orari è tagliata a
       34 px).
 
