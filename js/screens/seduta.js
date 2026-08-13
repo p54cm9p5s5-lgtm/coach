@@ -284,9 +284,19 @@ async function vistaRisultato(id, vaiA, da = null) {
 
   const serie = await store.serieDi(id);
   const logs = await store.questionariDi(id);
-  const durataSec = sed.oraFine
-    ? Math.round((sed.oraFine - (sed.oraInizioLavoro || sed.oraInizio)) / 1000)
-    : null;
+  // La durata dell'allenamento, non quella dell'orologio da parete.
+  //
+  // `oraFine − oraInizio` conta anche i buchi: con il **cardio rimandato** —
+  // pesi alle 17, cardio fatto alle 21 e chiusura lì — lo Storico annunciava
+  // «4h 30m» di allenamento, e quel numero finisce nel pacchetto del coach.
+  // `durataLavoroSec` è calcolata alla chiusura proprio per questo: somma i
+  // tratti fra un gesto e l'altro e scarta le pause oltre le tre ore.
+  const durataSec =
+    sed.durataLavoroSec != null
+      ? sed.durataLavoroSec
+      : sed.oraFine
+        ? Math.round((sed.oraFine - (sed.oraInizioLavoro || sed.oraInizio)) / 1000)
+        : null;
   // Le due medie si calcolano sulle STESSE serie: prima il reale veniva da
   // quelle cronometrate e il previsto da tutte, e il confronto «100s su 120»
   // metteva a paragone due insiemi diversi.
@@ -370,7 +380,15 @@ async function vistaRisultato(id, vaiA, da = null) {
       "div",
       { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
       scheda("Esercizi", `${svolti}/${previsti}`, `${serie.length} serie in tutto`),
-      scheda("Durata", durataSec != null ? durataUmana(durataSec) : "—", "dall'inizio alla chiusura"),
+      scheda(
+        "Durata",
+        durataSec != null ? durataUmana(durataSec) : "—",
+        // L'etichetta segue il numero: da quando la durata è il lavoro vero
+        // (pause lunghe escluse) dire «dall'inizio alla chiusura» sarebbe
+        // falso proprio nel caso che l'ha resa necessaria, il cardio
+        // rimandato di quattro ore.
+        sed.durataLavoroSec != null ? "tempo di allenamento" : "dall'inizio alla chiusura"
+      ),
       scheda("RPE medio", rpeMedio != null ? num(rpeMedio) : "—", tecMedia != null ? `tecnica ${num(tecMedia)}` : `zona ${store.regole().rpeTarget.min}-${store.regole().rpeTarget.max}`),
       scheda(
         "Recupero medio",

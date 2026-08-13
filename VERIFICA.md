@@ -1012,7 +1012,7 @@ Da qui in avanti la lista non cresce più leggendo: cresce solo provando.
 
 Lettura in corso. Queste voci hanno già un numero di riga dietro.
 
-- [ ] **11.O.1** ⚠️ **Il cardio rimandato sballa la durata dell'allenamento.** È
+- [x] **11.O.1** ⚠️ **Il cardio rimandato sballa la durata dell'allenamento.** È
       una conseguenza diretta del tasto aggiunto **oggi**. `fineStimata` prende
       la fine del cardio, ma `inizioStimato` guarda solo le serie dei pesi:
       chiudendo una seduta con i pesi alle 17 e il cardio alle 21, lo Storico
