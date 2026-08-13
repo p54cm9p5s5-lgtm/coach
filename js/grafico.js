@@ -572,3 +572,158 @@ export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede, sel
     piede ? h("p.footnote", piede) : null
   );
 }
+
+/**
+ * Il battito di un allenamento, come lo disegna l'orologio.
+ *
+ * Una barretta per momento, alta quanto il battito è ballato in quei secondi:
+ * è la forma che ha sull'Apple Watch, e dice una cosa in più della linea —
+ * quanto era stabile. Dove l'orologio non ha misurato non c'è barretta, e il
+ * vuoto si vede.
+ *
+ * Il rosso non viene dal tema: il battito è rosso ovunque, sull'orologio e
+ * nell'app Salute, e cambiarlo col tema significherebbe non farlo riconoscere.
+ * Il fondo della scheda invece è quello del tema, e le due tinte sono scelte
+ * per restare leggibili sia sul chiaro sia sullo scuro.
+ */
+export function graficoBattito({ caselle, inizioSec, durataSec, media = null, altezza = 150 }) {
+  const validi = caselle.filter((c) => c != null);
+  const L = 320;
+  const A = altezza;
+  const bassoTesti = 16;
+  const altoTesti = 12;
+  const area = A - bassoTesti - altoTesti;
+
+  const massimo = Math.max(...validi.map((c) => c.max));
+  const minimo = Math.min(...validi.map((c) => c.min));
+  // Un po' d'aria sopra e sotto, come fa l'orologio: le barrette non toccano
+  // mai i bordi, se no sembrano tagliate.
+  const alto = Math.ceil((massimo + 6) / 5) * 5;
+  const basso = Math.max(0, Math.floor((minimo - 6) / 5) * 5);
+  const y = (v) => altoTesti + area - ((v - basso) / Math.max(1, alto - basso)) * area;
+
+  const svg = el("svg", {
+    viewBox: `0 0 ${L} ${A}`,
+    width: "100%",
+    height: A,
+    role: "img",
+    "aria-label": `Battito durante l'allenamento, da ${Math.round(minimo)} a ${Math.round(massimo)} battiti al minuto`,
+    style: "display:block",
+  });
+
+  const passo = L / Math.max(caselle.length, 1);
+  const larghezza = Math.max(1.4, Math.min(4, passo * 0.55));
+
+  // Le due righe verticali dei terzi, come sull'orologio: danno il senso del
+  // tempo senza riempire il grafico di griglia.
+  for (const frazione of [1 / 3, 2 / 3]) {
+    svg.append(
+      el("line", {
+        x1: L * frazione, x2: L * frazione, y1: altoTesti, y2: altoTesti + area,
+        stroke: "currentColor", "stroke-width": 1, opacity: 0.16,
+      })
+    );
+  }
+
+  caselle.forEach((c, i) => {
+    if (!c) return;
+    const x = i * passo + passo / 2;
+    const yAlto = y(c.max);
+    const yBasso = y(c.min);
+    svg.append(
+      el("line", {
+        x1: x, x2: x, y1: yAlto, y2: Math.max(yBasso, yAlto + larghezza * 0.9),
+        stroke: "var(--battito)",
+        "stroke-width": larghezza,
+        "stroke-linecap": "round",
+      })
+    );
+  });
+
+  // Il massimo scritto in alto a destra: è il numero che si cerca per primo.
+  const etMax = el("text", {
+    x: L - 1, y: altoTesti - 3, "font-size": 9, "text-anchor": "end",
+    fill: "currentColor", opacity: 0.5,
+  });
+  etMax.textContent = String(Math.round(massimo));
+  svg.append(etMax);
+
+  const oraDa = (sec) => {
+    const s = ((Math.round(sec) % 86400) + 86400) % 86400;
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(Math.floor(s / 3600))}:${p(Math.floor((s % 3600) / 60))}`;
+  };
+  [0, 1 / 3, 2 / 3].forEach((frazione) => {
+    const t = el("text", {
+      x: frazione === 0 ? 0 : L * frazione + 2,
+      y: A - 4, "font-size": 8, fill: "currentColor", opacity: 0.45,
+    });
+    t.textContent = oraDa(inizioSec + durataSec * frazione);
+    svg.append(t);
+  });
+
+  const lettura = h("p", {
+    style:
+      "margin:0 0 6px;min-height:17px;font-size:12px;line-height:17px;color:var(--label-secondary);" +
+      "font-variant-numeric:tabular-nums",
+  });
+  lettura.textContent = "Tocca il grafico per leggere un momento";
+
+  const guida = el("line", {
+    y1: altoTesti, y2: altoTesti + area, stroke: "currentColor", "stroke-width": 1, opacity: 0,
+  });
+  svg.append(guida);
+
+  let scelto = null;
+  const mostra = (i) => {
+    const c = caselle[i];
+    if (i === scelto) return;
+    scelto = i;
+    const x = i * passo + passo / 2;
+    guida.setAttribute("x1", x);
+    guida.setAttribute("x2", x);
+    guida.setAttribute("opacity", "0.28");
+    const ora = oraDa(inizioSec + (durataSec * i) / Math.max(1, caselle.length - 1));
+    lettura.textContent = !c
+      ? `${ora} · nessuna misura`
+      : c.min === c.max
+        ? `${ora} · ${Math.round(c.min)} bpm`
+        : `${ora} · da ${Math.round(c.min)} a ${Math.round(c.max)} bpm`;
+  };
+
+  let premuto = false;
+  const aggiorna = (e) => {
+    const px = xNelDisegno(svg, e.clientX, e.clientY);
+    if (px == null) return;
+    mostra(Math.max(0, Math.min(caselle.length - 1, Math.floor(px / passo))));
+  };
+  svg.addEventListener("pointerdown", (e) => {
+    premuto = true;
+    aggiorna(e);
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (premuto) aggiorna(e);
+  });
+  const rilascia = () => {
+    premuto = false;
+  };
+  svg.addEventListener("pointerup", rilascia);
+  svg.addEventListener("pointercancel", rilascia);
+  svg.addEventListener("pointerleave", rilascia);
+  svg.style.touchAction = "pan-y";
+  svg.style.cursor = "pointer";
+
+  return h(
+    "div",
+    { style: "background:var(--bg-grouped);border-radius:14px;padding:12px 14px 6px" },
+    lettura,
+    svg,
+    media != null
+      ? h(
+          "p",
+          { style: "margin:6px 0 4px;font-size:11px;font-weight:700;letter-spacing:0.4px;color:var(--battito)" },
+          `${Math.round(media)} BPM IN MEDIA`
+        )
+      : null
+  );
+}

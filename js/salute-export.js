@@ -40,6 +40,18 @@ const DENTRO_WORKOUT = {
   HKQuantityTypeIdentifierDistanceSwimming: "km",
 };
 
+/* Lo «Sforzo» che l'orologio mostra da 1 a 10 («7 · Difficile»).
+   Apple lo scrive in due modi a seconda che l'abbia stimato lui o che tu
+   l'abbia corretto a mano, e a seconda della versione di iOS può stare dentro
+   il blocco dell'allenamento oppure essere una riga a sé con la sua ora. Qui si
+   accettano tutte le forme: quella che c'è viene letta, e se non c'è nessuna
+   la scheda dello sforzo semplicemente non compare, invece di mostrare un
+   numero inventato. */
+const SFORZO = new Set([
+  "HKQuantityTypeIdentifierWorkoutEffortScore",
+  "HKQuantityTypeIdentifierEstimatedWorkoutEffortScore",
+]);
+
 // I nomi delle fasi come li scrive Apple, in quelli che l'app riconosce.
 const FASI = {
   HKCategoryValueSleepAnalysisAsleepDeep: "Profondo",
@@ -133,6 +145,7 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
   const perGiornoWatch = new Map();
   const fc = new Map();
   const battiti = new Map();
+  const sforzi = [];
   const fasi = [];
   const allenamenti = [];
 
@@ -166,6 +179,13 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
           dentroWorkout.fcMedia = numero(ATTRIBUTO(r, "average"));
           dentroWorkout.fcMin = numero(ATTRIBUTO(r, "minimum"));
           dentroWorkout.fcMax = numero(ATTRIBUTO(r, "maximum"));
+        } else if (SFORZO.has(t)) {
+          const v = numero(ATTRIBUTO(r, "average")) ?? numero(ATTRIBUTO(r, "maximum")) ?? numero(ATTRIBUTO(r, "sum"));
+          // Lo sforzo dichiarato a mano vince su quello stimato: è la stessa
+          // regola delle notti corrette a mano.
+          if (v != null && (dentroWorkout.sforzo == null || t.indexOf("Estimated") < 0)) {
+            dentroWorkout.sforzo = v;
+          }
         }
       }
       if (r.indexOf("</Workout>") >= 0) {
@@ -238,9 +258,20 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
       if (c) {
         c.somma += v;
         c.quanti++;
+        // Minimo e massimo dentro la casella: sono loro a dare al grafico la
+        // forma che ha sull'orologio — una barretta per momento, alta quanto il
+        // battito è ballato in quei trenta secondi. Con la sola media resta una
+        // linea, che dice meno.
+        if (v < c.min) c.min = v;
+        if (v > c.max) c.max = v;
       } else {
-        battiti.set(chiave, { somma: v, quanti: 1 });
+        battiti.set(chiave, { somma: v, quanti: 1, min: v, max: v });
       }
+      return;
+    }
+    if (SFORZO.has(tipo)) {
+      const v = numero(ATTRIBUTO(r, "value"));
+      if (v != null) sforzi.push({ giorno: i.giorno, sec: i.sec, valore: v, stimato: tipo.indexOf("Estimated") >= 0 });
       return;
     }
     const campo = QUANTITA[tipo];
@@ -305,7 +336,7 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     // vuoto per giorni invece di dare una curva sbagliata e visibile.
     for (let passi = 0; passi <= CASELLE_AL_GIORNO * 2; passi++) {
       const c = battiti.get(`${giorno}|${casella}`);
-      valori.push(c ? c.somma / c.quanti : null);
+      valori.push(c ? { min: c.min, max: c.max } : null);
       if (giorno === fineGiorno && casella >= fineCasella) break;
       if (giorno > fineGiorno) break;
       casella++;
@@ -315,17 +346,39 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
       }
     }
     if (!valori.some((v) => v != null)) return null;
-    // Assottigliamento: gruppi uguali, media di quello che c'è dentro. Un
-    // gruppo tutto vuoto resta vuoto — la linea si spezza invece di inventare
-    // un tratto dritto dove l'orologio non ha misurato niente.
-    if (valori.length <= PUNTI_MAX) return valori.map((v) => (v == null ? "" : Math.round(v)));
+    // Assottigliamento: gruppi uguali, e di ogni gruppo il minimo dei minimi e
+    // il massimo dei massimi — la barretta resta alta quanto il battito è
+    // ballato lì dentro. Un gruppo tutto vuoto resta vuoto: il grafico lascia
+    // il buco invece di inventare una barretta dove non è stato misurato niente.
+    const scrivi = (v) => (v == null ? "" : v.min === v.max ? String(Math.round(v.min)) : `${Math.round(v.min)}-${Math.round(v.max)}`);
+    if (valori.length <= PUNTI_MAX) return valori.map(scrivi);
     const per = Math.ceil(valori.length / PUNTI_MAX);
     const fuori = [];
     for (let i = 0; i < valori.length; i += per) {
       const gruppo = valori.slice(i, i + per).filter((v) => v != null);
-      fuori.push(gruppo.length ? Math.round(gruppo.reduce((s, v) => s + v, 0) / gruppo.length) : "");
+      fuori.push(
+        gruppo.length
+          ? scrivi({ min: Math.min(...gruppo.map((g) => g.min)), max: Math.max(...gruppo.map((g) => g.max)) })
+          : ""
+      );
     }
     return fuori;
+  };
+
+  /* Lo sforzo scritto come riga a sé: si dà all'allenamento dentro il cui
+     intervallo cade. Se ce ne sono due per lo stesso allenamento — Salute ne
+     scrive uno stimato e uno corretto a mano — vince quello a mano. */
+  const sforzoDi = (a) => {
+    if (a.sforzo != null) return a.sforzo;
+    if (!a.da || !a.a) return null;
+    const dentro = sforzi.filter((s) => {
+      if (s.giorno === a.da.giorno && s.sec >= a.da.sec && (a.a.giorno !== a.da.giorno || s.sec <= a.a.sec)) return true;
+      if (s.giorno === a.a.giorno && a.a.giorno !== a.da.giorno && s.sec <= a.a.sec) return true;
+      return false;
+    });
+    if (!dentro.length) return null;
+    const aMano = dentro.find((s) => !s.stimato);
+    return (aMano || dentro[0]).valore;
   };
 
   allenamenti.sort((a, b) => (a.ordine < b.ordine ? -1 : a.ordine > b.ordine ? 1 : 0));
@@ -341,6 +394,8 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     if (a.fcMedia != null) pezzi.push(`fcmedia=${Math.round(a.fcMedia)}`);
     if (a.fcMin != null) pezzi.push(`fcmin=${Math.round(a.fcMin)}`);
     if (a.fcMax != null) pezzi.push(`fcmax=${Math.round(a.fcMax)}`);
+    const sf = sforzoDi(a);
+    if (sf != null) pezzi.push(`sforzo=${Math.round(sf)}`);
     if (a.tipo) pezzi.push(`tipo="${a.tipo}"`);
     out.push(pezzi.join(" "));
     const curva = curvaDi(a);

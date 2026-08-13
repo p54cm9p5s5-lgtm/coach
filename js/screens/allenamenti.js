@@ -12,7 +12,7 @@
 import { h, aggiungi, clear, dataLunga, dataBreve, durataUmana, num, chiedi, toast } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
-import { graficoLinea } from "../grafico.js";
+import { graficoBattito } from "../grafico.js";
 
 /* I nomi di Apple sono in inglese e attaccati: «FunctionalStrengthTraining».
    Quelli che il programma usa davvero hanno il nome che usa il programma —
@@ -59,6 +59,26 @@ function passoMedio(km, sec) {
 }
 
 const oraDi = (a) => a.inizio || "—";
+
+/** «1:11:16», come lo scrive l'orologio, invece di «1h 11m». */
+function durataOrologio(sec) {
+  if (!sec) return "—";
+  const h2 = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.round(sec % 60);
+  const p = (n) => String(n).padStart(2, "0");
+  return h2 ? `${h2}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
+}
+
+/* Le parole con cui Apple traduce lo sforzo da 1 a 10: sono quelle che hai
+   letto sull'orologio quando quel numero l'hai scelto. */
+function parolaSforzo(v) {
+  if (v <= 2) return "Molto facile";
+  if (v <= 4) return "Facile";
+  if (v <= 6) return "Moderato";
+  if (v <= 8) return "Difficile";
+  return "Massimo";
+}
 
 function parametri() {
   const q = location.hash.split("?")[1] || "";
@@ -318,8 +338,11 @@ async function dettaglio(uuid) {
     aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
     return wrap;
   }
+  // In cima la data, non il tipo: il tipo sta già grande due centimetri sotto,
+  // e nell'intestazione un nome lungo come «Rafforzamento funzionale» veniva
+  // tagliato a metà.
   aggiungi(wrap,
-    intestazione(nomeTipo(a.tipo), {
+    intestazione(dataBreve(a.data), {
       etichetta: "Indietro",
       onclick: () => (location.hash = `#/allenamenti?giorno=${a.data}`),
     })
@@ -328,49 +351,117 @@ async function dettaglio(uuid) {
   const sedute = await store.allenamenti();
   const suo = a.sedutaId ? sedute.find((s) => s.id === a.sedutaId) : null;
 
+  /* La scheda dei numeri, nello stile dell'orologio: etichetta piccola sopra,
+     numero grande e colorato sotto. I colori sono quelli che Apple usa per
+     quelle stesse misure — giallo la durata, rosso le calorie, rosso il
+     battito, viola lo sforzo — perché sono i colori con cui li hai già visti
+     sul polso, e cercarli qui deve costare zero. */
+  const numeroGrande = (etichetta, valore, unita, colore, nota) =>
+    h(
+      "div",
+      { style: "padding:2px 0" },
+      h("p", { style: "margin:0;font-size:14px;color:var(--label)" }, etichetta),
+      h(
+        "p",
+        { style: `margin:1px 0 0;font-size:27px;font-weight:800;letter-spacing:-0.8px;line-height:1.1;color:${colore};font-variant-numeric:tabular-nums` },
+        valore,
+        unita
+          ? h("span", { style: "font-size:15px;font-weight:700;letter-spacing:0;margin-left:3px" }, unita)
+          : null
+      ),
+      nota ? h("p", { style: "margin:1px 0 0;font-size:11px;color:var(--label-tertiary)" }, nota) : null
+    );
+
+  const riquadro = (...dentro) =>
+    h("div", { style: "background:var(--bg-grouped);border-radius:14px;padding:14px 16px;display:grid;gap:12px" }, ...dentro);
+
+  const affiancati = (...dentro) =>
+    h("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:12px" }, ...dentro.filter(Boolean));
+
   aggiungi(wrap,
     h(
       "div.hero",
+      { style: "padding-bottom:2px" },
       h("p.kicker", dataLunga(a.data)),
-      h("h2", durata(a.durataSec)),
-      h("p.target", a.fine ? `dalle ${a.inizio} alle ${a.fine}` : `dalle ${oraDi(a)}`)
+      h("h2", nomeTipo(a.tipo)),
+      h("p.target", a.fine ? `${a.inizio}–${a.fine}` : `dalle ${oraDi(a)}`)
     )
   );
 
-  const scheda = (etichetta, valore, nota) =>
-    h(
-      "div",
-      { style: "background:var(--bg-grouped);border-radius:12px;padding:13px" },
-      h("p", { style: "margin:0;font-size:11px;color:var(--label-secondary)" }, etichetta),
-      h(
-        "p",
-        { style: "margin:4px 0 0;font-size:20px;font-weight:700;letter-spacing:-0.4px;font-variant-numeric:tabular-nums" },
-        valore
-      ),
-      nota ? h("p", { style: "margin:2px 0 0;font-size:11px;color:var(--label-tertiary)" }, nota) : null
-    );
-
   const passo = passoMedio(a.km, a.durataSec);
-  // La durata sta già grande in cima: ripeterla in una scheda faceva sembrare
-  // che ci fossero due dati dove ce n'era uno, e su un allenamento povero
-  // riempiva la griglia di niente.
-  const schede = [
-    a.km != null ? scheda("Distanza", `${num(a.km, 2)} km`, passo ? `${passo} al km` : null) : null,
+  const dettagli = [
+    numeroGrande("Durata allenamento", durataOrologio(a.durataSec), null, "var(--giallo)"),
     a.kcalAttive != null
-      ? scheda("Kcal attive", String(Math.round(a.kcalAttive)), a.kcalTotali != null ? `${Math.round(a.kcalTotali)} totali` : null)
+      ? numeroGrande("Chilocalorie attive", String(Math.round(a.kcalAttive)), "KCAL", "var(--battito)")
       : null,
-    a.fcMedia != null
-      ? scheda("FC media", `${Math.round(a.fcMedia)}`, [
-          a.fcMin != null ? `min ${Math.round(a.fcMin)}` : null,
-          a.fcMax != null ? `max ${Math.round(a.fcMax)}` : null,
-        ].filter(Boolean).join(" · ") || null)
-      : null,
-    a.fine ? scheda("Orario", `${a.inizio}–${a.fine}`, "inizio e fine") : null,
   ].filter(Boolean);
 
-  if (schede.length) {
+  const seconda = [
+    a.kcalTotali != null
+      ? numeroGrande("Chilocalorie totali", String(Math.round(a.kcalTotali)), "KCAL", "var(--battito)")
+      : null,
+    a.fcMedia != null
+      ? numeroGrande("Media battito", String(Math.round(a.fcMedia)), "BPM", "var(--orange)")
+      : null,
+    a.km != null ? numeroGrande("Distanza", num(a.km, 2), "KM", "var(--accent)", passo ? `${passo} al km` : null) : null,
+    a.fcMax != null
+      ? numeroGrande("Battito massimo", String(Math.round(a.fcMax)), "BPM", "var(--orange)", a.fcMin != null ? `minimo ${Math.round(a.fcMin)}` : null)
+      : null,
+  ].filter(Boolean);
+
+  aggiungi(wrap,
+    h(
+      "div",
+      { style: "margin:8px 16px 0;display:grid;gap:12px" },
+      riquadro(
+        ...dettagli,
+        ...(seconda.length
+          ? [affiancati(...seconda.slice(0, 2)), ...(seconda.length > 2 ? [affiancati(...seconda.slice(2, 4))] : [])]
+          : [])
+      )
+    )
+  );
+
+  /* Lo sforzo, com'è sull'orologio: il numero dentro un cerchio, la parola che
+     lo traduce, e le tacche che salgono. Le parole sono quelle di Apple, perché
+     è lì che hai deciso quel numero. */
+  if (a.sforzo != null) {
+    const s = Math.max(1, Math.min(10, Math.round(a.sforzo)));
     aggiungi(wrap,
-      h("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" }, ...schede)
+      h(
+        "div",
+        { style: "margin:12px 16px 0" },
+        h(
+          "div",
+          { style: "background:var(--bg-grouped);border-radius:14px;padding:14px 16px" },
+          h("p", { style: "margin:0 0 8px;font-size:14px;color:var(--label)" }, "Sforzo"),
+          h(
+            "div",
+            { style: "display:flex;align-items:center;gap:12px" },
+            h(
+              "span",
+              {
+                style:
+                  "width:34px;height:34px;border-radius:50%;background:color-mix(in srgb, var(--sforzo) 22%, transparent);" +
+                  "color:var(--sforzo);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px",
+              },
+              String(s)
+            ),
+            h("span", { style: "font-size:24px;font-weight:800;letter-spacing:-0.6px;color:var(--sforzo)" }, parolaSforzo(s)),
+            h(
+              "span",
+              { style: "margin-left:auto;display:flex;align-items:flex-end;gap:3px;height:26px" },
+              ...Array.from({ length: 4 }, (_, i) =>
+                h("span", {
+                  style:
+                    `width:5px;border-radius:2px;height:${8 + i * 6}px;` +
+                    `background:${s > i * 2.5 ? "var(--sforzo)" : "var(--fill-tertiary)"}`,
+                })
+              )
+            )
+          )
+        )
+      )
     );
   }
 
@@ -404,46 +495,40 @@ async function dettaglio(uuid) {
     );
   }
 
-  // ---- la curva del battito ----
-  if (Array.isArray(a.battito) && a.battito.filter((v) => v != null).length >= 3) {
-    const n = a.battito.length;
-    const inizioSec = oraInSecondi(a.inizio);
-    const passoSec = a.durataSec && n > 1 ? a.durataSec / (n - 1) : 30;
-    const punti = a.battito.map((v, i) => ({
-      data: a.data,
-      valore: v,
-      ora: oraDaSecondi(inizioSec + Math.round(i * passoSec)),
-    }));
-    const validi = a.battito.filter((v) => v != null);
-    // L'asse non parte da zero: un battito vive fra 60 e 180, e con lo zero in
-    // fondo la curva diventerebbe una linea piatta in cima al grafico.
-    const minimo = Math.max(0, Math.floor((Math.min(...validi) - 8) / 5) * 5);
+  // ---- il battito ----
+  /* Le caselle arrivano in due forme: `{min,max}` da adesso, un numero solo dai
+     pacchetti scritti prima. Si normalizzano qui, così un allenamento importato
+     ieri continua a disegnarsi — con barrette alte un pelo, che è la verità:
+     di quel momento sappiamo un valore solo. */
+  const caselle = Array.isArray(a.battito)
+    ? a.battito.map((c) =>
+        c == null ? null : typeof c === "number" ? { min: c, max: c } : Number.isFinite(c.min) ? c : null
+      )
+    : [];
+  const quante = caselle.filter(Boolean).length;
+  if (quante >= 3) {
     aggiungi(wrap,
       h(
-        "div.group",
-        h("h2", "Battito"),
-        h(
-          "div",
-          { style: "padding:0 16px 8px" },
-          graficoLinea({
-            punti,
-            minimo,
-            altezza: 132,
-            invito: "Tocca la curva per leggere un momento",
-            etichetta: (p) => (p.valore == null ? `${p.ora} · nessuna misura` : `${p.ora} · ${Math.round(p.valore)} bpm`),
-            estremo: (p) => p.ora,
-          })
-        ),
+        "div",
+        { style: "margin:12px 16px 0" },
+        h("p", { style: "margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-0.5px" }, "Frequenza cardiaca"),
+        graficoBattito({
+          caselle,
+          inizioSec: oraInSecondi(a.inizio),
+          durataSec: a.durataSec || quante * 30,
+          media: a.fcMedia ?? null,
+        }),
         h(
           "p.footnote",
-          `${validi.length} ${validi.length === 1 ? "misura" : "misure"} dall'orologio, una ogni mezzo minuto circa. ` +
-            "I tratti interrotti sono i momenti in cui non ha misurato."
+          { style: "margin:8px 2px 0;padding:0" },
+          `${quante} ${quante === 1 ? "momento misurato" : "momenti misurati"} dall'orologio, uno ogni mezzo minuto circa. ` +
+            "Ogni barretta va dal battito più basso al più alto di quel momento; dove manca, l'orologio non ha misurato."
         )
       )
     );
-  } else {
+  } else if (Array.isArray(a.battito)) {
     aggiungi(wrap,
-      h("div.group", h("h2", "Battito"), h("p.footnote", "Per questo allenamento l'orologio non ha lasciato una curva del battito."))
+      h("div.group", h("h2", "Frequenza cardiaca"), h("p.footnote", "Per questo allenamento l'orologio ha lasciato troppe poche misure per disegnare l'andamento."))
     );
   }
 
@@ -452,60 +537,84 @@ async function dettaglio(uuid) {
   const sceltaCorrente = a.ruolo || null;
   const delGiorno = sedute.filter((s) => s.data === a.data && s.stato === "completata");
 
-  const pastiglia = (chiave, testo) =>
-    h(
-      "button",
-      {
-        "aria-pressed": sceltaCorrente === chiave ? "true" : "false",
-        onclick: async () => {
-          try {
-            if (chiave === "seduta" || chiave === "cardio") {
-              if (!delGiorno.length) {
-                toast("Quel giorno non c'è nessun allenamento registrato a cui collegarlo.");
-                return;
+  /* La scelta si fa QUI e resta qui.
+     Prima ogni tocco riportava all'elenco del giorno: sembrava che il tasto non
+     avesse fatto niente e ti toglieva dalla pagina che stavi guardando. Adesso
+     la pastiglia si accende, la riga sotto dice cosa cambia, e non ci si muove.
+     Serve a una cosa sola, ed è scritta: che il coach non legga una camminata
+     come se fosse la seduta di pesi. */
+  const riga = h("p.footnote");
+  const pastiglie = h("div.scelte.righe");
+  let scelta = a.ruolo || null;
+  let collegata = suo || null;
+
+  const spiega = () => {
+    riga.textContent = scelta
+      ? scelta === "extra"
+        ? "Al coach arriva come movimento fuori programma."
+        : collegata
+          ? `Al coach arriva come ${RUOLI[scelta]}: ${collegata.tipoNome} del ${dataBreve(collegata.data)}.`
+          : `Al coach arriva come ${RUOLI[scelta]}.`
+      : proposta && proposta.ruolo
+        ? `Non l'hai ancora detto. L'app direbbe: ${RUOLI[proposta.ruolo]} — ma non lo scrive da sola.`
+        : "Non l'hai ancora detto: al coach arriva come «da assegnare».";
+  };
+
+  const disegnaPastiglie = () => {
+    clear(pastiglie).append(
+      ...[
+        ["seduta", "La seduta"],
+        ["cardio", "Il cardio della seduta"],
+        ["extra", "Attività a parte"],
+      ].map(([chiave, testo]) =>
+        h(
+          "button",
+          {
+            "aria-pressed": scelta === chiave ? "true" : "false",
+            onclick: async () => {
+              try {
+                if (chiave === "seduta" || chiave === "cardio") {
+                  if (!delGiorno.length) {
+                    toast("Quel giorno non c'è nessun allenamento registrato a cui collegarlo.");
+                    return;
+                  }
+                  let quale = delGiorno[0].id;
+                  if (delGiorno.length > 1) {
+                    quale = await chiedi({
+                      titolo: "A quale allenamento?",
+                      testo: "Quel giorno ne hai registrati più di uno.",
+                      opzioni: delGiorno.map((s) => ({ etichetta: s.tipoNome, valore: s.id })),
+                    });
+                    if (!quale) return;
+                  }
+                  await store.decidiRuoloWatch(a.uuid, { ruolo: chiave, sedutaId: quale });
+                  collegata = delGiorno.find((s) => s.id === quale) || null;
+                } else {
+                  await store.decidiRuoloWatch(a.uuid, { ruolo: chiave });
+                  collegata = null;
+                }
+                scelta = chiave;
+                disegnaPastiglie();
+                spiega();
+              } catch (e) {
+                toast(e.message);
               }
-              let scelta = delGiorno[0].id;
-              if (delGiorno.length > 1) {
-                scelta = await chiedi({
-                  titolo: "A quale allenamento?",
-                  testo: "Quel giorno ne hai registrati più di uno.",
-                  opzioni: delGiorno.map((s) => ({ etichetta: `${s.tipoNome}`, valore: s.id })),
-                });
-                if (!scelta) return;
-              }
-              await store.decidiRuoloWatch(a.uuid, { ruolo: chiave, sedutaId: scelta });
-            } else {
-              await store.decidiRuoloWatch(a.uuid, { ruolo: chiave });
-            }
-            toast("Segnato.");
-            // Si rientra nella stessa schermata: l'hash non cambia, quindi si
-            // passa dal giorno e si torna, che è anche il gesto che farebbe
-            // uno a mano — e così l'elenco del giorno mostra subito il nuovo
-            // ruolo invece di restare indietro.
-            location.hash = `#/allenamenti?giorno=${a.data}`;
-          } catch (e) {
-            toast(e.message);
-          }
-        },
-      },
-      testo
+            },
+          },
+          testo
+        )
+      )
     );
+  };
+  disegnaPastiglie();
+  spiega();
 
   aggiungi(wrap,
     h(
       "div.group",
       h("h2", "Che cos'era"),
-      h("div.scelte.righe", pastiglia("seduta", "La seduta"), pastiglia("cardio", "Il cardio della seduta"), pastiglia("extra", "Attività a parte")),
-      h(
-        "p.footnote",
-        sceltaCorrente
-          ? suo
-            ? `Collegato a: ${suo.tipoNome} del ${dataBreve(suo.data)}.`
-            : "Non è collegato a nessun allenamento registrato."
-          : proposta && proposta.ruolo
-            ? `L'app direbbe: ${RUOLI[proposta.ruolo]}. Non lo scrive da sola — decidi tu.`
-            : "Scegli cos'era: serve al coach per non leggere una camminata come se fosse la seduta."
-      ),
+      pastiglie,
+      riga,
       suo
         ? h(
             "div.list",
