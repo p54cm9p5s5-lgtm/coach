@@ -1,7 +1,8 @@
 /* Avvio, routing, aggiornamenti. */
 
-import { h, qs, qsa, clear, toast, chiudiFogli } from "./ui.js";
+import { h, qs, qsa, clear, toast, chiudiFogli, foglioAperto } from "./ui.js";
 import * as store from "./store.js";
+import { aggiornaColoriPunteggio } from "./punteggio.js";
 
 const ROTTE = {
   oggi: () => import("./screens/oggi.js"),
@@ -51,6 +52,12 @@ applicaTema(temaCorrente());
    posto è meno peggio di un ridisegno a metà serie. */
 window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
   if (temaCorrente() !== "sistema") return;
+  // I colori del punteggio si calcolano al momento del disegno e dipendono dal
+  // fondo: vanno rifatti SEMPRE, anche dentro l'allenamento dove il ridisegno
+  // è vietato di proposito. Senza questa riga, un tramonto a metà seduta
+  // lasciava quei numeri della tinta di prima — misurati a 1,95:1 su fondo
+  // chiaro, cioè illeggibili — fino alla fine dell'allenamento.
+  aggiornaColoriPunteggio();
   if (rottaCorrente === "seduta") return;
   ridisegna();
 });
@@ -72,6 +79,26 @@ let modCorrente = null;
    sempre. Quello che si perderebbe ricaricando (schermata, cronometro, gesto
    che ha sbloccato l'audio) esiste solo mentre la seduta è sotto gli occhi. */
 let aggiornamentoInAttesa = false;
+
+/**
+ * Sto scrivendo qualcosa che ricaricare porterebbe via?
+ *
+ * Un aggiornamento che arriva fuori dall'allenamento ricarica la pagina
+ * **subito**: se in quel momento c'è un pannello aperto — le misure di Corpo,
+ * una nota, il motivo di un salto — quello che è stato scritto e non ancora
+ * salvato sparisce sotto le dita, senza che nessuno abbia toccato niente. Non
+ * capita spesso, ma capita esattamente quando fa più danno: mentre stai
+ * scrivendo. In quel caso l'aggiornamento si mette in attesa come già fa
+ * dentro la seduta, e entra al primo cambio di schermata.
+ */
+function stoScrivendo() {
+  if (foglioAperto()) return true;
+  const el = document.activeElement;
+  if (!el) return false;
+  const scrivibile = el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable;
+  if (!scrivibile) return false;
+  return String(el.value ?? el.textContent ?? "").trim() !== "";
+}
 
 let hashDisegnato = null;
 
@@ -139,7 +166,7 @@ export async function ridisegna() {
   // fallisce, si finisce sulla schermata «questa sezione non si è caricata» e
   // la riga qui sotto non viene mai raggiunta: l'aggiornamento non entra più e
   // «Riprova» rifà lo stesso errore, per sempre.
-  if (aggiornamentoInAttesa && nome !== "seduta") {
+  if (aggiornamentoInAttesa && nome !== "seduta" && !stoScrivendo()) {
     aggiornamentoInAttesa = false;
     location.reload();
     return;
@@ -347,7 +374,7 @@ async function registraServiceWorker() {
       // Mai ricaricare mentre stai guardando l'allenamento: si perderebbe la
       // schermata in corso, il timer e il gesto che ha autorizzato l'audio.
       // Fuori di lì non c'è niente da salvare e l'aggiornamento entra subito.
-      if (rottaCorrente === "seduta") {
+      if (rottaCorrente === "seduta" || stoScrivendo()) {
         aggiornamentoInAttesa = true;
         return;
       }

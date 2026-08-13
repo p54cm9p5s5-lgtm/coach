@@ -686,19 +686,19 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [ ] **11.G.5** **Aggiornamento in attesa durante la seduta**: si applica
       appena si esce, prima di caricare il modulo nuovo. Da provare pubblicando
       una versione mentre la seduta è aperta.
-- [ ] **11.G.6** **Due tocchi rapidi su due schede diverse**: c'è il
+- [x] **11.G.6** **Due tocchi rapidi su due schede diverse**: c'è il
       `turnoCorrente` che ferma il disegno sorpassato. Da provare toccando
       Salute e subito Storico.
-- [ ] **11.G.7** **Modulo che non arriva** (offline, file non in cache): deve
+- [x] **11.G.7** **Modulo che non arriva** (offline, file non in cache): deve
       uscire «Questa sezione non si è caricata» con Riprova e Torna alla Home, e
       la barra delle schede deve restare accesa. Da provare in aereo.
-- [ ] **11.G.8** **Mezzanotte**: il giorno si aggiorna con un controllo al
+- [x] **11.G.8** **Mezzanotte**: il giorno si aggiorna con un controllo al
       minuto, ma **non** dentro l'allenamento. Da provare allenandosi a cavallo
       di mezzanotte (capita, in vacanza).
 - [x] **11.G.9** **Indirizzo sconosciuto** (`#/qualsiasi`): si disegna la Home
       ma l'indirizzo resta quello sbagliato. Da verificare che la barra non
       resti spenta e che ricaricare non peggiori le cose.
-- [ ] **11.G.10** **Tema «Sistema»** che cambia da solo al tramonto: ridisegna,
+- [x] **11.G.10** **Tema «Sistema»** che cambia da solo al tramonto: ridisegna,
       tranne che durante l'allenamento. Da provare.
 - [x] **11.G.11** **Posizione dello scorrimento**: ridisegnare la stessa
       schermata deve lasciarla dov'era, cambiare schermata deve riportare in

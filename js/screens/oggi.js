@@ -6,7 +6,7 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { graficoAttivita, graficoLinea, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo, CHIAVE_PERIODO_SALUTE } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
-import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
+import { anello, giudizio, coloreDaPunteggio, coloraPunteggio } from "../punteggio.js";
 import { sbloccaAudio, unaVoltaSola } from "../ui.js";
 
 let meseMostrato = null;
@@ -226,10 +226,9 @@ async function bloccoGrafico(ridisegna) {
             h(
               "div.row",
               h("div.main", h("span.title", v.nome), h("span.sub", v.dettaglio)),
-              h(
-                "span.value",
-                { style: `color:${coloreDaPunteggio(Math.round(v.quota * 100))}` },
-                `${Math.round(v.quota * 100)}%`
+              coloraPunteggio(
+                h("span.value", `${Math.round(v.quota * 100)}%`),
+                Math.round(v.quota * 100)
               )
             )
           )
