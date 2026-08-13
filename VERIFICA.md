@@ -1604,7 +1604,7 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.AD — `ISTRUZIONI-BRIEF.md` (384 righe, letto tutto — mai aperto prima)
 
-- [ ] **11.AD.1** ⚠️ **Il documento promette una cosa che il codice non fa.**
+- [x] **11.AD.1** ⚠️ **Il documento promette una cosa che il codice non fa.**
       Dice: «si scrive solo quello che si vuole spostare, il resto resta com'è».
       È vero al primo livello, **falso al secondo**: un coach che segue queste
       istruzioni e scrive `"salute": { "pesi": { "sonno": 30 } }` **spegne tutte
@@ -1617,11 +1617,11 @@ c'è modo di accorgersene se non dal risultato.
       funzionano** e per questo non offre più il tasto. Da decidere quale delle
       due è vera **prima di partire**, perché da lontano l'unica strada sarà
       l'export XML letto dal telefono.
-- [ ] **11.AD.3** ⚠️ **La tabella degli errori è vecchia**: dice «Peso della
+- [x] **11.AD.3** ⚠️ **La tabella degli errori è vecchia**: dice «Peso della
       barra non valido — manca `barra` mentre c'è l'inventario», ma il codice
       non pretende più la barra (chi si allena in palestra la omette). Un coach
       che legge quella riga aggiungerà un dato che non serve.
-- [ ] **11.AD.4** ⚠️ **L'elenco dei giorni con riscaldamento è fermo a cinque**
+- [x] **11.AD.4** ⚠️ **L'elenco dei giorni con riscaldamento è fermo a cinque**
       (`petto-tricipiti`, `gambe-core`, `spalle`, `schiena-bicipiti`,
       `full-body`), ma in `data/riscaldamento.json` ce ne sono **diciassette**:
       push, pull, legs, upper, lower, dorso-femorali, dorso-quadricipiti,
@@ -1630,7 +1630,7 @@ c'è modo di accorgersene se non dal risultato.
 - [ ] **11.AD.5** **Verificato**: i 38 esercizi della libreria sono tutti e soli
       quelli elencati nel documento. Da rifare questo confronto ogni volta che la
       libreria cambia.
-- [ ] **11.AD.6** **Le istruzioni non nominano** `regole.finestra`,
+- [x] **11.AD.6** **Le istruzioni non nominano** `regole.finestra`,
       `fumoQuotaMinima`, `sonnoOraLimite`, `sonnoCostoOraTardi`, `fotoAncora`,
       `esposizioniPerRiproporre`: soglie che esistono e si possono cambiare, ma
       che nessuno sa di poter dichiarare.
@@ -1710,13 +1710,13 @@ di tutte le tornate.
 
 ## 12.A — Contraddizioni sulla privacy (la promessa più importante che fa l'app)
 
-- [ ] **12.A.1** ⚠️ **Il README dichiara ancora il difetto corretto oggi.** Prima
+- [x] **12.A.1** ⚠️ **Il README dichiara ancora il difetto corretto oggi.** Prima
       pagina del repository pubblico: «le uniche richieste in uscita sono verso
       YouTube — **la copertina di un video quando il riquadro entra sullo
       schermo**». È esattamente la cosa che l'app **non fa più**: la copertina
       adesso è disegnata. Chi legge il README crede che aprire un esercizio dica
       a Google cosa stai allenando.
-- [ ] **12.A.2** ⚠️ **`SPEC.md` si contraddice da sola sulla stessa cosa.** Il §1
+- [x] **12.A.2** ⚠️ **`SPEC.md` si contraddice da sola sulla stessa cosa.** Il §1
       dice giusto («la copertina è disegnata dall'app, non scaricata»), il §9 —
       cioè l'elenco delle promesse, l'ultima pagina, quella che si legge per
       sapere cosa l'app non fa — dice ancora «la copertina di un video
@@ -1729,18 +1729,18 @@ di tutte le tornate.
       in tre punti: §3.3 dice «non vengono collegati alle sedute e non hanno un
       ruolo da assegnare» (giusto, è la scelta di oggi); §3.4 e §4.4 descrivono
       per esteso il collegamento per data con le sue regole. Da ripulire.
-- [ ] **12.B.2** ⚠️ **§4.1: «Seduta prevista oggi… cambiabile con un tap».** Il
+- [x] **12.B.2** ⚠️ **§4.1: «Seduta prevista oggi… cambiabile con un tap».** Il
       codice dice il contrario, per scelta dichiarata: «Quale allenamento si fa
       lo decide lo split del master brief: l'app lo esegue, non lo mette in
       discussione». Una delle due va cancellata.
-- [ ] **12.B.3** ⚠️ **§4.3: «Grafici: vita, peso, rapporto vita/altezza».**
+- [x] **12.B.3** ⚠️ **§4.3: «Grafici: vita, peso, rapporto vita/altezza».**
       Verificato: **in Corpo non c'è nessun grafico** — la parola «grafico»
       compare una sola volta in tutto il file, dentro un commento. O la funzione
       è stata tolta, o non è mai stata costruita, ma la specifica la promette.
 - [ ] **12.B.4** ⚠️ **§1: il backup con `modo: "unisci"`.** La specifica lo
       descrive come funzione viva; `esportaCompleto` non scrive mai quel campo,
       quindi non esiste modo di produrre un file del genere dall'app (11.N.2).
-- [ ] **12.B.5** **§2: «Colori: variabili di sistema. Accento: blu di sistema.
+- [x] **12.B.5** **§2: «Colori: variabili di sistema. Accento: blu di sistema.
       Nessuna palette personalizzata.»** Esiste il tema «nero e lime», che è
       esattamente una palette personalizzata.
 - [ ] **12.B.6** **§3.2: la Seduta contiene ancora `orologio { numeri copiati dal
@@ -1758,26 +1758,26 @@ di tutte le tornate.
 
 ## 12.C — `COME-FUNZIONA.md` (1023 righe, letto tutto): è il documento che legge il coach
 
-- [ ] **12.C.1** ⚠️ **Si contraddice a venti righe di distanza.** Il §5 punto
+- [x] **12.C.1** ⚠️ **Si contraddice a venti righe di distanza.** Il §5 punto
       4-bis dice «i numeri dell'orologio non si scrivono più»; il §5 punto 6, due
       paragrafi dopo, dice «Riepilogo e chiusura. **Qui si copiano i numeri
       dall'orologio** (durata, kcal attive e totali, FC media e massima, sforzo;
       per il cardio anche distanza e ritmo)». Uno dei due è di oggi, l'altro di
       ieri.
-- [ ] **12.C.2** ⚠️ **§12 promette al coach una colonna che non esiste più**:
+- [x] **12.C.2** ⚠️ **§12 promette al coach una colonna che non esiste più**:
       «nel pacchetto ognuno porta scritto **cos'era** (la seduta, il cardio che
       le va dietro, o movimento fuori programma)». È il **ruolo**, tolto oggi — e
       il §9-bis dello stesso documento dice «non li collega alle sedute e non
       chiede di farlo». Il coach leggerà il pacchetto cercando una colonna che
       non troverà.
-- [ ] **12.C.3** ⚠️ **§12 descrive ancora il riquadro «Letti dall'Apple Watch»**
+- [x] **12.C.3** ⚠️ **§12 descrive ancora il riquadro «Letti dall'Apple Watch»**
       come contenuto normale del pacchetto, «trascritti dall'atleta a fine seduta
       leggendo il quadrante». Non si riempie più (vedi 11.J.1).
-- [ ] **12.C.4** ⚠️ **I pesi del punteggio Salute sono scritti in due modi
+- [x] **12.C.4** ⚠️ **I pesi del punteggio Salute sono scritti in due modi
       diversi nello stesso documento**: il §4 elenca sette voci **senza acqua**,
       il §6.3 ne elenca otto **con acqua** (peso 12). È esattamente il difetto
       che `pubblica.sh` dice essere già successo una volta.
-- [ ] **12.C.5** ⚠️ **Terza ripetizione della promessa falsa sulle regole**: «si
+- [x] **12.C.5** ⚠️ **Terza ripetizione della promessa falsa sulle regole**: «si
       fondono voce per voce: scrivere una soglia non azzera le altre della stessa
       famiglia». Vero al primo livello, falso al secondo (11.Q.2, 11.AD.1). La
       stessa frase sbagliata è in tre documenti.

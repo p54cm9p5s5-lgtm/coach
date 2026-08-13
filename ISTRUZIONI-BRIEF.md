@@ -236,8 +236,16 @@ quel brief non si carica: mandale insieme al brief, non dopo.
 ## 6. Riscaldamento e stretching
 
 L'app ha protocolli di riscaldamento e stretching **legati all'`id` del giorno**.
-Oggi esistono per: `petto-tricipiti`, `gambe-core`, `spalle`,
-`schiena-bicipiti`, `full-body`.
+Oggi esistono per diciassette id: `petto-tricipiti`, `gambe-core`, `spalle`,
+`schiena-bicipiti`, `full-body`, `spinta-catena-posteriore`,
+`dorso-quadricipiti`, `dorso-femorali`, `recupero-attivo-a`,
+`recupero-attivo-b`, `push`, `pull`, `legs`, `upper`, `lower`, `sabato`,
+`domenica`.
+
+**Attenzione**: i cinque id nuovi dello split (`push`, `pull`, `legs`, `upper`,
+`lower`) e i due del fine settimana **non hanno mobilità in riscaldamento né
+stretching finale**: hanno un blocco di mobilità a fine seduta. Su quei giorni
+il riscaldamento è camminata più serie di avvicinamento, e basta.
 
 - Se lo split usa **questi stessi id**, riscaldamento e stretching compaiono già.
 - Se usa id diversi, quelle schermate restano vuote finché non vengono scritti i
@@ -253,7 +261,10 @@ Le dosi a ripetizioni (`10 per lato`, `15 ripetizioni`) restano senza cronometro
 ## 7. `regole` — le soglie, se servono
 
 Tutto facoltativo: si scrive solo quello che si vuole spostare, il resto resta
-com'è. Le voci più usate:
+com'è — ma **a un livello solo**. Scrivere `cardio.kmhMax` lascia intatte le
+altre soglie del cardio; scrivere `salute.pesi` con una voce sola **sostituisce
+tutto il blocco dei pesi** e spegne le altre voci del punteggio. Le voci
+annidate vanno riscritte per intero. Le più usate:
 
 ```json
 "regole": {
@@ -274,6 +285,13 @@ com'è. Le voci più usate:
 
 `misureGiornoSettimana` e `fotoGiornoSettimana` usano la stessa numerazione dei
 giorni: 0 = domenica.
+
+Esistono anche, e quasi nessuno sa di poterle scrivere:
+`finestra` (`settimane`, `minimoSettimana`, `soglia` dello scostamento),
+`salute.sonnoOraLimite` e `salute.sonnoCostoOraTardi` (l'ora entro cui andare a
+letto e quanto costa ogni ora di ritardo), `salute.fumoQuotaMinima` (quanto può
+scendere sotto zero la voce Fumo), `progressione.esposizioniPerRiproporre`,
+`cadenze.fotoAncora` (la data da cui contare le due settimane delle foto).
 
 **Se l'atleta non fuma**, scrivi `"contaSigarette": false` dentro `salute`: la
 sezione Fumo sparisce dal menu dell'app e la voce esce dal punteggio, invece di
@@ -378,7 +396,7 @@ cronometro e senza obiettivo. Se invece la durata conta davvero, usa `aTempo` e
 | «compare due volte» | stesso esercizio ripetuto nello stesso giorno |
 | «Giorno della settimana non valido» | `giorno` fuori da 0-6 |
 | «Disco X in numero dispari» | quantità dispari nell'inventario |
-| «Peso della barra non valido» | manca `barra` mentre c'è l'inventario |
+| «Peso della barra non valido» | `barra` c'è ma non è un numero da zero in su. Ometterla è lecito: chi si allena in palestra non ha un bilanciere |
 
 Ricaricare lo stesso brief non cancella niente: allenamenti, misure, foto e note
 già registrate restano dove sono. Cambia solo il programma.
