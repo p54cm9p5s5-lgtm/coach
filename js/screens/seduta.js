@@ -956,7 +956,7 @@ async function menuSeduta() {
     const conferma = await chiedi({
       titolo: "Eliminare l'allenamento?",
       testo: "Serie, questionari e note di questo allenamento vengono cancellati. Non si può annullare.",
-      opzioni: [{ etichetta: "Elimina tutto", valore: "si", stile: "destructive" }],
+      opzioni: [{ etichetta: "Elimina tutto", valore: "si", stile: "danger" }],
     });
     if (conferma === "si") {
       await store.annullaSeduta(S.sed.id);

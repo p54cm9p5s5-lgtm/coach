@@ -896,7 +896,7 @@ async function azzera(ridisegna) {
   const due = await chiedi({
     titolo: "Confermi?",
     testo: "Esporta prima un backup se non l'hai fatto.",
-    opzioni: [{ etichetta: "Elimina definitivamente", valore: "si", stile: "destructive" }],
+    opzioni: [{ etichetta: "Elimina definitivamente", valore: "si", stile: "danger" }],
   });
   if (due !== "si") return;
 

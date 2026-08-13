@@ -586,7 +586,7 @@ async function mostraFoto(scatto, posa) {
             onclick: async () => {
               const c = await chiedi({
                 titolo: "Eliminare questa foto?",
-                opzioni: [{ etichetta: "Elimina", valore: "si", stile: "destructive" }],
+                opzioni: [{ etichetta: "Elimina", valore: "si", stile: "danger" }],
               });
               if (c === "si") {
                 await store.db.del("foto", scatto.id);

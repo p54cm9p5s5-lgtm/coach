@@ -446,7 +446,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       schermo che la dicitura sia quella (etichetta accanto alla data, testo
       dentro la foto ingrandita) e che **da nessuna parte** compaia «fuori
       protocollo».
-- [ ] **11.B.7** **Stili dei pulsanti di conferma.** Verificato che esistono
+- [x] **11.B.7** **Stili dei pulsanti di conferma.** Verificato che esistono
       entrambi e sono diversi: `danger` è rosso pieno, `destructive` è grigio con
       scritta rossa. Nell'app sono usati **17 volte** (9 `destructive`, 8
       `danger`) senza una regola. Resta da verificare a schermo che il rosso
@@ -469,7 +469,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
 - [x] **11.B.13** **Fuori scala**: la conferma scatta sotto il minimo o sopra il
       massimo di ogni misura. Da provare 175 di peso (deve chiedere) e 84,5 di
       vita (non deve chiedere).
-- [ ] **11.B.14** **Salvataggio parziale delle misure**: il messaggio distingue
+- [x] **11.B.14** **Salvataggio parziale delle misure**: il messaggio distingue
       «nessuna» / «una» / «N su M». Da provare con archivio pieno.
 - [ ] **11.B.15** **Doppio tocco sullo scatto** durante il conto alla rovescia:
       partono due conti, il secondo lavora su una fotocamera già spenta. Da
