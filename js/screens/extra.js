@@ -287,10 +287,16 @@ export async function render({ ridisegna }) {
   }
 
   const lista = h("div.list");
-  for (const x of righe.slice(0, 60)) {
+  // Le prime sessanta, e le altre con un tocco.
+  //
+  // Erano sessanta e basta: con settantatré attività registrate le ultime
+  // tredici non si potevano più vedere da nessuna parte, e niente lo diceva —
+  // l'intestazione contava tutte, l'elenco no. Come nello Storico: non si
+  // nasconde niente, si rimanda.
+  const A_VISTA = 60;
+  const riga = (x) => {
     const talk = store.TALK_TEST.find((t) => t.id === x.talkTest);
-    aggiungi(lista,
-      h(
+    return h(
         "button.row",
         {
           onclick: unaVoltaSola(async () => {
@@ -314,8 +320,28 @@ export async function render({ ridisegna }) {
           talk ? h("span.sub", `talk-test: ${talk.testo.toLowerCase()}`) : h("span.sub", "talk-test non risposto")
         ),
         h("span.chevron", "›")
-      )
+      );
+  };
+
+  for (const x of righe.slice(0, A_VISTA)) aggiungi(lista, riga(x));
+  const restanti = righe.slice(A_VISTA);
+  if (restanti.length) {
+    const altre = h(
+      "button.row",
+      {
+        onclick: () => {
+          for (const x of restanti) lista.insertBefore(riga(x), altre);
+          altre.remove();
+        },
+      },
+      h(
+        "div.main",
+        h("span.title", restanti.length === 1 ? "Mostra l'ultima" : `Mostra le altre ${restanti.length}`),
+        h("span.sub", `dal ${dataBreve(restanti[restanti.length - 1].data)} al ${dataBreve(restanti[0].data)}`)
+      ),
+      h("span.chevron", "›")
     );
+    aggiungi(lista, altre);
   }
 
   aggiungi(wrap,

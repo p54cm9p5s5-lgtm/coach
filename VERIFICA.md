@@ -858,7 +858,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 
 ## 11.L — `js/screens/extra.js` (297 righe, lette tutte)
 
-- [ ] **11.L.1** ⚠️ **Un'attività non si corregge, si cancella.** Toccando una
+- [x] **11.L.1** ⚠️ **Un'attività non si corregge, si cancella.** Toccando una
       riga l'unica scelta è «Elimina»: se hai scritto 45 minuti invece di 54
       devi buttarla e rifarla. Da decidere se aggiungere la modifica.
 - [x] **11.L.2** ⚠️ **Nessun controllo di scala sui numeri.** Durata, km, FC e
@@ -868,13 +868,13 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [x] **11.L.3** **Campo giorno svuotato**: da verificare cosa salva
       `registraExtra` con `data: ""` (una riga senza data non si ordina e non si
       trova più).
-- [ ] **11.L.4** **Elenco tagliato a 60 righe** senza «mostra tutte»: da
+- [x] **11.L.4** **Elenco tagliato a 60 righe** senza «mostra tutte»: da
       verificare che non sia già vicino al limite.
 - [x] **11.L.5** **«Altro» senza spiegazione** viene rifiutato: da provare.
-- [ ] **11.L.6** **Talk-test non risposto** = la giornata non vale come
+- [x] **11.L.6** **Talk-test non risposto** = la giornata non vale come
       allenamento, ma **non vale zero**. Da provare che sia davvero così nel
       punteggio Salute.
-- [ ] **11.L.7** **Un'attività e una seduta lo stesso giorno**: vince la seduta.
+- [x] **11.L.7** **Un'attività e una seduta lo stesso giorno**: vince la seduta.
       Da provare.
 
 ## 11.M — `js/grafico.js` (729 righe; lette per intero le parti nuove e i punti di rottura)

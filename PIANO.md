@@ -680,6 +680,12 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   dopo vale poco. Ma è una scelta, non un vincolo: se vuoi poter correggere
   all'indietro, si fa in poco.
 
+- **11.L.1 — un'attività fuori scheda non si corregge, si cancella.** Toccando
+  una riga l'unica scelta è «Elimina»: se hai scritto 45 minuti invece di 54
+  devi buttarla e rifarla. Non è un difetto — i dati non si perdono — ma è una
+  scomodità vera. Aggiungere la modifica è mezz'ora di lavoro: dimmi se la
+  vuoi.
+
 ### Difetti confermati che ho scelto di non correggere
 
 - **11.E.4 — i segnali portano la data di oggi, non quella del fatto.** Ogni
