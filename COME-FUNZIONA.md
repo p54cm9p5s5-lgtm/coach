@@ -681,6 +681,17 @@ non descrive nessuna delle due), indoor e outdoor stanno insieme: è comunque il
 tempo che ci metti a fare un chilometro. Più basso vuol dire più veloce; si tocca
 per vedere il passo di un giorno, con i chilometri e la durata da cui viene.
 
+**Non tutti gli allenamenti entrano nel conto.** L'orologio registra anche
+camminate che una distanza non ce l'hanno davvero: avviate e chiuse subito, o al
+chiuso dove il passo non è calibrato. Trenta metri in sei minuti darebbero «191
+minuti al chilometro» — un numero vero e inservibile. Entrano solo gli
+allenamenti da **almeno mezzo chilometro** e con un passo dentro limiti umani
+(fra 2 e 30 minuti al km): fuori di lì non è che sei andato piano, è che la
+distanza non è stata registrata. Gli esclusi **restano nell'elenco** — sono
+successi — e il grafico dice quanti sono. Un giorno in cui non ne resta nessuno
+è un buco nel grafico, non un numero sbagliato. La stessa regola vale nel
+dettaglio dell'allenamento: dove il passo non è credibile, non viene scritto.
+
 **L'app non li interpreta.** Non decide se una camminata era il cardio del
 programma o una passeggiata, non li collega alle sedute e non chiede di farlo:
 è stato provato, e serviva solo a far perdere tempo per un'informazione che
