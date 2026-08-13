@@ -924,6 +924,11 @@ async function incolla(ridisegna) {
   if (conteggio.agenda) {
     righe.push(`${conteggio.agenda} ${conteggio.agenda === 1 ? "giorno" : "giorni"} dal calendario`);
   }
+  if (conteggio.troppoVecchi) {
+    righe.push(
+      `${conteggio.troppoVecchi} ${conteggio.troppoVecchi === 1 ? "riga più vecchia" : "righe più vecchie"} dell'inizio di questa storia: ${conteggio.troppoVecchi === 1 ? "lasciata fuori" : "lasciate fuori"}`
+    );
+  }
   if (conteggio.vuoti) righe.push(`${conteggio.vuoti} ${conteggio.vuoti === 1 ? "giorno" : "giorni"} senza dati, ${conteggio.vuoti === 1 ? "segnato" : "segnati"} come non ${conteggio.vuoti === 1 ? "registrato" : "registrati"}`);
   if (pacchetto.avvisi.length) righe.push(`Avvisi: ${pacchetto.avvisi.slice(0, 3).join(" · ")}`);
 

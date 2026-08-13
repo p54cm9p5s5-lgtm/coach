@@ -148,22 +148,22 @@ locale, quindi ricaricare non basta.
 Sono le regole che rendono affidabile tutto il resto: se saltano, i numeri del
 passato cambiano da soli e non ci si accorge di niente.
 
-- [ ] **1b.1** **Punteggio congelato alla chiusura**: non cambia se il coach
+- [x] **1b.1** **Punteggio congelato alla chiusura**: non cambia se il coach
       cambia lo split.
-- [ ] **1b.2** **`previstiElenco` congelato all'avvio**: «3 su 4» resta con lo
+- [x] **1b.2** **`previstiElenco` congelato all'avvio**: «3 su 4» resta con lo
       stesso 4 con cui è stato calcolato.
-- [ ] **1b.3** **Soglie cardio congelate** nella seduta: valgono quelle di quel
+- [x] **1b.3** **Soglie cardio congelate** nella seduta: valgono quelle di quel
       giorno, non quelle di oggi.
-- [ ] **1b.4** **Col calendario attivo, un giorno senza evento è un giorno senza
+- [x] **1b.4** **Col calendario attivo, un giorno senza evento è un giorno senza
       allenamento** — e l'app non inventa promemoria suoi (solo quelli marcati
       «solo app»: backup e import).
-- [ ] **1b.5** **Il tetto sigarette a zero non risale**, per nessuna strada, e
+- [x] **1b.5** **Il tetto sigarette a zero non risale**, per nessuna strada, e
       sopravvive al ripristino di un backup.
-- [ ] **1b.6** **Il set foto del 29/07 è il riferimento**: non deve mai comparire
+- [x] **1b.6** **Il set foto del 29/07 è il riferimento**: non deve mai comparire
       come «fuori protocollo» (quella scritta è delle misure, non delle foto).
-- [ ] **1b.7** **Pavimento 29/07** sull'importazione dell'export di Salute.
-- [ ] **1b.8** **Una proposta già realizzata dal brief non viene riproposta.**
-- [ ] **1b.9** Gli allenamenti del Watch **non entrano in nessun punteggio**.
+- [x] **1b.7** **Pavimento 29/07** sull'importazione dell'export di Salute.
+- [x] **1b.8** **Una proposta già realizzata dal brief non viene riproposta.**
+- [x] **1b.9** Gli allenamenti del Watch **non entrano in nessun punteggio**.
 
 ## Blocco 2 — I dati che non si recuperano
 
@@ -1108,6 +1108,15 @@ c'è modo di accorgersene se non dal risultato.
       scritture una dopo l'altra (giorni, notti, riconciliazione, allenamenti,
       vuoti, agenda). Chiudere l'app a metà lascia un import fatto per metà,
       senza nessun segno. Da provare interrompendo di proposito.
+- [x] **11.P.13** ⚠️⚠️ **Il pavimento del 29 luglio valeva solo per l'export
+      XML.** Trovato provando 1b.7: incollando un pacchetto con dentro giugno,
+      quei giorni **entravano** — il pavimento era applicato dentro
+      `pacchettoDaExport`, non in `importaSalute`, che è il punto da cui passano
+      tutte le strade. E la riga `FINESTRA` faceva di peggio: creava un record
+      «senza dati» per **ogni** giorno della finestra, 73 giornate vuote più
+      vecchie dell'inizio della storia, che poi comparivano nei grafici e nel
+      conteggio delle finestre come buchi da riempire. Corretto in tutte e due i
+      punti; il riepilogo dell'import adesso dice quante righe ha lasciato fuori.
 - [ ] **11.P.5** ⚠️ **La riconciliazione delle notti CANCELLA notti**
       (`db.del("notti", …)`) in base a un'euristica: stessa durata a ±X minuti,
       un giorno prima o dopo, solo dentro il periodo delle fasi, solo fonte
