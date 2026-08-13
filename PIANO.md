@@ -626,6 +626,36 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   scade mentre sei via e la Home smette di sapere quale allenamento tocca
   (voce 11.P.3).
 
+### Decisioni che spettano a te (non le prendo io)
+
+- **Il tuo nome nella cronologia dei commit.** Il nome della tua compagna era
+  finito in `VERIFICA.md`, che è pubblicato: l'ho tolto, aggiunto alle parole
+  vietate (ora 19) e ripubblicato — sul sito non c'è più. Ma resta dentro **2
+  commit vecchi** della storia di git. Toglierlo da lì significa riscrivere la
+  storia del repository (`filter-repo` e un push forzato): si può fare, ma è una
+  cosa che cambia tutti gli identificativi dei commit e la decido tu.
+
+- **I set di foto più vecchi non si rivedono.** L'app mostra gli ultimi quattro
+  e basta. Gli altri sono in archivio e nel backup — non si perde niente — ma
+  dall'app non c'è modo di guardarli, e chi ne ha nove crede di averne quattro.
+  O si aggiunge un «vedi tutti», o lo si scrive a schermo: è una scelta di
+  interfaccia, non un difetto.
+
+- **«Set di riferimento» compare su ogni set caricato dalla libreria.** Non è un
+  errore — l'etichetta dice «queste foto le hai caricate, non scattate con la
+  guida» — ma se ne carichi due, a schermo ci sono due «set di riferimento» e
+  non si capisce quale sia quello buono. Serve una parola diversa, e la parola
+  la scegli tu.
+
+- **Il contenuto di `data/esercizi.json` e `data/riscaldamento.json`** — se un
+  attrezzo è quello giusto, se un cue è corretto, se un esercizio è sicuro per
+  una spalla che tira — non è verificabile leggendo codice. La struttura è a
+  posto; il merito lo deve guardare chi il gesto lo conosce (voce 9.12).
+
+- **Il tasto «Claude»** in fondo al riepilogo e in Home porta al pacchetto, ma
+  l'etichetta da sola non dice cosa fa. È il nome che hai scelto tu per il
+  coach, quindi non lo tocco.
+
 ### Difetti confermati che ho scelto di non correggere
 
 - **11.P.4 — l'importazione da Salute non è una transazione** (8 scritture
