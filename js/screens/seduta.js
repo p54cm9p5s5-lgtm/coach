@@ -2408,7 +2408,13 @@ async function vistaRecupero(corpo, piede) {
         ? `Poi si ricomincia il blocco: giro ${Math.min(fatte.length + 1, v.serie)} di ${v.serie}`
         : `Prossima: serie ${fatte.length + 1} di ${v.serie}`
   );
-  aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo));
+  // Il modo per zittire l'allarme restando sul recupero. Prima la memoria
+  // «suonoSpento» c'era, con tanto di commento che spiegava come funzionava,
+  // ma non la metteva a vero nessuno: l'unico modo di fermare il suono era
+  // «Pronto», che pero chiude il riposo. In palestra capita di non essere
+  // pronti quando suona, e l'allarme restava li a suonare.
+  const notaSuono = h("p.footnote", { style: "margin:6px 16px 0;text-align:center" }, "");
+  aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo, notaSuono));
 
   // Campi della serie appena chiusa — ma SOLO fra una serie e l'altra.
   //
@@ -2417,48 +2423,71 @@ async function vistaRecupero(corpo, piede) {
   // nella scheda di valutazione, che viene prima e le mostra tutte; rimetterle
   // qui vuol dire chiedere di sistemare una cosa già sistemata, in una pagina
   // che parla del prossimo esercizio.
-  let rip = ultima?.ripFatte ?? bersaglio;
-  let carico = ultima?.carico ?? null;
+  // Dentro un blocco il giro chiude DUE serie, una per esercizio, e il riposo
+  // arriva solo alla fine del giro. Qui si mostrava una sola riga — quella
+  // dell'esercizio che riparte per primo — chiamandola «appena chiusa»: era
+  // falso (l'ultima chiusa era quella del compagno) e l'altra serie restava
+  // correggibile solo alla fine dell'esercizio. Adesso ci sono tutte e due,
+  // ognuna col suo nome.
+  const daCorreggere = [];
+  for (const k of ind) {
+    const voce = S.esercizi[k];
+    if (!voce) continue;
+    const serieSue = k === S.indice ? fatte : await serieFatte(voce.esercizioId);
+    const suUltima = serieSue.at(-1);
+    if (!suUltima) continue;
+    daCorreggere.push({ voce, def: store.esercizio(voce.esercizioId), serie: suUltima, numero: suUltima.numero ?? serieSue.length });
+  }
 
-  // Rileggere prima di scrivere: partendo dalla copia caricata al disegno, la
-  // seconda correzione riscriveva sopra la prima e la cancellava.
-  const salva = async (patch) => {
-    if (!ultima) return;
-    await store.aggiornaSerie(ultima.id, patch);
+  const campiDi = ({ voce, def: sudDef, serie: sua, numero }) => {
+    const conNome = daCorreggere.length > 1;
+    const mioBersaglio = voce.aTempo
+      ? voce.durataSec
+      : (voce.esercizioId === v.esercizioId ? S.obiettivo?.rip : null) ?? voce.ripMin ?? voce.ripMax;
+    let mioRip = sua.ripFatte ?? mioBersaglio;
+    let mioCarico = sua.carico ?? null;
+    const valR = h("span.val", `${mioRip}${voce.aTempo ? "s" : ""}`);
+    const valC = h("span.val", mioCarico != null ? `${num(mioCarico)} kg` : "—");
+    // Rileggere prima di scrivere: partendo dalla copia caricata al disegno, la
+    // seconda correzione riscriveva sopra la prima e la cancellava.
+    const salvaSua = (patch) => store.aggiornaSerie(sua.id, patch);
+    const etichetta = (testo) => (conNome ? `${sudDef?.nome || voce.esercizioId} · ${testo.toLowerCase()}` : testo);
+    return [
+      h(
+        "div.field",
+        h("label", etichetta(voce.aTempo ? "Secondi tenuti" : "Ripetizioni fatte")),
+        h(
+          "div.stepper",
+          h("button", { "aria-label": voce.aTempo ? "meno 5 secondi" : "una ripetizione in meno", onclick: async () => { mioRip = Math.max(0, mioRip - (voce.aTempo ? 5 : 1)); valR.textContent = `${mioRip}${voce.aTempo ? "s" : ""}`; await salvaSua({ ripFatte: mioRip }); } }, "−"),
+          valR,
+          h("button", { "aria-label": voce.aTempo ? "più 5 secondi" : "una ripetizione in più", onclick: async () => { mioRip = Math.min(voce.aTempo ? 3600 : 200, mioRip + (voce.aTempo ? 5 : 1)); valR.textContent = `${mioRip}${voce.aTempo ? "s" : ""}`; await salvaSua({ ripFatte: mioRip }); } }, "+")
+        )
+      ),
+      mioCarico != null
+        ? h(
+            "div.field",
+            h("label", etichetta("Carico usato")),
+            h(
+              "div.stepper",
+              h("button", { "aria-label": "carico più basso", onclick: async () => { mioCarico = passoCarico(mioCarico, -1, sudDef, inv); valC.textContent = `${num(mioCarico)} kg`; if (voce.esercizioId === v.esercizioId) await impostaCarico(mioCarico); await salvaSua({ carico: mioCarico }); } }, "−"),
+              valC,
+              h("button", { "aria-label": "carico più alto", onclick: async () => { mioCarico = passoCarico(mioCarico, 1, sudDef, inv); valC.textContent = `${num(mioCarico)} kg`; if (voce.esercizioId === v.esercizioId) await impostaCarico(mioCarico); await salvaSua({ carico: mioCarico }); } }, "+")
+            )
+          )
+        : null,
+    ];
   };
 
-  const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
-  const valCar = h("span.val", carico != null ? `${num(carico)} kg` : "—");
-
-  if (!ultimaSerie) aggiungi(corpo,
+  if (!ultimaSerie && daCorreggere.length) aggiungi(corpo,
     h(
       "div.group",
-      h("h2", `Serie ${ultima?.numero ?? fatte.length} appena chiusa`),
       h(
-        "div.list",
-        h(
-          "div.field",
-          h("label", v.aTempo ? "Secondi tenuti" : "Ripetizioni fatte"),
-          h(
-            "div.stepper",
-            h("button", { "aria-label": v.aTempo ? "meno 5 secondi" : "una ripetizione in meno", onclick: async () => { rip = Math.max(0, rip - (v.aTempo ? 5 : 1)); valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "−"),
-            valRip,
-            h("button", { "aria-label": v.aTempo ? "più 5 secondi" : "una ripetizione in più", onclick: async () => { rip = Math.min(v.aTempo ? 3600 : 200, rip + (v.aTempo ? 5 : 1)); valRip.textContent = `${rip}${v.aTempo ? "s" : ""}`; await salva({ ripFatte: rip }); } }, "+")
-          )
-        ),
-        carico != null
-          ? h(
-              "div.field",
-              h("label", "Carico usato"),
-              h(
-                "div.stepper",
-                h("button", { "aria-label": "carico più basso", onclick: async () => { carico = passoCarico(carico, -1, def, inv); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "−"),
-                valCar,
-                h("button", { "aria-label": "carico più alto", onclick: async () => { carico = passoCarico(carico, 1, def, inv); valCar.textContent = `${num(carico)} kg`; await impostaCarico(carico); await salva({ carico }); } }, "+")
-              )
-            )
-          : null
+        "h2",
+        daCorreggere.length > 1
+          ? `Giro ${daCorreggere[0].numero} appena chiuso`
+          : `Serie ${daCorreggere[0].numero} appena chiusa`
       ),
+      h("div.list", ...daCorreggere.flatMap(campiDi)),
       h("p.footnote", "I valori sono precompilati con l'obiettivo: correggili solo se hai fatto altro.")
     )
   );
@@ -2491,12 +2520,30 @@ async function vistaRecupero(corpo, piede) {
   // 250 ms e senza questa memoria lo farebbe ripartire subito dopo averlo
   // spento, cioè renderebbe il bottone inutile.
   let suonoSpento = false;
+  const zittisci = () => {
+    if (!allarmeAttivo()) return;
+    suonoSpento = true;
+    fermaAllarme();
+    notaSuono.textContent = "Suono fermato. Il recupero continua a contare.";
+  };
+  quadrante.setAttribute("role", "button");
+  quadrante.setAttribute("tabindex", "0");
+  quadrante.setAttribute("aria-label", "Ferma il suono senza chiudere il recupero");
+  quadrante.style.cursor = "pointer";
+  quadrante.addEventListener("click", zittisci);
+  quadrante.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter" || ev.key === " ") {
+      ev.preventDefault();
+      zittisci();
+    }
+  });
   const aggiorna = () => {
     if (!S.recuperoFine) return;
     const restanti = (S.recuperoFine - Date.now()) / 1000;
     if (restanti > 3.5) {
       preavvisoFatto = false; // il timer è stato allungato
       suonoSpento = false;
+      if (notaSuono.textContent) notaSuono.textContent = "";
     }
     const quota = Math.max(0, Math.min(1, (restanti * 1000) / totale));
     anello.style.strokeDashoffset = String(CIRC * (1 - quota));
@@ -2519,6 +2566,7 @@ async function vistaRecupero(corpo, piede) {
       testoTimer.classList.add("done");
       if (!allarmeAttivo() && !suonoSpento) {
         avviaAllarme();
+        notaSuono.textContent = "Tocca il cerchio per fermare il suono senza chiudere il recupero.";
       }
       pulsante.textContent = "Pronto · ferma il suono";
     }

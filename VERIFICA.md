@@ -1209,7 +1209,7 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.S — `js/screens/seduta.js` (3.607 righe; lette 642-830, 2059-2280, 2923-3075)
 
-- [ ] **11.S.1** ⚠️ **Se non correggi, l'app registra il bersaglio come se
+- [x] **11.S.1** ⚠️ **Se non correggi, l'app registra il bersaglio come se
       l'avessi fatto.** `completaSerie` scrive `ripFatte = target`: le
       ripetizioni vere si mettono solo dopo, con i tasti −/+ nella schermata del
       recupero o nel questionario. Chi tocca «serie completata» e va avanti
@@ -1229,11 +1229,11 @@ c'è modo di accorgersene se non dal risultato.
 - [ ] **11.S.4** **Ogni tocco dentro la seduta sblocca l'audio** (`azione`): è
       la rete che fa suonare il recupero. Da provare con l'interruttore su
       silenzioso e con la musica in cuffia.
-- [ ] **11.S.5** **Blocchi (due esercizi attaccati)**: giro senza riposo, riposo
+- [x] **11.S.5** **Blocchi (due esercizi attaccati)**: giro senza riposo, riposo
       solo a giro completo, valutazione di tutti e due alla fine, salto che
       salta la coppia. Sono sei strade diverse. Da provarle tutte se il brief in
       vigore usa i blocchi.
-- [ ] **11.S.6** **Salto di un esercizio**: nota obbligatoria di almeno tre
+- [x] **11.S.6** **Salto di un esercizio**: nota obbligatoria di almeno tre
       caratteri, e chiudere il pannello senza scrivere **non** salta. Da provare.
 - [ ] **11.S.7** **Limiti del cardio**: 0,5-20 km/h e 5-180 minuti. Da provare a
       sbattere contro i quattro estremi.
@@ -1252,7 +1252,7 @@ c'è modo di accorgersene se non dal risultato.
       `S.obiettivo?.rip ?? v.ripMax ?? v.ripMin` — il **tetto**. Il questionario
       torna al fondo. Conta solo quando la serie non ha `ripFatte`, ma è la
       stessa domanda con due risposte in tre punti. Da uniformare.
-- [ ] **11.S.12** ⚠️ **Il tasto per zittire l'allarme non esiste.** In
+- [x] **11.S.12** ⚠️ **Il tasto per zittire l'allarme non esiste.** In
       `vistaRecupero` c'è una variabile `suonoSpento` con un commento che spiega
       come «una volta zittito il suono non riparte da solo» — ma **non viene mai
       messa a vero da nessuna parte**: non c'è nessun modo di zittire l'allarme
@@ -1283,14 +1283,14 @@ c'è modo di accorgersene se non dal risultato.
 - [ ] **11.S.18** **Preavviso a 3 secondi + allarme a zero**, con il controllo
       ogni 250 ms. Da provare con lo schermo bloccato e con l'app in secondo
       piano.
-- [ ] **11.S.19** **`spostaTimer` non passa da `azione()`** e salva senza
+- [x] **11.S.19** **`spostaTimer` non passa da `azione()`** e salva senza
       attendere: due tocchi rapidi su «+15 s» vanno verificati.
-- [ ] **11.S.20** **Il questionario torna su compilato** se ci si ritorna sopra,
+- [x] **11.S.20** **Il questionario torna su compilato** se ci si ritorna sopra,
       e distingue «non risposto» da «no». Da provare tornando indietro dal
       riepilogo.
-- [ ] **11.S.21** **Il questionario elenca cosa manca** con le parole delle
+- [x] **11.S.21** **Il questionario elenca cosa manca** con le parole delle
       domande. Da provare lasciando fuori solo il «quanto faceva male».
-- [ ] **11.S.22** **Correzione di TUTTE le serie** dell'esercizio nel
+- [x] **11.S.22** **Correzione di TUTTE le serie** dell'esercizio nel
       questionario, con il punteggio che si aggiorna a ogni tocco. Da provare
       con tre serie e correggerne una di mezzo.
 - [ ] **11.S.23** **Serie di avvicinamento**: non compare sugli esercizi a corpo
@@ -1299,7 +1299,7 @@ c'è modo di accorgersene se non dal risultato.
       esercizi diversi.
 - [ ] **11.S.24** **Riscaldamento senza `riscaldamento.json`** (vedi 11.Q.3): la
       schermata resta senza passaggi. Da provare.
-- [ ] **11.S.25** **`inBlocco()` non è chiamata da nessuno**: funzione morta, da
+- [x] **11.S.25** **`inBlocco()` non è chiamata da nessuno**: funzione morta, da
       togliere.
 
 ## 11.T — `js/screens/seduta.js`, riepilogo e chiusura (righe 3412-3607)
@@ -1314,9 +1314,9 @@ c'è modo di accorgersene se non dal risultato.
       lasciato aperto si ritrovi in Home.
 - [ ] **11.T.3** **Densità e durata nel riepilogo** usano lo stesso conto della
       chiusura. Con il cardio rimandato sono tutti e due gonfiati (vedi 11.O.1).
-- [ ] **11.T.4** **La nota generale si salva anche tornando indietro**. Da
+- [x] **11.T.4** **La nota generale si salva anche tornando indietro**. Da
       provare scrivendo e toccando «Torna agli esercizi».
-- [ ] **11.T.5** **Copia interna a fine allenamento**: se fallisce non deve
+- [x] **11.T.5** **Copia interna a fine allenamento**: se fallisce non deve
       impedire la chiusura. Da provare con l'archivio pieno.
 - [ ] **11.T.6** **Il riquadro «Dall'orologio»** compare solo con dati vecchi, e
       la sua nota adesso rimanda a Home → Watch. Da guardare su una seduta di
