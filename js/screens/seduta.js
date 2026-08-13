@@ -345,16 +345,12 @@ async function vistaRisultato(id, vaiA, da = null) {
     );
   }
 
-  // Anche a allenamento chiuso: l'orologio lo guardi con calma dopo, e i
-  // numeri devono poter entrare lo stesso.
-  const salvaOrologio = async (orologio) => {
-    await store.aggiornaSeduta(sed.id, { orologio });
-    sed.orologio = orologio;
-  };
-  aggiungi(wrap, bloccoOrologio(sed, "pesi", salvaOrologio));
-  if (sed.cardio?.previsto || sed.cardio?.eseguito) {
-    aggiungi(wrap, bloccoOrologio(sed, "cardio", salvaOrologio));
-  }
+  // I numeri dell'orologio non si scrivono più a mano: li legge l'importazione
+  // da Salute, per intero e senza errori di trascrizione. Quelli scritti a mano
+  // prima che esistesse quella strada restano, in sola lettura: sono lavoro di
+  // qualcuno e nel pacchetto per il coach continuano a viaggiare.
+  aggiungi(wrap, orologioScritto(sed, "pesi"));
+  if (sed.cardio?.previsto || sed.cardio?.eseguito) aggiungi(wrap, orologioScritto(sed, "cardio"));
 
   const scheda = (etichetta, valore, nota) =>
     h(
@@ -792,6 +788,14 @@ async function disegna() {
     fase = S.sed.progresso.fase;
   }
 
+  // Chi era dentro l'app nella fase «numeri del cardio» quando è arrivato
+  // l'aggiornamento: quella schermata non esiste più, e senza questa riga
+  // resterebbe su un allenamento che non sa più disegnare.
+  if (fase === "valutazioneCardio") {
+    await salvaProgresso({ fase: "stretching" });
+    fase = S.sed.progresso.fase;
+  }
+
   // Sui giorni del nuovo split lo stretching finale non c'è: al suo posto c'è
   // il blocco di mobilità. Ci si fermava lo stesso su una schermata vuota che
   // chiedeva «fatto o saltato?» di niente — e rispondere «saltato» tirava giù
@@ -813,7 +817,6 @@ async function disegna() {
   else if (fase === "recupero") await vistaRecupero(corpo, piede);
   else if (fase === "questionario") await vistaQuestionario(corpo, piede);
   else if (fase === "cardio") await vistaCardio(corpo, piede);
-  else if (fase === "valutazioneCardio") await vistaValutazioneCardio(corpo, piede);
   else if (fase === "stretching") await vistaStretching(corpo, piede);
   else if (fase === "mobilita") await vistaMobilita(corpo, piede);
   else await vistaFine(corpo, piede);
@@ -829,9 +832,6 @@ function testata() {
   if (fase === "cardio") {
     passo = "Cardio";
     avanzamento = 90;
-  } else if (fase === "valutazioneCardio") {
-    passo = "Cardio · numeri";
-    avanzamento = 93;
   } else if (fase === "stretching") {
     // Anche qui si va un passaggio per volta: la testata dice quale, come fa
     // con gli esercizi.
@@ -2988,11 +2988,6 @@ async function vistaCardio(corpo, piede) {
           )
         )
       : null,
-    // Qui la parte pesi è finita e sull'orologio hai il suo riepilogo davanti:
-    // è il momento giusto per copiarlo, prima di far partire il cardio.
-    bloccoOrologio(S.sed, "pesi", async (orologio) => {
-      S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-    }),
     h(
       "div.group",
       h(
@@ -3199,10 +3194,10 @@ async function vistaCardioInCorso(corpo, piede, r) {
         finitoIl: Math.min(Date.now(), inizio + trascorsi * 60000),
       },
     });
-    // I numeri del cardio si scrivono adesso, con l'orologio ancora al polso e
-    // il riepilogo aperto: dopo lo stretching sono già stati sostituiti da
-    // quelli della sessione pesi, e si finiva a ricordarli a memoria.
-    await salvaProgresso({ fase: "valutazioneCardio", cardioInizio: null, cardioFine: null });
+    // Una volta qui si chiedevano i numeri dell'orologio, finché l'unico modo di
+    // averli era ricopiarli dal quadrante. Adesso li porta l'importazione da
+    // Salute — tutti, compreso lo sforzo — e si va dritti allo stretching.
+    await salvaProgresso({ fase: "stretching", cardioInizio: null, cardioFine: null });
     await disegna();
   };
 
@@ -3258,55 +3253,6 @@ async function vistaCardioInCorso(corpo, piede, r) {
 
 // ---------- stretching, come passo dell'allenamento ----------
 
-/**
- * Com'è andato il cardio, subito dopo il cardio.
- *
- * I numeri stanno sull'orologio adesso: la sessione appena chiusa è ancora
- * quella in cima al riepilogo. Chiedendoli dopo lo stretching, al polso c'era
- * già dell'altro e si finiva a scriverli a memoria — o a non scriverli.
- */
-async function vistaValutazioneCardio(corpo, piede) {
-  const c = S.sed.cardio || {};
-  const r = store.regole().cardio || {};
-  const previsti = c.durataPrevistaMin || r.durataMin || null;
-  const fatti = c.durataMin || 0;
-
-  aggiungi(corpo,
-    h(
-      "div.hero",
-      h("p.kicker", "Cardio finito"),
-      h("h2", "I numeri del cardio"),
-      h(
-        "p.target",
-        `${num(c.kmh ?? r.kmhMin ?? 0)} km/h per ${durataUmana(fatti * 60)}${
-          previsti ? ` · previsti ${durataUmana(previsti * 60)}` : ""
-        }`
-      )
-    ),
-    bloccoOrologio(S.sed, "cardio", async (orologio) => {
-      S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-    }),
-    h(
-      "p.footnote",
-      { style: "margin:14px 16px 24px" },
-      "Copiali dal riepilogo che l'orologio mostra adesso. Sono facoltativi: quelli che scrivi finiscono nel pacchetto per il coach."
-    )
-  );
-
-  aggiungiPiede(piede,
-    h(
-      "button.btn",
-      {
-        onclick: azione(async () => {
-          await salvaProgresso({ fase: "stretching" });
-          await disegna();
-        }),
-      },
-      "Avanti"
-    )
-  );
-}
-
 async function vistaStretching(corpo, piede) {
   const passi = passiStretching();
 
@@ -3331,13 +3277,6 @@ async function vistaStretching(corpo, piede) {
               )
             )
           )
-        : null,
-      // I numeri del cardio non si chiedono più qui: hanno una schermata loro
-      // subito dopo il cardio, quando l'orologio li mostra ancora.
-      i === passi.length - 1 && !S.sed.cardio?.previsto
-        ? bloccoOrologio(S.sed, "pesi", async (orologio) => {
-            S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-          })
         : null,
     ],
     tastiExtra: () => [
@@ -3424,105 +3363,51 @@ async function vistaMobilita(corpo, piede) {
 }
 
 /**
- * I numeri che l'orologio mostra a fine allenamento, scritti a mano.
- * I Comandi Rapidi non sanno leggere gli allenamenti dell'Apple Watch (nella
- * lista dei tipi di dato l'allenamento non esiste), e ricavare i battiti da
- * una finestra di ore darebbe una media sporca. Scriverli qui costa dieci
- * secondi ed è il dato esatto.
+ * I numeri dell'orologio scritti a mano, in sola lettura.
  *
- * Sono due blocchi distinti perché l'orologio registra due allenamenti
- * separati: la parte pesi e il cardio, con dati diversi.
+ * Fino a che l'unica strada per averli era ricopiarli dal quadrante, l'app
+ * apriva sei caselle a fine allenamento e chiedeva di riempirle. Adesso li
+ * legge l'importazione da Salute — durata, calorie attive e totali, battito
+ * medio e massimo, sforzo — quindi chiederli sarebbe far rifare a mano un
+ * lavoro già fatto, con l'aggiunta degli errori di trascrizione.
+ *
+ * Quelli scritti prima restano: sono lavoro di qualcuno, stanno nello storico e
+ * nel pacchetto per il coach, e sparire sarebbe peggio che essere superati.
  */
-const CAMPI_OROLOGIO = {
-  pesi: [
-    { id: "durata", nome: "Durata allenamento", esempio: "1:35:40", testo: true },
-    { id: "kcalAttive", nome: "Chilocalorie attive", unita: "kcal" },
-    { id: "kcalTotali", nome: "Chilocalorie totali", unita: "kcal" },
-    { id: "fcMedia", nome: "Media battito", unita: "bpm" },
-    { id: "fcMax", nome: "Battito massimo", unita: "bpm" },
-    { id: "sforzo", nome: "Sforzo", unita: "su 10" },
-  ],
-  cardio: [
-    { id: "durata", nome: "Durata allenamento", esempio: "0:30:13", testo: true },
-    { id: "km", nome: "Distanza", unita: "km", dec: 2 },
-    { id: "kcalAttive", nome: "Chilocalorie attive", unita: "kcal" },
-    { id: "kcalTotali", nome: "Chilocalorie totali", unita: "kcal" },
-    { id: "ritmo", nome: "Media ritmo", esempio: "10'02\"", testo: true },
-    { id: "fcMedia", nome: "Media battito", unita: "bpm" },
-    { id: "sforzo", nome: "Sforzo", unita: "su 10" },
-  ],
+const NOMI_OROLOGIO = {
+  durata: "Durata allenamento",
+  km: "Distanza",
+  kcalAttive: "Chilocalorie attive",
+  kcalTotali: "Chilocalorie totali",
+  ritmo: "Media ritmo",
+  fcMedia: "Media battito",
+  fcMax: "Battito massimo",
+  sforzo: "Sforzo",
 };
+const UNITA_OROLOGIO = { km: "km", kcalAttive: "kcal", kcalTotali: "kcal", fcMedia: "bpm", fcMax: "bpm", sforzo: "su 10" };
 
-function bloccoOrologio(sed, quale, salva) {
+function orologioScritto(sed, quale) {
   // Compatibilità con la prima versione, che teneva un blocco solo e piatto.
   const tutto = sed.orologio || {};
   const vecchioPiatto = tutto.fcMedia != null || tutto.fcMax != null || tutto.kcal != null;
-  const valori = { ...(quale === "pesi" && vecchioPiatto ? tutto : tutto[quale] || {}) };
-
-  const lista = h("div.list");
-  for (const c of CAMPI_OROLOGIO[quale]) {
-    // type="text" e tastiera numerica: con type="number" il telefono butta via
-    // quello che scrivi appena metti la virgola o i due punti.
-    const campo = h("input.val", {
-      type: "text",
-      inputmode: c.testo ? "text" : "decimal",
-      placeholder: c.esempio || "—",
-      "aria-label": `${c.nome}${c.unita ? ` in ${c.unita}` : ""}`,
-      value: valori[c.id] != null ? (c.testo ? String(valori[c.id]) : num(valori[c.id], c.dec ?? 1)) : "",
-      style: c.testo ? "width:120px" : "",
-    });
-    // Quello che non si riesce a leggere come numero non veniva salvato, ma
-    // restava scritto nel campo: sembrava registrato e non lo era. Adesso lo
-    // dice, e appena lasci il campo rimette quello che c'è davvero in archivio.
-    const avviso = h(
-      "p.footnote",
-      { style: "margin:2px 16px 6px;color:var(--orange);display:none" },
-      ""
+  const valori = quale === "pesi" && vecchioPiatto ? tutto : tutto[quale] || {};
+  const righe = Object.entries(NOMI_OROLOGIO)
+    .filter(([id]) => valori[id] != null && valori[id] !== "")
+    .map(([id, nome]) =>
+      h(
+        "div.row",
+        h("div.main", h("span.title", nome)),
+        h("span.value", `${valori[id]}${UNITA_OROLOGIO[id] ? ` ${UNITA_OROLOGIO[id]}` : ""}`)
+      )
     );
-    const rimettiSalvato = () => {
-      campo.value = valori[c.id] != null ? (c.testo ? String(valori[c.id]) : num(valori[c.id], c.dec ?? 1)) : "";
-    };
-    campo.addEventListener("input", async () => {
-      const t = campo.value.trim();
-      if (t === "") valori[c.id] = null;
-      else if (c.testo) valori[c.id] = t;
-      else {
-        const n = Number(t.replace(",", "."));
-        if (!Number.isFinite(n) || n < 0) {
-          campo.setAttribute("aria-invalid", "true");
-          avviso.textContent = `«${t}» non è un numero: il campo resta come prima.`;
-          avviso.style.display = "block";
-          return;
-        }
-        // I decimali che servono, campo per campo: la distanza ne vuole due
-        // (3,01 km diventava 3) e i battiti nessuno.
-        const p10 = 10 ** (c.dec ?? 1);
-        valori[c.id] = Math.round(n * p10) / p10;
-      }
-      campo.removeAttribute("aria-invalid");
-      avviso.style.display = "none";
-      await salva({ ...tutto, [quale]: { ...valori } });
-    });
-    // L'avviso resta scritto anche dopo: se il campo si svuotasse in silenzio
-    // sembrerebbe di non aver mai scritto niente.
-    campo.addEventListener("blur", () => {
-      if (campo.getAttribute("aria-invalid") !== "true") return;
-      rimettiSalvato();
-      campo.removeAttribute("aria-invalid");
-    });
-    aggiungi(
-      lista,
-      h("div.field", h("label", `${c.nome}${c.unita ? ` (${c.unita})` : ""}`), h("div.stepper", campo)),
-      avviso
-    );
-  }
+  if (!righe.length) return null;
   return h(
     "div.group",
     h("h2", quale === "pesi" ? "Dall'orologio — pesi" : "Dall'orologio — cardio"),
-    lista,
+    h("div.list", ...righe),
     h(
       "p.footnote",
-      "Copia i numeri dal riepilogo dell'allenamento sull'orologio. Facoltativi: quelli che scrivi finiscono nel pacchetto per il coach."
+      "Scritti a mano prima che l'app leggesse gli allenamenti dall'app Salute. Adesso arrivano da soli: li trovi in Home, sotto Watch."
     )
   );
 }
@@ -3607,14 +3492,8 @@ async function vistaFine(corpo, piede) {
     mancanti.length
       ? h("div.group", h("h2", "Dati mancanti"), h("div.list", ...mancanti.map((m) => h("div.row", h("div.main", h("span.title", m))))))
       : null,
-    bloccoOrologio(S.sed, "pesi", async (orologio) => {
-      S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-    }),
-    S.sed.cardio?.previsto || S.sed.cardio?.eseguito
-      ? bloccoOrologio(S.sed, "cardio", async (orologio) => {
-          S.sed = await store.aggiornaSeduta(S.sed.id, { orologio });
-        })
-      : null,
+    orologioScritto(S.sed, "pesi"),
+    S.sed.cardio?.previsto || S.sed.cardio?.eseguito ? orologioScritto(S.sed, "cardio") : null,
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota generale (dolori, sensazioni — solo se presenti)"),
     // La scritta qui sopra si vede ma non è collegata al campo: chi usa
     // VoiceOver sentirebbe «campo di testo» e basta. È l'unico campo dell'app

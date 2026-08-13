@@ -331,10 +331,17 @@ silenzio e sotto il cronometro c'è scritto quanto sei andato oltre. Prima era u
 conto alla rovescia: per camminare di più bisognava premere «+5 min» mentre si
 camminava.
 
-**4-bis. I numeri del cardio.** Appena finito il cardio, prima dello
-stretching, l'app chiede i dati dell'orologio (durata, distanza, kcal, ritmo,
-battito, sforzo). Sono facoltativi e finiscono nel pacchetto. Stanno lì perché
-in quel momento il riepilogo è ancora quello sul quadrante: chiesti dopo lo
+**4-bis. I numeri dell'orologio non si scrivono più.** Fino a che l'unica strada
+per averli era ricopiarli dal quadrante, l'app apriva sei caselle a fine
+allenamento e chiedeva di riempirle. Adesso li legge l'importazione da Salute —
+durata, calorie attive e totali, battito medio e massimo, sforzo, e in più la
+curva del battito — quindi chiederli sarebbe far rifare a mano un lavoro già
+fatto, con l'aggiunta degli errori di trascrizione. Quelli scritti prima restano
+visibili nel riepilogo e nel pacchetto, in sola lettura.
+
+Il testo che segue vale per gli allenamenti registrati prima di quel cambio: l'app chiedeva i dati dell'orologio (durata, distanza, kcal, ritmo,
+battito, sforzo). Erano facoltativi e finivano nel pacchetto. Stavano lì perché
+in quel momento il riepilogo era ancora quello sul quadrante: chiesti dopo lo
 stretching, al polso c'è già dell'altro.
 
 **5. Stretching** — come il riscaldamento: **un allungamento per volta**, con
