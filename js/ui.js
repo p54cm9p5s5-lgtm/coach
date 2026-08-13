@@ -198,6 +198,14 @@ export function chiudiFogli() {
   for (const chiudi of [...FOGLI_APERTI]) chiudi(undefined);
 }
 
+/**
+ * C'è almeno un pannello aperto? Serve a chi deve decidere se è il momento di
+ * ricaricare la pagina: un pannello aperto vuol dire che qualcosa è a metà.
+ */
+export function foglioAperto() {
+  return FOGLI_APERTI.size > 0;
+}
+
 export function sheet(build) {
   return new Promise((resolve) => {
     let chiuso = false;

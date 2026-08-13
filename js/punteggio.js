@@ -711,6 +711,48 @@ function visibileSulBianco(rgb) {
 
 const tinta = (rgb) => `rgb(${(fondoChiaro() ? visibileSulBianco(rgb) : rgb).join(",")})`;
 
+/**
+ * Applica il colore di un punteggio a un elemento **ricordandosi il numero**.
+ *
+ * Serve perché questi colori si calcolano una volta sola, al disegno, e
+ * dipendono dal tema. Se il telefono passa da chiaro a scuro dopo — al
+ * tramonto, con il tema «Sistema» — i numeri restano della tinta di prima. Di
+ * solito non si vede, perché il cambio di tema ridisegna la schermata; ma
+ * **dentro l'allenamento il ridisegno è soppresso apposta** (perderebbe quello
+ * che stai scrivendo), e lì i numeri restavano illeggibili fino alla fine
+ * della seduta: misurati a 1,95:1 su fondo chiaro, contro i 4,5 richiesti.
+ *
+ * Con il numero appeso all'elemento, `aggiornaColoriPunteggio()` può
+ * ricalcolare la tinta senza toccare niente altro.
+ */
+export function coloraPunteggio(el, totale, proprieta = "color", conSfondo = false) {
+  if (!el) return el;
+  el.dataset.punteggio = totale == null ? "" : String(totale);
+  el.dataset.punteggioProp = proprieta;
+  if (conSfondo) el.dataset.punteggioSfondo = "1";
+  el.style[proprieta] = coloreDaPunteggio(totale);
+  if (conSfondo) el.style.background = velo(coloreDaPunteggio(totale));
+  return el;
+}
+
+/** Il velo dietro le pastiglie: lo stesso colore del numero, al 16%. */
+const velo = (c) => `color-mix(in srgb, ${c} 16%, transparent)`;
+
+/** Rimette in tinta tutto quello che è stato colorato con `coloraPunteggio`. */
+export function aggiornaColoriPunteggio(radice = document) {
+  for (const el of radice.querySelectorAll("[data-punteggio]")) {
+    const grezzo = el.dataset.punteggio;
+    if (grezzo === "") continue;
+    const n = Number(grezzo);
+    if (!Number.isFinite(n)) continue;
+    const c = coloreDaPunteggio(n);
+    el.style[el.dataset.punteggioProp || "color"] = c;
+    // Il velo dietro la pastiglia è fatto dello stesso colore del numero:
+    // rifarne uno senza rifare l'altro lascerebbe il fondo della tinta vecchia.
+    if (el.dataset.punteggioSfondo === "1") el.style.background = velo(c);
+  }
+}
+
 export function coloreDaPunteggio(totale) {
   if (totale == null || Number.isNaN(totale)) return "var(--label-secondary)";
   const v = Math.max(0, Math.min(100, totale));
@@ -745,12 +787,16 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
   const colore = coloreDaPunteggio(totale);
   svg.append(
     el("circle", { cx: 88, cy: 88, r: R, fill: "none", stroke: "currentColor", "stroke-width": spessore, opacity: 0.14 }),
-    el("circle", {
-      cx: 88, cy: 88, r: R, fill: "none", stroke: colore, "stroke-width": spessore,
-      "stroke-linecap": "round", "stroke-dasharray": CIRC,
-      "stroke-dashoffset": CIRC * (1 - limita(totale / 100)),
-      style: "transition:stroke-dashoffset .45s ease",
-    })
+    coloraPunteggio(
+      el("circle", {
+        cx: 88, cy: 88, r: R, fill: "none", stroke: colore, "stroke-width": spessore,
+        "stroke-linecap": "round", "stroke-dasharray": CIRC,
+        "stroke-dashoffset": CIRC * (1 - limita(totale / 100)),
+        style: "transition:stroke-dashoffset .45s ease",
+      }),
+      totale,
+      "stroke"
+    )
   );
 
   const scala = dimensione / 176;
@@ -764,12 +810,15 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
         style:
           "position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px",
       },
-      h(
-        "p",
-        {
-          style: `margin:0;font-size:${Math.round(44 * scala)}px;font-weight:700;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1;color:${colore}`,
-        },
-        String(totale)
+      coloraPunteggio(
+        h(
+          "p",
+          {
+            style: `margin:0;font-size:${Math.round(44 * scala)}px;font-weight:700;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1;color:${colore}`,
+          },
+          String(totale)
+        ),
+        totale
       ),
       h(
         "p",

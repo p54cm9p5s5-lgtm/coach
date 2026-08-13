@@ -5,7 +5,7 @@
 import { h, num, dataBreve, dataLunga, isoDate, aggiungi, toast, chiedi } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
-import { coloreDaPunteggio } from "../punteggio.js";
+import { coloraPunteggio } from "../punteggio.js";
 
 export async function render({ ridisegna }) {
   const wrap = h("div.screen");
@@ -79,7 +79,7 @@ export async function render({ ridisegna }) {
           h(
             "div.row",
             h("div.main", h("span.title", "Giorni a obiettivo"), h("span.sub", `su ${rispostiPrima.length} ${rispostiPrima.length === 1 ? "giorno risposto" : "giorni risposti"}`)),
-            h("span.value", { style: `color:${coloreDaPunteggio(quota)}` }, `${si} · ${quota}%`)
+            coloraPunteggio(h("span.value", `${si} · ${quota}%`), quota)
           )
         )
       )

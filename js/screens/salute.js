@@ -3,7 +3,7 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
 import { graficoLinea, schedaGrafico, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
-import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
+import { anello, giudizio, coloreDaPunteggio, coloraPunteggio } from "../punteggio.js";
 
 
 /**
@@ -252,9 +252,12 @@ export async function render({ ridisegna }) {
 
     // Stessa scala di colori del punteggio Salute: lime acceso da 95 in su,
     // rosso acceso da 20 in giù, e in mezzo il passaggio graduale.
+    // La pastiglia porta con sé il proprio numero (`coloraPunteggio`): se il
+    // tema cambia senza ridisegnare, la tinta si rifà da sola invece di
+    // restare quella del fondo di prima.
     const pillola = (n) => {
       const c = coloreDaPunteggio(n);
-      return h(
+      const el = h(
         "span.pill",
         {
           style:
@@ -262,6 +265,7 @@ export async function render({ ridisegna }) {
         },
         String(n)
       );
+      return coloraPunteggio(el, n, "color", true);
     };
 
     aggiungi(wrap,
