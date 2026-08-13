@@ -1610,7 +1610,7 @@ c'è modo di accorgersene se non dal risultato.
       istruzioni e scrive `"salute": { "pesi": { "sonno": 30 } }` **spegne tutte
       le altre voci del punteggio** (vedi 11.Q.2). Da correggere in tutti e due
       i posti — il codice e queste istruzioni.
-- [ ] **11.AD.2** ⚠️ **Due documenti che si contraddicono sui comandi rapidi.**
+- [x] **11.AD.2** ⚠️ **Due documenti che si contraddicono sui comandi rapidi.**
       Le istruzioni dentro l'app (schermata Salute) descrivono un'automazione
       alle 05:00 con «Coach Salute», mentre il codice della stessa schermata
       dice per esteso che **le azioni di Salute dentro Comandi Rapidi non
@@ -1627,7 +1627,7 @@ c'è modo di accorgersene se non dal risultato.
       push, pull, legs, upper, lower, dorso-femorali, dorso-quadricipiti,
       recupero-attivo-a/b, sabato, domenica… Un coach che scrive un brief nuovo
       crede di dover allegare protocolli che invece esistono già.
-- [ ] **11.AD.5** **Verificato**: i 38 esercizi della libreria sono tutti e soli
+- [x] **11.AD.5** **Verificato**: i 38 esercizi della libreria sono tutti e soli
       quelli elencati nel documento. Da rifare questo confronto ogni volta che la
       libreria cambia.
 - [x] **11.AD.6** **Le istruzioni non nominano** `regole.finestra`,
@@ -1795,17 +1795,17 @@ di tutte le tornate.
       schermate» (§14) e «ripristino identico byte a byte su tutti e 17 gli
       archivi» (§15). Erano vere quando sono state scritte; da allora sono
       cambiate 23 file.
-- [ ] **12.C.10** **§10 dichiara per esteso la scelta sulle sigarette**: «un
+- [x] **12.C.10** **§10 dichiara per esteso la scelta sulle sigarette**: «un
       giorno senza righe vale zero sigarette, cioè punteggio pieno». Conferma che
       11.O.3 è una decisione, non una svista — e che va riconsiderata sapendo
       che in vacanza capiterà.
 
 ## 12.D — Il resto degli strumenti
 
-- [ ] **12.D.1** **`tools/serve.py`** ascolta solo su `127.0.0.1`: dal telefono
+- [x] **12.D.1** **`tools/serve.py`** ascolta solo su `127.0.0.1`: dal telefono
       sulla stessa wifi non si raggiunge. Per passare i file al telefono c'è
       `passa-file.py`. Da sapere se serve provare qualcosa dal telefono di casa.
-- [ ] **12.D.2** **`tools/` è dentro la lista bianca di pubblicazione**: tutti
+- [x] **12.D.2** **`tools/` è dentro la lista bianca di pubblicazione**: tutti
       gli strumenti finiscono nel repository pubblico. Da rileggere una volta
       cercando percorsi personali (il controllo parole vietate li prenderebbe,
       ma è meglio guardare).
@@ -1838,7 +1838,7 @@ contiene il difetto con la conseguenza peggiore trovata in tutto il controllo.
       regole.
 - [ ] **13.4** **Finestre diverse**: 21 giorni sul Mac, 30 sul telefono. Da
       uniformare o da dichiarare.
-- [ ] **13.5** **Il nome del documento personale è nel repository pubblico**:
+- [x] **13.5** **Il nome del documento personale è nel repository pubblico**:
       `tools/passa-file.py` contiene il percorso `_privato/master brief
       coaching.md`. Non è un dato di salute, ma è il nome di un file privato, e
       il controllo di `pubblica.sh` su «master brief» guarda **i nomi dei file da
@@ -1930,13 +1930,13 @@ Non documentazione: i **contenuti che l'app ti mostra in palestra**.
       dichiara un `theme-color` chiaro per chi usa il tema di sistema. Con l'app
       installata comanda il manifest: chi tiene l'iPhone in chiaro vede
       un'apertura nera. Da guardare.
-- [ ] **14.C.2** **`.gitignore` è la rete che tiene fuori i dati personali**:
+- [x] **14.C.2** **`.gitignore` è la rete che tiene fuori i dati personali**:
       copre `_privato/`, i backup, i dati iniziali, e da poco anche `.claude/*`
       tranne `launch.json`. Da rileggere ogni volta che nasce un file nuovo con
       dati dentro.
-- [ ] **14.C.3** **`robots.txt` è `Disallow: /`** — ma il repository su GitHub
+- [x] **14.C.3** **`robots.txt` è `Disallow: /`** — ma il repository su GitHub
       resta pubblico e leggibile: il file scoraggia i motori, non protegge niente.
-- [ ] **14.C.4** **`manifest`: `orientation: portrait`** — l'app non ruota. Da
+- [x] **14.C.4** **`manifest`: `orientation: portrait`** — l'app non ruota. Da
       confermare che sia voluto (i grafici in orizzontale si vedrebbero meglio).
 
 ---

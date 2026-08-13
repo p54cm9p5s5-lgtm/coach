@@ -13,6 +13,7 @@ erano affidate alla memoria di chi lo lancia («tienilo acceso pochi minuti»):
   - il server si spegne da solo dopo DURATA_MINUTI, anche se ci si dimentica.
 """
 import http.server
+import os
 import secrets
 import socket
 import subprocess
@@ -23,9 +24,17 @@ from html import escape
 from urllib.parse import quote, unquote
 
 PRIVATO = Path(__file__).resolve().parent.parent / "_privato"
+# I nomi dei file personali non stanno scritti qui: questo script finisce nel
+# repository pubblico, e il nome di un documento privato è già un'informazione
+# che non ha ragione di uscire. Si prendono dalle variabili d'ambiente, oppure
+# si passano sulla riga di comando (che è il modo normale di usarlo).
 FILE = {
-    "dati.json": PRIVATO / "coach-dati-iniziali.json",
-    "brief.md": PRIVATO / "master brief coaching.md",
+    n: PRIVATO / v
+    for n, v in (
+        ("dati.json", os.environ.get("COACH_DATI", "coach-dati-iniziali.json")),
+        ("brief.md", os.environ.get("COACH_BRIEF", "")),
+    )
+    if v
 }
 PORTA = 8899
 DURATA_MINUTI = 10
