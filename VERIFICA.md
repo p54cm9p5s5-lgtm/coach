@@ -709,26 +709,26 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 
 ## 11.H — `js/screens/acqua.js` (122) e `js/plates.js` (234), lette tutte
 
-- [ ] **11.H.1** **Acqua è accesa solo se il brief dice `contaAcqua: true`.** Da
+- [x] **11.H.1** **Acqua è accesa solo se il brief dice `contaAcqua: true`.** Da
       verificare per quale dei due profili è accesa davvero, e che la domanda
       usi i litri del brief giusto.
-- [ ] **11.H.2** **Un giorno senza risposta resta fuori dal punteggio** (non
+- [x] **11.H.2** **Un giorno senza risposta resta fuori dal punteggio** (non
       vale zero): è scritto nella nota, va verificato che il conto lo rispetti.
-- [ ] **11.H.3** **Solo la risposta di oggi si può togliere**; i giorni passati
+- [x] **11.H.3** **Solo la risposta di oggi si può togliere**; i giorni passati
       non si correggono da nessuna parte. Da decidere se va bene.
-- [ ] **11.H.4** **Ordine e taglio dell'elenco**: si mostrano i primi 30 giorni
+- [x] **11.H.4** **Ordine e taglio dell'elenco**: si mostrano i primi 30 giorni
       di `giorniAcqua()`. Da verificare che quella lista sia ordinata dal più
       recente (altrimenti si vedono i 30 più vecchi).
-- [ ] **11.H.5** **Percentuale «giorni a obiettivo»**: calcolata solo sui giorni
+- [x] **11.H.5** **Percentuale «giorni a obiettivo»**: calcolata solo sui giorni
       risposti prima di oggi. Da verificare con pochi giorni (1 su 1 = 100%).
-- [ ] **11.H.6** **Dischi**: la ricerca è esaustiva con potatura. Da verificare
+- [x] **11.H.6** **Dischi**: la ricerca è esaustiva con potatura. Da verificare
       il tempo di risposta se un brief dichiara un magazzino ricco (molti tagli,
       molte coppie) — succede a metà allenamento, dove non si può aspettare.
-- [ ] **11.H.7** **Inventario incompleto** (senza barra, senza dischi, con
+- [x] **11.H.7** **Inventario incompleto** (senza barra, senza dischi, con
       `dischi: null`): non deve rompere niente e non deve dire «bilanciere
       scarico (0 kg)». Da provare sul brief di lei, che potrebbe non avere il
       blocco tecnico.
-- [ ] **11.H.8** **Manubri singoli e a paio**: «manubri» consuma quattro dischi
+- [x] **11.H.8** **Manubri singoli e a paio**: «manubri» consuma quattro dischi
       per taglio, «manubrio» due. Da verificare su un esercizio di ciascun tipo
       che i numeri montabili siano reali.
 
