@@ -686,6 +686,14 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   scomodità vera. Aggiungere la modifica è mezz'ora di lavoro: dimmi se la
   vuoi.
 
+- **11.N.2 — il ripristino «unisci» non esiste davvero.** Il codice sa fare due
+  cose, sostituire e unire, e sceglie in base a un campo `modo` dentro il file
+  di backup. Ma il backup che l'app scrive quel campo non ce l'ha: quindi ogni
+  ripristino è «sostituisci tutto», ed è anche l'unica scelta offerta a
+  schermo. Non è un difetto — quello che succede è quello che il foglio di
+  conferma dice — ma è codice che promette una possibilità che non c'è. O si
+  collega (aggiungendo una seconda scelta al foglio) o si toglie: dimmi tu.
+
 ### Difetti confermati che ho scelto di non correggere
 
 - **11.E.4 — i segnali portano la data di oggi, non quella del fatto.** Ogni
