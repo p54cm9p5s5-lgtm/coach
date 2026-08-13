@@ -383,29 +383,29 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       capita con un sonnellino letto come notte, o con una fase mal attribuita —
       darebbe ritardo 7 → quota orario **zero** → voce Sonno a **zero**,
       qualunque sia la durata. Da provare con inizio 05:00, 09:00, 11:59.
-- [ ] **11.A.2** **Il bersaglio delle ripetizioni quando mancano delle serie**:
+- [x] **11.A.2** **Il bersaglio delle ripetizioni quando mancano delle serie**:
       si usa l'ultimo `ripTarget` chiesto, non quello del brief. Da provare con 3
       serie previste e 1 sola fatta, e con una proposta accettata in mezzo.
-- [ ] **11.A.3** **Il tetto dichiarato**: viene mostrato solo se
+- [x] **11.A.3** **Il tetto dichiarato**: viene mostrato solo se
       `tetto <= totale`. Da verificare che il tetto che ha davvero fermato il
       punteggio sia sempre quello scritto sotto il numero.
-- [ ] **11.A.4** **Carico previsto pari a zero** trattato come corpo libero: da
+- [x] **11.A.4** **Carico previsto pari a zero** trattato come corpo libero: da
       provare con un esercizio che nel brief ha `carico: 0`.
-- [ ] **11.A.5** **Tecnica fuori scala** (`> 10`, `0`, `null`): curva e tetti.
-- [ ] **11.A.6** **Recupero non misurato** su tutte le serie: la voce esce dal
+- [x] **11.A.5** **Tecnica fuori scala** (`> 10`, `0`, `null`): curva e tetti.
+- [x] **11.A.6** **Recupero non misurato** su tutte le serie: la voce esce dal
       conto e il peso si redistribuisce.
-- [ ] **11.A.7** **Dolori multipli**: −20 per punto, tetto 70 una volta sola.
+- [x] **11.A.7** **Dolori multipli**: −20 per punto, tetto 70 una volta sola.
 - [x] **11.A.8** **`pesi.acqua`**: il valore predefinito (12) non è nell'elenco
       dei pesi di base. Se un brief dichiara `pesi` senza `acqua`, verificare che
       il conto resti coerente.
 - [x] **11.A.9** **`contaSigarette: false`**: la voce Fumo non compare affatto.
-- [ ] **11.A.10** **Colori del punteggio**: sono fissi e non di tema, e in tema
+- [x] **11.A.10** **Colori del punteggio**: sono fissi e non di tema, e in tema
       chiaro vengono scuriti da un calcolo (`visibileSulBianco`) tarato sul
       **bianco puro**. Da verificare il contrasto reale sopra `--bg-grouped` e
       sopra il grigio della pagina, in tutti e tre i temi.
-- [ ] **11.A.11** **`commento()`**: le frasi «esecuzione piena», «manca poco»,
+- [x] **11.A.11** **`commento()`**: le frasi «esecuzione piena», «manca poco»,
       «il punto debole è…» con punteggi al limite (89, 90, 91).
-- [ ] **11.A.12** **Durezze delle curve** dichiarate: 2,5 di base, 1,6 cardio,
+- [x] **11.A.12** **Durezze delle curve** dichiarate: 2,5 di base, 1,6 cardio,
       1,5 movimento, 1,2 passi/esercizio/in piedi. Da verificare che i numeri a
       schermo corrispondano a queste curve e non a un'altra.
 

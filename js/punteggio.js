@@ -868,5 +868,11 @@ export function commento(risultato, nomeEsercizio) {
     return "Esecuzione piena: nessun criterio resta indietro.";
   }
   if (peggiore && peggiore.quota >= 0.9) return "Manca poco al pieno, e non c'è un punto debole singolo.";
-  return peggiore ? `Il punto debole è ${peggiore.nome.toLowerCase()}: ${peggiore.dettaglio}.` : "";
+  // Il dettaglio c'è in tutte e 27 le voci di oggi, ma se un domani ne nasce
+  // una senza, questa frase scriverebbe «il punto debole è recupero:
+  // undefined» in faccia a chi legge. Meglio una frase più corta.
+  if (!peggiore) return "";
+  return peggiore.dettaglio
+    ? `Il punto debole è ${peggiore.nome.toLowerCase()}: ${peggiore.dettaglio}.`
+    : `Il punto debole è ${peggiore.nome.toLowerCase()}.`;
 }
