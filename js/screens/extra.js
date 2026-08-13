@@ -170,6 +170,40 @@ async function registra(precompilato = {}) {
                 altroQuale.input.focus();
                 return;
               }
+              // Un numero fuori scala non deve entrare in silenzio.
+              //
+              // Durata, km, battito e calorie si scrivono a mano, e una cifra
+              // di troppo passava senza una parola: FC 999 e 400 di massima
+              // sono finite in archivio in prova, e da lì nel pacchetto che
+              // legge il coach. Come per le misure del corpo, non è un divieto
+              // ma una domanda: se è giusto lo salvo.
+              const LIMITI = [
+                [durata, "Durata", 1, 600, "min"],
+                [km, "Distanza", 0.05, 300, "km"],
+                [fcMedia, "FC media", 30, 230, "bpm"],
+                [fcMax, "FC massima", 30, 240, "bpm"],
+                [kcalAttive, "Kcal attive", 1, 5000, "kcal"],
+                [kcalTotali, "Kcal totali", 1, 6000, "kcal"],
+              ];
+              const strani = LIMITI.map(([campo, nome, min, max, unita]) => {
+                const grezzo = String(campo.input.value ?? "").trim().replace(",", ".");
+                if (!grezzo) return null;
+                const v = Number(grezzo);
+                if (!Number.isFinite(v) || v < min || v > max) return `${nome} ${grezzo} ${unita}`;
+                return null;
+              }).filter(Boolean);
+              if (strani.length) {
+                const scelta = await chiedi({
+                  titolo: strani.length === 1 ? "Un numero fuori scala" : "Numeri fuori scala",
+                  testo: `${strani.join(", ")}. È lontano da quello che un'attività può contenere: di solito è un tocco di troppo sulla tastiera. Se è giusto lo salvo, ma prima te lo chiedo.`,
+                  opzioni: [
+                    { etichetta: "È giusto, salva", valore: "salva" },
+                    { etichetta: "Torno a correggere", valore: "correggi" },
+                  ],
+                  annulla: false,
+                });
+                if (scelta !== "salva") return;
+              }
               await store.registraExtra({
                 data: data.value,
                 tipo: tipoScelto === "Altro" ? scritto : tipoScelto,
