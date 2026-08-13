@@ -595,10 +595,10 @@ l'app: fa dire una cosa falsa a una persona che decide.
 - [x] **11.E.6** **La baseline resta quella delle prime tre settimane
       registrate**, per sempre. Da verificare che la frase lo dica e che sia la
       regola voluta (§9 del brief) e non un residuo.
-- [ ] **11.E.7** **Verificato**: le notti hanno davvero `presente: true`
+- [x] **11.E.7** **Verificato**: le notti hanno davvero `presente: true`
       (`salute.js:368`), quindi il segnale sul sonno può accendersi. Resta da
       provare che si accenda per davvero, con dati veri.
-- [ ] **11.E.8** **Le regole di progressione arrivano dal brief**
+- [x] **11.E.8** **Le regole di progressione arrivano dal brief**
       (`esposizioniMinime`, `rpePerSalire`, `tecnicaMinima`, `tecnicaRiduzione`).
       Da verificare che i numeri nelle frasi delle quattro domande siano quelli
       del brief in vigore, per lui **e per lei** (i due brief possono differire).
@@ -606,7 +606,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
       `esposizioniPerEsercizio` e `allenamenti` siano ordinati dal più recente.
       Da verificare in `store.js` che sia vero anche dopo un ripristino da
       backup.
-- [ ] **11.E.10** **Un esercizio a tempo** non deve mai ricevere proposte di
+- [x] **11.E.10** **Un esercizio a tempo** non deve mai ricevere proposte di
       carico o ripetizioni, solo il segnale «tetto tenuto pulito».
 - [x] **11.E.11** **Dolore**: due sedute con lo stesso punto dolente su quattro
       generano un segnale per **punto**, non uno cumulativo; e qualunque dolore
