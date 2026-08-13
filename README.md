@@ -2,9 +2,10 @@
 
 App personale di allenamento. PWA, nessun build step, nessun server, nessuna dipendenza.
 I dati restano sul dispositivo (IndexedDB): nessun account, nessun server, niente
-che venga inviato. Le uniche richieste in uscita sono verso YouTube — la copertina
-di un video quando il riquadro entra sullo schermo, il player solo su tocco — e non
-trasportano dati dell'utente.
+che venga inviato. L'unica richiesta che può uscire è il player di YouTube, e parte
+**solo se tocchi il video**: la copertina è disegnata dall'app, non scaricata, e
+porta scritto dove sta per andare. Aprire una scheda esercizio non produce nessuna
+richiesta fuori dal telefono.
 
 Specifica funzionale: [SPEC.md](SPEC.md).
 

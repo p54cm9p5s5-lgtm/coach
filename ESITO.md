@@ -38,31 +38,31 @@ senza che una riga sia stata davvero chiusa.
 | 2 | ! | **11.P.4** | NON CORREGGO | confermato: 8 scritture separate. Racchiuderle in una transazione sola richiede di riscrivere importaSalute (IndexedDB chiude la transazione al primo await senza operazioni, e in mezzo ci sono letture e un import dinamico). Il danno è recuperabile: l'import è idempotente per costruzione (chiave = data), quindi un import interrotto si ripara reimportando lo stesso pacchetto. Vedi §8 | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 2 | ! | **11.Q.3** | NON RIPRODOTTO | `data/riscaldamento.json` è dentro gli ASSETS di sw.js, quindi con il service worker attivo c'è anche senza rete; e al primissimo avvio senza rete non si carica nemmeno l'app. Resta il caso teorico del fetch che fallisce per altri motivi, senza ritentativo | 11.Q — `js/store.js`, programma, regole e origine del giorno |
 | 2 |  | **11.U.6** | CORRETTO | stessa correzione di 11.I.3: la riga in fondo al calendario adesso dice quanto sono in ritardo | 11.U — `js/screens/oggi.js` |
-| 3 | ! | **11.AD.1** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
+| 3 | ! | **11.AD.1** | CORRETTO | ISTRUZIONI-BRIEF §7: stessa correzione di 12.C.5, sul documento che legge chi scrive il brief | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 | ! | **11.AD.2** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
-| 3 | ! | **11.AD.3** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
-| 3 | ! | **11.AD.4** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
+| 3 | ! | **11.AD.3** | CORRETTO | ISTRUZIONI-BRIEF §9: la riga «manca barra mentre c'è l'inventario» non era più vera; ora dice che ometterla è lecito | 11.AD — `ISTRUZIONI-BRIEF.md` |
+| 3 | ! | **11.AD.4** | CORRETTO | ISTRUZIONI-BRIEF §6: i giorni con protocollo sono 17, non 5; ed è scritto che i cinque nuovi e il fine settimana non hanno mobilità in riscaldamento né stretching finale | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 |  | **11.AD.5** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
-| 3 |  | **11.AD.6** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
+| 3 |  | **11.AD.6** | CORRETTO | ISTRUZIONI-BRIEF §7: elencate le soglie che esistono e non erano nominate (finestra, sonnoOraLimite, sonnoCostoOraTardi, fumoQuotaMinima, esposizioniPerRiproporre, fotoAncora) | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 | ! | **11.J.1** | DA FARE |  | 11.J — `js/screens/export.js` |
 | 3 | ! | **11.W.3** | DA FARE |  | 11.W — `js/export.js` |
-| 3 | ! | **12.A.1** | DA FARE |  | 12.A — Contraddizioni sulla privacy |
-| 3 | ! | **12.A.2** | DA FARE |  | 12.A — Contraddizioni sulla privacy |
+| 3 | ! | **12.A.1** | CORRETTO | README: «la copertina di un video quando il riquadro entra sullo schermo» → «l'unica richiesta è il player, e parte solo se tocchi il video; la copertina è disegnata dall'app» | 12.A — Contraddizioni sulla privacy |
+| 3 | ! | **12.A.2** | CORRETTO | SPEC §9 allineata al §1: la copertina è disegnata, non scaricata; aprire una scheda esercizio non produce nessuna richiesta | 12.A — Contraddizioni sulla privacy |
 | 3 | ! | **12.B.1** | DA FARE |  | 12.B — `SPEC.md` |
-| 3 | ! | **12.B.2** | DA FARE |  | 12.B — `SPEC.md` |
-| 3 | ! | **12.B.3** | DA FARE |  | 12.B — `SPEC.md` |
+| 3 | ! | **12.B.2** | CORRETTO | SPEC §4.1: tolto «cambiabile con un tap», che diceva il contrario del codice. Ora dice che l'allenamento lo decide il brief o il calendario e l'app non offre di cambiarlo | 12.B — `SPEC.md` |
+| 3 | ! | **12.B.3** | CORRETTO | SPEC §4.3: tolti i «grafici vita, peso, rapporto vita/altezza» che in Corpo non esistono; scritto che l'andamento si guarda in Salute | 12.B — `SPEC.md` |
 | 3 | ! | **12.B.4** | DA FARE |  | 12.B — `SPEC.md` |
-| 3 |  | **12.B.5** | DA FARE |  | 12.B — `SPEC.md` |
+| 3 |  | **12.B.5** | CORRETTO | SPEC §2: «nessuna palette personalizzata» → dichiarato il tema «nero e lime», che è l'unica palette non di sistema | 12.B — `SPEC.md` |
 | 3 |  | **12.B.6** | DA FARE |  | 12.B — `SPEC.md` |
 | 3 |  | **12.B.7** | DA FARE |  | 12.B — `SPEC.md` |
 | 3 |  | **12.B.8** | DA FARE |  | 12.B — `SPEC.md` |
 | 3 |  | **12.B.9** | DA FARE |  | 12.B — `SPEC.md` |
-| 3 | ! | **12.C.1** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
+| 3 | ! | **12.C.1** | CORRETTO | COME-FUNZIONA §5.6: tolto «qui si copiano i numeri dall'orologio», che contraddiceva il §5.4-bis venti righe sopra | 12.C — `COME-FUNZIONA.md` |
 | 3 |  | **12.C.10** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
-| 3 | ! | **12.C.2** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
-| 3 | ! | **12.C.3** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
-| 3 | ! | **12.C.4** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
-| 3 | ! | **12.C.5** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
+| 3 | ! | **12.C.2** | CORRETTO | COME-FUNZIONA §12: tolta la colonna «cos'era» (il ruolo, rimosso), scritto che l'app non li interpreta e che vanno letti accanto al log | 12.C — `COME-FUNZIONA.md` |
+| 3 | ! | **12.C.3** | CORRETTO | COME-FUNZIONA §12: tolto dal contenuto del pacchetto il riquadro «Letti dall'Apple Watch» trascritto a mano | 12.C — `COME-FUNZIONA.md` |
+| 3 | ! | **12.C.4** | CORRETTO | COME-FUNZIONA §4: i pesi del punteggio Salute ora includono acqua 12 e dicono che le voci assenti ridistribuiscono il peso — combaciano col §6.3 | 12.C — `COME-FUNZIONA.md` |
+| 3 | ! | **12.C.5** | CORRETTO | COME-FUNZIONA §3: la fusione delle regole è dichiarata «a un livello solo», con l'esempio di salute.pesi che sostituisce l'intero blocco | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.6** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
 | 3 |  | **12.C.7** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
 | 3 |  | **12.C.8** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |

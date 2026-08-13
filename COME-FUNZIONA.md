@@ -103,8 +103,10 @@ resta.
   modulabile posseduto. Il campo è facoltativo: un brief che non lo dichiara
   continua a funzionare, l'app torna al passo da un chilo e non dà istruzioni
   di montaggio sui manubri.
-- `regole` — tutte le soglie del §4, che si fondono voce per voce con quelle di
-  base: scrivere una soglia non azzera le altre della stessa famiglia
+- `regole` — tutte le soglie del §4. Si fondono con quelle di base **a un solo
+  livello**: scrivere `cardio.kmhMax` lascia intatte le altre soglie del cardio,
+  ma scrivere `salute.pesi` con una voce sola **sostituisce tutto il blocco dei
+  pesi**. Le voci annidate vanno riscritte per intero
 
 **Un vincolo da conoscere prima di scrivere il brief**: `esercizioId` deve
 esistere nella libreria dell'app, che contiene per ogni esercizio guida completa
@@ -177,7 +179,9 @@ trekking imprevisto. È una regola che l'app applica dal principio, non
 un'aggiunta.
 
 **Punteggio Salute** — pesi: sonno 22, allenamento 22, fumo 20, movimento 12,
-passi 10, minuti di esercizio 8, tempo in piedi 6. Bersagli: sonno **8 h**
+acqua 12, passi 10, minuti di esercizio 8, tempo in piedi 6. Fumo e acqua ci
+sono solo per chi li dichiara nel brief, e il peso delle voci assenti si
+ridistribuisce sulle altre (il dettaglio è al §6.3). Bersagli: sonno **8 h**
 (minimo **6 h**), movimento **1000 kcal**, passi **10.000**, esercizio **60 min**,
 tempo in piedi **180 min**, sigarette tollerate **10 al giorno**.
 
@@ -364,9 +368,10 @@ e lower, dove al suo posto c'è il blocco di mobilità — questo passaggio non
 compare affatto: si va dritti alla mobilità. Prima ci si fermava su una pagina
 vuota che chiedeva «fatto o saltato?» di niente.
 
-**6. Riepilogo e chiusura.** Qui si copiano i numeri dall'orologio (durata, kcal
-attive e totali, FC media e massima, sforzo; per il cardio anche distanza e
-ritmo). Sono facoltativi, e finiscono nel pacchetto.
+**6. Riepilogo e chiusura.** Durata, densità, recuperi medi reali, punteggio
+scomposto, dati mancanti e nota generale. I numeri dell'orologio **non si
+scrivono più**: li porta l'importazione da Salute (vedi 4-bis). Quelli trascritti
+a mano prima di quel cambio restano visibili, in sola lettura.
 
 Si può **uscire a metà e riprendere**: serie, riscaldamento e posizione esatta
 restano al loro posto anche dopo aver chiuso l'app — compreso il passaggio del
@@ -781,10 +786,7 @@ Contiene:
   RPE / nota, più recuperi reali cronometrati (media, minimo, massimo **e per
   singolo esercizio**), velocità e durata del cardio, durata dell'allenamento,
   **densità sui pesi** (serie/min dalla prima all'ultima serie), riscaldamento
-  (con o senza tapis), stretching, il riquadro **«Letti dall'Apple Watch»**
-  con i numeri di pesi e cardio trascritti dall'atleta a fine seduta leggendo
-  il quadrante (durata, kcal attive e totali, FC media e massima, km e ritmo
-  sul cardio, sforzo), nota generale, il
+  (con o senza tapis), stretching, nota generale, il
   **punteggio che l'app si è data** con l'eventuale tetto che l'ha fermato, e
   gli **obiettivi chiesti dall'app diversi dal brief** (quando una proposta
   accettata ha cambiato il bersaglio)
@@ -816,14 +818,13 @@ si può leggere in tre modi diversi
   Salute**, e vale pieno: solo però se il talk-test è stato risposto, altrimenti
   resta fuori dal conto invece di valere zero. Dove c'è anche una seduta vera
   comanda il punteggio della seduta, che dice di più
-- **Allenamenti letti dall'Apple Watch** — vedi §9-bis: nel pacchetto ognuno
-  porta scritto **cos'era** (la seduta, il cardio che le va dietro, o movimento
-  fuori programma), perché sommare due volte lo stesso lavoro è l'errore più
-  facile da fare leggendo questa tabella. Degli ultimi 7 giorni: data, ora,
-  tipo, durata, kcal attive e totali, FC media e massima, e se quell'attività
-  corrisponde a una seduta registrata nell'app o è movimento in più (una
-  camminata, la giornata). L'intestazione dice da dove vengono: sono misure
-  dell'orologio importate da Salute, non stime dell'app. Senza questa tabella
+- **Allenamenti letti dall'Apple Watch** — vedi §9-bis. Degli ultimi 7 giorni:
+  data, ora, tipo, durata, km, kcal attive e totali, FC media e massima, sforzo.
+  L'app **non dice cos'era** ognuno — se la seduta, il cardio che le va dietro o
+  movimento in più: ci ha provato e non serviva a nessuno. L'intestazione dice
+  da dove vengono (misure dell'orologio importate da Salute, non stime dell'app)
+  e che vanno letti **accanto** al log della seduta, non al posto suo: un
+  allenamento di forza compare in tutti e due. Senza questa tabella
   il coach vedeva l'allenamento registrato a mano ma non il resto della
   giornata, e quello che l'atleta importava nell'app non arrivava a
   destinazione

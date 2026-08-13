@@ -69,8 +69,9 @@ resta nella conversazione con Claude.
 **Look iOS nativo.** L'app deve sembrare un'app di sistema, non un sito.
 
 - Font: `-apple-system` / SF. Nessun font caricato dalla rete.
-- Colori: variabili di sistema, `prefers-color-scheme` automatico chiaro/scuro.
-  Accento: blu di sistema. Nessuna palette personalizzata.
+- Colori: variabili di sistema, `prefers-color-scheme` automatico chiaro/scuro,
+  accento blu di sistema. In più un tema dichiarato, **«nero e lime»**, che resta
+  scuro sempre: è l'unica palette non di sistema, e si sceglie da Impostazioni.
 - Struttura: liste raggruppate in stile Impostazioni, `border-radius` 10px,
   separatori sottili, header grandi (Large Title) che si contraggono allo scroll.
 - Navigazione: **tab bar in basso, 6 voci** — Home · Oggi · Salute · Fumo ·
@@ -210,7 +211,9 @@ suonoFineRecupero · ultimoBackup · ultimoImportSalute · versioneBrief
 ## 4. Funzionalità per schermata
 
 ### 4.1 Oggi
-- Seduta prevista oggi secondo lo split, con tasto **[Inizia]**; cambiabile con un tap.
+- Seduta prevista oggi secondo lo split, con tasto **[Inizia]**. Quale
+  allenamento tocca lo decide il brief (o il calendario del coach): l'app lo
+  esegue e non offre di cambiarlo, perché non è una scelta che le spetta.
 - Cosa manca: peso settimanale scaduto, foto attese, import Salute vecchio di N giorni.
 - Stato finestre: `Movimento 12/21 giorni · Sonno 9/21 notti`.
 - Proposte in sospeso.
@@ -271,7 +274,8 @@ recuperi reali su tutti gli esercizi, densità della seduta, tempo per esercizio
 - Promemoria condizioni standard (mattino, digiuno, dopo il bagno, prima di bere).
 - Foto: 4 pose, **griglia fissa e foto precedente in trasparenza** per allineare
   posa e distanza, checklist condizioni prima dello scatto. Restano sul dispositivo.
-- Grafici: vita, peso, rapporto vita/altezza.
+- Nessun grafico: in Corpo ci sono i valori, la variazione rispetto alla
+  misura precedente e gli indici. L'andamento nel tempo si guarda in Salute.
 
 ### 4.4 Salute
 - Tasto **[Aggiorna dati salute]** → lancia lo Shortcut → si torna e si incolla.
@@ -435,7 +439,7 @@ appartiene al repository pubblico.
   Il modello dati lascia lo spazio per aggiungerli in seguito senza rifare niente.
 - Non interpreta alcun dato clinico: mostra numeri, nessuna diagnosi.
 - Non calcola fabbisogni calorici né dà indicazioni alimentari.
-- Non manda dati fuori dal telefono. Le uniche richieste in uscita sono verso
-  YouTube: la copertina di un video all'apertura della scheda di un esercizio e
-  il player solo su tocco. Non trasportano dati dell'utente; senza rete non
-  partono e l'app funziona lo stesso.
+- Non manda dati fuori dal telefono. L'unica richiesta in uscita è il player di
+  YouTube, e parte **solo su tocco**: la copertina è disegnata dall'app, non
+  scaricata (vedi §1). Aprire la scheda di un esercizio non produce nessuna
+  richiesta. Senza rete il player non parte e l'app funziona lo stesso.
