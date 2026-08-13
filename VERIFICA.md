@@ -861,7 +861,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [ ] **11.L.1** ⚠️ **Un'attività non si corregge, si cancella.** Toccando una
       riga l'unica scelta è «Elimina»: se hai scritto 45 minuti invece di 54
       devi buttarla e rifarla. Da decidere se aggiungere la modifica.
-- [ ] **11.L.2** ⚠️ **Nessun controllo di scala sui numeri.** Durata, km, FC e
+- [x] **11.L.2** ⚠️ **Nessun controllo di scala sui numeri.** Durata, km, FC e
       kcal si accettano come vengono: 999 km o FC 400 entrano in silenzio e
       finiscono nel pacchetto del coach. È lo stesso difetto del carico 1750, già
       corretto altrove ma non qui.
