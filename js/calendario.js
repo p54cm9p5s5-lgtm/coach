@@ -253,7 +253,16 @@ export function calcolaAttese({
   // backup di otto giorni e uno di due mesi non sono la stessa cosa, e finché
   // il testo era identico l'avviso si leggeva una volta e poi diventava
   // arredamento. Con i giorni scritti, il ritardo che cresce si vede crescere.
-  const giorniExport = ultimoExport ? giorniTra(ultimoExport.slice(0, 10), oggi) : null;
+  // `ultimoExport` e `ultimoImportSalute` sono istanti scritti in UTC: prenderne
+  // i primi dieci caratteri dà la data di Greenwich, non la tua. Fra mezzanotte
+  // e le due del mattino (ora legale italiana) sono due giorni diversi, e il
+  // promemoria contava un giorno in più — «backup 8 giorni fa» il giorno stesso
+  // in cui l'avevi fatto. Si converte in data locale, come fa tutto il resto.
+  const dataLocaleDi = (iso) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? String(iso).slice(0, 10) : isoDate(d);
+  };
+  const giorniExport = ultimoExport ? giorniTra(dataLocaleDi(ultimoExport), oggi) : null;
   if (giorniExport === null || giorniExport >= 7) {
     aggiungiA(
       oggi,
@@ -263,7 +272,7 @@ export function calcolaAttese({
         : `Backup su file: ${giorniExport} giorni fa (solo app)`
     );
   }
-  const giorniImport = ultimoImportSalute ? giorniTra(ultimoImportSalute.slice(0, 10), oggi) : null;
+  const giorniImport = ultimoImportSalute ? giorniTra(dataLocaleDi(ultimoImportSalute), oggi) : null;
   if (giorniImport === null || giorniImport >= 2) {
     aggiungiA(
       oggi,
