@@ -783,7 +783,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [x] **11.J.3** ⚠️ **Sigarette nel pacchetto: un giorno non contato vale zero.**
       Stesso difetto della sezione Fumo (`conteggi.get(data) || 0`), ma qui il
       numero lo legge il coach. Da verificare con un giorno saltato.
-- [ ] **11.J.4** ⚠️ **«Misure e indici» è spento di default** (`corpo: false`):
+- [x] **11.J.4** ⚠️ **«Misure e indici» è spento di default** (`corpo: false`):
       il pacchetto normale **non** contiene peso e circonferenze. Da decidere se
       è quello che vogliamo, visto che il coach le chiede.
 - [x] **11.J.5** **L'ultimo allenamento è scelto per `oraFine`**: una seduta
@@ -795,7 +795,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [x] **11.J.7** **Finestre diverse nello stesso pacchetto**: salute 21 giorni,
       Watch 7, extra 7, fumo 7, acqua 7. Da verificare che il testo dica sempre
       quale periodo sta guardando.
-- [ ] **11.J.8** **Watch tagliato a 20 righe**, con la frase che dice quanti ne
+- [x] **11.J.8** **Watch tagliato a 20 righe**, con la frase che dice quanti ne
       restano fuori. Da provare con più di 20 allenamenti in 7 giorni.
 - [x] **11.J.9** **`nomeSeduta` è un parametro morto**: `bloccoWatch` non lo usa
       più da quando i ruoli sono spariti, ma la schermata continua a passarlo.
@@ -807,9 +807,9 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [x] **11.J.11** **Copia negli appunti** su iOS installato: se fallisce deve
       uscire la spiegazione «tieni premuto → Seleziona tutto». Da provare
       davvero, perché è l'unico modo di mandare il pacchetto da lontano.
-- [ ] **11.J.12** **«Salva come file»**: nome `coach-AAAA-MM-GG.md`, e da
+- [x] **11.J.12** **«Salva come file»**: nome `coach-AAAA-MM-GG.md`, e da
       verificare dove finisce su iPhone (e che si possa allegare in chat).
-- [ ] **11.J.13** **Un blocco che esplode** non deve lasciare «Sto
+- [x] **11.J.13** **Un blocco che esplode** non deve lasciare «Sto
       ricomponendo…» per sempre: c'è la rete, va provata togliendo una sezione.
 - [x] **11.J.14** **Spunte di profilo**: Fumo e Acqua non devono comparire
       nell'elenco per chi non le conta. Da verificare su **tutti e due** i
