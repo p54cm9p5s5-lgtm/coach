@@ -18,17 +18,17 @@ senza che una riga sia stata davvero chiusa.
 | 0 |  | **0.1** | CORRETTO | tag `prima-del-controllo` su a582344; ritorno con `git reset --hard prima-del-controllo && pubblica.sh` | Blocco 0 — Protezione |
 | 0 |  | **0.2** | NON RIPRODOTTO | `pubblica.sh --controlla` eseguito: 18 parole vietate, lista bianca pulita, sw.js completo, staging ripristinato | Blocco 0 — Protezione |
 | 0 |  | **0.3** | CORRETTO | provati 4 controlli su 6 con file finti: lista bianca ✓, immagine incorporata ✓, file fuori da sw.js ✓, nomi personali ✗ → vedi 11.AE.6 | Blocco 0 — Protezione |
-| 0 |  | **0.4** | DA FARE |  | Blocco 0 — Protezione |
-| 0 |  | **0.5** | DA FARE |  | Blocco 0 — Protezione |
+| 0 |  | **0.4** | CORRETTO | decisione presa con lui: i tre .md restano online; lista bianca ora li elenca uno per uno (11.AE.6) | Blocco 0 — Protezione |
+| 0 |  | **0.5** | CORRETTO | fotografia di partenza in _privato/controllo-2026-08/: console pulita su 12 rotte, backup 8600, brief di prova, base invarianti (0/59/48/10), guida di ripresa | Blocco 0 — Protezione |
 | 1 | ! | **11.AF.1** | DA FARE |  | 11.AF — Voci raccolte finendo i file già cominciati |
 | 1 | ! | **11.B.1** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 1 | ! | **11.B.2** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 1 |  | **11.B.3** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 1 | ! | **11.P.1** | DA FARE |  | 11.P — `js/store.js`, importazione da Salute e agenda |
+| 1 | ! | **11.P.1** | CORRETTO | stessa correzione di 13.1: il record vecchio veniva letto e mai usato. Ora un campo assente vale «non lo so», non «azzeralo» | 11.P — `js/store.js`, importazione da Salute e agenda |
 | 1 | ! | **11.S.13** | DA FARE |  | 11.S-bis — `js/screens/seduta.js`, seconda tornata |
 | 1 | ! | **11.T.1** | DA FARE |  | 11.T — `js/screens/seduta.js`, riepilogo e chiusura |
 | 1 | ! | **11.U.2** | DA FARE |  | 11.U — `js/screens/oggi.js` |
-| 1 | ! | **13.1** | DA FARE |  | Blocco 13 — I tre strumenti da computer |
+| 1 | ! | **13.1** | CORRETTO | riprodotto su 8602: importato un pacchetto ricco (km 5,2 · FC 118/88/141 · sforzo 6 · indoor · fine · 8 caselle di battito), poi uno povero → tutto svuotato. Ora `importaSalute` fonde invece di sostituire: dopo il povero i campi ricchi restano. Invarianti 0/10/48/59 identici | Blocco 13 — I tre strumenti da computer |
 | 2 | ! | **11.G.1** | DA FARE |  | 11.G — `js/app.js` |
 | 2 | ! | **11.G.2** | DA FARE |  | 11.G — `js/app.js` |
 | 2 | ! | **11.I.3** | DA FARE |  | 11.I — `js/calendario.js` |
@@ -232,7 +232,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.I.8** | DA FARE |  | 11.I — `js/calendario.js` |
 | 5 |  | **11.I.9** | DA FARE |  | 11.I — `js/calendario.js` |
 | 5 |  | **11.J.10** | DA FARE |  | 11.J — `js/screens/export.js` |
-| 5 |  | **11.J.11** | DA FARE |  | 11.J — `js/screens/export.js` |
+| 5 |  | **11.J.11** | NON RIPRODOTTO | il ripiego funziona: cliccato «Copia il pacchetto» sul profilo di prova, la scrittura negli appunti fallisce e compare «Copia non riuscita — tieni premuto sull'anteprima e usa Seleziona tutto → Copia» | 11.J — `js/screens/export.js` |
 | 5 |  | **11.J.12** | DA FARE |  | 11.J — `js/screens/export.js` |
 | 5 |  | **11.J.13** | DA FARE |  | 11.J — `js/screens/export.js` |
 | 5 |  | **11.J.14** | DA FARE |  | 11.J — `js/screens/export.js` |
@@ -346,6 +346,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.U.10** | DA FARE |  | 11.U — `js/screens/oggi.js` |
 | 5 |  | **11.U.11** | DA FARE |  | 11.U — `js/screens/oggi.js` |
 | 5 |  | **11.U.12** | DA FARE |  | 11.U — `js/screens/oggi.js` |
+| 5 | ! | **11.U.13** | DA FARE |  | 11.U — `js/screens/oggi.js` |
 | 5 | ! | **11.U.3** | DA FARE |  | 11.U — `js/screens/oggi.js` |
 | 5 |  | **11.U.4** | DA FARE |  | 11.U — `js/screens/oggi.js` |
 | 5 |  | **11.U.5** | DA FARE |  | 11.U — `js/screens/oggi.js` |
