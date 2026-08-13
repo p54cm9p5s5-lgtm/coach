@@ -44,33 +44,33 @@ senza che una riga sia stata davvero chiusa.
 | 3 | ! | **11.AD.4** | CORRETTO | ISTRUZIONI-BRIEF §6: i giorni con protocollo sono 17, non 5; ed è scritto che i cinque nuovi e il fine settimana non hanno mobilità in riscaldamento né stretching finale | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 |  | **11.AD.5** | DA FARE |  | 11.AD — `ISTRUZIONI-BRIEF.md` |
 | 3 |  | **11.AD.6** | CORRETTO | ISTRUZIONI-BRIEF §7: elencate le soglie che esistono e non erano nominate (finestra, sonnoOraLimite, sonnoCostoOraTardi, fumoQuotaMinima, esposizioniPerRiproporre, fotoAncora) | 11.AD — `ISTRUZIONI-BRIEF.md` |
-| 3 | ! | **11.J.1** | DA FARE |  | 11.J — `js/screens/export.js` |
-| 3 | ! | **11.W.3** | DA FARE |  | 11.W — `js/export.js` |
+| 3 | ! | **11.J.1** | CORRETTO | js/export.js: le due frasi che rimandavano ai numeri «trascritti dall'atleta leggendo il quadrante» dicono ora che quel riquadro resta solo sulle sedute vecchie | 11.J — `js/screens/export.js` |
+| 3 | ! | **11.W.3** | CORRETTO | js/export.js: «Misure e indici, solo se aggiornati di recente» → dichiarato che non c'è nessun filtro di recenza e che la data è scritta accanto a ogni valore | 11.W — `js/export.js` |
 | 3 | ! | **12.A.1** | CORRETTO | README: «la copertina di un video quando il riquadro entra sullo schermo» → «l'unica richiesta è il player, e parte solo se tocchi il video; la copertina è disegnata dall'app» | 12.A — Contraddizioni sulla privacy |
 | 3 | ! | **12.A.2** | CORRETTO | SPEC §9 allineata al §1: la copertina è disegnata, non scaricata; aprire una scheda esercizio non produce nessuna richiesta | 12.A — Contraddizioni sulla privacy |
-| 3 | ! | **12.B.1** | DA FARE |  | 12.B — `SPEC.md` |
+| 3 | ! | **12.B.1** | CORRETTO | SPEC §3.4 e §4.4 allineate al §3.3: gli allenamenti del Watch non si collegano alle sedute | 12.B — `SPEC.md` |
 | 3 | ! | **12.B.2** | CORRETTO | SPEC §4.1: tolto «cambiabile con un tap», che diceva il contrario del codice. Ora dice che l'allenamento lo decide il brief o il calendario e l'app non offre di cambiarlo | 12.B — `SPEC.md` |
 | 3 | ! | **12.B.3** | CORRETTO | SPEC §4.3: tolti i «grafici vita, peso, rapporto vita/altezza» che in Corpo non esistono; scritto che l'andamento si guarda in Salute | 12.B — `SPEC.md` |
-| 3 | ! | **12.B.4** | DA FARE |  | 12.B — `SPEC.md` |
+| 3 | ! | **12.B.4** | CORRETTO | SPEC §1: il modo «unisci» esiste nel codice ma l'app non produce backup che lo dichiarino; scritto che il ripristino sostituisce sempre | 12.B — `SPEC.md` |
 | 3 |  | **12.B.5** | CORRETTO | SPEC §2: «nessuna palette personalizzata» → dichiarato il tema «nero e lime», che è l'unica palette non di sistema | 12.B — `SPEC.md` |
-| 3 |  | **12.B.6** | DA FARE |  | 12.B — `SPEC.md` |
-| 3 |  | **12.B.7** | DA FARE |  | 12.B — `SPEC.md` |
-| 3 |  | **12.B.8** | DA FARE |  | 12.B — `SPEC.md` |
-| 3 |  | **12.B.9** | DA FARE |  | 12.B — `SPEC.md` |
+| 3 |  | **12.B.6** | CORRETTO | SPEC §3.2: `orologio` marcato «solo sulle sedute vecchie»; la domanda sul dolore non è più fissa sul polso ma una per punto dichiarato | 12.B — `SPEC.md` |
+| 3 |  | **12.B.7** | CORRETTO | SPEC §3.6: nomi veri delle impostazioni (ultimoExport, ultimoSnapshot, fumoTettoDichiarato, agenda…) al posto di ultimoBackup e versioneBrief, che non esistono | 12.B — `SPEC.md` |
+| 3 |  | **12.B.8** | CORRETTO | SPEC §3.1: `giorni[5]` → 5-7, con sabato e domenica di sola mobilità | 12.B — `SPEC.md` |
+| 3 |  | **12.B.9** | CORRETTO | SPEC §4.4: il comando rapido per la salute non viene più offerto; resta quello del calendario | 12.B — `SPEC.md` |
 | 3 | ! | **12.C.1** | CORRETTO | COME-FUNZIONA §5.6: tolto «qui si copiano i numeri dall'orologio», che contraddiceva il §5.4-bis venti righe sopra | 12.C — `COME-FUNZIONA.md` |
 | 3 |  | **12.C.10** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.2** | CORRETTO | COME-FUNZIONA §12: tolta la colonna «cos'era» (il ruolo, rimosso), scritto che l'app non li interpreta e che vanno letti accanto al log | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.3** | CORRETTO | COME-FUNZIONA §12: tolto dal contenuto del pacchetto il riquadro «Letti dall'Apple Watch» trascritto a mano | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.4** | CORRETTO | COME-FUNZIONA §4: i pesi del punteggio Salute ora includono acqua 12 e dicono che le voci assenti ridistribuiscono il peso — combaciano col §6.3 | 12.C — `COME-FUNZIONA.md` |
 | 3 | ! | **12.C.5** | CORRETTO | COME-FUNZIONA §3: la fusione delle regole è dichiarata «a un livello solo», con l'esempio di salute.pesi che sostituisce l'intero blocco | 12.C — `COME-FUNZIONA.md` |
-| 3 | ! | **12.C.6** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
-| 3 |  | **12.C.7** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
-| 3 |  | **12.C.8** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
-| 3 |  | **12.C.9** | DA FARE |  | 12.C — `COME-FUNZIONA.md` |
+| 3 | ! | **12.C.6** | CORRETTO | COME-FUNZIONA: tolta la data «dal 24/08/2026» per un blocco già attivo nei dati | 12.C — `COME-FUNZIONA.md` |
+| 3 |  | **12.C.7** | CORRETTO | COME-FUNZIONA §11: aggiunto il terzo indice, vita/fianchi, con la nota che 0,95 è la soglia maschile | 12.C — `COME-FUNZIONA.md` |
+| 3 |  | **12.C.8** | CORRETTO | COME-FUNZIONA §9: il formato ALLENAMENTO non promette più `uuid` e mostra i campi veri più la riga BATTITO | 12.C — `COME-FUNZIONA.md` |
+| 3 |  | **12.C.9** | CORRETTO | COME-FUNZIONA §14: la misura «zero richieste fuori dal telefono» è datata 13/08/2026, dopo le correzioni | 12.C — `COME-FUNZIONA.md` |
 | 3 |  | **12.D.1** | DA FARE |  | 12.D — Il resto degli strumenti |
 | 3 |  | **12.D.2** | DA FARE |  | 12.D — Il resto degli strumenti |
-| 3 | ! | **13.2** | DA FARE |  | Blocco 13 — I tre strumenti da computer |
-| 3 | ! | **14.C.1** | DA FARE |  | 14.C — I file piccoli, mai aperti |
+| 3 | ! | **13.2** | CORRETTO | COME-FUNZIONA: tolto «identico byte per byte», che era falso e verificabile; scritto che lo strumento da computer produce un pacchetto più povero e che ormai non fa danno perché l'import fonde | Blocco 13 — I tre strumenti da computer |
+| 3 | ! | **14.C.1** | CORRETTO | manifest: background_color e theme_color da #08080a (il nero del tema lime) a #000000, il nero di sistema — la schermata d'avvio non impone più il tema scuro alternativo | 14.C — I file piccoli, mai aperti |
 | 3 |  | **14.C.2** | DA FARE |  | 14.C — I file piccoli, mai aperti |
 | 3 |  | **14.C.3** | DA FARE |  | 14.C — I file piccoli, mai aperti |
 | 3 |  | **14.C.4** | DA FARE |  | 14.C — I file piccoli, mai aperti |

@@ -598,7 +598,8 @@ FINESTRA 2026-07-06 2026-08-04
 GIORNO 2026-08-04 passi=… kcal=… obiettivo=… esercizio=… inpiedi=… piani=… km=… fc=…
 NOTTE  2026-08-04 durata=… profondo=… rem=… veglia=… risvegli=…
 FASE   2026-08-03 23:14 2026-08-04 00:02 Core
-ALLENAMENTO 2026-08-04 uuid=… inizio=18:30 durata=… kcal=… kcaltot=… fcmedia=… fcmax=… tipo=…
+ALLENAMENTO 2026-08-04 inizio=18:30 durata=… kcal=… kcaltot=… km=… fcmedia=… fcmin=… fcmax=… sforzo=… indoor=… fine=… tipo=…
+BATTITO     2026-08-04 18:30 95,100-110,105,…
 AGENDA 2026-08-05 titolo=Gambe e core nota=…
 ```
 
@@ -756,8 +757,9 @@ comunque ma **segnato come non confrontabile**.
 Un valore fuori scala (per esempio un peso di 999 kg, quasi sempre un tocco di
 troppo) **fa scattare una richiesta di conferma**: l'app non rifiuta, chiede.
 
-**Indici**: vita/altezza (soglia 0,50) e BMI, dichiarato per quello che è — «il
-meno informativo dei tre», gonfiato dalla massa muscolare. Sono indicatori di
+**Indici**: vita/altezza (soglia 0,50), vita/fianchi (soglia 0,95, che è quella
+maschile: sul profilo di un'atleta va letta sapendolo) e BMI, dichiarato per
+quello che è — «il meno informativo dei tre», gonfiato dalla massa muscolare. Sono indicatori di
 struttura, **non una diagnosi**.
 
 **Foto**: 4 pose, ogni 2 settimane, con protocollo identico (stessa ora, stessa
@@ -865,9 +867,15 @@ prende direttamente l'`export.xml` dell'app Salute
 (profilo → «Esporta tutti i dati», poi in File si estrae lo zip). Il file pesa
 centinaia di megabyte e non viene caricato in memoria: viene fatto **scorrere**
 a pezzi, tenendo solo i numeri che servono. Misurato su un export vero da
-852 MB: letto in un paio di secondi con meno di 30 MB di memoria occupata, e il
-pacchetto che ne esce è **identico byte per byte** a quello prodotto dallo
-stesso lavoro fatto su un computer (`tools/salute-da-export.py`).
+852 MB: letto in un paio di secondi con meno di 30 MB di memoria occupata.
+
+Lo strumento da computer (`tools/salute-da-export.py`) fa lo stesso lavoro ma
+produce un pacchetto **più povero**: scrive giorno, ora, durata, calorie e tipo,
+mentre il lettore sul telefono aggiunge distanza, calorie totali, frequenze
+minima/media/massima, sforzo, dentro o fuori, ora di fine e la curva del
+battito. Non è un problema per i dati già in archivio — reimportare **fonde**, e
+un campo assente non cancella quello che c'era — ma se puoi scegliere, la strada
+del telefono porta più roba.
 
 Non entra mai niente di più vecchio del **29 luglio 2026**, il giorno da cui
 comincia questa storia: la data è scritta nel codice, non dedotta dai dati del
@@ -883,7 +891,7 @@ tocca Salute e infatti funziona.
 
 ### La mobilità di fine seduta
 
-Dal **24/08/2026**, dopo lo stretching finale, ogni giorno ha un blocco di
+Dopo lo stretching finale, ogni giorno ha un blocco di
 mobilità a **dose fissa**: nessun carico, nessuna soglia tecnica, nessuna
 progressione. Copre le zone che il riscaldamento di quel giorno non tocca già —
 Push, Upper: anca, caviglia, colonna · Pull: anca, caviglia · Legs, Lower:
@@ -955,7 +963,8 @@ Sono la parte che conta più delle funzioni.
   richiesta, proprio per non farlo: la copertina lo tradiva. Ora l'app tace
   finché non sei tu a chiedere.
 
-  Misurato aprendo tutte le schermate: **zero** richieste fuori dal telefono.
+  Misurato aprendo tutte le schermate: **zero** richieste fuori dal telefono
+  (rifatto il 13/08/2026, dopo le correzioni).
 
 ---
 
