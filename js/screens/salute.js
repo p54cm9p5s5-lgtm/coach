@@ -504,32 +504,6 @@ export async function render({ ridisegna }) {
     );
   }
 
-  // Gli allenamenti dell'orologio stanno qui, subito dopo il movimento: sono
-  // la stessa domanda («cosa ho fatto con il corpo in questi giorni»), solo
-  // guardata per allenamento invece che per giornata. In fondo alla schermata,
-  // dopo le finestre dati e la manutenzione, non li trovava nessuno.
-  if (daWatch) {
-    aggiungi(wrap,
-      h(
-        "div.group",
-        h(
-          "div.list",
-          h(
-            "a.row",
-            { href: "#/allenamenti" },
-            h(
-              "div.main",
-              h("span.title", "Watch"),
-              h("span.sub", "gli allenamenti che l'orologio registra da solo, giorno per giorno")
-            ),
-            h("span.value", String(daWatch)),
-            h("span.chevron", "›")
-          )
-        )
-      )
-    );
-  }
-
   aggiungi(wrap,
     h(
       "div.group",

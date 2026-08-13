@@ -2070,14 +2070,9 @@ export async function importaSalute(pacchetto) {
     const prec = await db.get("allenamentiWatch", a.uuid);
     await db.put("allenamentiWatch", {
       ...a,
-      // Quello che ha deciso l'atleta non lo riscrive un import: il
-      // collegamento a una seduta, il ruolo scelto a mano e il fatto stesso di
-      // averlo scelto. I NUMERI invece sì, e devono: è così che gli
-      // allenamenti importati con una versione più povera si riempiono di
-      // distanza, battito e frequenze quando si reimporta.
-      sedutaId: prec?.sedutaId ?? null,
-      ruolo: prec?.ruolo ?? null,
-      ruoloDeciso: prec?.ruoloDeciso ?? false,
+      // I numeri si riscrivono sempre: è così che un allenamento importato con
+      // una versione più povera si riempie di distanza, battito, sforzo e
+      // frequenze quando si reimporta.
       fonte: "salute",
       importatoIl: new Date().toISOString(),
     });
@@ -2234,7 +2229,6 @@ export async function importaSalute(pacchetto) {
   if (pacchetto.giorni.length || pacchetto.notti.length || pacchetto.allenamenti.length) {
     await setImpostazione("ultimoImportSalute", new Date().toISOString());
   }
-  await collegaAllenamentiASedute();
   return conteggio;
 }
 
@@ -2896,113 +2890,17 @@ export async function svuotaAgenda() {
 }
 
 /** Associa ogni allenamento del Watch a quello registrato nello stesso giorno. */
-/* I tipi di Salute che possono ESSERE la seduta di forza. La camminata non lo è
-   mai: è il cardio del protocollo o un'attività a parte, e le due cose si
-   distinguono solo sapendo cosa prevedeva quel giorno. */
-const TIPI_FORZA = new Set([
-  "FunctionalStrengthTraining",
-  "TraditionalStrengthTraining",
-  "CoreTraining",
-]);
-
-/** L'istante in cui è cominciato un allenamento dell'orologio. */
-function istanteWatch(a) {
-  if (!a?.data || !a?.inizio) return null;
-  const t = new Date(`${a.data}T${String(a.inizio).padStart(5, "0")}:00`).getTime();
-  return Number.isFinite(t) ? t : null;
-}
-
 /**
- * Che ruolo ha questo allenamento dell'orologio, se l'app riesce a dirlo.
+ * Gli allenamenti che l'orologio ha registrato, dal più recente.
  *
- * Restituisce anche i casi incerti, con `sicuro: false`: servono a proporre,
- * non a decidere. Chi chiama scrive solo i sicuri.
+ * Non vengono collegati alle sedute e non hanno un «ruolo» da assegnare. C'è
+ * stato un tentativo di farlo — dire se un allenamento ERA la seduta, il cardio
+ * o altro — e non serviva a niente: al coach basta sapere che quei numeri
+ * vengono dall'orologio, e il pacchetto ora lo scrive. La regola che collegava
+ * tutto alla seduta del giorno faceva danni (una camminata di un'ora chiamata
+ * «Push») e quella che chiedeva di deciderlo a mano faceva perdere tempo per
+ * un'informazione che nessuno usava.
  */
-export function ruoloProbabile(a, sedute, regoleCardio = null) {
-  const inizio = istanteWatch(a);
-  const durata = (a?.durataSec || 0) * 1000;
-  const delGiorno = (sedute || []).filter((s) => s.data === a.data && s.stato === "completata");
-  if (!delGiorno.length) return { ruolo: "extra", sedutaId: null, sicuro: false };
-
-  // Una seduta di forza si riconosce perché è avvenuta NELLO STESSO MOMENTO:
-  // il tipo da solo non basta e la data nemmeno — è la regola vecchia che
-  // attaccava le camminate alla seduta di pesi.
-  if (TIPI_FORZA.has(a.tipo) && inizio != null) {
-    const dentro = delGiorno.filter((s) => {
-      const da = s.oraInizioLavoro || s.oraInizio;
-      const a2 = s.oraFine;
-      if (!da || !a2) return false;
-      return inizio < a2 && inizio + durata > da;
-    });
-    if (dentro.length === 1) return { ruolo: "seduta", sedutaId: dentro[0].id, sicuro: true };
-  }
-  // Le sedute vecchie non hanno gli orari: lì l'unica cosa onesta è dire che
-  // probabilmente è quella, senza scriverlo.
-  if (TIPI_FORZA.has(a.tipo) && delGiorno.length === 1) {
-    return { ruolo: "seduta", sedutaId: delGiorno[0].id, sicuro: false };
-  }
-
-  // Il cardio del protocollo: una camminata attaccata alla fine della seduta,
-  // di durata simile a quella prevista. È un indizio forte, non una certezza —
-  // una camminata per tornare a casa somiglia molto a una camminata di lavoro.
-  const previstiMin = regoleCardio?.durataMin || null;
-  if (inizio != null && /walk|run/i.test(a.tipo || "")) {
-    for (const s of delGiorno) {
-      if (!s.oraFine || !s.cardio?.previsto) continue;
-      const distanzaMin = (inizio - s.oraFine) / 60000;
-      const durataMin = (a.durataSec || 0) / 60;
-      const somiglia = !previstiMin || Math.abs(durataMin - previstiMin) <= previstiMin * 0.5;
-      if (distanzaMin >= -10 && distanzaMin <= 45 && somiglia) {
-        return { ruolo: "cardio", sedutaId: s.id, sicuro: false };
-      }
-    }
-  }
-  return { ruolo: "extra", sedutaId: null, sicuro: false };
-}
-
-/**
- * Ricollega gli allenamenti dell'orologio alle sedute.
- *
- * Scrive SOLO quello di cui è sicura. Prima bastava che quel giorno ci fosse
- * una sola seduta chiusa e ogni allenamento del Watch di quel giorno le veniva
- * attaccato: due camminate e una sessione di pesi risultavano tutte «la seduta
- * Push», e quell'etichetta finiva nel pacchetto per il coach. Adesso serve che
- * i due orari si sovrappongano davvero, e un allenamento già assegnato a mano
- * non si tocca.
- */
-export async function collegaAllenamentiASedute() {
-  const allenamenti = await db.all("allenamentiWatch");
-  const tutteSedute = await db.all("sedute");
-  const reg = regole()?.cardio || null;
-  const gia = new Set(allenamenti.map((a) => a.sedutaId).filter(Boolean));
-  let collegati = 0;
-  for (const a of allenamenti) {
-    if (a.sedutaId || a.ruoloDeciso) continue;
-    const p = ruoloProbabile(a, tutteSedute, reg);
-    if (!p.sicuro || !p.sedutaId) continue;
-    // Una seduta ha un solo allenamento dell'orologio: due sessioni di forza
-    // sovrapposte alla stessa seduta sono un caso da chiedere, non da tirare
-    // a indovinare.
-    if (gia.has(p.sedutaId)) continue;
-    gia.add(p.sedutaId);
-    await db.put("allenamentiWatch", { ...a, sedutaId: p.sedutaId, ruolo: p.ruolo });
-    collegati++;
-  }
-  return collegati;
-}
-
-/** Il ruolo scelto a mano: da lì in poi comanda quello, non la regola. */
-export async function decidiRuoloWatch(uuid, { ruolo, sedutaId = null }) {
-  const a = await db.get("allenamentiWatch", uuid);
-  if (!a) throw new Error("Allenamento non trovato.");
-  await db.put("allenamentiWatch", {
-    ...a,
-    ruolo: ruolo || null,
-    sedutaId: ruolo === "seduta" || ruolo === "cardio" ? sedutaId : null,
-    ruoloDeciso: true,
-  });
-}
-
 export async function allenamentiWatch() {
   const a = await db.all("allenamentiWatch");
   return a.sort((x, y) =>
@@ -3011,27 +2909,26 @@ export async function allenamentiWatch() {
 }
 
 /**
- * I collegamenti scritti dalla regola vecchia non si correggono da soli.
+ * I collegamenti scritti dalle versioni precedenti si tolgono una volta sola.
  *
- * Restano in archivio come li ha messi lei — ogni camminata attaccata alla
- * seduta di quel giorno — e nessuna regola nuova li guarda, perché guarda solo
- * quelli vuoti. Si rifanno una volta sola, al primo avvio dopo l'aggiornamento:
- * sono dati che l'app si è calcolata da sola, non scelte di chi si allena,
- * quindi rifarli non toglie niente a nessuno. Quello che hai deciso tu
- * (`ruoloDeciso`) resta dov'è.
+ * Restavano in archivio come li aveva messi la regola vecchia — ogni camminata
+ * attaccata alla seduta di quel giorno — e da lì finivano nel pacchetto per il
+ * coach. Adesso non esistono più: si puliscono, e non si riscrivono.
  */
-const VERSIONE_COLLEGAMENTI = 2;
+const VERSIONE_COLLEGAMENTI = 3;
 export async function rifaiCollegamentiWatch() {
   const fatta = Number(await impostazione("versioneCollegamentiWatch")) || 0;
   if (fatta >= VERSIONE_COLLEGAMENTI) return 0;
-  const allenamenti = await db.all("allenamentiWatch");
-  for (const a of allenamenti) {
-    if (a.ruoloDeciso) continue;
-    if (a.sedutaId || a.ruolo) await db.put("allenamentiWatch", { ...a, sedutaId: null, ruolo: null });
+  let puliti = 0;
+  for (const a of await db.all("allenamentiWatch")) {
+    if (a.sedutaId || a.ruolo || a.ruoloDeciso) {
+      const { ruolo, ruoloDeciso, ...resto } = a;
+      await db.put("allenamentiWatch", { ...resto, sedutaId: null });
+      puliti++;
+    }
   }
-  const rifatti = await collegaAllenamentiASedute();
   await setImpostazione("versioneCollegamentiWatch", VERSIONE_COLLEGAMENTI);
-  return rifatti;
+  return puliti;
 }
 
 export async function giorniSalute() {

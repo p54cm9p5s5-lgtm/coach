@@ -632,52 +632,32 @@ una via obbligata per correggere un errore.
 
 Da quando i dati arrivano dall'esportazione di Salute, ogni sessione avviata
 sull'Apple Watch entra nell'app per conto suo: le camminate, la sessione di
-pesi, tutto. Stanno in **Salute → Allenamenti dal Watch**, e si leggono su tre
-livelli: i **giorni** (col numero di allenamenti di quel giorno), gli
-**allenamenti di quel giorno** in ordine d'orario, e il **dettaglio** di uno.
+pesi, tutto. Stanno in **Home → Watch** — le ultime tre, e da lì l'elenco
+completo, uno dietro l'altro dal più recente.
 
-I giorni si scelgono su un **calendario**: quelli con allenamenti hanno un
-pallino per allenamento, gli altri restano scritti ma non si toccano. Le frecce
-cambiano mese e sono spente dove non ci sono dati.
+Il dettaglio è quello che l'orologio mostra a te, con gli stessi numeri e gli
+stessi colori: durata, chilocalorie attive e totali, media e massimo del
+battito, distanza e passo, e lo **Sforzo** da 1 a 10 con la parola che lo
+traduce. Poi la **frequenza cardiaca** disegnata come sul quadrante — una
+barretta per momento, dal battito più basso al più alto di quei secondi, così si
+vede anche quanto è stato stabile e non solo quanto è salito. Si tocca per
+leggere un momento preciso, che sull'orologio non si può fare; dove manca la
+barretta, l'orologio non ha misurato. Le misure si raccolgono a caselle da mezzo
+minuto: l'orologio scrive un battito ogni pochi secondi, e un'ora di allenamento
+farebbe settecento punti per un grafico largo tre centimetri.
 
-Nel dettaglio c'è quello che il file di Salute contiene davvero, scritto come lo
-scrive l'orologio — numeri grandi e colorati, gli stessi colori con cui li hai
-già visti sul polso: durata, kcal attive e totali, media e massimo del battito,
-distanza e passo medio, e lo **Sforzo** da 1 a 10 con la parola che lo traduce
-(«7 · Difficile»).
+**L'app non li interpreta.** Non decide se una camminata era il cardio del
+programma o una passeggiata, non li collega alle sedute e non chiede di farlo:
+è stato provato, e serviva solo a far perdere tempo per un'informazione che
+nessuno usava. Nel pacchetto arrivano per quello che sono — «allenamenti
+registrati dall'Apple Watch e importati dall'app Salute» — con scritto che vanno
+letti **accanto** al log della seduta e non al posto suo: un allenamento di forza
+compare in tutti e due, qui come lo ha visto l'orologio e là come è stato
+eseguito.
 
-Poi la **frequenza cardiaca**, disegnata come sull'Apple Watch: una barretta per
-momento, alta dal battito più basso al più alto di quei secondi — così si vede
-anche quanto è stato stabile, non solo quanto è salito. Si tocca per leggere un
-momento preciso; dove manca la barretta, l'orologio non ha misurato. Le misure
-si raccolgono a caselle da mezzo minuto: l'orologio scrive un battito ogni pochi
-secondi, e un'ora di allenamento farebbe settecento punti per disegnare un
-grafico largo tre centimetri.
-
-**Cos'era.** Ogni allenamento può essere una di tre cose: **la seduta** del
-programma, **il cardio** che le va dietro, o un'**attività a parte**. Lo decidi
-tu con un tocco. L'app propone — riconosce la sessione di forza che si
-sovrappone d'orario alla seduta registrata, e la camminata attaccata alla fine
-con la durata del cardio previsto — ma scrive da sola **solo** il caso certo: la
-sessione di forza che è avvenuta nello stesso momento della seduta.
-
-Prima la regola era un'altra: se quel giorno c'era una sola seduta chiusa, ogni
-allenamento dell'orologio di quel giorno le veniva attaccato. Due camminate e
-una sessione di pesi risultavano tutte «la seduta Push», e quell'etichetta
-finiva nel pacchetto per il coach, che leggeva una camminata di 57 minuti come
-se fosse l'allenamento di forza. I collegamenti scritti da quella regola vengono
-**rifatti una volta sola**, al primo avvio dopo l'aggiornamento: sono numeri che
-l'app si era calcolata da sola, non scelte di chi si allena. Quello che hai
-deciso tu non viene toccato.
-
-**Non entrano in nessun punteggio.** Né in quello della seduta, né in quello
+**Non entrano in nessun punteggio**: né in quello della seduta, né in quello
 Salute, né nelle proposte di progressione. Sono l'osservazione di quello che è
-successo, non la misura di quanto hai seguito il programma — che resta il
-mestiere dei due punteggi. L'unica cosa che possono fare è riempire i numeri
-della seduta al posto tuo, e solo se sei tu a dire che quell'allenamento è
-quella seduta.
-
----
+successo, non la misura di quanto hai seguito il programma.
 
 ## 10. Il conteggio delle sigarette
 

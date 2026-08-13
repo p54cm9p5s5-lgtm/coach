@@ -165,8 +165,10 @@ AllenamentoWatch uuid (PK), data, inizio, fine, durataSec, tipo (nome di Apple),
                  km, kcalAttive, kcalTotali, fcMedia, fcMin, fcMax, sforzo (1-10),
                  battito[] ({min,max} ogni ~30s, `null` dove non ha misurato;
                             i pacchetti vecchi hanno un numero solo, si legge uguale),
-                 ruolo (seduta|cardio|extra), ruoloDeciso: bool, sedutaId
-                 Letti da Salute, mai scritti dall'app. Fuori da ogni punteggio.
+                 Letti da Salute, mai scritti dall'app. Non vengono collegati
+                 alle sedute e non hanno un ruolo da assegnare: nel pacchetto
+                 arrivano come dati dell'orologio, da leggere accanto al log.
+                 Fuori da ogni punteggio.
 Foto             id, data, posa (fronte|profiloDx|schiena|profiloSx),
                  immagine (data URL, NON un Blob: il backup è JSON e un Blob
                            dentro JSON sparirebbe senza dire niente),
