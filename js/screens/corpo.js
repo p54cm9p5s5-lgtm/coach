@@ -248,6 +248,12 @@ async function registra(ridisegna) {
         }
         valori[def.id] = Math.max(0, Math.round((valori[def.id] + d) * 10) / 10);
         scelte.add(def.id);
+        // Toccare − o + rimette a schermo un numero valido: quel campo non è
+        // più «non è un numero», e va tolto dall'elenco che blocca il salvataggio.
+        // Senza questa riga il campo mostrava 85 in color accento e «Salva»
+        // rispondeva «Non è un numero: Peso», con niente di sbagliato da
+        // correggere: l'unica via d'uscita era svuotare il campo.
+        nonValidi.delete(def.id);
         mostra();
       };
       val.addEventListener("input", () => {
@@ -451,7 +457,31 @@ async function bloccoFoto(ridisegna) {
                   opzioni: [{ etichetta: "Elimina il set", valore: "si", stile: "danger" }],
                 });
                 if (c !== "si") return;
-                for (const x of s.scatti) await store.db.del("foto", x.id);
+                // Cancellare a pezzi può fermarsi a metà: se l'archivio
+                // rifiuta una foto, prima restavano dentro le altre e il
+                // messaggio diceva comunque «Set eliminato». Quante ne sono
+                // uscite davvero va detto, come per il salvataggio parziale
+                // delle misure.
+                let tolte = 0;
+                try {
+                  for (const x of s.scatti) {
+                    await store.db.del("foto", x.id);
+                    tolte++;
+                  }
+                } catch (e) {
+                  await chiedi({
+                    titolo: tolte ? "Set eliminato solo in parte" : "Set non eliminato",
+                    testo:
+                      (tolte
+                        ? `Ne sono uscite ${tolte} su ${s.scatti.length}: `
+                        : "Non è uscita nessuna foto: ") +
+                      `${puntoFinale(e.message)} Le altre sono ancora al loro posto: riprova.`,
+                    opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+                    annulla: false,
+                  });
+                  await ridisegna();
+                  return;
+                }
                 toast("Set eliminato.");
                 await ridisegna();
               },
@@ -564,7 +594,31 @@ async function nuovoSet(ridisegna) {
   for (const posa of store.POSE) {
     const sagoma = await store.ultimaFoto(posa.id, oggi);
     const immagine = await cattura(posa, sagoma);
-    if (!immagine) break;
+    // Una posa senza foto non ferma il set: chiede se il resto va fatto.
+    //
+    // «Annullato» qui non vuol dire per forza che hai cambiato idea: quando la
+    // foto arriva dalla libreria, il ritorno del fuoco più 800 ms vale come
+    // annullamento, e su una scelta lenta o su un file pesante capita che
+    // scatti da solo. Con il `break` secco le pose successive non venivano
+    // nemmeno chieste: uscivi credendo di aver fatto il set e ne avevi metà.
+    if (!immagine) {
+      const restanti = store.POSE.length - store.POSE.indexOf(posa) - 1;
+      if (!restanti) break;
+      const scelta = await chiedi({
+        titolo: `«${posa.nome}» non è stata scattata`,
+        testo:
+          `${restanti === 1 ? "Manca ancora una posa" : `Mancano ancora ${restanti} pose`}. ` +
+          "Se hai annullato apposta va bene, ma a volte il telefono chiude il selettore da solo: " +
+          "in quel caso continuare è la cosa giusta.",
+        opzioni: [
+          { etichetta: restanti === 1 ? "Continua con l'ultima" : "Continua con le altre", valore: "avanti" },
+          { etichetta: "Fermati qui", valore: "stop" },
+        ],
+        annulla: false,
+      });
+      if (scelta === "avanti") continue;
+      break;
+    }
     try {
       await store.registraFoto({ data: oggi, posa: posa.id, immagine, checklist: { protocollo: true } });
       fatte++;

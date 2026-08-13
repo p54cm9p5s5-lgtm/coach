@@ -20,14 +20,14 @@ senza che una riga sia stata davvero chiusa.
 | 0 |  | **0.3** | CORRETTO | provati 4 controlli su 6 con file finti: lista bianca ✓, immagine incorporata ✓, file fuori da sw.js ✓, nomi personali ✗ → vedi 11.AE.6 | Blocco 0 — Protezione |
 | 0 |  | **0.4** | CORRETTO | decisione presa con lui: i tre .md restano online; lista bianca ora li elenca uno per uno (11.AE.6) | Blocco 0 — Protezione |
 | 0 |  | **0.5** | CORRETTO | fotografia di partenza in _privato/controllo-2026-08/: console pulita su 12 rotte, backup 8600, brief di prova, base invarianti (0/59/48/10), guida di ripresa | Blocco 0 — Protezione |
-| 1 | ! | **11.AF.1** | DA FARE |  | 11.AF — Voci raccolte finendo i file già cominciati |
-| 1 | ! | **11.B.1** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 1 | ! | **11.B.2** | DA FARE |  | 11.B — `js/screens/corpo.js` |
-| 1 |  | **11.B.3** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 1 | ! | **11.AF.1** | CORRETTO | `registraSaltoVero` ora parte dal record esistente: RPE, tecnica, dolori e nota dell'esercizio restano; cambia solo che risulta saltato | 11.AF — Voci raccolte finendo i file già cominciati |
+| 1 | ! | **11.B.1** | CORRETTO | riprodotto con «abc» (con «8a4» non si riproduce: parseFloat legge 8 → vedi 11.B.19). Toccando − il campo torna valido e ora esce da `nonValidi`: «Salva» non rifiuta più un campo che a schermo è giusto | 11.B — `js/screens/corpo.js` |
+| 1 | ! | **11.B.2** | CORRETTO | il `break` secco è diventato una domanda: «manca ancora una posa, continuo?». Un annullamento involontario del selettore non porta più via il resto del set | 11.B — `js/screens/corpo.js` |
+| 1 |  | **11.B.3** | CORRETTO | la cancellazione del set è dentro try/catch e dice quante foto sono uscite davvero, come già fa il salvataggio parziale delle misure | 11.B — `js/screens/corpo.js` |
 | 1 | ! | **11.P.1** | CORRETTO | stessa correzione di 13.1: il record vecchio veniva letto e mai usato. Ora un campo assente vale «non lo so», non «azzeralo» | 11.P — `js/store.js`, importazione da Salute e agenda |
-| 1 | ! | **11.S.13** | DA FARE |  | 11.S-bis — `js/screens/seduta.js`, seconda tornata |
-| 1 | ! | **11.T.1** | DA FARE |  | 11.T — `js/screens/seduta.js`, riepilogo e chiusura |
-| 1 | ! | **11.U.2** | DA FARE |  | 11.U — `js/screens/oggi.js` |
+| 1 | ! | **11.S.13** | CORRETTO | nuova `store.aggiornaSerie(id, patch)` in coda (`inFila`), che rilegge il record prima di scrivere; le tre scritture dirette in seduta.js (recupero, questionario, correzione del riposo) ci passano | 11.S-bis — `js/screens/seduta.js`, seconda tornata |
+| 1 | ! | **11.T.1** | CORRETTO | il ripiego non è più `indice: 0` ma l'ultimo esercizio: a fine seduta «Torna agli esercizi» non riporta più sul primo, già chiuso | 11.T — `js/screens/seduta.js`, riepilogo e chiusura |
+| 1 | ! | **11.U.2** | CORRETTO | `aggiornaProgresso` al posto di `aggiornaSeduta` con la fotografia vecchia: si scrive solo la fase, fusa su quella salvata | 11.U — `js/screens/oggi.js` |
 | 1 | ! | **13.1** | CORRETTO | riprodotto su 8602: importato un pacchetto ricco (km 5,2 · FC 118/88/141 · sforzo 6 · indoor · fine · 8 caselle di battito), poi uno povero → tutto svuotato. Ora `importaSalute` fonde invece di sostituire: dopo il povero i campi ricchi restano. Invarianti 0/10/48/59 identici | Blocco 13 — I tre strumenti da computer |
 | 2 | ! | **11.G.1** | DA FARE |  | 11.G — `js/app.js` |
 | 2 | ! | **11.G.2** | DA FARE |  | 11.G — `js/app.js` |
@@ -155,6 +155,7 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.B.16** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.17** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.18** | DA FARE |  | 11.B — `js/screens/corpo.js` |
+| 5 | ! | **11.B.19** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.4** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.5** | DA FARE |  | 11.B — `js/screens/corpo.js` |
 | 5 |  | **11.B.6** | DA FARE |  | 11.B — `js/screens/corpo.js` |
