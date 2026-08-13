@@ -110,12 +110,23 @@ fi
 #
 # Se un giorno serve pubblicare qualcosa di nuovo, si aggiunge una riga qui: è
 # una decisione, e va presa una volta, non subita a ogni pubblicazione.
+#
+# I documenti si elencano UNO PER UNO, non con «qualunque .md maiuscolo».
+# Con la regola larga, un file chiamato DATI.md contenente «peso 84,5 kg»
+# passava tutti e sei i controlli: la lista bianca lo accettava per il nome, le
+# parole vietate non possono coprire parole comuni come «peso», e il controllo
+# dei nomi personali qui sopra non lo vedeva nemmeno. Provato davvero, non
+# immaginato. Un documento nuovo adesso ferma la pubblicazione finché qualcuno
+# non decide di aggiungerlo a questa riga — che è esattamente il senso di una
+# lista bianca.
+#
 # `|| true`: quando non c'è niente fuori lista l'ultimo grep esce con 1, e con
 # `set -e` lo script moriva in silenzio proprio nel caso buono — un controllo
 # che ferma tutto quando va tutto bene è peggio di nessun controllo.
+DOCUMENTI='^(README|SPEC|COME-FUNZIONA|ISTRUZIONI-BRIEF|VERIFICA|PIANO|ESITO)\.md$'
 FUORI_LISTA="$(
   echo "$DA_PUBBLICARE" | grep -vE '^(index\.html|sw\.js|manifest\.webmanifest|robots\.txt|\.nojekyll|\.gitignore)$' \
-    | grep -vE '^[A-Z0-9-]+\.md$' \
+    | grep -vE "$DOCUMENTI" \
     | grep -vE '^(css|js|data|icons|tools)/' \
     | grep -vE '^\.claude/launch\.json$' \
     | grep -v '^$' || true
