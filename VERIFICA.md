@@ -644,7 +644,7 @@ l'app: fa dire una cosa falsa a una persona che decide.
       telefono, una strada alla volta.
 - [ ] **11.F.4** **La media include oggi**, che è una giornata a metà: da
       verificare che sia voluto.
-- [ ] **11.F.5** **Ogni giorno passato è giudicato col limite che aveva lui**
+- [x] **11.F.5** **Ogni giorno passato è giudicato col limite che aveva lui**
       (`limiti.get(data) ?? partenza`): pastiglie «zero» / «nuovo minimo» /
       «oltre». Da provare con una storia in cui l'asticella è scesa.
 - [ ] **11.F.6** **Il conteggio si accende aprendo la sezione.** Da verificare
@@ -826,7 +826,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       adesso: cambiando scheda, la storia di un esercizio tolto diventa
       irraggiungibile dall'interfaccia (i dati restano nell'archivio). Da
       verificare, e da decidere se va aggiunta una voce «non più in programma».
-- [ ] **11.K.3** ⚠️ **Esito della verifica scritto in linguaggio da codice**: nel
+- [x] **11.K.3** ⚠️ **Esito della verifica scritto in linguaggio da codice**: nel
       dettaglio della proposta si legge `nonConfermata` tutto attaccato, mentre
       nello Storico la stessa cosa è scritta «non confermata». Da uniformare.
 - [ ] **11.K.4** **Aprire Proposte fa girare il motore** (`aggiornaMotore`):
@@ -1022,7 +1022,7 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
       del coach lo ignora. Due numeri sbagliati in versi opposti. Da provare
       esattamente così: pesi, «Rimanda il cardio», cardio dopo più di tre ore,
       chiudi.
-- [ ] **11.O.2** ⚠️ **Il punteggio Salute dei giorni passati NON è congelato.**
+- [x] **11.O.2** ⚠️ **Il punteggio Salute dei giorni passati NON è congelato.**
       A differenza del punteggio della seduta, `punteggiSalute` lo ricalcola ogni
       volta e per sapere se quel giorno «era previsto un allenamento» usa
       `giornoPrevisto(data)`, cioè **lo split di oggi**. Se il coach cambia il
@@ -1042,7 +1042,7 @@ Lettura in corso. Queste voci hanno già un numero di riga dietro.
       settimana in corso ha zero giorni registrati, `completa` torna falsa, e
       resta falsa fino a tre settimane dopo il rientro. Da verificare cosa
       succede al segnale «finestra completa» e a quello che il coach legge.
-- [ ] **11.O.5** ⚠️ **Lo stretching previsto non è congelato.** In
+- [x] **11.O.5** ⚠️ **Lo stretching previsto non è congelato.** In
       `completezzaSeduta`, `previstoStretching` chiede a `riscaldamento(tipoId)`
       di **adesso**, mentre tutto il resto della funzione usa l'elenco congelato
       alla partenza. Se il brief cambia, una seduta non ancora congelata viene
@@ -1135,7 +1135,7 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.Q — `js/store.js`, programma, regole e origine del giorno (righe 1-575)
 
-- [ ] **11.Q.1** ⚠️ **La stessa domanda con due risposte.** `varianteDi(id)`
+- [x] **11.Q.1** ⚠️ **La stessa domanda con due risposte.** `varianteDi(id)`
       scorre lo split **nell'ordine in cui è scritto nel brief**; `varianti()`
       lo scorre **in ordine di validità** (prima il giorno che il calendario
       rimette per primo). Se nel brief convivono due programmi con lo stesso
@@ -1237,7 +1237,7 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.S-bis — `js/screens/seduta.js`, seconda tornata (righe 14-264, 860-1060, 2346-2800)
 
-- [ ] **11.S.11** ⚠️ **«Bersaglio» ha due definizioni diverse nello stesso file.**
+- [x] **11.S.11** ⚠️ **«Bersaglio» ha due definizioni diverse nello stesso file.**
       `completaSerie` usa `S.obiettivo?.rip ?? v.ripMin ?? v.ripMax` — il **fondo**
       del range, come dice il commento. `vistaRecupero` usa
       `S.obiettivo?.rip ?? v.ripMax ?? v.ripMin` — il **tetto**. Il questionario
@@ -1398,12 +1398,12 @@ c'è modo di accorgersene se non dal risultato.
 
 È il testo che arriva al coach. Qui un'etichetta sbagliata vale più di un bug.
 
-- [ ] **11.W.1** ⚠️ **Due densità diverse per lo stesso allenamento.** Il
+- [x] **11.W.1** ⚠️ **Due densità diverse per lo stesso allenamento.** Il
       riepilogo a schermo calcola `serie / durataLavoroSec`; il pacchetto del
       coach calcola `serie / (ultima serie − prima serie)`. Sono due numeri
       diversi per la stessa seduta: tu leggi uno, il coach ne legge un altro. Da
       uniformare, o almeno da dire.
-- [ ] **11.W.2** ⚠️ **«Nuovo minimo» scritto su ogni giorno sotto soglia.** Nella
+- [x] **11.W.2** ⚠️ **«Nuovo minimo» scritto su ogni giorno sotto soglia.** Nella
       tabella FUMO la nota dice «nuovo minimo» ogni volta che il numero è sotto
       la soglia di quel giorno, anche sette giorni di fila. Un minimo è uno solo:
       così com'è, la parola non vuol dire niente. Stessa cosa nella schermata

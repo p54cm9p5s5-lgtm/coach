@@ -2351,7 +2351,11 @@ async function vistaRecupero(corpo, piede) {
   // Riletto invece che dato per scontato: se l'app riparte a metà recupero,
   // S è nuovo di zecca e l'obiettivo accettato non deve sparire dallo schermo.
   S.obiettivo = v.aTempo ? null : await store.obiettivoCorrente(v.esercizioId);
-  const bersaglio = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMax ?? v.ripMin;
+  // Il fondo del range, come in `completaSerie` e nel questionario: qui era
+  // il tetto, e la stessa parola voleva dire due cose diverse in tre punti
+  // dello stesso file. Conta solo quando la serie non ha `ripFatte`, ma è
+  // esattamente il caso in cui un numero sbagliato non si nota.
+  const bersaglio = v.aTempo ? v.durataSec : S.obiettivo?.rip ?? v.ripMin ?? v.ripMax;
   const inv = await store.inventario();
 
   const testoTimer = h("p.timer", "--:--");

@@ -372,17 +372,26 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     // numeri non erano confrontabili fra loro.
     riga(
       "Densità sui pesi",
+      // La stessa densità che l'app mostra nel riepilogo a fine seduta.
+      //
+      // Qui si calcolava su «dalla prima all'ultima serie», nel riepilogo su
+      // `durataLavoroSec`: due numeri diversi per la stessa seduta, uno letto
+      // dall'atleta e l'altro dal coach. Adesso comanda il tempo di lavoro
+      // netto — quello congelato alla chiusura, che esclude le pause vere — e
+      // il tratto fra la prima e l'ultima serie resta scritto accanto come
+      // contesto, non come base del conto.
       (() => {
         const gesti = serie
           .map((x) => ({ da: x.tsInizioSerie || x.tsFineSerie, a: x.tsFineSerie }))
           .filter((x) => x.da && x.a);
-        const inizio = Math.min(...gesti.map((x) => x.da));
-        const fine = Math.max(...gesti.map((x) => x.a));
-        const secondi = gesti.length > 1 ? Math.round((fine - inizio) / 1000) : null;
-        const netto = secondi || seduta.durataLavoroSec || durata;
+        const arco =
+          gesti.length > 1
+            ? Math.round((Math.max(...gesti.map((x) => x.a)) - Math.min(...gesti.map((x) => x.da))) / 1000)
+            : null;
+        const netto = seduta.durataLavoroSec || arco || durata;
         return netto
-          ? `${(serie.length / (netto / 60)).toFixed(2).replace(".", ",")} serie/min` +
-              (secondi ? ` (dalla prima all'ultima serie, ${durataUmana(secondi)})` : "")
+          ? `${(serie.length / (netto / 60)).toFixed(2).replace(".", ",")} serie/min su ${durataUmana(netto)} di lavoro` +
+              (arco ? ` (dalla prima all'ultima serie: ${durataUmana(arco)})` : "")
           : null;
       })()
     ),
@@ -805,12 +814,20 @@ export function bloccoFumo({ perGiorno, tollerate, primoGiorno }) {
   // quando sono state vissute erano dentro il limite.
   const sogliaDi = (g) => g.tollerate ?? tollerate;
   const oltre = perGiorno.filter((g) => g.quante > sogliaDi(g));
+  // «Nuovo minimo» vuol dire una cosa sola: meno di qualunque giorno precedente.
+  // Prima era scritto su OGNI giornata sotto la soglia — anche sette di fila —
+  // e una parola che si ripete ogni giorno smette di dire qualcosa. I giorni
+  // arrivano dal più recente, quindi il confronto guarda quelli dopo nella lista.
+  const minimoVero = (i) => {
+    const q = perGiorno[i].quante;
+    return perGiorno.slice(i + 1).every((g) => g.quante > q);
+  };
   return [
     "FUMO",
     "",
     tabella(
       ["Data", "Giorno", "Sigarette", "Soglia", "Note"],
-      perGiorno.map((g) => [
+      perGiorno.map((g, i) => [
         dataBreve(g.data),
         GIORNI_ABBR[new Date(g.data + "T00:00:00").getDay()],
         String(g.quante),
@@ -819,9 +836,11 @@ export function bloccoFumo({ perGiorno, tollerate, primoGiorno }) {
           ? `${g.quante - sogliaDi(g)} oltre la soglia`
           : g.quante === 0
             ? "nessuna"
-            : g.quante < sogliaDi(g)
+            : minimoVero(i)
               ? "nuovo minimo"
-              : "",
+              : g.quante < sogliaDi(g)
+                ? "sotto la soglia"
+                : "",
       ])
     ),
     "",

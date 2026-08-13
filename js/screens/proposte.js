@@ -209,13 +209,23 @@ async function dettaglio(id) {
         h("h2", "Esito"),
         h(
           "div.list",
-          h("div.row", h("div.main", h("span.title", "Risposta")), h("span.value", p.stato)),
+          h(
+            "div.row",
+            h("div.main", h("span.title", "Risposta")),
+            h("span.value", { "aria-label": `proposta ${p.stato}` }, p.stato)
+          ),
           p.notaRisposta ? h("div.row", h("div.main", h("span.sub", p.notaRisposta))) : null,
           p.esitoVerifica
             ? h(
                 "div.row",
                 h("div.main", h("span.title", "Verifica")),
-                h("span.value", `${p.esitoVerifica.esito} · ${dataBreve(p.esitoVerifica.data)}`)
+                h(
+                  "span.value",
+                  // «nonConfermata» è come si chiama il valore nel codice, non
+                  // come si dice in italiano: nello Storico era già scritto per
+                  // esteso, qui no, e la stessa cosa si leggeva in due modi.
+                  `${p.esitoVerifica.esito === "confermata" ? "confermata" : "non confermata"} · ${dataBreve(p.esitoVerifica.data)}`
+                )
               )
             : null
         )
