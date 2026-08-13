@@ -254,9 +254,16 @@ export function punteggioEsercizio({ variante, serie, rpe, tecnica, dolori, dolo
  */
 export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarette, sigaretteTollerate = null, acqua = null, regole }) {
   const R = (regole && regole.salute) || {};
-  const pesi = R.pesi || {
-    sonno: 22, allenamento: 22, fumo: 20, movimento: 12, passi: 10, esercizio: 8, inPiedi: 6,
-  };
+  // I pesi dichiarati nel brief si FONDONO con quelli di base, non li
+  // sostituiscono.
+  //
+  // Un brief che ne dichiara solo cinque — cosa del tutto ragionevole da
+  // scrivere — lasciava le altre voci con peso `undefined`: la somma dei pesi
+  // diventava `NaN` e il punteggio Salute spariva del tutto, `null`, senza una
+  // parola. Un documento scritto dal coach mentre sei via non deve poter
+  // spegnere un punteggio: quello che non dichiara resta com'era.
+  const PESI_BASE = { sonno: 22, allenamento: 22, fumo: 20, movimento: 12, passi: 10, esercizio: 8, inPiedi: 6, acqua: 12 };
+  const pesi = { ...PESI_BASE, ...(R.pesi || {}) };
   const oreBersaglio = R.sonnoOreBersaglio ?? 8;
   const oreMinime = R.sonnoOreMinime ?? 6;
   // Il limite può essere quello del giorno — scende man mano che si raggiungono
