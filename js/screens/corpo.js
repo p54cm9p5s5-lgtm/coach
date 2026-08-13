@@ -314,10 +314,15 @@ async function registra(ridisegna) {
     return h(
       "div",
       h("h2", "Registra misure"),
+      // La primissima volta non c'è nessuna «ultima volta» da cui partire: i
+      // campi sono tutti vuoti e quella frase manda a cercare dei valori che
+      // non ci sono.
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        "I valori partono dall'ultima volta: tocca solo quelli cambiati."
+        Object.values(partenza).some((v) => v != null)
+          ? "I valori partono dall'ultima volta: tocca solo quelli cambiati."
+          : "È la prima volta: scrivi quelli che hai misurato, gli altri lasciali vuoti."
       ),
       h("div.group", { style: "margin-top:14px" }, campi),
       h(
