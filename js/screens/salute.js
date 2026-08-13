@@ -80,6 +80,7 @@ export async function render({ ridisegna }) {
   // contarli qui, un archivio che ne aveva soltanto quelli si presentava come
   // «nessun dato importato» e non c'era modo di vederli.
   const daWatch = await store.db.count("allenamentiWatch");
+  const allenamentiOrologio = await store.allenamentiWatch();
   const imp = await store.impostazioni();
 
   // Un solo periodo per tutta la schermata e per la Home: ogni selettore lo
@@ -366,6 +367,121 @@ export async function render({ ridisegna }) {
         }),
         piede: "I passi non hanno un obiettivo nel programma: servono a leggere quanto ti muovi nei giorni senza allenamento.",
       })
+    );
+  }
+
+  // ---- passo al chilometro, a piedi e di corsa ----
+  /* Quanto ci metti a fare un chilometro. Non è un dato che l'orologio scrive:
+     si ricava dagli allenamenti, sommando distanza e durata di quelli dello
+     stesso tipo nello stesso giorno. Sommare prima e dividere dopo — invece di
+     fare la media dei passi di ogni allenamento — è l'unico modo corretto: una
+     camminata di dieci minuti non pesa quanto una di un'ora.
+
+     Camminata e corsa restano separate: mescolarle darebbe un numero che non
+     descrive nessuna delle due. Indoor e outdoor invece stanno insieme, come
+     hai chiesto: è sempre il tempo che ci metti a fare un chilometro. */
+  const passoDi = (tipi) => {
+    const perData = new Map();
+    for (const a of allenamentiOrologio) {
+      if (!tipi.has(a.tipo) || !(a.km > 0) || !(a.durataSec > 0)) continue;
+      const r = perData.get(a.data) || { km: 0, sec: 0, quanti: 0 };
+      r.km += a.km;
+      r.sec += a.durataSec;
+      r.quanti++;
+      perData.set(a.data, r);
+    }
+    return perData;
+  };
+
+  const minutiAlKm = (sec, km) => sec / 60 / km;
+  const scriviPasso = (v) => {
+    const m = Math.floor(v);
+    const sec = Math.round((v - m) * 60);
+    return sec === 60 ? `${m + 1}'00"` : `${m}'${String(sec).padStart(2, "0")}"`;
+  };
+
+  const schedaPasso = (nome, tipi, piede) => {
+    const perData = passoDi(tipi);
+    if (!perData.size) return null;
+    const f = conPeriodo();
+    const dentro = [...perData.entries()].filter(([data]) => f.dentro({ data }));
+    if (!dentro.length) return null;
+    const totali = dentro.reduce((t, [, r]) => ({ km: t.km + r.km, sec: t.sec + r.sec, quanti: t.quanti + r.quanti }), { km: 0, sec: 0, quanti: 0 });
+    // Il grafico copre tutti i giorni del periodo, non solo quelli con
+    // allenamenti: un buco di tre giorni deve vedersi come un buco.
+    const punti = perGrafico(
+      giorni.filter(f.dentro).map((g) => {
+        const r = perData.get(g.data);
+        return { data: g.data, presente: Boolean(r), valore: r ? minutiAlKm(r.sec, r.km) : null, r };
+      })
+    );
+    // Se in archivio non ci sono giorni di salute che coprono quelle date, il
+    // grafico si costruisce comunque dai soli giorni con allenamento.
+    const finali = punti.length
+      ? punti
+      : dentro
+          .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+          .map(([data, r]) => ({ data, presente: true, valore: minutiAlKm(r.sec, r.km), r }));
+    const validi = finali.filter((p) => p.valore != null).map((p) => p.valore);
+    // Un passo vive in una fascia stretta: partendo da zero la linea si
+    // schiaccerebbe in cima. Il fondo scende un minuto sotto il più veloce.
+    const minimo = validi.length ? Math.max(0, Math.floor(Math.min(...validi) - 1)) : 0;
+    return schedaGrafico({
+      selettore: f.selettore,
+      titolo: nome,
+      valore: scriviPasso(minutiAlKm(totali.sec, totali.km)),
+      // «al km» sta nella nota e non come unità: accanto a un numero già lungo
+      // («12'19"») andava a capo da solo, e si leggeva «12'19" al» e sotto «km».
+      nota: `al km · ${totali.quanti} ${totali.quanti === 1 ? "allenamento" : "allenamenti"} · ${num(totali.km, 1)} km · ${f.etichetta}`,
+      grafico: graficoLinea({
+        punti: finali.map((p) => ({
+          data: p.data,
+          valore: p.valore,
+          nota: p.r ? `${num(p.r.km, 2)} km in ${durataUmana(p.r.sec)}` : null,
+        })),
+        minimo,
+        formatta: (v) => `${scriviPasso(v)} al km`,
+        invito: "Tocca un giorno per vedere il passo",
+      }),
+      piede,
+    });
+  };
+
+  const schedaCammino = schedaPasso(
+    "Passo a piedi",
+    new Set(["Walking", "Hiking"]),
+    "Minuti per chilometro camminando, indoor e outdoor insieme. Più basso vuol dire più veloce. " +
+      "Ogni giorno somma distanza e durata delle camminate di quel giorno: una camminata corta non pesa quanto una lunga."
+  );
+  if (schedaCammino) aggiungi(wrap, schedaCammino);
+
+  const schedaCorsa = schedaPasso(
+    "Passo di corsa",
+    new Set(["Running"]),
+    "Minuti per chilometro correndo. Compare da quando l'orologio registra la prima corsa."
+  );
+  if (schedaCorsa) aggiungi(wrap, schedaCorsa);
+
+  // Sotto i grafici del passo, la porta per gli allenamenti da cui vengono:
+  // si guarda il numero e la domanda dopo è sempre «quali?».
+  if (allenamentiOrologio.length) {
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h(
+          "div.list",
+          h(
+            "a.row",
+            { href: "#/allenamenti" },
+            h(
+              "div.main",
+              h("span.title", "Tutti gli allenamenti del Watch"),
+              h("span.sub", `${allenamentiOrologio.length} in archivio, con battito e dettagli`)
+            ),
+            h("span.chevron", "›")
+          )
+        )
+      )
     );
   }
 

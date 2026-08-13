@@ -663,6 +663,24 @@ barretta, l'orologio non ha misurato. Le misure si raccolgono a caselle da mezzo
 minuto: l'orologio scrive un battito ogni pochi secondi, e un'ora di allenamento
 farebbe settecento punti per un grafico largo tre centimetri.
 
+**Al chiuso o all'aperto.** Per Salute una camminata è sempre «Walking»: il
+tapis e il giro dell'isolato hanno lo stesso tipo, e la differenza sta in un dato
+a parte dentro il blocco dell'allenamento. L'app lo legge e lo scrive nel nome —
+«Camminata indoor», «Camminata outdoor», e lo stesso per corsa e bici. Dove
+quel dato non c'è (gli allenamenti importati prima) il nome resta semplice,
+senza inventare.
+
+**Il passo al chilometro.** In Salute, sotto i passi, due grafici dicono quanti
+minuti ci metti a fare un chilometro: **a piedi** e **di corsa**. Quello di corsa
+compare da quando l'orologio registra la prima corsa. Non è un numero che
+l'orologio scrive: si ricava sommando distanza e durata degli allenamenti dello
+stesso tipo nello stesso giorno, e dividendo — sommare prima e dividere dopo è
+l'unico modo corretto, perché una camminata di dieci minuti non pesa quanto una
+di un'ora. Camminata e corsa restano separate (mescolarle darebbe un numero che
+non descrive nessuna delle due), indoor e outdoor stanno insieme: è comunque il
+tempo che ci metti a fare un chilometro. Più basso vuol dire più veloce; si tocca
+per vedere il passo di un giorno, con i chilometri e la durata da cui viene.
+
 **L'app non li interpreta.** Non decide se una camminata era il cardio del
 programma o una passeggiata, non li collega alle sedute e non chiede di farlo:
 è stato provato, e serviva solo a far perdere tempo per un'informazione che

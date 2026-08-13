@@ -188,6 +188,17 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
           }
         }
       }
+      /* Al chiuso o all'aperto non è un tipo di allenamento diverso: per Salute
+         una camminata è sempre «Walking», e la differenza sta in un dato a
+         parte dentro il blocco. Senza leggerlo, il tapis e il giro dell'isolato
+         finivano nella stessa riga con lo stesso nome — e sul passo al
+         chilometro sono due cose che non si mescolano.
+         Il valore può essere scritto come 1/0 o come YES/NO. */
+      if (r.indexOf("<MetadataEntry") >= 0 && /key="(HKIndoorWorkout|HKMetadataKeyIndoorWorkout)"/.test(r)) {
+        const v = String(ATTRIBUTO(r, "value") || "").trim().toLowerCase();
+        if (v === "1" || v === "true" || v === "yes") dentroWorkout.indoor = true;
+        else if (v === "0" || v === "false" || v === "no") dentroWorkout.indoor = false;
+      }
       if (r.indexOf("</Workout>") >= 0) {
         allenamenti.push(dentroWorkout);
         dentroWorkout = null;
@@ -396,6 +407,7 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     if (a.fcMax != null) pezzi.push(`fcmax=${Math.round(a.fcMax)}`);
     const sf = sforzoDi(a);
     if (sf != null) pezzi.push(`sforzo=${Math.round(sf)}`);
+    if (a.indoor != null) pezzi.push(`indoor=${a.indoor ? 1 : 0}`);
     if (a.tipo) pezzi.push(`tipo="${a.tipo}"`);
     out.push(pezzi.join(" "));
     const curva = curvaDi(a);

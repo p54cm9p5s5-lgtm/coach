@@ -75,7 +75,7 @@ const CHIAVI_NOTE = {
   NOTTE: new Set(["durata", "profondo", "rem", "veglia", "risvegli"]),
   ALLENAMENTO: new Set([
     "uuid", "inizio", "fine", "durata", "kcal", "kcaltot", "km",
-    "fcmedia", "fc", "fcmin", "fcmax", "sforzo", "tipo",
+    "fcmedia", "fc", "fcmin", "fcmax", "sforzo", "indoor", "tipo",
   ]),
 };
 
@@ -298,6 +298,9 @@ export function analizza(testo) {
           const v = NUMERO(c.sforzo);
           return v != null && v >= 1 && v <= 10 ? v : null;
         })(),
+        // Al chiuso o all'aperto. Assente vuol dire «non lo so», non «fuori»:
+        // gli allenamenti importati prima non portavano questo dato.
+        indoor: c.indoor == null ? null : String(c.indoor) === "1" || /^(true|yes|si|sì)$/i.test(String(c.indoor)),
         tipo: c.tipo || null,
         sedutaId: null,
       });

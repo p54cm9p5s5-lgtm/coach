@@ -39,6 +39,19 @@ const TIPI = {
 
 export const nomeTipo = (t) => TIPI[t] || t || "Allenamento";
 
+/* Al chiuso o all'aperto lo dice il nome.
+   Per Salute una camminata è sempre «Walking»: il tapis e il giro dell'isolato
+   hanno lo stesso tipo, e la differenza sta in un dato a parte. Sul passo al
+   chilometro sono due cose che non si mescolano, e nell'elenco erano due righe
+   identiche. Dove l'informazione non c'è — gli allenamenti importati prima —
+   il nome resta quello di prima, senza inventare. */
+const CON_LUOGO = new Set(["Walking", "Running", "Cycling"]);
+export function nomeAllenamento(a) {
+  const base = nomeTipo(a?.tipo);
+  if (a?.indoor == null || !CON_LUOGO.has(a?.tipo)) return base;
+  return `${base} ${a.indoor ? "indoor" : "outdoor"}`;
+}
+
 const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
 /** «1:11:16», come lo scrive l'orologio, invece di «1h 11m». */
@@ -117,7 +130,7 @@ async function elenco() {
         { onclick: () => (location.hash = `#/allenamenti?id=${encodeURIComponent(a.uuid)}`) },
         h(
           "div.main",
-          h("span.title", nomeTipo(a.tipo)),
+          h("span.title", nomeAllenamento(a)),
           h("span.sub", `${giorno} ${dataBreve(a.data)} · ${a.fine ? `${a.inizio}–${a.fine}` : a.inizio || "—"}`),
           h("span.sub", numeri.join(" · "))
         ),
@@ -168,7 +181,7 @@ async function dettaglio(uuid) {
       h(
         "h2",
         { style: "margin:0;font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1.05" },
-        nomeTipo(a.tipo)
+        nomeAllenamento(a)
       ),
       a.kcalAttive != null
         ? h(
