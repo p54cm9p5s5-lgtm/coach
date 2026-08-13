@@ -161,7 +161,12 @@ export async function render({ ridisegna }) {
         {
           style:
             "margin:10px 0 0;font-size:12px;line-height:1.35;color:var(--label-tertiary);" +
-            "text-align:center;flex:none;max-height:34px;overflow:hidden",
+            // Due righe di orari e non di più: la schermata ha un'altezza fissa
+            // e questa riga non deve spingere via i tasti. Ma il taglio non può
+            // essere muto — con venti sigarette gli ultimi orari sparivano e
+            // niente diceva che c'erano. Ora si scorre: quello che non ci sta
+            // resta raggiungibile invece di svanire.
+            "text-align:center;flex:none;max-height:34px;overflow-y:auto;overscroll-behavior:contain",
         },
         dOggi.length
           ? `Orari: ${dOggi.map((x) => oraDi(x.ts)).join(" · ")}`
