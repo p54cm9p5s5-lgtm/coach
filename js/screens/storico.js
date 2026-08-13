@@ -72,9 +72,14 @@ async function elenco(vaiA) {
       const saltati = logs.filter(
         (l) => l.saltato && !serie.some((x) => x.esercizioId === l.esercizioId)
       ).length;
-      const durata = s.oraFine
-        ? durataUmana(Math.round((s.oraFine - (s.oraInizioLavoro || s.oraInizio)) / 1000))
-        : "—";
+      // Stessa ragione del riepilogo: con il cardio rimandato la distanza fra
+      // inizio e chiusura comprende ore in cui non ti stavi allenando.
+      const durata =
+        s.durataLavoroSec != null
+          ? durataUmana(s.durataLavoroSec)
+          : s.oraFine
+            ? durataUmana(Math.round((s.oraFine - (s.oraInizioLavoro || s.oraInizio)) / 1000))
+            : "—";
       return h(
         "a.row",
         { href: `#/seduta?riepilogo=${s.id}&da=storico` },
