@@ -411,22 +411,29 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
 
 ## 11.B — `js/screens/corpo.js` (878 righe, lette tutte)
 
-- [ ] **11.B.1** ⚠️ **Numero rifiutato che sembra giusto.** Se in un campo misura
+- [x] **11.B.1** ⚠️ **Numero rifiutato che sembra giusto.** Se in un campo misura
       scrivi qualcosa che non è un numero (`8a4`) e poi tocchi **−** o **+**, il
       campo torna a mostrare un numero valido e diventa color accento, ma l'id
       resta dentro `nonValidi`: «Salva» rifiuta con «Non è un numero: Peso» e a
       schermo non c'è niente di sbagliato da correggere. Uscita possibile solo
       svuotando il campo. Da provare esattamente così.
-- [ ] **11.B.2** ⚠️ **Selettore foto annullato per sbaglio.** In `catturaDaFile`
+- [x] **11.B.2** ⚠️ **Selettore foto annullato per sbaglio.** In `catturaDaFile`
       il ritorno del fuoco più 800 ms vale come «annullato». Se il telefono
       rimette il fuoco prima di consegnare il file, la posa risulta annullata e
       in `nuovoSet` un `break` **interrompe tutto il set**: le pose successive
       non vengono nemmeno chieste. Da provare con una scelta lenta dalla
       libreria e con una foto pesante.
-- [ ] **11.B.3** **Set foto eliminato a metà.** Il ciclo `for … await
+- [x] **11.B.3** **Set foto eliminato a metà.** Il ciclo `for … await
       store.db.del("foto", x.id)` non ha nessuna rete: se una cancellazione
       fallisce restano dentro le foto rimanenti e il messaggio dice comunque
       «Set eliminato». Da provare con archivio in errore.
+- [ ] **11.B.19** ⚠️ **Un errore di battitura nelle misure viene troncato in
+      silenzio.** Trovato provando la 11.B.1: il campo usa `parseFloat`, che
+      legge il prefisso numerico e butta il resto — «8a4» diventa **8**, campo
+      color accento, nessun avviso, e 8 kg finisce in archivio come se l'avessi
+      scritto tu. Solo un testo che non comincia per cifra («abc») viene
+      riconosciuto come non valido. Da chiudere con un controllo che accetti
+      solo un numero intero: cifre, una virgola, cifre.
 - [ ] **11.B.4** **Cancellazione di una singola foto** → `location.reload()`
       (unico punto dell'app che ricarica la pagina invece di ridisegnare). Da
       verificare che dopo il ricaricamento si torni davvero su Corpo e che una
@@ -1242,7 +1249,7 @@ c'è modo di accorgersene se non dal risultato.
       messa a vero da nessuna parte**: non c'è nessun modo di zittire l'allarme
       restando sul recupero, se non toccare «Pronto». Da decidere se il tasto
       serve o se va tolto il commento.
-- [ ] **11.S.13** ⚠️ **I tasti −/+ delle ripetizioni scrivono fuori dalla coda.**
+- [x] **11.S.13** ⚠️ **I tasti −/+ delle ripetizioni scrivono fuori dalla coda.**
       Sia nel recupero sia nel questionario la correzione fa
       `db.put("serie", …)` direttamente, senza passare da `inFila`: due tocchi
       rapidi possono arrivare in ordine invertito e lasciare il numero
@@ -1288,7 +1295,7 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.T — `js/screens/seduta.js`, riepilogo e chiusura (righe 3412-3607)
 
-- [ ] **11.T.1** ⚠️ **«Torna agli esercizi» quando sono tutti finiti riporta al
+- [x] **11.T.1** ⚠️ **«Torna agli esercizi» quando sono tutti finiti riporta al
       primo.** `findIndex` non trova nessun esercizio aperto, torna −1, e il
       ripiego è `indice: 0`: si finisce sul primo esercizio già chiuso, con il
       questionario da rifare — esattamente quello che il commento dice di voler
@@ -1315,7 +1322,7 @@ c'è modo di accorgersene se non dal risultato.
       tutte le misure e tutte le date delle foto. È la prima schermata che si
       apre venti volte al giorno. Da misurare adesso e da rimisurare con un
       anno di dati.
-- [ ] **11.U.2** ⚠️ **«Fai il cardio» scrive il progresso a mano**, con
+- [x] **11.U.2** ⚠️ **«Fai il cardio» scrive il progresso a mano**, con
       `aggiornaSeduta({progresso: {...inCorso.progresso, fase:"cardio"}})`
       partendo dalla fotografia letta al disegno, invece di usare
       `aggiornaProgresso`. È il difetto che tutto il resto del file evita per
@@ -1657,7 +1664,7 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.AF — Voci raccolte finendo i file già cominciati
 
-- [ ] **11.AF.1** ⚠️ **Saltare un esercizio già valutato ne cancella la
+- [x] **11.AF.1** ⚠️ **Saltare un esercizio già valutato ne cancella la
       valutazione.** `registraSalto` riscrive lo **stesso** record del
       questionario azzerando RPE, tecnica e dolori: se hai risposto e poi decidi
       di segnarlo saltato, quelle risposte spariscono senza avviso.

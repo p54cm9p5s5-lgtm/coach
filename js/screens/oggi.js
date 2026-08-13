@@ -399,9 +399,15 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
               "button.btn",
               {
                 onclick: async () => {
-                  await store.aggiornaSeduta(inCorso.id, {
-                    progresso: { ...(inCorso.progresso || {}), fase: "cardio" },
-                  });
+                  // `aggiornaProgresso` e non `aggiornaSeduta`: quello che c'è
+                  // qui in memoria è la fotografia scattata quando la Home è
+                  // stata disegnata, e fra quel momento e questo tocco può
+                  // essere cambiato qualcosa (un timer chiuso, una serie
+                  // registrata da un'altra scheda). Ricostruendo il progresso
+                  // da quella fotografia si riscriveva sopra a quello vero.
+                  // È la stessa regola che tutto il resto dell'app rispetta:
+                  // si scrive solo la voce che cambia, fusa su quella salvata.
+                  await store.aggiornaProgresso(inCorso.id, { fase: "cardio" });
                   store.invalidaCacheSedute();
                   vaiA("seduta");
                 },

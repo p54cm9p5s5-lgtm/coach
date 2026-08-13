@@ -915,6 +915,28 @@ async function registraSerieVera({
   return rec;
 }
 
+/**
+ * Corregge una serie già registrata, in fila come tutte le altre scritture.
+ *
+ * Le correzioni con i tasti − e + (ripetizioni fatte, carico usato) passavano
+ * dritte a `db.put`, fuori dalla coda: due tocchi rapidi leggevano lo stesso
+ * record di partenza e il secondo a scrivere cancellava il primo. Con il dito
+ * fermo sul «+» è il caso normale, non un caso di scuola — ed è lo stesso
+ * difetto che per il progresso della seduta era già stato chiuso.
+ *
+ * Rilegge SEMPRE il record dall'archivio prima di scriverci sopra: la copia
+ * che ha in mano chi chiama può essere già vecchia.
+ */
+export function aggiornaSerie(id, patch) {
+  return inFila(async () => {
+    const attuale = await db.get("serie", id);
+    if (!attuale) return null;
+    const agg = { ...attuale, ...patch };
+    await db.put("serie", agg);
+    return agg;
+  });
+}
+
 // ---------- questionario ----------
 
 export function registraQuestionario(dati) {
@@ -968,20 +990,35 @@ export function registraSalto(dati) {
 async function registraSaltoVero({ sedutaId, esercizioId, ordine, motivo, nota }) {
   const esistenti = await db.byIndex("esercizioLog", "sedutaId", sedutaId);
   const prec = esistenti.find((l) => l.esercizioId === esercizioId);
+  // Una valutazione già data non si butta via.
+  //
+  // Capita di rispondere alle domande e poi decidere che quell'esercizio è
+  // saltato — l'attrezzo occupato, il dolore che arriva dopo, il tempo finito
+  // a metà. Prima questa funzione riscriveva lo STESSO record azzerando RPE,
+  // tecnica e dolori: sparivano senza un avviso, e con loro l'unica cosa che
+  // spiegava perché l'esercizio è stato interrotto. Adesso quello che avevi
+  // dichiarato resta; cambia soltanto che l'esercizio risulta saltato.
+  //
+  // Il punteggio non cambia comportamento: `completezzaSeduta` guarda
+  // `saltato` e le serie, non l'RPE, e un esercizio saltato con serie
+  // registrate resta «interrotto» come prima.
   const rec = {
+    ...(prec || {}),
     id: prec?.id || db.nuovoId("log"),
     sedutaId,
     esercizioId,
     ordine,
-    rpe: null,
-    tecnica: null,
-    dolori: [],
-    dolorePolso: false,
-    dolorePolsoQuando: null,
-    dolorePolsoIntensita: null,
-    nota: (nota || "").trim() || null,
+    rpe: prec?.rpe ?? null,
+    tecnica: prec?.tecnica ?? null,
+    dolori: prec?.dolori || [],
+    dolorePolso: prec?.dolorePolso || false,
+    dolorePolsoQuando: prec?.dolorePolsoQuando || null,
+    dolorePolsoIntensita: prec?.dolorePolsoIntensita || null,
+    // La nota del salto non cancella quella dell'esercizio: sono due cose
+    // diverse e finiscono in due posti diversi del pacchetto.
+    nota: prec?.nota || (nota || "").trim() || null,
     saltato: { motivo, nota: (nota || "").trim() || null },
-    creatoIl: new Date().toISOString(),
+    creatoIl: prec?.creatoIl || new Date().toISOString(),
     fonte: "app",
   };
   await db.put("esercizioLog", rec);

@@ -10,6 +10,32 @@ questo dice *come si lavora*.
 
 ---
 
+## 0. La regola che viene prima di tutte
+
+**NON MI FERMO MAI FINCHÉ NON HO FINITO TUTTE LE FASI, DALLA 0 ALL'ULTIMA.**
+
+Non si finisce una fase e si riferisce. Non si chiede conferma fra una fase e
+l'altra. Non si aspetta un cenno. Si va avanti: Fase 0 → 1 → 2 → 3 → 4 → 5 → 6 →
+7, e si parla **solo alla fine**, quando `grep -cE '^\|.*DA FARE' ESITO.md` dà
+zero.
+
+Non mi fermo nemmeno:
+
+- quando una fase è finita — comincio la successiva nello stesso momento;
+- quando trovo un difetto nuovo — lo registro e vado avanti;
+- quando una correzione non riesce — la annullo, la metto in §8 e vado avanti;
+- quando qualcosa mi sembra da chiedere — scelgo l'opzione che non cambia il
+  comportamento, la scrivo in §8 e vado avanti.
+
+**L'unica interruzione ammessa è quella che non decido io**: se la sessione si
+esaurisce, riprendo da `ESITO.md` e da
+`_privato/controllo-2026-08/04-come-si-riprende.md` senza chiedere niente e
+senza ricominciare da capo. Quei due file sono il modo in cui questa regola
+sopravvive a un'interruzione: vanno tenuti aggiornati **mentre** lavoro, non
+alla fine.
+
+---
+
 ## 1. Regole d'ingaggio
 
 ### Non tocco mai, per nessun motivo

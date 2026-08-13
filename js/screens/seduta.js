@@ -2406,8 +2406,7 @@ async function vistaRecupero(corpo, piede) {
   // seconda correzione riscriveva sopra la prima e la cancellava.
   const salva = async (patch) => {
     if (!ultima) return;
-    const attuale = (await store.serieDi(S.sed.id)).find((x) => x.id === ultima.id) || ultima;
-    await store.db.put("serie", { ...attuale, ...patch });
+    await store.aggiornaSerie(ultima.id, patch);
   };
 
   const valRip = h("span.val", `${rip}${v.aTempo ? "s" : ""}`);
@@ -2544,7 +2543,7 @@ async function chiudiRecupero() {
     // Solo una scelta esplicita cambia il dato: annullando la domanda (tocco
     // fuori dal pannello) non si tocca niente e la si rifà alla prossima.
     if (scelta === "previsto") {
-      await store.db.put("serie", { ...ultima, tsFineSerie: Date.now() - target });
+      await store.aggiornaSerie(ultima.id, { tsFineSerie: Date.now() - target });
     }
   }
   S.tsInizioSerie = Date.now();
@@ -2697,11 +2696,10 @@ async function vistaQuestionario(corpo, piede) {
   const correzione = h("div");
   if (serieFatteQui.length) {
     const salvaSerie = async (id, patch) => {
-      const attuale = (await store.serieDi(S.sed.id)).find((x) => x.id === id);
-      if (!attuale) return;
-      await store.db.put("serie", { ...attuale, ...patch });
+      const agg = await store.aggiornaSerie(id, patch);
+      if (!agg) return;
       const i = serieFatteQui.findIndex((x) => x.id === id);
-      if (i >= 0) serieFatteQui[i] = { ...serieFatteQui[i], ...patch };
+      if (i >= 0) serieFatteQui[i] = agg;
       ridisegnaPunteggio();
     };
 
@@ -3593,9 +3591,17 @@ async function vistaFine(corpo, piede) {
             !logsOra.some((l) => l.esercizioId === v.esercizioId) &&
             serieOra.filter((x) => x.esercizioId === v.esercizioId).length < (v.serie || 1)
         );
+        // Se non c'è più niente di aperto, non si torna al primo esercizio.
+        //
+        // Il ripiego era `indice: 0`, cioè proprio quello che il commento qui
+        // sopra dice di voler evitare: a esercizi tutti finiti si finiva sul
+        // primo, già chiuso, con il questionario da rifare da capo. Chi tocca
+        // «Torna agli esercizi» a fine seduta vuole rivedere il lavoro, non
+        // ricominciarlo: si va sull'ULTIMO esercizio, quello appena chiuso.
+        const ultimo = Math.max(0, S.esercizi.length - 1);
         await salvaProgresso({
           fase: "esercizio",
-          indice: primoAperto >= 0 ? primoAperto : 0,
+          indice: primoAperto >= 0 ? primoAperto : ultimo,
           recuperoFine: null,
           caricoCorrente: null,
           tsInizioSerie: null,
