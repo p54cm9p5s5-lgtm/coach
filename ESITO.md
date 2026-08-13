@@ -74,14 +74,14 @@ senza che una riga sia stata davvero chiusa.
 | 3 |  | **14.C.2** | NON RIPRODOTTO | riletto `.gitignore`: copre `_privato/`, i backup, i dati iniziali e `.claude/*` tranne launch.json. La cartella di lavoro del controllo (`_privato/controllo-2026-08/`) è coperta: verificato con `git check-ignore` | 14.C — I file piccoli, mai aperti |
 | 3 |  | **14.C.3** | NON CORREGGO | `robots.txt` è `Disallow: /` ma il repository GitHub resta pubblico e leggibile: il file scoraggia i motori, non protegge niente. È così per scelta e non c'è correzione possibile senza rendere privato il repository — che romperebbe GitHub Pages | 14.C — I file piccoli, mai aperti |
 | 3 |  | **14.C.4** | NON CORREGGO | `orientation: portrait` è voluto: l'app è disegnata per una colonna sola, e i grafici in orizzontale non guadagnerebbero abbastanza da giustificare il rifacimento delle schermate | 14.C — I file piccoli, mai aperti |
-| 4 |  | **11.F.5** | DA FARE |  | 11.F — `js/screens/fumo.js` |
-| 4 | ! | **11.K.3** | DA FARE |  | 11.K — `js/screens/storico.js` |
-| 4 | ! | **11.O.2** | DA FARE |  | 11.O — `js/store.js` |
-| 4 | ! | **11.O.5** | DA FARE |  | 11.O — `js/store.js` |
-| 4 | ! | **11.Q.1** | DA FARE |  | 11.Q — `js/store.js`, programma, regole e origine del giorno |
-| 4 | ! | **11.S.11** | DA FARE |  | 11.S-bis — `js/screens/seduta.js`, seconda tornata |
-| 4 | ! | **11.W.1** | DA FARE |  | 11.W — `js/export.js` |
-| 4 | ! | **11.W.2** | DA FARE |  | 11.W — `js/export.js` |
+| 4 |  | **11.F.5** | CORRETTO | stessa correzione nella schermata Fumo: la pastiglia «nuovo minimo» diventa «sotto il massimo» quando non è un minimo vero. Il minimo dei giorni precedenti si calcola una volta sola, in avanti | 11.F — `js/screens/fumo.js` |
+| 4 | ! | **11.K.3** | CORRETTO | nel dettaglio della proposta l'esito della verifica si legge «non confermata» invece di `nonConfermata`, come già faceva lo Storico | 11.K — `js/screens/storico.js` |
+| 4 | ! | **11.O.2** | NON CORREGGO | confermato: `punteggiSalute` ricalcola ogni volta e usa `giornoPrevisto(data)`, cioè lo split di oggi, per sapere se quel giorno era previsto un allenamento. Congelarlo vorrebbe dire un archivio nuovo con un punteggio per giorno, scritto quando la giornata si chiude — cioè un cambiamento di modello, non una correzione, e con una migrazione dei dati che il piano vieta. Vedi §8 | 11.O — `js/store.js` |
+| 4 | ! | **11.O.5** | CORRETTO | `previstoStretching` viene congelato alla nascita della seduta, accanto a `previstiElenco` e alle soglie del cardio; `completezzaSeduta` lo usa se c'è e ripiega sul protocollo corrente solo per le sedute vecchie. Prima una stessa seduta era giudicata metà col programma di allora e metà con quello di oggi | 11.O — `js/store.js` |
+| 4 | ! | **11.Q.1** | CORRETTO | `varianteDi` scorre ora `giorniInOrdineDiValidita()` come `varianti()`: con due programmi nel brief, motore e schermata leggono la stessa riga. Contorno e invarianti (0/10/48/59) invariati | 11.Q — `js/store.js`, programma, regole e origine del giorno |
+| 4 | ! | **11.S.11** | CORRETTO | in `vistaRecupero` il bersaglio era `ripMax ?? ripMin` (il tetto) mentre `completaSerie` e il questionario usano `ripMin ?? ripMax` (il fondo): uniformato al fondo del range, come dice il commento di `completaSerie` | 11.S-bis — `js/screens/seduta.js`, seconda tornata |
+| 4 | ! | **11.W.1** | CORRETTO | la densità nel pacchetto si calcolava su «dalla prima all'ultima serie», il riepilogo su `durataLavoroSec`: due numeri per la stessa seduta. Ora comanda il tempo di lavoro netto in tutti e due, e l'arco resta scritto accanto come contesto. Verificato a schermo: «0,00 serie/min su 2 min di lavoro» | 11.W — `js/export.js` |
+| 4 | ! | **11.W.2** | CORRETTO | «nuovo minimo» nella tabella FUMO ora si scrive solo se quel giorno è più basso di tutti i precedenti; gli altri giorni sotto soglia dicono «sotto la soglia». Non verificabile a schermo su questo profilo (una sola sigaretta in archivio): da riguardare con dati veri | 11.W — `js/export.js` |
 | 5 |  | **1.1** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
 | 5 |  | **1.10** | DA FARE |  | Blocco 1 — Il flusso quotidiano |
 | 5 |  | **1.11** | DA FARE |  | Blocco 1 — Il flusso quotidiano |

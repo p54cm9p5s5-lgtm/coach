@@ -523,9 +523,19 @@ export function sitiDolore() {
     }));
 }
 
-/** La riga dello split che riguarda un esercizio: serie, range, carico di partenza. */
+/**
+ * La riga dello split che riguarda un esercizio: serie, range, carico.
+ *
+ * Nello stesso ordine di `varianti()`, cioè per validità e non per come sono
+ * scritti nel brief. Prima questa funzione scorreva lo split dall'alto e
+ * `varianti()` lo scorreva in ordine di calendario: con due programmi nel
+ * brief — quello che finisce e quello che comincia — il motore decideva sulla
+ * riga del programma NUOVO e la schermata della proposta mostrava quella del
+ * VECCHIO. Serie e range scritti sotto la proposta non erano quelli su cui la
+ * proposta era stata calcolata.
+ */
 export function varianteDi(esercizioId) {
-  for (const g of giorniSplit()) {
+  for (const g of giorniInOrdineDiValidita()) {
     const v = (g.esercizi || []).find((x) => x.esercizioId === esercizioId);
     if (v) return v;
   }
@@ -638,6 +648,11 @@ async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
     oraInizio: Date.now(),
     oraFine: null,
     riscaldamento: { fatto: false, modalita: null, note: null },
+    // Quel giorno prevedeva lo stretching finale? Congelato adesso, come le
+    // soglie del cardio qui sotto e come `previstiElenco`: sui giorni del nuovo
+    // split lo stretching non c'è, e se il protocollo cambia domani il
+    // punteggio di oggi non deve cambiare con lui.
+    previstoStretching: Boolean(riscaldamento(g.id)?.stretchingFinale?.length),
     // Le soglie del cardio si congelano qui: se il coach cambia il brief, il
     // giudizio su un allenamento già fatto non deve cambiare da solo.
     cardio: {
@@ -1102,7 +1117,19 @@ export async function completezzaSeduta(id) {
     // giorni del nuovo split al suo posto c'è il blocco di mobilità, e una
     // voce a zero per una cosa che il programma non chiede è una penalità
     // inventata.
-    previstoStretching: Boolean(riscaldamento(sed.tipoId)?.stretchingFinale?.length),
+    // Congelato come tutto il resto.
+    //
+    // Qui si chiedeva al protocollo di ADESSO se quel giorno prevedeva lo
+    // stretching, mentre l'elenco degli esercizi e le soglie del cardio sono
+    // quelli congelati alla partenza: la stessa seduta veniva giudicata metà
+    // col programma di allora e metà con quello di oggi. Se il valore è stato
+    // scritto quando la seduta è nata, comanda quello; per le sedute più
+    // vecchie resta il protocollo corrente, che è tutto quello che si può
+    // sapere di loro.
+    previstoStretching:
+      sed.previstoStretching != null
+        ? Boolean(sed.previstoStretching)
+        : Boolean(riscaldamento(sed.tipoId)?.stretchingFinale?.length),
     // La voce entra solo se quel giorno aveva un blocco di mobilità: sulle
     // sedute di prima, e sui giorni che non ne hanno, non deve comparire una
     // riga a zero per una cosa che non era prevista.

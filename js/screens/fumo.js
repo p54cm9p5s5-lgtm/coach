@@ -179,11 +179,23 @@ export async function render({ ridisegna }) {
     let mostrati = 0;
     let totale = 0;
     let contati = 0;
+    // Il più basso fra i giorni PRECEDENTI a quello che si sta disegnando: si
+    // scorre all'indietro, quindi si calcola prima, in avanti, una volta sola.
+    const minimiPrecedenti = new Map();
+    (() => {
+      const giorni = [...conteggi.keys()].filter((g) => g >= primo && g < oggi).sort();
+      let min = Infinity;
+      for (const g of giorni) {
+        minimiPrecedenti.set(g, min);
+        min = Math.min(min, conteggi.get(g) || 0);
+      }
+    })();
     while (mostrati < 14) {
       const p = (n) => String(n).padStart(2, "0");
       const data = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
       if (data < primo) break;
       const n = conteggi.get(data) || 0;
+      const minimoFinora = minimiPrecedenti.has(data) ? minimiPrecedenti.get(data) : Infinity;
       totale += n;
       contati++;
       if (data !== oggi) {
@@ -197,7 +209,11 @@ export async function render({ ridisegna }) {
               const suo = limiti.get(data) ?? partenza;
               if (n === 0) return h("span.pill.ok", "zero");
               if (n > suo) return h("span.pill.warn", "oltre");
-              if (n < suo) return h("span.pill.ok", "nuovo minimo");
+              // «Nuovo minimo» solo se lo è davvero rispetto a tutti i giorni
+              // contati prima: scritto su ogni giornata sotto soglia diventava
+              // una parola d'arredamento. Il minimo di prima si tiene mentre si
+              // scorre indietro, giorno per giorno.
+              if (n < suo) return h("span.pill.ok", n < minimoFinora ? "nuovo minimo" : "sotto il massimo");
               return null;
             })()
           )
