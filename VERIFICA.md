@@ -835,25 +835,25 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [x] **11.K.5** **Segnale archiviato**: `archiviaSegnale` lo toglie, ma gli id
       dei segnali sono deterministici e il motore li ricalcola. Da verificare che
       un segnale archiviato non ritorni al primo ricalcolo.
-- [ ] **11.K.6** **«Adesso» e «Proposta»** usano `serie` della variante di
+- [x] **11.K.6** **«Adesso» e «Proposta»** usano `serie` della variante di
       **oggi**: se il programma è cambiato dopo la nascita della proposta, il
       «3×8» scritto lì può non essere più vero. Da provare dopo un cambio di
       scheda.
 - [x] **11.K.7** **Rimando / Rifiuto**: la nota è facoltativa, annullare non
       deve registrare niente. Da provare anche cambiando schermata mentre il
       pannello della nota è aperto (deve valere come «annullato»).
-- [ ] **11.K.8** **Verifica in scadenza**: la data mostrata è quella
+- [x] **11.K.8** **Verifica in scadenza**: la data mostrata è quella
       dell'accettazione, non della nascita della proposta. Da provare con una
       proposta accettata giorni dopo.
-- [ ] **11.K.9** **«Perché non c'è altro»**: ogni esercizio senza proposta deve
+- [x] **11.K.9** **«Perché non c'è altro»**: ogni esercizio senza proposta deve
       avere un motivo leggibile. Da leggere tutta la lista per intero, cercando
       motivi che si contraddicono fra loro.
-- [ ] **11.K.10** **Volume settimanale per pattern**: dichiara «prossimi sette
+- [x] **11.K.10** **Volume settimanale per pattern**: dichiara «prossimi sette
       giorni». Da verificare col brief in vigore, e col secondo programma se ce
       ne sono due.
-- [ ] **11.K.11** **Collegamenti vecchi** `#/storico?seduta=…` devono rimandare
+- [x] **11.K.11** **Collegamenti vecchi** `#/storico?seduta=…` devono rimandare
       alla schermata unica del riepilogo. Da provare da un collegamento salvato.
-- [ ] **11.K.12** **Colonna «Sec» invece di «Rip»** sugli esercizi a tempo. Da
+- [x] **11.K.12** **Colonna «Sec» invece di «Rip»** sugli esercizi a tempo. Da
       provare su un plank.
 
 ## 11.L — `js/screens/extra.js` (297 righe, lette tutte)
