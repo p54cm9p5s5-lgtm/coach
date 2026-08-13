@@ -768,7 +768,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 
 È quello che il coach legge davvero. Qui una frase sbagliata vale più di un bug.
 
-- [ ] **11.J.1** ⚠️ **Frasi rimaste indietro dopo la modifica di oggi.** Il
+- [x] **11.J.1** ⚠️ **Frasi rimaste indietro dopo la modifica di oggi.** Il
       pacchetto dice ancora, in due punti, che i numeri dell'orologio «li scrive
       l'atleta leggendoli dal quadrante» — ma i quattro punti di trascrizione a
       mano sono stati **tolti oggi**. Il riquadro compare solo se ci sono dati
@@ -1408,7 +1408,7 @@ c'è modo di accorgersene se non dal risultato.
       la soglia di quel giorno, anche sette giorni di fila. Un minimo è uno solo:
       così com'è, la parola non vuol dire niente. Stessa cosa nella schermata
       Fumo (11.F.5).
-- [ ] **11.W.3** ⚠️ **«Misure e indici, solo se aggiornati di recente»: non è
+- [x] **11.W.3** ⚠️ **«Misure e indici, solo se aggiornati di recente»: non è
       vero.** `bloccoCorpo` stampa l'ultima misura di ogni tipo qualunque sia la
       sua data, senza nessun limite di recenza. Il commento promette un filtro
       che non c'è. (La data di ogni misura è scritta, quindi non è un dato
@@ -1725,7 +1725,7 @@ di tutte le tornate.
 
 ## 12.B — `SPEC.md` (442 righe, letta tutta): la specifica descrive un'altra app
 
-- [ ] **12.B.1** ⚠️ **La specifica si contraddice sul collegamento Watch↔seduta**
+- [x] **12.B.1** ⚠️ **La specifica si contraddice sul collegamento Watch↔seduta**
       in tre punti: §3.3 dice «non vengono collegati alle sedute e non hanno un
       ruolo da assegnare» (giusto, è la scelta di oggi); §3.4 e §4.4 descrivono
       per esteso il collegamento per data con le sue regole. Da ripulire.
@@ -1737,21 +1737,21 @@ di tutte le tornate.
       Verificato: **in Corpo non c'è nessun grafico** — la parola «grafico»
       compare una sola volta in tutto il file, dentro un commento. O la funzione
       è stata tolta, o non è mai stata costruita, ma la specifica la promette.
-- [ ] **12.B.4** ⚠️ **§1: il backup con `modo: "unisci"`.** La specifica lo
+- [x] **12.B.4** ⚠️ **§1: il backup con `modo: "unisci"`.** La specifica lo
       descrive come funzione viva; `esportaCompleto` non scrive mai quel campo,
       quindi non esiste modo di produrre un file del genere dall'app (11.N.2).
 - [x] **12.B.5** **§2: «Colori: variabili di sistema. Accento: blu di sistema.
       Nessuna palette personalizzata.»** Esiste il tema «nero e lime», che è
       esattamente una palette personalizzata.
-- [ ] **12.B.6** **§3.2: la Seduta contiene ancora `orologio { numeri copiati dal
+- [x] **12.B.6** **§3.2: la Seduta contiene ancora `orologio { numeri copiati dal
       quadrante }`**, e §4.2 punto 4 chiede ancora «Dolore al polso destro?» come
       domanda fissa, mentre §3.2 poco sopra dice che i punti dolenti li dichiara
       il brief.
-- [ ] **12.B.7** **§3.6: nomi delle impostazioni sbagliati** — `ultimoBackup`
+- [x] **12.B.7** **§3.6: nomi delle impostazioni sbagliati** — `ultimoBackup`
       (nel codice è `ultimoExport`) e `versioneBrief` (non esiste).
-- [ ] **12.B.8** **§3.1: «Programma … giorni[5]»** — lo split ne ha sette
+- [x] **12.B.8** **§3.1: «Programma … giorni[5]»** — lo split ne ha sette
       (sabato e domenica sono giorni di sola mobilità).
-- [ ] **12.B.9** **§4.4: «Tasto [Aggiorna dati salute] → lancia lo Shortcut».**
+- [x] **12.B.9** **§4.4: «Tasto [Aggiorna dati salute] → lancia lo Shortcut».**
       Terza contraddizione sullo stesso tema (con `ISTRUZIONI-BRIEF.md` e le
       istruzioni dentro l'app): il comando rapido per la salute **non viene più
       offerto**.
@@ -1781,16 +1781,16 @@ di tutte le tornate.
       fondono voce per voce: scrivere una soglia non azzera le altre della stessa
       famiglia». Vero al primo livello, falso al secondo (11.Q.2, 11.AD.1). La
       stessa frase sbagliata è in tre documenti.
-- [ ] **12.C.6** ⚠️ **«Dal 24/08/2026»** — la mobilità di fine seduta è descritta
+- [x] **12.C.6** ⚠️ **«Dal 24/08/2026»** — la mobilità di fine seduta è descritta
       come attiva da una data che **deve ancora arrivare**, mentre verificato in
       `riscaldamento.json` è **già attiva adesso** su push, pull, legs, upper,
       lower, sabato e domenica. Da chiarire quale delle due è vera.
-- [ ] **12.C.7** **§11: gli indici elencati sono due** (vita/altezza e BMI), ma
+- [x] **12.C.7** **§11: gli indici elencati sono due** (vita/altezza e BMI), ma
       nel codice ce n'è un terzo — vita/fianchi, con la soglia maschile scritta
       nel codice (11.AF.2). Non è nominato da nessuna parte.
-- [ ] **12.C.8** **§9: il formato documentato prevede `uuid=…` sulle righe
+- [x] **12.C.8** **§9: il formato documentato prevede `uuid=…` sulle righe
       ALLENAMENTO**, ma il lettore dell'export non lo scrive mai (11.AA.2).
-- [ ] **12.C.9** **Due misurazioni dichiarate «verificate» che vanno rifatte
+- [x] **12.C.9** **Due misurazioni dichiarate «verificate» che vanno rifatte
       dopo oggi**: «zero richieste fuori dal telefono, misurato aprendo tutte le
       schermate» (§14) e «ripristino identico byte a byte su tutti e 17 gli
       archivi» (§15). Erano vere quando sono state scritte; da allora sono
@@ -1826,7 +1826,7 @@ contiene il difetto con la conseguenza peggiore trovata in tutto il controllo.
       l'allenamento intero senza fondere), usare lo strumento sul Mac **svuota
       distanza, battito, sforzo e indoor** da ogni allenamento che li aveva. E il
       passo al chilometro, che vive sulla distanza, sparisce con loro.
-- [ ] **13.2** ⚠️ **`COME-FUNZIONA.md` dichiara una cosa falsa e verificabile**:
+- [x] **13.2** ⚠️ **`COME-FUNZIONA.md` dichiara una cosa falsa e verificabile**:
       «il pacchetto che ne esce è **identico byte per byte** a quello prodotto
       dallo stesso lavoro fatto su un computer (`tools/salute-da-export.py`)».
       Non lo è: i due strumenti scrivono pacchetti diversi, e quello del computer
@@ -1925,7 +1925,7 @@ Non documentazione: i **contenuti che l'app ti mostra in palestra**.
 
 ## 14.C — I file piccoli, mai aperti
 
-- [ ] **14.C.1** ⚠️ **Schermata d'avvio sempre nera.** Il `manifest.webmanifest`
+- [x] **14.C.1** ⚠️ **Schermata d'avvio sempre nera.** Il `manifest.webmanifest`
       fissa `background_color` e `theme_color` a `#08080a`, mentre `index.html`
       dichiara un `theme-color` chiaro per chi usa il tema di sistema. Con l'app
       installata comanda il manifest: chi tiene l'iPhone in chiaro vede

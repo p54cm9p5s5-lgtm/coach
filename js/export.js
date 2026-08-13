@@ -447,7 +447,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
         "LETTI DALL'APPLE WATCH (trascritti dall'atleta a fine seduta)",
         riga("Pesi", pesi),
         riga("Cardio", cardio),
-        "Sono le misure dell'orologio per questa seduta, non stime dell'app: i Comandi Rapidi non sanno leggere gli allenamenti dell'Apple Watch, quindi li scrive l'atleta leggendoli dal quadrante.",
+        "Sono le misure dell'orologio per questa seduta, trascritte a mano dall'atleta quando l'app non sapeva ancora leggerle da Salute. Sulle sedute nuove non compaiono: quei numeri arrivano da soli, nella tabella degli allenamenti del Watch.",
         "",
       ];
     })(),
@@ -638,9 +638,10 @@ export function bloccoExtra(righe, { talkTest = [], oggi = isoDate() } = {}) {
 export function bloccoWatch(allenamenti, { giorni = 7, nomeSeduta = null } = {}) {
   // Questa tabella esiste solo se il pacchetto di Salute porta righe
   // ALLENAMENTO. Molti Comandi Rapidi non le mandano — l'Apple Watch non
-  // espone i suoi allenamenti a Comandi — e in quel caso i numeri
-  // dell'orologio arrivano lo stesso, ma dal riquadro «Letti dall'Apple Watch»
-  // dentro il log della seduta, che l'atleta compila leggendo il quadrante.
+  // espone i suoi allenamenti a Comandi — e in quel caso la strada è
+  // l'esportazione completa di Salute, letta dall'app. Il riquadro «Letti
+  // dall'Apple Watch» dentro il log resta solo sulle sedute vecchie: quei
+  // numeri non si trascrivono più a mano.
   if (!allenamenti?.length) return null;
   const righe = allenamenti.slice(0, 20).map((a) => [
     dataBreve(a.data),
@@ -857,7 +858,14 @@ export function bloccoSegnali(segnali) {
   ].join("\n");
 }
 
-/** Misure e indici, solo se aggiornati di recente. */
+/**
+ * Misure e indici: l'ULTIMA di ogni tipo, qualunque sia la sua data.
+ *
+ * Non c'è nessun filtro di recenza — la scritta «solo se aggiornati di
+ * recente» prometteva un taglio che non esiste. La data di ogni misura è
+ * scritta accanto al valore, e gli indici dicono se vengono da misure di
+ * giorni diversi: chi legge ha tutto per accorgersene da solo.
+ */
 export function bloccoCorpo({ misure, indici, etichette, dateIndici = {} }) {
   if (!misure.length) return null;
   // Ogni indice nasce dall'ultima misura di ciascun tipo, e quelle misure

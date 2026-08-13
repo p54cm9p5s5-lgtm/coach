@@ -49,9 +49,10 @@ resta nella conversazione con Claude.
   - *backup su file*, manuale, completo, da salvare in File/iCloud Drive.
     È l'unico che sopravvive al telefono; se manca da oltre 7 giorni l'app lo
     segnala in Oggi.
-  - Un file di backup può dichiarare `modo: "unisci"`: viene aggiunto ai dati
-    presenti invece di sostituirli. Serve ai dati iniziali, così l'ordine tra
-    importazione e caricamento del brief non conta.
+  - Il ripristino da file **sostituisce** sempre: l'app non produce backup con
+    `modo: "unisci"`, quindi quella strada esiste nel codice ma non si può
+    imboccare da qui. Prima di sostituire, il ripristino dice cosa c'è nel file
+    e cosa c'è adesso sul telefono, e tiene da parte una copia interna.
 - **Offline:** service worker, tutto funzionante senza rete tranne i video YouTube.
 - **Schermo:** Wake Lock attivo per l'intera durata della Modalità Seduta.
 - **Test locale:** `python3 tools/serve.py 8787` (serve senza cache) + browser.
@@ -114,7 +115,7 @@ Chiavi primarie sempre esplicite. Ogni entità porta `creatoIl` e `fonte`
 
 ### 3.1 Programma (da master brief)
 ```
-Programma        versione, dataBrief, giorni[5], regole, note
+Programma        versione, dataBrief, giorni[] (5-7: sabato e domenica sono di sola mobilità), regole, note
 GiornoSplit      id, nome (Petto/Tricipiti…), giornoSettimana, esercizi[], cardio: bool
 EsercizioDef     id, nome, pattern, attrezzo,
                  serieTarget, ripTargetMin, ripTargetMax,
@@ -141,7 +142,7 @@ Seduta           id, data, tipoId, tipoNome, tipoProgrammatoId,
                           finitoIl, saltatoMotivo, note, soglie },
                  stretching { fatto }, mobilita { fatto },
                  previstiElenco[], progresso, completezza, notaGenerale,
-                 orologio { … numeri copiati dal quadrante }
+                 orologio { … } (solo sulle sedute vecchie: non si scrive più)
 SerieLog         id, sedutaId, esercizioId, numero, carico, caricoTarget,
                  ripFatte, ripTarget, aTempo, tsInizioSerie, tsFineSerie,
                  recuperoRealeSec, recuperoTargetSec
@@ -182,10 +183,8 @@ GiornoSalute     data (PK), presente: bool, kcalAttive, obiettivoKcal, passi,
                  minutiEsercizio, minutiInPiedi, pianiSaliti, distanzaKm, fcRiposo
 Notte            data (PK, notte del), presente: bool, durataMin,
                  profondoMin, remMin, vegliaMin, risvegli
-AllenamentoWatch uuid (PK), inizio, durataSec, kcalAttive, kcalTotali,
-                 fcMedia, fcMax, tipo,
-                 sedutaId (collegato per DATA, solo quando quel giorno c'è una
-                           sola seduta chiusa; con due resta scollegato)
+AllenamentoWatch  vedi §3.3: non viene collegato alle sedute (il campo
+                  `sedutaId` resta a null e non lo scrive più nessuno)
 ```
 **Invariante critica:** `presente: false` ≠ valore 0. Un giorno senza dati è
 escluso dalle medie e dal conteggio delle finestre, e segnalato.
@@ -202,8 +201,9 @@ Segnale          id, data, tipo, gravita (info|attenzione), messaggio, riferimen
 
 ### 3.6 Impostazioni
 ```
-obiettivoMovimentoKcal (default 600) · inventarioDischi · finestraImportGiorni (30)
-suonoFineRecupero · ultimoBackup · ultimoImportSalute · versioneBrief
+obiettivoMovimentoKcal (default 600) · finestraImportGiorni (30) · suonoFineRecupero
+ultimoExport · ultimoSnapshot · snapshotAutomatico · ultimoImportSalute
+fumoContatoDal · fumoTettoDichiarato · agenda · videoRiscaldamento
 ```
 
 ---
@@ -251,7 +251,8 @@ Sequenza rigida, un passo per volta.
    - "Quanto è stata dura l'ultima serie?" → 10 tasti, zona 6–8 evidenziata,
      sotto la selezione la traduzione in ripetizioni rimaste (8 = "ne avevo ancora 2").
    - "Com'è andata la tecnica?" → 10 tasti.
-   - "Dolore al polso destro?" NO/SÌ → se SÌ compare una riga: durante/dopo,
+   - Una domanda per ogni punto dolente dichiarato in `regole.dolori` (senza
+     dichiarazione: il polso destro) → NO/SÌ, e se SÌ una riga: durante/dopo,
      lieve/medio/forte.
    - Nota facoltativa, dettatura vocale ammessa.
 5. **Salto esercizio** — motivo obbligatorio (tempo | dolore | attrezzo | altro) + nota.
@@ -278,15 +279,18 @@ recuperi reali su tutti gli esercizi, densità della seduta, tempo per esercizio
   misura precedente e gli indici. L'andamento nel tempo si guarda in Salute.
 
 ### 4.4 Salute
-- Tasto **[Aggiorna dati salute]** → lancia lo Shortcut → si torna e si incolla.
+- Tasto **[Aggiorna dati salute]** → si incolla il pacchetto, oppure si sceglie
+  l'`export.xml` di Salute. Il comando rapido per la salute **non viene più
+  offerto**: le azioni di Salute dentro Comandi Rapidi restano appese. Resta
+  quello del calendario, che funziona.
 - Finestra mobile **30 giorni**, import **idempotente** (chiave = tipo + data),
   riscrive i dati di Salute, **non tocca mai** note, RPE, carichi, misure manuali.
 - Tabelle movimento e sonno equivalenti a §9-bis e §9-ter, calcolate non digitate.
 - Stato delle finestre di 3 settimane con giorni mancanti evidenziati.
-- Collegamento allenamento Watch ↔ seduta **per data**, e solo quando quel
-  giorno c'è una sola seduta chiusa: con due non ne sceglie una a caso, lascia
-  «non collegato». Non è correggibile a mano; il collegamento si rifà da solo
-  quando la situazione diventa non ambigua.
+- Gli allenamenti del Watch **non si collegano** alle sedute e non hanno un
+  ruolo da assegnare: è stato provato e serviva solo a far perdere tempo per
+  un'informazione che nessuno usava. Arrivano al coach come quello che sono,
+  da leggere accanto al log e non al posto suo.
 
 ### 4.5 Storico e progressione
 - Per esercizio: carico, ripetizioni, RPE, tecnica nel tempo.
