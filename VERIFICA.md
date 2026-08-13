@@ -1122,16 +1122,16 @@ c'è modo di accorgersene se non dal risultato.
       un giorno prima o dopo, solo dentro il periodo delle fasi, solo fonte
       «salute». Quattro reti, ma resta una cancellazione automatica. Da provare
       con i tuoi dati veri e controllare l'elenco «notti tolte» nel riepilogo.
-- [ ] **11.P.6** **Una notte corretta a mano vince sempre**, e il dato
+- [x] **11.P.6** **Una notte corretta a mano vince sempre**, e il dato
       dell'orologio si conserva a parte per poterci tornare. Da provare:
       correggo, reimporto, la correzione deve restare e «torna al dato
       dell'orologio» deve avere qualcosa a cui tornare.
-- [ ] **11.P.7** **Fra due letture della stessa notte vince la più lunga**, e la
+- [x] **11.P.7** **Fra due letture della stessa notte vince la più lunga**, e la
       differenza viene detta. Da provare in tutti e due i versi.
-- [ ] **11.P.8** **«Ultimo import» si aggiorna solo se sono arrivati dati di
+- [x] **11.P.8** **«Ultimo import» si aggiorna solo se sono arrivati dati di
       salute**, non se hai letto solo il calendario. Da provare importando un
       pacchetto di sola agenda.
-- [ ] **11.P.9** **Giorni dentro la finestra ma senza dati** vengono segnati
+- [x] **11.P.9** **Giorni dentro la finestra ma senza dati** vengono segnati
       `presente: false` (non zero). Da verificare che i dieci giorni di vacanza,
       se importi al rientro, non diventino zeri.
 - [ ] **11.P.10** **Due eventi lo stesso giorno**: l'allenamento vince sul
