@@ -683,7 +683,15 @@ export function graficoBattito({ caselle, inizioSec, durataSec, media = null, al
     guida.setAttribute("x1", x);
     guida.setAttribute("x2", x);
     guida.setAttribute("opacity", "0.28");
-    const ora = oraDa(inizioSec + (durataSec * i) / Math.max(1, caselle.length - 1));
+    /* L'ora si ricava dalla stessa frazione con cui la barretta è disegnata
+       — il suo centro, `(i + 0,5) / quante` — non da `i / (quante − 1)`.
+       Sono due conti diversi: il secondo spalma le caselle fra il primo e
+       l'ultimo pixel, il disegno le mette al centro del loro spicchio. La
+       differenza è mezza casella, e su una camminata di tre ore divisa in
+       dodici caselle diventava **undici minuti**: il dito su «10:00»
+       dell'asse leggeva «09:49». Con questa frazione la riga verticale, l'ora
+       scritta e l'etichetta dell'asse cadono tutte sullo stesso pixel. */
+    const ora = oraDa(inizioSec + (durataSec * (i + 0.5)) / Math.max(1, caselle.length));
     lettura.textContent = !c
       ? `${ora} · nessuna misura`
       : c.min === c.max
