@@ -829,10 +829,10 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [x] **11.K.3** ⚠️ **Esito della verifica scritto in linguaggio da codice**: nel
       dettaglio della proposta si legge `nonConfermata` tutto attaccato, mentre
       nello Storico la stessa cosa è scritta «non confermata». Da uniformare.
-- [ ] **11.K.4** **Aprire Proposte fa girare il motore** (`aggiornaMotore`):
+- [x] **11.K.4** **Aprire Proposte fa girare il motore** (`aggiornaMotore`):
       scrive proposte e segnali. Da verificare che non cambi niente sotto gli
       occhi mentre la schermata si sta disegnando.
-- [ ] **11.K.5** **Segnale archiviato**: `archiviaSegnale` lo toglie, ma gli id
+- [x] **11.K.5** **Segnale archiviato**: `archiviaSegnale` lo toglie, ma gli id
       dei segnali sono deterministici e il motore li ricalcola. Da verificare che
       un segnale archiviato non ritorni al primo ricalcolo.
 - [ ] **11.K.6** **«Adesso» e «Proposta»** usano `serie` della variante di
