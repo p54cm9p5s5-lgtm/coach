@@ -117,7 +117,6 @@ niente: le raccolgo in §8 con la mia raccomandazione. Elenco iniziale (crescer�
   chiude la giornata.
 - **15.A.5** — il Pallof press dichiara di sé stesso di essere inadatto, e il
   sostituto che indica non esiste in libreria.
-- **11.K.2** — gli esercizi usciti dal programma spariscono dallo Storico.
 - **15.A.1** — le istruzioni al femminile sul tuo telefono.
 
 ---
