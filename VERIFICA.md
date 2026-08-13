@@ -540,27 +540,27 @@ Questo file lo usano tutte le schermate: un difetto qui si vede ovunque.
       archivi finiscono in `ignorati`: i dati non entrano. Da verificare che
       l'elenco degli ignorati venga **davvero mostrato a schermo** e non solo
       restituito.
-- [ ] **11.D.2** **Ripristino «sostituisci»**: gli archivi che il file non
+- [x] **11.D.2** **Ripristino «sostituisci»**: gli archivi che il file non
       nomina vengono svuotati lo stesso, tranne quelli dichiarati in `parziale`.
       Da provare con la copia interna (che non contiene le foto): **le foto
       devono restare**.
-- [ ] **11.D.3** **File danneggiato**: sezione non-array, righe senza chiave,
+- [x] **11.D.3** **File danneggiato**: sezione non-array, righe senza chiave,
       versione «boh», versione v2. Tutte e quattro devono dire «non ho toccato
       niente» — e l'archivio dev'essere davvero intatto dopo.
-- [ ] **11.D.4** **Ripristino interrotto a metà**: tutto sta in **una**
+- [x] **11.D.4** **Ripristino interrotto a metà**: tutto sta in **una**
       transazione. Da provare chiudendo l'app durante un ripristino grande (con
       le foto) e verificare che l'archivio sia o quello vecchio o quello nuovo,
       mai un misto.
-- [ ] **11.D.5** **Due schede aperte**: `onblocked` e `VersionError` hanno un
+- [x] **11.D.5** **Due schede aperte**: `onblocked` e `VersionError` hanno un
       messaggio in italiano. Da provare tenendo aperta l'app in Safari e nella
       versione installata.
-- [ ] **11.D.6** **Spazio finito**: `t.onabort` dice «di solito è lo spazio
+- [x] **11.D.6** **Spazio finito**: `t.onabort` dice «di solito è lo spazio
       finito». Da provare riempiendo l'archivio con un set di foto.
 - [x] **11.D.7** **`nuovoId`**: `Date.now()` in base 36 più un contatore che
       riparte da zero a ogni ricaricamento. Da verificare che nessuna schermata
       ordini per id invece che per data/ora (se l'orologio del telefono torna
       indietro, l'ordine per id mente).
-- [ ] **11.D.8** **`svuotaTutto`**: o tutto o niente, e restituisce l'elenco
+- [x] **11.D.8** **`svuotaTutto`**: o tutto o niente, e restituisce l'elenco
       degli archivi svuotati. Da verificare che il messaggio finale lo usi.
 - [x] **11.D.9** **Backup che pesa**: `esportaTutto({salta})` serve a non
       rileggere le foto. Da verificare quali chiamate lo usano e che il backup
