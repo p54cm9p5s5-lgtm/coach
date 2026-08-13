@@ -775,24 +775,24 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       vecchi (verificato: senza dati non esce), ma il testo di
       `ALLENAMENTI LETTI DALL'APPLE WATCH` rimanda a un riquadro che non si
       riempie più. Da riscrivere prima di partire.
-- [ ] **11.J.2** ⚠️ **Comporre il pacchetto SCRIVE nell'archivio**:
+- [x] **11.J.2** ⚠️ **Comporre il pacchetto SCRIVE nell'archivio**:
       `aggiornaProposte()` e `aggiornaSegnali()` girano ogni volta che si apre la
       schermata o si tocca una spunta. Da verificare che aprire il Pacchetto non
       faccia comparire proposte nuove sulla Home come effetto collaterale, e che
       due composizioni ravvicinate non si pestino i piedi.
-- [ ] **11.J.3** ⚠️ **Sigarette nel pacchetto: un giorno non contato vale zero.**
+- [x] **11.J.3** ⚠️ **Sigarette nel pacchetto: un giorno non contato vale zero.**
       Stesso difetto della sezione Fumo (`conteggi.get(data) || 0`), ma qui il
       numero lo legge il coach. Da verificare con un giorno saltato.
 - [ ] **11.J.4** ⚠️ **«Misure e indici» è spento di default** (`corpo: false`):
       il pacchetto normale **non** contiene peso e circonferenze. Da decidere se
       è quello che vogliamo, visto che il coach le chiede.
-- [ ] **11.J.5** **L'ultimo allenamento è scelto per `oraFine`**: una seduta
+- [x] **11.J.5** **L'ultimo allenamento è scelto per `oraFine`**: una seduta
       chiusa senza `oraFine` (dati vecchi) finisce in fondo e non viene mai
       esportata. Da verificare sulle sedute più vecchie.
-- [ ] **11.J.6** **Allenamento ancora aperto** e **secondo allenamento dello
+- [x] **11.J.6** **Allenamento ancora aperto** e **secondo allenamento dello
       stesso giorno**: devono comparire come NOTA in cima. Da provare tutti e
       due i casi.
-- [ ] **11.J.7** **Finestre diverse nello stesso pacchetto**: salute 21 giorni,
+- [x] **11.J.7** **Finestre diverse nello stesso pacchetto**: salute 21 giorni,
       Watch 7, extra 7, fumo 7, acqua 7. Da verificare che il testo dica sempre
       quale periodo sta guardando.
 - [ ] **11.J.8** **Watch tagliato a 20 righe**, con la frase che dice quanti ne
