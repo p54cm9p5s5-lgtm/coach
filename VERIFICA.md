@@ -675,7 +675,7 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       cosa che si vede è un toast di 6 secondi e poi il vuoto. Da provare
       forzando un errore lì dentro, e valutare una schermata di ripiego stabile
       come quella dell'archivio inaccessibile.
-- [ ] **11.G.3** ⚠️ **`store.regole()` chiamata senza rete di sicurezza** in tre
+- [x] **11.G.3** ⚠️ **`store.regole()` chiamata senza rete di sicurezza** in tre
       punti di `ridisegna()` (fumo, acqua, schede della barra). Da verificare
       cosa succede se il programma non è caricato o è rotto: è la strada più
       corta verso una pagina vuota.
@@ -695,15 +695,15 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
 - [ ] **11.G.8** **Mezzanotte**: il giorno si aggiorna con un controllo al
       minuto, ma **non** dentro l'allenamento. Da provare allenandosi a cavallo
       di mezzanotte (capita, in vacanza).
-- [ ] **11.G.9** **Indirizzo sconosciuto** (`#/qualsiasi`): si disegna la Home
+- [x] **11.G.9** **Indirizzo sconosciuto** (`#/qualsiasi`): si disegna la Home
       ma l'indirizzo resta quello sbagliato. Da verificare che la barra non
       resti spenta e che ricaricare non peggiori le cose.
 - [ ] **11.G.10** **Tema «Sistema»** che cambia da solo al tramonto: ridisegna,
       tranne che durante l'allenamento. Da provare.
-- [ ] **11.G.11** **Posizione dello scorrimento**: ridisegnare la stessa
+- [x] **11.G.11** **Posizione dello scorrimento**: ridisegnare la stessa
       schermata deve lasciarla dov'era, cambiare schermata deve riportare in
       cima. Da provare sulla lista lunga di Salute.
-- [ ] **11.G.12** **Schede nascoste**: Fumo solo se `contaSigarette !== false`,
+- [x] **11.G.12** **Schede nascoste**: Fumo solo se `contaSigarette !== false`,
       Acqua solo se `contaAcqua === true`. Da verificare su **tutti e due** i
       profili, e che l'indirizzo diretto a una sezione spenta rimandi alla Home.
 
