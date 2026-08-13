@@ -705,10 +705,6 @@ async function fatteNelBlocco(indici) {
   return out;
 }
 
-function inBlocco(i = S.sed.progresso.indice) {
-  return indiciBlocco(i).length > 1;
-}
-
 function vocePrevista(i = S.sed.progresso.indice) {
   return S.esercizi[i] || null;
 }
