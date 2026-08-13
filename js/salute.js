@@ -75,7 +75,7 @@ const CHIAVI_NOTE = {
   NOTTE: new Set(["durata", "profondo", "rem", "veglia", "risvegli"]),
   ALLENAMENTO: new Set([
     "uuid", "inizio", "fine", "durata", "kcal", "kcaltot", "km",
-    "fcmedia", "fc", "fcmin", "fcmax", "tipo",
+    "fcmedia", "fc", "fcmin", "fcmax", "sforzo", "tipo",
   ]),
 };
 
@@ -180,10 +180,23 @@ export function analizza(testo) {
         risultato.avvisi.push(`Riga BATTITO senza data o ora valida, ignorata: «${riga.slice(0, 44)}»`);
         continue;
       }
+      // Ogni casella è «min-max» (la barretta del grafico) oppure un numero
+      // solo, che vale sia per il minimo sia per il massimo. I pacchetti
+      // scritti prima avevano solo numeri: continuano a leggersi.
       const valori = coda2
         .join("")
         .split(",")
-        .map((v) => (v === "" ? null : NUMERO(v)));
+        .map((v) => {
+          if (v === "") return null;
+          const due = /^(\d+(?:[.,]\d+)?)-(\d+(?:[.,]\d+)?)$/.exec(v);
+          if (due) {
+            const min = NUMERO(due[1]);
+            const max = NUMERO(due[2]);
+            return min != null && max != null ? { min: Math.min(min, max), max: Math.max(min, max) } : null;
+          }
+          const n = NUMERO(v);
+          return n == null ? null : { min: n, max: n };
+        });
       if (valori.filter((v) => v != null).length < 3) {
         risultato.avvisi.push(`Riga BATTITO del ${d} ${ora} con troppi pochi valori: ignorata.`);
         continue;
@@ -279,6 +292,12 @@ export function analizza(testo) {
         // altro, quindi vale come «fcmedia» invece di finire nel nulla.
         fcMedia: NUMERO(c.fcmedia) ?? NUMERO(c.fc),
         fcMax: NUMERO(c.fcmax),
+        // Lo «Sforzo» dell'orologio, da 1 a 10. Fuori da quella scala non è
+        // quel dato: meglio niente che un numero che non si sa cosa sia.
+        sforzo: (() => {
+          const v = NUMERO(c.sforzo);
+          return v != null && v >= 1 && v <= 10 ? v : null;
+        })(),
         tipo: c.tipo || null,
         sedutaId: null,
       });

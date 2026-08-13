@@ -636,13 +636,23 @@ pesi, tutto. Stanno in **Salute → Allenamenti dal Watch**, e si leggono su tre
 livelli: i **giorni** (col numero di allenamenti di quel giorno), gli
 **allenamenti di quel giorno** in ordine d'orario, e il **dettaglio** di uno.
 
-Nel dettaglio c'è quello che il file di Salute contiene davvero: orario
-inizio-fine, durata, distanza e passo medio, kcal attive e totali, frequenza
-media, minima e massima, e la **curva del battito** — si tocca per leggere il
-valore in un dato momento, e dove la linea si interrompe è perché l'orologio lì
-non ha misurato. La curva viene raccolta a caselle da mezzo minuto: l'orologio
-scrive un battito ogni pochi secondi, e una camminata di un'ora farebbe
-settecento punti per disegnare una linea larga tre centimetri.
+I giorni si scelgono su un **calendario**: quelli con allenamenti hanno un
+pallino per allenamento, gli altri restano scritti ma non si toccano. Le frecce
+cambiano mese e sono spente dove non ci sono dati.
+
+Nel dettaglio c'è quello che il file di Salute contiene davvero, scritto come lo
+scrive l'orologio — numeri grandi e colorati, gli stessi colori con cui li hai
+già visti sul polso: durata, kcal attive e totali, media e massimo del battito,
+distanza e passo medio, e lo **Sforzo** da 1 a 10 con la parola che lo traduce
+(«7 · Difficile»).
+
+Poi la **frequenza cardiaca**, disegnata come sull'Apple Watch: una barretta per
+momento, alta dal battito più basso al più alto di quei secondi — così si vede
+anche quanto è stato stabile, non solo quanto è salito. Si tocca per leggere un
+momento preciso; dove manca la barretta, l'orologio non ha misurato. Le misure
+si raccolgono a caselle da mezzo minuto: l'orologio scrive un battito ogni pochi
+secondi, e un'ora di allenamento farebbe settecento punti per disegnare un
+grafico largo tre centimetri.
 
 **Cos'era.** Ogni allenamento può essere una di tre cose: **la seduta** del
 programma, **il cardio** che le va dietro, o un'**attività a parte**. Lo decidi

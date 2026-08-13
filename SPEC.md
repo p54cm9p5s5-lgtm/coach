@@ -162,8 +162,9 @@ Misura           id, data, tipo, valore, condizioniStandard: bool
                  tipo ∈ peso · vitaOmbelico (primaria) · vitaStretta · fianchi ·
                         petto · bicipiteRilassato · coscia
 AllenamentoWatch uuid (PK), data, inizio, fine, durataSec, tipo (nome di Apple),
-                 km, kcalAttive, kcalTotali, fcMedia, fcMin, fcMax,
-                 battito[] (un valore ogni ~30s, `null` dove non ha misurato),
+                 km, kcalAttive, kcalTotali, fcMedia, fcMin, fcMax, sforzo (1-10),
+                 battito[] ({min,max} ogni ~30s, `null` dove non ha misurato;
+                            i pacchetti vecchi hanno un numero solo, si legge uguale),
                  ruolo (seduta|cardio|extra), ruoloDeciso: bool, sedutaId
                  Letti da Salute, mai scritti dall'app. Fuori da ogni punteggio.
 Foto             id, data, posa (fronte|profiloDx|schiena|profiloSx),
