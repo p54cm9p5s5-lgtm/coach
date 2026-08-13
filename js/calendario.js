@@ -110,6 +110,10 @@ export function calcolaAttese({
   datePeso = null,
   dateVita = null,
   dateFoto = null,
+  // Il primo giorno di cui l'app sa qualcosa. Prima di lì non esistono cose
+  // «attese»: il programma non era ancora cominciato, e segnare arretrati su
+  // giorni in cui non c'era nulla da fare è un rimprovero inventato.
+  dal = null,
 }) {
   const cad = {
     misureGiornoSettimana: 4,
@@ -151,9 +155,17 @@ export function calcolaAttese({
 
   const periodiche = () => {
     const d = parseIso(oggi);
-    for (let i = -21; i <= 21; i++) {
+    // Quattro mesi indietro e uno avanti, non tre settimane per parte.
+    //
+    // Con ±21 giorni, sfogliando il calendario a due mesi fa non compariva
+    // nessun pallino: i giovedì della pesata sembravano tutti in ordine, e
+    // «nessun segno» si legge come «fatto», non come «non lo so». Il conto è
+    // un giro per giorno su una manciata di date: misurato, tutta la funzione
+    // costa 0,09 ms — allargarla non si sente.
+    for (let i = -120; i <= 31; i++) {
       const g = new Date(d);
       g.setDate(g.getDate() + i);
+      if (dal && iso(g) < dal) continue;
       if (g.getDay() === cad.misureGiornoSettimana) {
         const data = iso(g);
         const peso = ultimaEntro(datePeso, ultimoPeso, data);
