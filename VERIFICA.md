@@ -889,22 +889,22 @@ Avvio, indirizzi, aggiornamenti. È il punto da cui può nascere lo schermo bian
       curva assottigliata a 120 punti lo scarto è di mezza casella (una decina di
       secondi). Da guardare su un allenamento lungo che l'ora letta sia
       plausibile.
-- [ ] **11.M.3** **Allenamento a cavallo di mezzanotte**: l'ora gira col modulo
+- [x] **11.M.3** **Allenamento a cavallo di mezzanotte**: l'ora gira col modulo
       24h. Da provare (in vacanza può capitare).
 - [ ] **11.M.4** **`minimo` nel grafico a linea**: verificato che il passo al km
       lo calcola come `max(0, floor(minimo − 1))`, quindi nessun punto finisce
       sotto il bordo. Da confermare a schermo con un solo giorno di dati.
-- [ ] **11.M.5** **Un solo punto** in un grafico a linea (un giorno solo di
+- [x] **11.M.5** **Un solo punto** in un grafico a linea (un giorno solo di
       passo, o di passi): da guardare che non esca una riga vuota o un punto
       appiccicato al bordo.
-- [ ] **11.M.6** **Il periodo scelto è condiviso** fra tutti i grafici tranne il
+- [x] **11.M.6** **Il periodo scelto è condiviso** fra tutti i grafici tranne il
       punteggio Salute in Home, e sta in `localStorage`. Da verificare che
       cambiarlo in Salute non sposti quello della Home, e che sopravviva alla
       chiusura dell'app.
 - [ ] **11.M.7** **Tocco sul grafico dell'attività**: la conversione delle
       coordinate parte dal disegno, non dal riquadro. Da provare in orizzontale e
       su schermo stretto che il giorno letto sia quello toccato.
-- [ ] **11.M.8** **Obiettivo movimento**: la linea tratteggiata usa l'obiettivo
+- [x] **11.M.8** **Obiettivo movimento**: la linea tratteggiata usa l'obiettivo
       **più recente**, non il primo. Da provare cambiandolo in Salute.
 - [ ] **11.M.9** **Giorni senza dato**: pallino, non barra a zero. Da verificare
       che i dieci giorni di vacanza (se non importi) si vedano come buchi e non
