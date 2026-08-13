@@ -471,15 +471,15 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
       vita (non deve chiedere).
 - [x] **11.B.14** **Salvataggio parziale delle misure**: il messaggio distingue
       «nessuna» / «una» / «N su M». Da provare con archivio pieno.
-- [ ] **11.B.15** **Doppio tocco sullo scatto** durante il conto alla rovescia:
+- [x] **11.B.15** **Doppio tocco sullo scatto** durante il conto alla rovescia:
       partono due conti, il secondo lavora su una fotocamera già spenta. Da
       verificare che non salvi un'immagine nera o vuota.
-- [ ] **11.B.16** **Specchio**: l'anteprima è specchiata, la foto salvata no, e
+- [x] **11.B.16** **Specchio**: l'anteprima è specchiata, la foto salvata no, e
       la sagoma sovrapposta segue l'anteprima. Da verificare con la fotocamera
       posteriore («Ruota»), dove non c'è specchio.
-- [ ] **11.B.17** **Permesso fotocamera negato**: deve comparire la spiegazione
+- [x] **11.B.17** **Permesso fotocamera negato**: deve comparire la spiegazione
       con il ripiego, e il testo che dice di **non** disinstallare l'app.
-- [ ] **11.B.18** **Peso delle foto**: ogni scatto è una data-URL dentro
+- [x] **11.B.18** **Peso delle foto**: ogni scatto è una data-URL dentro
       l'archivio. Da verificare quanto pesa il backup con tutti i set che ci sono
       ora, e che l'esportazione su file riesca lo stesso.
 
