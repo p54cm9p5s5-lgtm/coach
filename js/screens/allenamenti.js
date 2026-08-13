@@ -95,44 +95,160 @@ async function elenco() {
     perGiorno.get(a.data).push(a);
   }
 
-  const righe = h("div.list");
-  for (const [data, elenco_] of perGiorno) {
-    const secondi = elenco_.reduce((t, a) => t + (a.durataSec || 0), 0);
-    const kcal = elenco_.reduce((t, a) => t + (a.kcalAttive || 0), 0);
-    // Il riassunto dice di che allenamenti si tratta, non solo quanti: «3»
-    // da solo non distingue tre camminate da una seduta e due camminate.
-    const conteggio = new Map();
-    for (const a of elenco_) {
-      const n = nomeTipo(a.tipo);
-      conteggio.set(n, (conteggio.get(n) || 0) + 1);
+  // Il mese si sceglie qui e resta finché sei nella schermata: si apre su
+  // quello dell'allenamento più recente, non sul mese di oggi, perché se
+  // l'ultima importazione è di una settimana fa aprire un calendario vuoto
+  // sembrerebbe che i dati non ci siano.
+  const piuRecente = tutti[0]?.data || null;
+  let mese = mesePreferito ?? (piuRecente ? piuRecente.slice(0, 7) : null);
+  const contenitore = h("div");
+  const disegna = () => {
+    clear(contenitore).append(calendario(mese, perGiorno, (nuovo) => {
+      mese = nuovo;
+      mesePreferito = nuovo;
+      disegna();
+    }));
+  };
+  disegna();
+  aggiungi(wrap, contenitore);
+
+  // Dentro un gruppo, se no `.footnote` non prende il suo stile e la nota
+  // finisce grande come il testo principale.
+  aggiungi(wrap,
+    h("div.group",
+      h("p.footnote",
+        "I giorni col pallino hanno allenamenti: toccali. Li registra l'orologio da solo, qui non si scrive niente, " +
+          "e non entrano in nessun punteggio — sono quello che è successo, non quello che il programma chiedeva."
+      )
+    )
+  );
+  return wrap;
+}
+
+/* Il mese scelto sopravvive all'andata e ritorno verso un giorno: senza, si
+   tornava sempre al mese dell'ultimo allenamento e chi stava guardando marzo
+   doveva rifare la strada ogni volta. */
+let mesePreferito = null;
+
+const GIORNI_SETT = ["L", "M", "M", "G", "V", "S", "D"];
+const MESI = [
+  "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+  "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
+];
+
+/** Il mese `AAAA-MM` spostato di `n` mesi. */
+function meseSpostato(mese, n) {
+  const [a, m] = mese.split("-").map(Number);
+  const d = new Date(a, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Il calendario del mese, coi giorni che hanno allenamenti da toccare.
+ *
+ * La settimana comincia di lunedì, come su un calendario italiano da parete e
+ * come nel resto dell'app. I giorni senza allenamenti restano scritti — servono
+ * a leggere il mese — ma non sono toccabili: un tasto che non fa niente è
+ * peggio di nessun tasto.
+ */
+function calendario(mese, perGiorno, onMese) {
+  if (!mese) return h("div");
+  const [anno, m] = mese.split("-").map(Number);
+  const primo = new Date(anno, m - 1, 1);
+  const quanti = new Date(anno, m, 0).getDate();
+  // getDay(): domenica 0. Con la settimana che comincia di lunedì, la domenica
+  // è l'ultima colonna, non la prima.
+  const salta = (primo.getDay() + 6) % 7;
+
+  const mesiConDati = [...new Set([...perGiorno.keys()].map((d) => d.slice(0, 7)))].sort();
+  const cePrima = mesiConDati.some((x) => x < mese);
+  const ceDopo = mesiConDati.some((x) => x > mese);
+
+  const celle = [];
+  for (let i = 0; i < salta; i++) celle.push(h("div"));
+  for (let g = 1; g <= quanti; g++) {
+    const iso = `${mese}-${String(g).padStart(2, "0")}`;
+    const suoi = perGiorno.get(iso) || [];
+    const stile =
+      "aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;" +
+      "border:0;border-radius:12px;font-size:15px;font-variant-numeric:tabular-nums;padding:0;";
+    if (!suoi.length) {
+      celle.push(
+        h("div", { style: `${stile}color:var(--label-tertiary);background:transparent` }, String(g))
+      );
+      continue;
     }
-    const riassunto = [...conteggio.entries()]
-      .map(([n, q]) => (q > 1 ? `${q} × ${n.toLowerCase()}` : n.toLowerCase()))
-      .join(" · ");
-    aggiungi(righe,
+    celle.push(
       h(
-        "button.row.accent",
-        { onclick: () => (location.hash = `#/allenamenti?giorno=${data}`) },
+        "button",
+        {
+          style: `${stile}background:var(--bg-grouped);color:var(--label);font-weight:600;cursor:pointer`,
+          "aria-label": `${g} ${MESI[m - 1]}: ${suoi.length} ${suoi.length === 1 ? "allenamento" : "allenamenti"}`,
+          onclick: () => (location.hash = `#/allenamenti?giorno=${iso}`),
+        },
+        String(g),
+        // Un pallino per allenamento, fino a tre: dice quanti sono senza far
+        // leggere un numero, ed è la stessa informazione del numerino di prima.
         h(
-          "div.main",
-          h("span.title", dataLunga(data)),
-          h("span.sub", riassunto),
-          h("span.sub", `${durata(secondi)}${kcal ? ` · ${Math.round(kcal)} kcal attive` : ""}`)
-        ),
-        h("span.pill", String(elenco_.length)),
-        h("span.chevron", "›")
+          "span",
+          { style: "display:flex;gap:2px" },
+          ...Array.from({ length: Math.min(suoi.length, 3) }, () =>
+            h("span", { style: "width:4px;height:4px;border-radius:50%;background:var(--accent)" })
+          )
+        )
       )
     );
   }
 
-  aggiungi(wrap, h("div.group", h("h2", `${perGiorno.size} ${perGiorno.size === 1 ? "giorno" : "giorni"}`), righe));
-  aggiungi(wrap,
-    h("p.footnote",
-      "Li registra l'orologio da solo: qui non si scrive niente. Non entrano in nessun punteggio — " +
-        "sono quello che è successo, non quello che il programma chiedeva."
+  const conta = [...perGiorno.entries()].filter(([d]) => d.startsWith(mese));
+  const quantiAllenamenti = conta.reduce((t, [, v]) => t + v.length, 0);
+
+  return h(
+    "div.group",
+    h(
+      "div",
+      { style: "display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px" },
+      h(
+        "button",
+        {
+          style: `border:0;background:transparent;font-size:22px;padding:6px 12px;min-height:44px;color:${cePrima ? "var(--accent)" : "var(--label-tertiary)"}`,
+          disabled: !cePrima,
+          "aria-label": "Mese precedente",
+          onclick: () => onMese(meseSpostato(mese, -1)),
+        },
+        "‹"
+      ),
+      h(
+        "span",
+        { style: "font-size:15px;font-weight:600" },
+        `${MESI[m - 1]} ${anno}`
+      ),
+      h(
+        "button",
+        {
+          style: `border:0;background:transparent;font-size:22px;padding:6px 12px;min-height:44px;color:${ceDopo ? "var(--accent)" : "var(--label-tertiary)"}`,
+          disabled: !ceDopo,
+          "aria-label": "Mese successivo",
+          onclick: () => onMese(meseSpostato(mese, 1)),
+        },
+        "›"
+      )
+    ),
+    h(
+      "div",
+      { style: "display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 4px" },
+      ...GIORNI_SETT.map((g) =>
+        h("div", { style: "text-align:center;font-size:10px;color:var(--label-secondary);padding-bottom:4px" }, g)
+      ),
+      ...celle
+    ),
+    h(
+      "p.footnote",
+      quantiAllenamenti
+        ? `${quantiAllenamenti} ${quantiAllenamenti === 1 ? "allenamento" : "allenamenti"} in ${conta.length} ${conta.length === 1 ? "giorno" : "giorni"}.`
+        : "In questo mese l'orologio non ha registrato niente."
     )
   );
-  return wrap;
 }
 
 // ---------- livello 2: il giorno ----------
@@ -235,8 +351,11 @@ async function dettaglio(uuid) {
     );
 
   const passo = passoMedio(a.km, a.durataSec);
+  // La durata sta già grande in cima: ripeterla in una scheda faceva sembrare
+  // che ci fossero due dati dove ce n'era uno, e su un allenamento povero
+  // riempiva la griglia di niente.
   const schede = [
-    a.km != null ? scheda("Distanza", `${num(a.km)} km`, passo ? `${passo} al km` : null) : null,
+    a.km != null ? scheda("Distanza", `${num(a.km, 2)} km`, passo ? `${passo} al km` : null) : null,
     a.kcalAttive != null
       ? scheda("Kcal attive", String(Math.round(a.kcalAttive)), a.kcalTotali != null ? `${Math.round(a.kcalTotali)} totali` : null)
       : null,
@@ -246,12 +365,44 @@ async function dettaglio(uuid) {
           a.fcMax != null ? `max ${Math.round(a.fcMax)}` : null,
         ].filter(Boolean).join(" · ") || null)
       : null,
-    scheda("Durata", durata(a.durataSec), a.fine ? `${a.inizio}–${a.fine}` : null),
+    a.fine ? scheda("Orario", `${a.inizio}–${a.fine}`, "inizio e fine") : null,
   ].filter(Boolean);
 
-  aggiungi(wrap,
-    h("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" }, ...schede)
-  );
+  if (schede.length) {
+    aggiungi(wrap,
+      h("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" }, ...schede)
+    );
+  }
+
+  /* Un allenamento importato prima dell'aggiornamento ha solo quattro numeri:
+     giorno, ora, durata e calorie. Distanza, frequenze, orario di fine e curva
+     del battito stanno nel file di Salute e ci sono sempre stati — è il lettore
+     che non li prendeva. Dirlo qui è l'unico modo perché non sembri che
+     l'orologio non li abbia misurati: basta reimportare. */
+  const poveri = a.km == null && a.fcMedia == null && !a.fine && !Array.isArray(a.battito);
+  if (poveri) {
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h("h2", "Mancano dei numeri"),
+        h(
+          "p.footnote",
+          "Questo allenamento è stato importato da una versione dell'app che leggeva solo durata e calorie. " +
+            "Distanza, frequenza cardiaca, orario di fine e curva del battito sono nel file di Salute: " +
+            "rifai l'importazione da Salute e si riempiono da soli, senza perdere niente di quello che hai già deciso qui."
+        ),
+        h(
+          "div.list",
+          h(
+            "a.row",
+            { href: "#/salute" },
+            h("div.main", h("span.title", "Vai a importare i dati da Salute")),
+            h("span.chevron", "›")
+          )
+        )
+      )
+    );
+  }
 
   // ---- la curva del battito ----
   if (Array.isArray(a.battito) && a.battito.filter((v) => v != null).length >= 3) {
@@ -370,8 +521,10 @@ async function dettaglio(uuid) {
   );
 
   aggiungi(wrap,
-    h("p.footnote", { style: "margin:18px 16px 24px" },
-      "Questi numeri li ha scritti l'orologio. L'app non li cambia e non li fa entrare in nessun punteggio."
+    h("div.group",
+      h("p.footnote",
+        "Questi numeri li ha scritti l'orologio. L'app non li cambia e non li fa entrare in nessun punteggio."
+      )
     )
   );
   return wrap;
