@@ -112,8 +112,8 @@ senza che una riga sia stata davvero chiusa.
 | 5 |  | **11.A.5** | DA FARE |  | 11.A — `js/punteggio.js` |
 | 5 |  | **11.A.6** | DA FARE |  | 11.A — `js/punteggio.js` |
 | 5 |  | **11.A.7** | DA FARE |  | 11.A — `js/punteggio.js` |
-| 5 |  | **11.A.8** | DA FARE |  | 11.A — `js/punteggio.js` |
-| 5 |  | **11.A.9** | DA FARE |  | 11.A — `js/punteggio.js` |
+| 5 |  | **11.A.8** | CORRETTO | **difetto grave, ed è proprio il caso «un brief nuovo arriva mentre sei via».** Se il brief dichiara i `pesi` del punteggio Salute **in parte** — cinque su otto, cosa del tutto ragionevole da scrivere — le voci non dichiarate restavano con peso `undefined`, la somma diventava `NaN` e **il punteggio Salute spariva del tutto** (`null`), senza una parola. Ora i pesi del brief si fondono con quelli di base invece di sostituirli, e `acqua` (che mancava dall'elenco di base) c'è. Verificato: con pesi parziali il punteggio esce (76), con un solo peso dichiarato esce (74), e senza pesi dichiarati resta **identico a prima** (74) — nessuna regressione | 11.A — `js/punteggio.js` |
+| 5 |  | **11.A.9** | NON RIPRODOTTO | con `contaSigarette: false` la voce Fumo non compare affatto nell'elenco, invece di restare lì a valere sempre zero; con il conteggio attivo compare. Provate tutte e due le forme | 11.A — `js/punteggio.js` |
 | 5 | ! | **11.AA.1** | DA FARE |  | 11.AA — `js/salute.js` |
 | 5 | ! | **11.AA.2** | DA FARE |  | 11.AA — `js/salute.js` |
 | 5 |  | **11.AA.3** | DA FARE |  | 11.AA — `js/salute.js` |

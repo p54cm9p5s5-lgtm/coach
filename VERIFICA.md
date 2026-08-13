@@ -395,10 +395,10 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
 - [ ] **11.A.6** **Recupero non misurato** su tutte le serie: la voce esce dal
       conto e il peso si redistribuisce.
 - [ ] **11.A.7** **Dolori multipli**: −20 per punto, tetto 70 una volta sola.
-- [ ] **11.A.8** **`pesi.acqua`**: il valore predefinito (12) non è nell'elenco
+- [x] **11.A.8** **`pesi.acqua`**: il valore predefinito (12) non è nell'elenco
       dei pesi di base. Se un brief dichiara `pesi` senza `acqua`, verificare che
       il conto resti coerente.
-- [ ] **11.A.9** **`contaSigarette: false`**: la voce Fumo non compare affatto.
+- [x] **11.A.9** **`contaSigarette: false`**: la voce Fumo non compare affatto.
 - [ ] **11.A.10** **Colori del punteggio**: sono fissi e non di tema, e in tema
       chiaro vengono scuriti da un calcolo (`visibileSulBianco`) tarato sul
       **bianco puro**. Da verificare il contrasto reale sopra `--bg-grouped` e
