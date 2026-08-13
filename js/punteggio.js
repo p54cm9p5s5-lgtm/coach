@@ -41,6 +41,13 @@ function ritardoAndataALetto(inizio, oraLimite = 0) {
   const [h, m] = orario.split(":").map(Number);
   if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
   if (h >= 12) return 0; // a letto prima di mezzanotte
+  // Oltre le cinque del mattino non è più «andato a letto tardi»: è un
+  // sonnellino letto come notte, una fase attribuita male, o un fuso orario
+  // diverso. Contarlo come ritardo dava nove ore di penalità e mandava a
+  // ZERO la voce Sonno di una notte da sette ore piene — un rimprovero per un
+  // dato che quasi certamente è sbagliato. Meglio dire «l'orario non lo so» e
+  // giudicare la notte sulla sola durata, che è il dato di cui ci si fida.
+  if (h >= 5) return null;
   return Math.max(0, h + m / 60 - oraLimite);
 }
 

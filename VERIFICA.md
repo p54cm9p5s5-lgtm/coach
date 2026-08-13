@@ -377,7 +377,7 @@ Questa parte non viene dalla mappa: viene dalla lettura. Cresce man mano.
 
 ## 11.A — `js/punteggio.js` (829 righe, lette tutte)
 
-- [ ] **11.A.1** ⚠️ **`ritardoAndataALetto()`**: un orario di inizio notte fra le
+- [x] **11.A.1** ⚠️ **`ritardoAndataALetto()`**: un orario di inizio notte fra le
       **00:00 e le 11:59** viene contato come ritardo in ore (`h + m/60`), e ogni
       ora costa il 12%. Una notte che l'orologio fa cominciare alle 07:00 —
       capita con un sonnellino letto come notte, o con una fase mal attribuita —
