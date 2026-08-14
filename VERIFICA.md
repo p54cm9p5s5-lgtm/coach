@@ -1553,33 +1553,33 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.AA — `js/salute.js` (434) e `js/salute-export.js` (429), lette tutte
 
-- [ ] **11.AA.1** ⚠️ **Un sonnellino di giorno diventa una notte.** Nel montaggio
+- [x] **11.AA.1** ⚠️ **Un sonnellino di giorno diventa una notte.** Nel montaggio
       delle fasi, una fase che comincia **dalle 12 in poi** viene attribuita alla
       notte del giorno dopo. Un pisolino alle 15 diventa quindi «la notte di
       domani», con un inizio alle 15 — e da lì la voce Sonno del punteggio
       (`ritardoAndataALetto`, 11.A.1) fa il resto. Da provare con un sonnellino
       registrato dall'orologio.
-- [ ] **11.AA.2** ⚠️ **Allenamenti dell'orologio senza `uuid`.** Il lettore
+- [x] **11.AA.2** ⚠️ **Allenamenti dell'orologio senza `uuid`.** Il lettore
       dell'export non lo scrive, e `analizza` costruisce la chiave come
       `data-inizio-durata`: due allenamenti che cominciano nello stesso minuto e
       durano uguale si sovrascrivono a vicenda. Da verificare se in archivio ce
       ne sono con la stessa chiave.
-- [ ] **11.AA.3** **iPhone e Watch tenuti separati** dal nome della sorgente
+- [x] **11.AA.3** **iPhone e Watch tenuti separati** dal nome della sorgente
       (`/watch/i`): se l'orologio ha un nome che non contiene «watch», i suoi
       dati finiscono con quelli del telefono e i passi si contano due volte. Da
       verificare come si chiama il tuo orologio in Salute.
-- [ ] **11.AA.4** **Numeri all'italiana**: «10.700» sono diecimilasettecento,
+- [x] **11.AA.4** **Numeri all'italiana**: «10.700» sono diecimilasettecento,
       «12.836» kcal sono dodici virgola otto. Da controllare su un import vero
       che i passi non siano divisi per mille e le kcal non moltiplicate.
-- [ ] **11.AA.5** **Campi sconosciuti e valori negativi** finiscono negli
+- [x] **11.AA.5** **Campi sconosciuti e valori negativi** finiscono negli
       avvisi. Da leggere gli avvisi dopo un import vero, non solo il riepilogo.
-- [ ] **11.AA.6** **Curva del battito senza allenamento** a cui riferirsi: viene
+- [x] **11.AA.6** **Curva del battito senza allenamento** a cui riferirsi: viene
       detto invece di sparire. Da provare.
-- [ ] **11.AA.7** **Export da centinaia di MB letto a pezzi**: da rifare sul
+- [x] **11.AA.7** **Export da centinaia di MB letto a pezzi**: da rifare sul
       telefono, con la percentuale che avanza, perché in vacanza sarà l'unica
       strada (le azioni di Salute nei Comandi Rapidi non funzionano — vedi
       11.AD.2).
-- [ ] **11.AA.8** **Distanza di nuoto e bici finiscono nello stesso campo `km`**
+- [x] **11.AA.8** **Distanza di nuoto e bici finiscono nello stesso campo `km`**
       della camminata: da verificare che il passo al chilometro non peschi una
       nuotata (i tipi sono filtrati, ma va provato).
 

@@ -277,7 +277,13 @@ export function analizza(testo) {
       });
     } else if (tipo === "ALLENAMENTO") {
       risultato.allenamenti.push({
-        uuid: c.uuid || `${data}-${c.inizio || "00:00"}-${c.durata || 0}`,
+        // Senza uuid la chiave la costruiamo noi, e ci va anche il tipo: una
+        // camminata e una corsa cominciate nello stesso minuto e lunghe uguale
+        // avevano la stessa chiave, e la seconda cancellava la prima. Con il
+        // tipo dentro restano due allenamenti diversi; due righe identiche in
+        // tutto restano una sola, che è quello che si vuole quando lo stesso
+        // export viene importato due volte.
+        uuid: c.uuid || `${data}-${c.inizio || "00:00"}-${c.durata || 0}-${(c.tipo || "?").toLowerCase()}`,
         data,
         inizio: c.inizio || null,
         fine: c.fine || null,
@@ -343,6 +349,8 @@ export function analizza(testo) {
   // alle 3, la notte finiva sul giorno prima ancora.
   if (risultato.fasi.length) {
     const perNotte = new Map();
+    const sonnellini = [];
+    const p2 = (n) => String(n).padStart(2, "0");
     for (const f of risultato.fasi) {
       const inizio = new Date(f.inizio);
       const fine = new Date(f.fine);
@@ -356,11 +364,22 @@ export function analizza(testo) {
       if (minuti < 0) minuti += 24 * 60;
       if (minuti <= 0 || minuti > 12 * 60) continue;
 
-      // Una fase che comincia di sera (dalle 12 in poi) finisce il giorno
-      // dopo: la notte è quella del risveglio. Una che comincia dopo
-      // mezzanotte finisce nello stesso giorno in cui è cominciata.
+      // Una fase che comincia di sera finisce il giorno dopo: la notte è quella
+      // del risveglio. Una che comincia dopo mezzanotte finisce nello stesso
+      // giorno in cui è cominciata.
+      //
+      // Il taglio era a mezzogiorno, e cosi un sonnellino delle 15 diventava
+      // «la notte di domani», cominciata alle 15: si mangiava la notte vera e
+      // il punteggio del sonno del giorno dopo. Le ore centrali della giornata
+      // non sono nessuna delle due notti: quel sonno c'è stato, ma non è la
+      // notte, e viene detto invece di essere impastato con lei.
+      const ora = inizio.getHours();
+      if (ora >= 11 && ora < 18) {
+        sonnellini.push({ quando: `${p2(inizio.getDate())}/${p2(inizio.getMonth() + 1)} alle ${p2(ora)}:${p2(inizio.getMinutes())}`, minuti });
+        continue;
+      }
       const notte = new Date(inizio);
-      if (notte.getHours() >= 12) notte.setDate(notte.getDate() + 1);
+      if (ora >= 18) notte.setDate(notte.getDate() + 1);
       const p = (n) => String(n).padStart(2, "0");
       const chiave = `${notte.getFullYear()}-${p(notte.getMonth() + 1)}-${p(notte.getDate())}`;
 
@@ -390,6 +409,16 @@ export function analizza(testo) {
     // tutte e due, quella esplicita vince.
     const gia = new Set(risultato.notti.map((n) => n.data));
     for (const n of perNotte.values()) if (!gia.has(n.data)) risultato.notti.push(n);
+    // I sonnellini si dicono: sono sonno vero, ma non sono la notte, e sapere
+    // che ci sono spiega una notte più corta del solito.
+    if (sonnellini.length) {
+      const totale = sonnellini.reduce((t, x) => t + x.minuti, 0);
+      const elenco = sonnellini.slice(0, 3).map((x) => `${x.quando} (${x.minuti} min)`).join(", ");
+      risultato.avvisi.push(
+        `${sonnellini.length} ${sonnellini.length === 1 ? "sonnellino di giorno" : "sonnellini di giorno"} per ${totale} minuti in tutto` +
+          `${elenco ? `: ${elenco}` : ""}${sonnellini.length > 3 ? " e altri" : ""}. Restano fuori dalle notti: il punteggio del sonno guarda la notte, non il pomeriggio.`
+      );
+    }
   }
 
   // Ogni curva va attaccata al suo allenamento: si riconoscono per giorno e ora
