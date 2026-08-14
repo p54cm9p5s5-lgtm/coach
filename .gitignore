@@ -19,3 +19,8 @@ coach-dati-iniziali.json
 # serve alla guardia in tools/non-fermarti.sh. Cancellarlo è il modo per
 # fermare tutto. Non è roba da pubblicare.
 .controllo-in-corso
+
+# Il registro del controllo resta sul computer (scelta del 14/08)
+VERIFICA.md
+ESITO.md
+PIANO.md
