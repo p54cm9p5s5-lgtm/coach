@@ -1,6 +1,8 @@
 /* Lettura del blocco tecnico COACH-DATA dal master brief.
    Funzioni pure: estrazione, validazione, confronto. L'applicazione sta in store.js. */
 
+import { num } from "./ui.js";
+
 export const VERSIONE_SUPPORTATA = 1;
 
 const APERTURA = /<!--\s*COACH-DATA\s+v(\d+)\s*-->/i;
@@ -67,6 +69,30 @@ export function valida(dati, libreria) {
 
   if (!Array.isArray(dati.split) || !dati.split.length) {
     problemi.push("Manca lo split settimanale.");
+  }
+
+  // Due giorni con lo stesso id, o due giorni sullo stesso giorno della
+  // settimana: vinceva il primo scritto e l'altro spariva senza dirlo. Succede
+  // davvero quando nel brief convivono due programmi (quello vecchio e quello
+  // nuovo), ed è il tipo di errore di cui ci si accorge solo in palestra.
+  const idVisti = new Map();
+  const settimanaVisti = new Map();
+  for (const giorno of dati.split || []) {
+    if (giorno?.id) {
+      if (idVisti.has(giorno.id)) {
+        problemi.push(
+          `Due giorni con lo stesso id "${giorno.id}": «${idVisti.get(giorno.id)}» e «${giorno.nome || giorno.id}». L'app ne userebbe uno solo.`
+        );
+      } else idVisti.set(giorno.id, giorno.nome || giorno.id);
+    }
+    if (typeof giorno?.giorno === "number") {
+      const gia = settimanaVisti.get(giorno.giorno);
+      if (gia) {
+        problemi.push(
+          `Due allenamenti sullo stesso giorno della settimana (${GIORNI_SETTIMANA[giorno.giorno] || giorno.giorno}): «${gia}» e «${giorno.nome || giorno.id}». Il calendario ne può proporre uno solo.`
+        );
+      } else settimanaVisti.set(giorno.giorno, giorno.nome || giorno.id);
+    }
   }
 
   for (const giorno of dati.split || []) {
@@ -180,6 +206,80 @@ export function valida(dati, libreria) {
     }
   }
 
+  // Le regole non venivano guardate affatto: un blocco scritto a metà passava
+  // e poi spegneva in silenzio metà del punteggio. Qui non si giudica il
+  // merito (i numeri li decide il coach), si controlla solo la forma: dove
+  // l'app si aspetta un numero dev'esserci un numero.
+  const reg = dati.regole;
+  if (reg != null) {
+    if (typeof reg !== "object" || Array.isArray(reg)) {
+      problemi.push("«regole» deve essere un blocco di voci, non un elenco.");
+    } else {
+      const numeriPositivi = {
+        "cardio.kmhMin": reg.cardio?.kmhMin,
+        "cardio.kmhMax": reg.cardio?.kmhMax,
+        "cardio.fcMin": reg.cardio?.fcMin,
+        "cardio.fcMax": reg.cardio?.fcMax,
+        "cardio.fcLimite": reg.cardio?.fcLimite,
+        "cardio.durataMin": reg.cardio?.durataMin,
+        "finestra.settimane": reg.finestra?.settimane,
+        "finestra.minimoSettimana": reg.finestra?.minimoSettimana,
+        "progressione.esposizioniMinime": reg.progressione?.esposizioniMinime,
+        "progressione.rpePerSalire": reg.progressione?.rpePerSalire,
+        "progressione.tecnicaMinima": reg.progressione?.tecnicaMinima,
+        "progressione.esposizioniPerRiproporre": reg.progressione?.esposizioniPerRiproporre,
+        "rpeTarget.min": reg.rpeTarget?.min,
+        "rpeTarget.max": reg.rpeTarget?.max,
+        "salute.sonnoOreBersaglio": reg.salute?.sonnoOreBersaglio,
+        "salute.movimentoBersaglio": reg.salute?.movimentoBersaglio,
+        "salute.passiBersaglio": reg.salute?.passiBersaglio,
+        "salute.sigaretteTollerate": reg.salute?.sigaretteTollerate,
+      };
+      for (const [dove, valore] of Object.entries(numeriPositivi)) {
+        if (valore != null && !(Number.isFinite(valore) && valore >= 0)) {
+          problemi.push(`«regole.${dove}» dev'essere un numero, zero o più.`);
+        }
+      }
+      for (const [dove, valore] of Object.entries({
+        cardio: reg.cardio, finestra: reg.finestra, progressione: reg.progressione,
+        rpeTarget: reg.rpeTarget, salute: reg.salute, cadenze: reg.cadenze,
+      })) {
+        if (valore != null && (typeof valore !== "object" || Array.isArray(valore))) {
+          problemi.push(`«regole.${dove}» dev'essere un blocco di voci.`);
+        }
+      }
+      if (reg.cardio?.kmhMin != null && reg.cardio?.kmhMax != null && reg.cardio.kmhMin > reg.cardio.kmhMax) {
+        problemi.push("«regole.cardio»: la velocità minima è più alta della massima.");
+      }
+      if (reg.cardio?.fcMin != null && reg.cardio?.fcMax != null && reg.cardio.fcMin > reg.cardio.fcMax) {
+        problemi.push("«regole.cardio»: il battito minimo è più alto del massimo.");
+      }
+      if (reg.rpeTarget?.min != null && reg.rpeTarget?.max != null && reg.rpeTarget.min > reg.rpeTarget.max) {
+        problemi.push("«regole.rpeTarget»: il minimo è più alto del massimo.");
+      }
+      const pesi = reg.salute?.pesi;
+      if (pesi != null) {
+        if (typeof pesi !== "object" || Array.isArray(pesi)) {
+          problemi.push("«regole.salute.pesi» dev'essere un blocco di voci (nome del peso: numero).");
+        } else {
+          for (const [voce, valore] of Object.entries(pesi)) {
+            if (!(Number.isFinite(valore) && valore >= 0)) {
+              problemi.push(`«regole.salute.pesi.${voce}» dev'essere un numero, zero o più.`);
+            }
+          }
+        }
+      }
+      for (const [dove, valore] of Object.entries({
+        "salute.contaSigarette": reg.salute?.contaSigarette,
+        "salute.contaAcqua": reg.salute?.contaAcqua,
+      })) {
+        if (valore != null && typeof valore !== "boolean") {
+          problemi.push(`«regole.${dove}» dev'essere vero o falso.`);
+        }
+      }
+    }
+  }
+
   const inv = dati.inventario;
   if (inv) {
     // La barra è facoltativa quanto i manubri: chi si allena con soli manubri
@@ -238,6 +338,91 @@ const GIORNI_SETTIMANA = [
  * mezzo chilo è la modifica più frequente che il coach fa.
  */
 const kg = (v) => (v == null ? "—" : String(v).replace(".", ","));
+
+
+/* I nomi per esteso delle soglie, cosi la riga del confronto si legge come una
+   frase invece che come un percorso di chiavi. Quelle che non stanno qui si
+   mostrano col loro nome tecnico: meglio una parola tecnica che il silenzio. */
+const NOMI_REGOLE = {
+  "cardio.kmhMin": "cardio · velocità minima (km/h)",
+  "cardio.kmhMax": "cardio · velocità massima (km/h)",
+  "cardio.fcMin": "cardio · battito minimo",
+  "cardio.fcMax": "cardio · battito massimo",
+  "cardio.fcLimite": "cardio · battito da non superare",
+  "cardio.durataMin": "cardio · durata (min)",
+  "finestra.settimane": "finestra dati · settimane",
+  "finestra.minimoSettimana": "finestra dati · giorni minimi a settimana",
+  "finestra.soglia": "finestra dati · soglia dello scarto",
+  "progressione.esposizioniMinime": "progressione · esposizioni minime",
+  "progressione.rpePerSalire": "progressione · RPE per salire",
+  "progressione.tecnicaMinima": "progressione · tecnica minima",
+  "progressione.tecnicaRiduzione": "progressione · tecnica sotto cui si scende",
+  "progressione.esposizioniPerRiproporre": "progressione · esposizioni per riproporre",
+  "rpeTarget.min": "zona RPE · minimo",
+  "rpeTarget.max": "zona RPE · massimo",
+  "salute.sonnoOreBersaglio": "salute · ore di sonno bersaglio",
+  "salute.sonnoOreMinime": "salute · ore di sonno minime",
+  "salute.sonnoOraLimite": "salute · ora limite per andare a letto",
+  "salute.sonnoCostoOraTardi": "salute · costo di ogni ora tardi",
+  "salute.movimentoBersaglio": "salute · bersaglio movimento (kcal)",
+  "salute.passiBersaglio": "salute · bersaglio passi",
+  "salute.minutiEsercizioBersaglio": "salute · bersaglio minuti di esercizio",
+  "salute.minutiInPiediBersaglio": "salute · bersaglio minuti in piedi",
+  "salute.sigaretteTollerate": "salute · sigarette tollerate",
+  "salute.contaSigarette": "salute · conta le sigarette",
+  "salute.contaAcqua": "salute · conta l'acqua",
+  "salute.acquaLitriBersaglio": "salute · litri d'acqua",
+  "salute.fumoQuotaMinima": "salute · quanto può scendere la voce Fumo",
+  "salute.pesi.sonno": "punteggio Salute · quanto pesa il sonno",
+  "salute.pesi.allenamento": "punteggio Salute · quanto pesa l'allenamento",
+  "salute.pesi.fumo": "punteggio Salute · quanto pesa il fumo",
+  "salute.pesi.movimento": "punteggio Salute · quanto pesa il movimento",
+  "salute.pesi.passi": "punteggio Salute · quanto pesano i passi",
+  "salute.pesi.esercizio": "punteggio Salute · quanto pesano i minuti di esercizio",
+  "salute.pesi.inPiedi": "punteggio Salute · quanto pesa il tempo in piedi",
+  "salute.pesi.acqua": "punteggio Salute · quanto pesa l'acqua",
+  "cadenze.misureGiornoSettimana": "cadenze · giorno delle misure",
+  "cadenze.fotoGiornoSettimana": "cadenze · giorno delle foto",
+  "cadenze.fotoOgniSettimane": "cadenze · foto ogni quante settimane",
+  "cadenze.fotoAncora": "cadenze · data di riferimento delle foto",
+};
+
+function scrivibile(v) {
+  if (v == null) return "non dichiarato";
+  if (typeof v === "boolean") return v ? "sì" : "no";
+  if (typeof v === "number") return num(v);
+  if (typeof v === "string") return v;
+  return JSON.stringify(v);
+}
+
+/** Le regole cambiate, una riga per voce, con il prima e il dopo. */
+export function differenzeRegole(vecchie, nuove, prefisso = "") {
+  const righe = [];
+  const chiavi = [...new Set([...Object.keys(vecchie || {}), ...Object.keys(nuove || {})])].sort();
+  for (const k of chiavi) {
+    // I punti dolenti hanno un elenco tutto loro: si dicono a parte, per nome.
+    if (!prefisso && k === "dolori") {
+      const p = (x) => (Array.isArray(x) ? x.map((s) => s?.nome || s?.id).filter(Boolean) : []);
+      const a = p(vecchie[k]);
+      const b = p(nuove[k]);
+      if (a.join("|") !== b.join("|")) {
+        righe.push(`punti dolenti chiesti dopo ogni esercizio: ${a.length ? a.join(", ") : "nessuno"} → ${b.length ? b.join(", ") : "nessuno"}`);
+      }
+      continue;
+    }
+    const va = vecchie?.[k];
+    const vb = nuove?.[k];
+    const dove = prefisso ? `${prefisso}.${k}` : k;
+    const oggetto = (x) => x && typeof x === "object" && !Array.isArray(x);
+    if (oggetto(va) || oggetto(vb)) {
+      righe.push(...differenzeRegole(oggetto(va) ? va : {}, oggetto(vb) ? vb : {}, dove));
+      continue;
+    }
+    if (JSON.stringify(va) === JSON.stringify(vb)) continue;
+    righe.push(`${NOMI_REGOLE[dove] || dove}: ${scrivibile(va)} → ${scrivibile(vb)}`);
+  }
+  return righe;
+}
 
 export function confronta(corrente, nuovo, libreria) {
   const nome = (id) => libreria.find((e) => e.id === id)?.nome || id;
@@ -340,9 +525,14 @@ export function confronta(corrente, nuovo, libreria) {
     if (!b.has(k)) righe.push({ tipo: "rimosso", testo: `${g.nome}: tolto ${nome(v.esercizioId)}` });
   }
 
-  const rc = JSON.stringify(corrente.regole || {});
-  const rn = JSON.stringify(nuovo.regole || {});
-  if (rc !== rn) righe.push({ tipo: "modificato", testo: "Regole e soglie aggiornate." });
+  // «Regole e soglie aggiornate» era tutto quello che si leggeva quando il
+  // coach spostava le soglie del cardio, i pesi del punteggio o le esposizioni
+  // minime: proprio le modifiche che non si vedono da nessun'altra parte,
+  // mentre per un carico da 20 a 22 kg l'app scrive la differenza esatta.
+  // Adesso le regole si confrontano voce per voce, con i nomi che si leggono.
+  for (const riga of differenzeRegole(corrente.regole || {}, nuovo.regole || {})) {
+    righe.push({ tipo: "modificato", testo: riga });
+  }
 
   const ic = JSON.stringify(corrente.inventario || {});
   const inuovo = JSON.stringify(nuovo.inventario || {});

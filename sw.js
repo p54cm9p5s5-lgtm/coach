@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260814-023659";
+const VERSION = "20260814-024356";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
@@ -52,7 +52,17 @@ self.addEventListener("install", (e) => {
   // vecchia resta al suo posto. Con allSettled una rete ballerina produceva
   // una versione monca che poi cancellava l'unica copia funzionante.
   e.waitUntil(
-    caches.open(CACHE).then((c) => Promise.all(ASSETS.map((u) => c.add(new Request(u, { cache: "reload" })))))
+    caches
+      .open(CACHE)
+      .then((c) => Promise.all(ASSETS.map((u) => c.add(new Request(u, { cache: "reload" })))))
+      // Se l'installazione fallisce a metà, la cache monca resta lì a occupare
+      // spazio finché non riesce un aggiornamento: si butta subito, così
+      // l'unica copia in giro è quella che funziona.
+      .catch((err) =>
+        caches.delete(CACHE).then(() => {
+          throw err;
+        })
+      )
   );
 });
 
