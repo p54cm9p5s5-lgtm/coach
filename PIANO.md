@@ -686,6 +686,33 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   scomodità vera. Aggiungere la modifica è mezz'ora di lavoro: dimmi se la
   vuoi.
 
+- **15.A.3 — i giorni nuovi del protocollo sono scritti peggio dei vecchi.**
+  I giorni vecchi hanno un «come si fa» di due-tre frasi con il riferimento
+  sensoriale («Si sente davanti alla spalla»); i giorni nuovi — push, pull,
+  dorso-*, recupero-attivo-* — una riga secca: «Attivazione leggera prima delle
+  serie di lavoro». Chi non conosce già il movimento da lì non lo ricava, e sono
+  proprio i giorni che il brief nuovo usa. Non li ho riscritti io: inventare
+  istruzioni tecniche su come si esegue un movimento è la cosa peggiore che
+  potrei fare. Da chiedere al coach.
+
+- **15.A.4 — lo stesso movimento con dosi diverse.** «Pettorali» compare a 30s,
+  30s per lato e 20s per lato, con lo stesso identico «come si fa»; «Squat a
+  corpo libero» a 10 rip, 10 ripetizioni e 10-15 rip lente. Può essere voluto —
+  un giorno chiede più mobilità di un altro — o disattenzione nel copiare. Ho
+  sistemato solo il caso che a schermo non voleva dire niente: sei dosi erano il
+  numero nudo «10» («Cat-cow · 10», dieci cosa?) e adesso dicono «10 ripetizioni».
+
+- **15.B.1 — il lavoro sui glutei viene contato fra i femorali.** Ponte per
+  glutei, ponte coi piedi rialzati, abduzioni in decubito laterale e donkey kick
+  sono tutti classificati «femorali»: nella tabella del volume per pattern che
+  legge il coach, il lavoro sui glutei non si vede. Aggiungere un pattern è
+  facile, ma cambia i conti di tutto lo storico: decidi tu.
+
+- **15.B.2 — un rematore con sessanta secondi di recupero.** Tutti gli esercizi
+  con bilanciere hanno 120 secondi di recupero predefinito; il rematore a presa
+  larga ne ha **60**. Conta solo quando il brief non lo dichiara (il tuo lo
+  dichiara). Da confermare col coach.
+
 - **14.A.1 — sui giorni del nuovo split il riscaldamento è di due passaggi.**
   Contati sui dati veri: `push`, `pull`, `legs`, `upper`, `lower` non hanno
   nessun movimento di mobilità in apertura e nessuno stretching finale — tutto
