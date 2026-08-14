@@ -232,15 +232,25 @@ come si fa), dice qual è il prossimo e in testa scrive a che punto sei —
 «Riscaldamento 3 di 7». Include la serie di avvicinamento sul primo esercizio
 (non viene registrata).
 
-Quanti passaggi siano dipende dal giorno, e i due gruppi sono molto diversi: i
-giorni del **vecchio** split (petto-tricipiti, gambe-core, spalle,
-schiena-bicipiti, full-body) hanno 4-5 movimenti di mobilità e un blocco di
-stretching finale, quindi il riscaldamento è di sette passaggi e dura una
-decina di minuti; i giorni del **nuovo** split (push, pull, legs, upper, lower)
-non hanno mobilità in apertura — quel lavoro è stato spostato alla fine, nel
-blocco di mobilità — e lì il riscaldamento è di **due passaggi**: la camminata e
-la serie di avvicinamento. Sabato e domenica c'è la sola camminata, e poi cinque
-movimenti di mobilità.
+Quanti passaggi siano dipende dal giorno, e la struttura è sempre la stessa:
+**camminata di 5 minuti + mobilità specifica + serie di avvicinamento**, circa
+dieci minuti in tutto. I giorni con esercizi hanno 4-7 movimenti di mobilità in
+apertura, quindi il riscaldamento è di sei-nove passaggi; sabato e domenica, che
+esercizi non ne hanno, c'è la sola camminata e poi cinque movimenti di mobilità.
+
+I cinque giorni del nuovo split (push, pull, legs, upper, lower) sono rimasti
+per un periodo **senza** mobilità in apertura e senza stretching finale: quelle
+scalette esistevano nel master brief (§17-bis) ma non erano mai state trascritte
+nei dati dell'app, e lì il riscaldamento risultava di due passaggi soli. Sono
+state riempite il **14/08/2026**, con i movimenti e le dosi del master:
+
+| Giorno | Mobilità in apertura | Stretching finale | Mobilità di fine seduta |
+|---|---|---|---|
+| Push | 6 | 4 | 3 |
+| Pull | 5 | 4 | 2 |
+| Legs | 5 | 5 | 3 |
+| Upper | 5 | 5 | 3 |
+| Lower | 5 | 4 | 3 |
 
 La serie di avvicinamento **dice quale esercizio è e con quanto**: «Serie di
 avvicinamento: Squat con bilanciere — 1 × 8-10 · bilanciere scarico (10 kg)»,
@@ -919,9 +929,17 @@ spiegazione e lo stesso video.
 Nel punteggio entra come il riscaldamento: per il fatto di essere stata fatta o
 saltata, non per quanto bene. **Sabato e domenica sono giorni di sola
 mobilità** — nello split ci sono, ma senza esercizi — e lì quella voce è tutto
-il punteggio: farla vale 100, saltarla vale 0, e non farsi vedere pesa come
-saltare un giorno di scheda. In quei due giorni riscaldamento e stretching non
-contano, perché non sono previsti.
+il punteggio: aprire il giorno e farla vale 100, aprirlo e saltarla vale 0. In
+quei due giorni riscaldamento e stretching non contano, perché non sono
+previsti.
+
+**Punto ancora aperto (14/08/2026):** non farsi vedere affatto — non aprire
+nemmeno l'allenamento — oggi non produce lo stesso «previsto, non fatto» di un
+Push saltato, perché l'app ha una regola per cui un giorno senza esercizi non
+genera mai quella voce. Il coach ha chiesto che sabato e domenica pesino come
+tutti gli altri giorni e ha già messo i due eventi ricorrenti sul calendario;
+il pezzo dalla parte dell'app resta da fare. La mobilità parte il 24/08 e i
+primi sabato/domenica reali sono il 29-30/08.
 
 ---
 
