@@ -56,7 +56,16 @@ ESCLUDI=":!tools/pubblica.sh"
 # L'elenco unisce due cose: quello che git già traccia (un file personale
 # aggiunto a forza tempo fa resterebbe altrimenti invisibile) e quello che
 # viene aggiunto adesso.
-DA_PUBBLICARE="$( { git ls-files; git diff --cached --name-only; } | sort -u )"
+# I file che finiranno sul sito: quelli già tracciati più quelli appena messi in
+# preparazione, **meno quelli che si stanno togliendo**. Senza l'ultima parte,
+# togliere un documento dal repository faceva fallire i controlli proprio sul
+# file che si voleva far sparire: la cancellazione veniva letta come una cosa da
+# pubblicare.
+CANCELLATI="$(git diff --cached --name-only --diff-filter=D)"
+DA_PUBBLICARE="$(
+  { git ls-files; git diff --cached --name-only; } | sort -u \
+    | { [ -n "$CANCELLATI" ] && grep -vxF "$CANCELLATI" || cat; }
+)"
 
 if echo "$DA_PUBBLICARE" | grep -q "^_privato/"; then
   errore "Un file della cartella _privato è nel repository. Esegui: git rm -r --cached _privato"
@@ -123,7 +132,11 @@ fi
 # `|| true`: quando non c'è niente fuori lista l'ultimo grep esce con 1, e con
 # `set -e` lo script moriva in silenzio proprio nel caso buono — un controllo
 # che ferma tutto quando va tutto bene è peggio di nessun controllo.
-DOCUMENTI='^(README|SPEC|COME-FUNZIONA|ISTRUZIONI-BRIEF|VERIFICA|PIANO|ESITO)\.md$'
+# VERIFICA.md, ESITO.md e PIANO.md — il registro del controllo — sono usciti da
+# qui il 14/08, per scelta sua: restano sul computer e nella storia del
+# repository, ma non finiscono sul sito. Dentro non c'era niente di personale,
+# ma pubblicarli era una decisione, non un automatismo.
+DOCUMENTI='^(README|SPEC|COME-FUNZIONA|ISTRUZIONI-BRIEF)\.md$'
 FUORI_LISTA="$(
   echo "$DA_PUBBLICARE" | grep -vE '^(index\.html|sw\.js|manifest\.webmanifest|robots\.txt|\.nojekyll|\.gitignore)$' \
     | grep -vE "$DOCUMENTI" \
