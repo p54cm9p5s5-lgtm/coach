@@ -218,7 +218,7 @@
     {
       "id": "ponte-glutei",
       "nome": "Ponte per glutei",
-      "pattern": "femorali",
+      "pattern": "glutei",
       "attrezzo": "corpo libero",
       "sollecitaPolso": false,
       "recuperoDefaultSec": 90,
@@ -686,7 +686,7 @@
     {
       "id": "ponte-glutei-piedi-rialzati",
       "nome": "Ponte per glutei con piedi sulla panca",
-      "pattern": "femorali",
+      "pattern": "glutei",
       "attrezzo": "manubrio",
       "sollecitaPolso": false,
       "recuperoDefaultSec": 120,
@@ -872,7 +872,7 @@
     {
       "id": "abduzioni-decubito-laterale",
       "nome": "Abduzioni d'anca in decubito laterale",
-      "pattern": "femorali",
+      "pattern": "glutei",
       "attrezzo": "corpo libero",
       "sollecitaPolso": false,
       "recuperoDefaultSec": 60,
@@ -934,7 +934,7 @@
     {
       "id": "donkey-kick",
       "nome": "Donkey kick con appoggio sulla panca",
-      "pattern": "femorali",
+      "pattern": "glutei",
       "attrezzo": "corpo libero",
       "sollecitaPolso": true,
       "recuperoDefaultSec": 90,
@@ -968,7 +968,7 @@
       "pattern": "deltoidePosteriore",
       "attrezzo": "bilanciere",
       "sollecitaPolso": true,
-      "recuperoDefaultSec": 60,
+      "recuperoDefaultSec": 120,
       "setup": [
         "Presa prona, più larga delle spalle.",
         "Busto inclinato a circa 45°, ginocchia morbide, bacino indietro.",
@@ -1048,12 +1048,13 @@
         "Estensione rapida che sfrutta lo slancio."
       ],
       "cue": "Il tronco è di pietra, si muovono solo le braccia.",
-      "sicurezza": "Con il manubrio la resistenza è verticale, quindi qui non c'è lavoro anti-rotazione: è una spinta frontale anti-estensione. Con l'attrezzatura disponibile il sostituto corretto è il suitcase hold, manubrio in una mano, 30 secondi per lato.",
+      "sicurezza": "Col manubrio la resistenza viene dall'alto, non di lato: qui non c'è lavoro anti-rotazione, è una spinta frontale **anti-estensione** — il tronco tiene mentre le braccia si allontanano. Fatto così va bene, ma sappi cosa stai allenando: il core che resiste all'inarcamento, non alla torsione.",
       "video": {
         "id": "LMEccH-34PI",
         "titolo": "How To Do A Standing Dumbbell Press Out",
         "canale": "Live Lean TV"
-      }
+      },
+      "patternDettaglio": "core anti-estensione"
     },
     {
       "id": "pilates",

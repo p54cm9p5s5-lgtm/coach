@@ -1388,6 +1388,11 @@ export const ETICHETTE_PATTERN = {
   tirataVerticale: "Tirata verticale",
   quadricipiti: "Quadricipiti",
   femorali: "Femorali",
+  // I glutei stavano sotto «femorali»: ponte, ponte coi piedi rialzati,
+  // abduzioni in decubito laterale e donkey kick sono lavoro sui glutei, e
+  // contarli fra i femorali falsava la lettura del volume su tutti e due.
+  // Separati il 14/08 su decisione del coach.
+  glutei: "Glutei",
   polpacci: "Polpacci",
   core: "Core",
   deltoideLaterale: "Deltoide laterale",
