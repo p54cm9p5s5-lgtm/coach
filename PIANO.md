@@ -686,6 +686,21 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   scomodità vera. Aggiungere la modifica è mezz'ora di lavoro: dimmi se la
   vuoi.
 
+- **14.A.1 — sui giorni del nuovo split il riscaldamento è di due passaggi.**
+  Contati sui dati veri: `push`, `pull`, `legs`, `upper`, `lower` non hanno
+  nessun movimento di mobilità in apertura e nessuno stretching finale — tutto
+  quel lavoro è stato spostato nel blocco di mobilità di fine seduta, che ne ha
+  due o tre. Quindi su quei giorni il riscaldamento è **camminata di 5 minuti +
+  serie di avvicinamento**, e basta. I giorni del vecchio split
+  (petto-tricipiti, gambe-core, spalle, schiena-bicipiti, full-body) ne hanno
+  4-7 di mobilità e 3-5 di stretching. Se il brief in vigore usa i giorni nuovi
+  — e il tuo usa Push — **è il riscaldamento che farai ogni volta per dieci
+  giorni**. Non è un difetto dell'app: l'app mostra quello che il protocollo
+  dice. È una domanda per il coach: quelle liste sono state svuotate apposta o
+  non sono mai state scritte? Io ho allineato la documentazione ai dati (§5 di
+  COME-FUNZIONA e §4.2 di SPEC dicevano «5 esercizi per giorno», che su cinque
+  giorni su sette non è vero), ma i contenuti non li ho inventati.
+
 - **11.AE.1 — il registro di questo controllo è pubblico.** `VERIFICA.md`,
   `ESITO.md` e questo `PIANO.md` vengono pubblicati insieme all'app: chi ha
   l'indirizzo del sito può leggerli. Dentro non c'è niente di personale — nomi,

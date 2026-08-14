@@ -1840,12 +1840,12 @@ contiene il difetto con la conseguenza peggiore trovata in tutto il controllo.
       dallo stesso lavoro fatto su un computer (`tools/salute-da-export.py`)».
       Non lo è: i due strumenti scrivono pacchetti diversi, e quello del computer
       è molto più povero. Da correggere insieme a 13.1.
-- [ ] **13.3** ⚠️ **Nessun pavimento predefinito nello strumento sul Mac.** Il
+- [x] **13.3** ⚠️ **Nessun pavimento predefinito nello strumento sul Mac.** Il
       lettore sul telefono applica sempre `inizioStoria()` (mai dati più vecchi
       del 29/07/2026); lo script usa `--dal` **solo se glielo scrivi**, e di
       default guarda 21 giorni indietro senza limite inferiore. Due strade, due
       regole.
-- [ ] **13.4** **Finestre diverse**: 21 giorni sul Mac, 30 sul telefono. Da
+- [x] **13.4** **Finestre diverse**: 21 giorni sul Mac, 30 sul telefono. Da
       uniformare o da dichiarare.
 - [x] **13.5** **Il nome del documento personale è nel repository pubblico**:
       `tools/passa-file.py` contiene il percorso `_privato/master brief
@@ -1853,12 +1853,12 @@ contiene il difetto con la conseguenza peggiore trovata in tutto il controllo.
       il controllo di `pubblica.sh` su «master brief» guarda **i nomi dei file da
       pubblicare**, non il loro contenuto: quella riga passa. Da decidere se
       aggiungerla alle parole vietate o cambiare il percorso in una variabile.
-- [ ] **13.6** **`passa-file.py`** è fatto bene: chiave casuale a ogni avvio,
+- [x] **13.6** **`passa-file.py`** è fatto bene: chiave casuale a ogni avvio,
       spegnimento automatico dopo 10 minuti, stessa risposta 404 per chiave
       sbagliata e file inesistente, testo messo al sicuro con `escape`. Da
       provarlo una volta prima di partire, se pensi di doverlo usare da lontano
       (serve la stessa Wi-Fi: da fuori casa non serve a niente).
-- [ ] **13.7** **`icona.py` e `icona-da-immagine.sh`**: leggono e riscrivono PNG,
+- [x] **13.7** **`icona.py` e `icona-da-immagine.sh`**: leggono e riscrivono PNG,
       nessun dato personale, nessuna rete. Niente da verificare.
 
 ---
@@ -1872,7 +1872,7 @@ Non documentazione: i **contenuti che l'app ti mostra in palestra**.
 
 ## 14.A — `data/riscaldamento.json` (1.129 righe)
 
-- [ ] **14.A.1** ⚠️⚠️ **Sui giorni del nuovo split il riscaldamento è di due
+- [x] **14.A.1** ⚠️⚠️ **Sui giorni del nuovo split il riscaldamento è di due
       passaggi soli.** Verificato contando i passaggi giorno per giorno:
       `push`, `pull`, `legs`, `upper`, `lower` hanno **zero** voci di mobilità e
       **zero** di stretching finale (tutto è stato spostato in `mobilitaFinale`,
@@ -1884,52 +1884,52 @@ Non documentazione: i **contenuti che l'app ti mostra in palestra**.
       stretching. Da capire se è voluto o se quelle liste non sono mai state
       scritte: se il brief in vigore usa i giorni nuovi, **è il riscaldamento che
       farai ogni volta per dieci giorni**.
-- [ ] **14.A.2** ⚠️ **La documentazione descrive un riscaldamento che su cinque
+- [x] **14.A.2** ⚠️ **La documentazione descrive un riscaldamento che su cinque
       giorni su sette non esiste**: «circa 10 minuti… poi mobilità mirata al
       lavoro previsto: 5 esercizi per giorno dello split» (COME-FUNZIONA §5,
       SPEC §4.2).
-- [ ] **14.A.3** ⚠️ **La mobilità finale non corrisponde a quello che è scritto.**
+- [x] **14.A.3** ⚠️ **La mobilità finale non corrisponde a quello che è scritto.**
       `COME-FUNZIONA.md` dice «Push, Upper: anca, caviglia, colonna · Pull: anca,
       caviglia · **Legs, Lower: spalle, colonna**» — cioè due voci — ma nei dati
       `legs` e `lower` ne hanno **tre**. Da controllare quali sono davvero.
-- [ ] **14.A.4** **Verificato con la stessa regola del codice**: tutte e 112 le
+- [x] **14.A.4** **Verificato con la stessa regola del codice**: tutte e 112 le
       dosi vengono lette come devono. Le 41 a tempo fanno partire il cronometro
       (20s, 30s, 45s, 5 min, e «per lato»/«per direzione» contate come due
       tenute); le 71 a ripetizioni restano senza, come previsto. **Nessuna dose a
       ripetizioni fa partire un cronometro per sbaglio, e nessuna dose a tempo lo
       perde.** È il controllo che leggendo il codice non si poteva fare.
-- [ ] **14.A.5** **`6-7 min`** (camminata del full-body) viene letta come **6
+- [x] **14.A.5** **`6-7 min`** (camminata del full-body) viene letta come **6
       minuti**, cioè il minimo del range: è la regola voluta, ma va guardata a
       schermo almeno una volta.
-- [ ] **14.A.6** **27 passaggi su 112 non hanno video**, mentre la
+- [x] **14.A.6** **27 passaggi su 112 non hanno video**, mentre la
       documentazione dice che i movimenti della mobilità finale sono «quelli che
       già conosci dal riscaldamento, con la stessa spiegazione e **lo stesso
       video**». Da verificare quali restano senza.
-- [ ] **14.A.7** **Tutti e 112 i passaggi hanno il «come si fa»**: nessuno resta
+- [x] **14.A.7** **Tutti e 112 i passaggi hanno il «come si fa»**: nessuno resta
       muto. Verificato.
-- [ ] **14.A.8** **Sabato e domenica**: solo camminata come riscaldamento, poi
+- [x] **14.A.8** **Sabato e domenica**: solo camminata come riscaldamento, poi
       cinque voci di mobilità finale. Da provare un giorno intero di quelli, che
       nel punteggio vale come un giorno di scheda.
 
 ## 14.B — `data/esercizi.json` (1.141 righe, 38 esercizi)
 
-- [ ] **14.B.1** **Nessun id duplicato, nessun video ripetuto fra esercizi
+- [x] **14.B.1** **Nessun id duplicato, nessun video ripetuto fra esercizi
       diversi, tutti gli id dei video hanno la forma giusta (11 caratteri).**
       Verificato.
-- [ ] **14.B.2** **Diciotto esercizi su 38 non hanno la voce «sicurezza»**: è
+- [x] **14.B.2** **Diciotto esercizi su 38 non hanno la voce «sicurezza»**: è
       facoltativa e la sezione semplicemente non compare. Da decidere se su
       panca, squat e stacco (che ce l'hanno) basta.
-- [ ] **14.B.3** **`pilates` e `camminata` non hanno video** ed è giusto: non
+- [x] **14.B.3** **`pilates` e `camminata` non hanno video** ed è giusto: non
       sono esercizi. Ma hanno `pattern: "recupero"`, che **non è nell'elenco dei
       pattern** né in `SPEC.md` §3.1 né in `ISTRUZIONI-BRIEF.md` §5 — il codice
       lo conosce («Recupero attivo»), i due documenti no. Quarto disallineamento
       fra codice e carta.
-- [ ] **14.B.4** **Tredici esercizi dichiarano `sollecitaPolso`**: è il flag che
+- [x] **14.B.4** **Tredici esercizi dichiarano `sollecitaPolso`**: è il flag che
       accende l'avviso sulla domanda del dolore. Da verificare che siano quelli
       giusti quando la domanda del polso è attiva.
-- [ ] **14.B.5** **Un solo esercizio è `aTempo`** (il plank). Da ricordare
+- [x] **14.B.5** **Un solo esercizio è `aTempo`** (il plank). Da ricordare
       quando si prova il cronometro degli esercizi a tempo: è l'unico caso reale.
-- [ ] **14.B.6** **Tutti i recuperi predefiniti stanno fra 30 e 300 secondi.**
+- [x] **14.B.6** **Tutti i recuperi predefiniti stanno fra 30 e 300 secondi.**
       Verificato: nessun numero assurdo.
 
 ## 14.C — I file piccoli, mai aperti
