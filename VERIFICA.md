@@ -1375,31 +1375,31 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.V — `js/screens/salute.js` (lette righe 1-360 e i grafici del passo)
 
-- [ ] **11.V.1** ⚠️ **Aprire Salute congela i punteggi vecchi.** La scheda
+- [x] **11.V.1** ⚠️ **Aprire Salute congela i punteggi vecchi.** La scheda
       «Completezza degli allenamenti» chiama `completezzaSeduta` per **ogni**
       seduta chiusa del periodo, e quella funzione congela per sempre il
       punteggio delle sedute che non ce l'hanno ancora — con le regole di
       **oggi** (vedi 11.O.6). Basta aprire la schermata dopo un cambio di brief
       perché diventi definitivo un punteggio calcolato con regole che quel
       giorno non c'erano.
-- [ ] **11.V.2** **`conRipiego` non fa più niente**: restituisce le righe così
+- [x] **11.V.2** **`conRipiego` non fa più niente**: restituisce le righe così
       come sono e un'etichetta sempre nulla, con un commento che descrive un
       ripiego che non esiste più. Da togliere.
-- [ ] **11.V.3** **Obiettivo movimento**: vince quello più recente mandato da
+- [x] **11.V.3** **Obiettivo movimento**: vince quello più recente mandato da
       Salute, altrimenti quello impostato nell'app. Da verificare che linea,
       percentuali e nota in fondo dicano tutti lo stesso numero.
-- [ ] **11.V.4** **I buchi nel grafico sono giorni veri**: `perGrafico` riempie
+- [x] **11.V.4** **I buchi nel grafico sono giorni veri**: `perGrafico` riempie
       ogni data mancante con un punto vuoto, così una settimana senza dati non
       sembra un giorno solo. Da guardare dopo i dieci giorni via.
-- [ ] **11.V.5** **La media esclude oggi**, tranne col periodo «1 gg» e tranne il
+- [x] **11.V.5** **La media esclude oggi**, tranne col periodo «1 gg» e tranne il
       sonno. Da verificare che il numero accanto («N giorni con dati»)
       corrisponda sempre a quello del pannello delle finestre.
-- [ ] **11.V.6** **Raggruppamento per `tipoId`**: rinominare un giorno nel brief
+- [x] **11.V.6** **Raggruppamento per `tipoId`**: rinominare un giorno nel brief
       non deve spezzare in due lo stesso allenamento. Da provare.
-- [ ] **11.V.7** **Grafico sigarette**: ogni giorno è giudicato con la soglia di
+- [x] **11.V.7** **Grafico sigarette**: ogni giorno è giudicato con la soglia di
       quel giorno, e l'obiettivo disegnato è quello di oggi. Da guardare su una
       storia in cui l'asticella è scesa.
-- [ ] **11.V.8** **La scheda resta anche col periodo vuoto** («1 gg» in un giorno
+- [x] **11.V.8** **La scheda resta anche col periodo vuoto** («1 gg» in un giorno
       di riposo) e dice «nessun allenamento» invece di sparire. Da provare tutti
       e quattro i periodi su ogni scheda.
 

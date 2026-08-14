@@ -156,6 +156,9 @@ export async function render({ ridisegna }) {
   const obiettivo =
     [...giorni].sort((a, b) => (a.data < b.data ? 1 : -1)).find((g) => g.obiettivoKcal)?.obiettivoKcal ||
     imp.obiettivoMovimentoKcal;
+  // Il bersaglio con cui il punteggio Salute misura il movimento: lo dichiara
+  // il brief e non è detto che sia lo stesso dell'anello.
+  const bersaglioPunteggio = store.regole().salute?.movimentoBersaglio ?? null;
 
   // I giorni arrivano dal più recente: per il grafico servono in ordine di
   // calendario, e senza la coda di giorni vuoti che non racconta niente.
@@ -197,11 +200,14 @@ export async function render({ ridisegna }) {
     return v.length ? { valore: v.reduce((a, b) => a + b, 0) / v.length, quanti: v.length } : null;
   };
 
-  // «1 gg» vuol dire oggi, e basta. Se oggi il dato non c'è, si scrive che non
-  // c'è: mostrare al suo posto l'ultimo giorno disponibile faceva leggere come
-  // «oggi» un numero di ieri. Il sonno è l'unica eccezione, e per un motivo
-  // vero: una notte comincia la sera prima e finisce stamattina.
-  const conRipiego = (righeDelPeriodo) => ({ righe: righeDelPeriodo, etichetta: null });
+  // Se oggi ha dati ma resta fuori dalla media, va scritto: sulla stessa
+  // schermata la scheda diceva «6 giorni con dati» e il pannello delle finestre
+  // ne contava 7 per la stessa settimana, e a guardarli sembrava che uno dei
+  // due sbagliasse.
+  const notaOggiEscluso = (righe, campo) =>
+    !soloOggi && righe.some((r) => r.data === oggiIso && r.presente && r[campo] != null)
+      ? " · oggi escluso, non è finito"
+      : "";
 
   const allenati = new Set(
     (await store.allenamenti()).filter((x) => x.stato === "completata").map((x) => x.data)
@@ -314,8 +320,8 @@ export async function render({ ridisegna }) {
 
   // ---- movimento ----
   const fMov2 = conPeriodo();
-  const ripKcal = conRipiego(giorni.filter(fMov2.dentro));
-  const giorniMov = perGrafico(ripKcal.righe);
+  const righeKcal = giorni.filter(fMov2.dentro);
+  const giorniMov = perGrafico(righeKcal);
   const mKcal = media(giorniMov, "kcalAttive");
   // La scheda c'è se il dato esiste in archivio, non solo dentro il periodo
   // scelto: cambiando periodo le schede sparivano e sembrava un guasto.
@@ -327,7 +333,7 @@ export async function render({ ridisegna }) {
         valore: mKcal ? String(Math.round(mKcal.valore)) : "—",
         unita: "kcal",
         nota: mKcal
-          ? `${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"} con dati · ${ripKcal.etichetta || fMov2.etichetta}`
+          ? `${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"} con dati · ${fMov2.etichetta}${notaOggiEscluso(righeKcal, "kcalAttive")}`
           : `nessun dato · ${fMov2.etichetta}`,
         grafico: graficoLinea({
           punti: giorniMov.map((g) => ({
@@ -342,15 +348,24 @@ export async function render({ ridisegna }) {
           etichettaObiettivo: `obiettivo ${obiettivo}`,
           formatta: (v) => `${Math.round(v)} kcal`,
         }),
-        piede: `Obiettivo Movimento ${obiettivo} kcal. I punti più grandi sono i giorni con allenamento registrato.`,
+        // Due numeri diversi girano per l'app con lo stesso nome: l'anello
+        // Movimento dell'orologio (questo) e il bersaglio del punteggio Salute,
+        // che sta nel brief. Quando non coincidono va detto quale si sta
+        // guardando, se no la stessa giornata sembra al 96% qui e al 57% in
+        // Home senza che nessuno spieghi perché.
+        piede:
+          `Obiettivo Movimento ${obiettivo} kcal, quello impostato sull'anello dell'orologio. I punti più grandi sono i giorni con allenamento registrato.` +
+          (bersaglioPunteggio && bersaglioPunteggio !== obiettivo
+            ? ` Il punteggio Salute usa un altro numero, quello dichiarato nel brief: ${bersaglioPunteggio} kcal.`
+            : ""),
       })
     );
   }
 
   // ---- passi ----
   const fPassi = conPeriodo();
-  const ripPassi = conRipiego(giorni.filter(fPassi.dentro));
-  const giorniPassi = perGrafico(ripPassi.righe);
+  const righePassi = giorni.filter(fPassi.dentro);
+  const giorniPassi = perGrafico(righePassi);
   const mPassi = media(giorniPassi, "passi");
   if (giorni.some((g) => g.presente && g.passi != null)) {
     aggiungi(wrap,
@@ -359,7 +374,7 @@ export async function render({ ridisegna }) {
         titolo: "Passi",
         valore: mPassi ? Math.round(mPassi.valore).toLocaleString("it-IT") : "—",
         nota: mPassi
-          ? `${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"} con dati · ${ripPassi.etichetta || fPassi.etichetta}`
+          ? `${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"} con dati · ${fPassi.etichetta}${notaOggiEscluso(righePassi, "passi")}`
           : `nessun dato · ${fPassi.etichetta}`,
         grafico: graficoLinea({
           punti: giorniPassi.map((g) => ({
@@ -599,9 +614,8 @@ export async function render({ ridisegna }) {
   if (ALTRI.length) {
     const righe = h("div.list");
     for (const a of ALTRI) {
-      const rip = conRipiego(giorniAltro);
-      const m = media(rip.righe, a.campo);
-      const ultimo = [...rip.righe]
+      const m = media(giorniAltro, a.campo);
+      const ultimo = [...giorniAltro]
         .sort((x, y) => (x.data < y.data ? 1 : -1))
         .find((g) => g[a.campo] != null);
       aggiungi(righe,
@@ -613,7 +627,7 @@ export async function render({ ridisegna }) {
             h(
               "span.sub",
               m
-                ? `media su ${m.quanti} ${m.quanti === 1 ? "giorno" : "giorni"} · ${rip.etichetta || fAltro.etichetta}`
+                ? `media su ${m.quanti} ${m.quanti === 1 ? "giorno" : "giorni"} · ${fAltro.etichetta}${notaOggiEscluso(giorniAltro, a.campo)}`
                 : "nessun dato"
             )
           ),
