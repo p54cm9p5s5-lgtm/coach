@@ -1585,30 +1585,30 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.AB — `js/screens/allenamenti.js` (353) e il resto di `js/grafico.js`
 
-- [ ] **11.AB.1** ⚠️ **L'elenco degli allenamenti del Watch non ha limite**:
+- [x] **11.AB.1** ⚠️ **L'elenco degli allenamenti del Watch non ha limite**:
       nessun taglio, nessun caricamento progressivo. Con una camminata al giorno
       diventano centinaia di righe disegnate tutte insieme. Da misurare adesso e
       da rimisurare fra un mese.
-- [ ] **11.AB.2** **Indoor/outdoor nel nome** solo per camminata, corsa e bici.
+- [x] **11.AB.2** **Indoor/outdoor nel nome** solo per camminata, corsa e bici.
       Da decidere se serve anche altrove.
-- [ ] **11.AB.3** **Un allenamento importato da una versione vecchia** mostra il
+- [x] **11.AB.3** **Un allenamento importato da una versione vecchia** mostra il
       riquadro «Mancano dei numeri» con il collegamento all'import. Da provare.
-- [ ] **11.AB.4** **Il periodo dei grafici è condiviso** e vive in
+- [x] **11.AB.4** **Il periodo dei grafici è condiviso** e vive in
       `localStorage`: da verificare che non si perda reinstallando l'app.
 
 ## 11.AC — `index.html` (79) e `css/app.css` (1616), letti tutti
 
-- [ ] **11.AC.1** ⚠️ **Barra di stato di iOS**: `apple-mobile-web-app-status-bar-style`
+- [x] **11.AC.1** ⚠️ **Barra di stato di iOS**: `apple-mobile-web-app-status-bar-style`
       è `default` (testo scuro) mentre il tema «nero e lime» è sempre scuro. Da
       guardare sul telefono che l'ora e la batteria in cima si leggano.
-- [ ] **11.AC.2** **Contrasti**: i colori sono già stati tarati sopra 4,5:1 con
+- [x] **11.AC.2** **Contrasti**: i colori sono già stati tarati sopra 4,5:1 con
       i conti scritti nel foglio di stile. Da riverificare con un misuratore
       vero le voci nuove di oggi (`--battito`, `--sforzo`) in tutti e tre i temi.
-- [ ] **11.AC.3** **Nessuno stile di messa a fuoco** sui pulsanti (solo su
+- [x] **11.AC.3** **Nessuno stile di messa a fuoco** sui pulsanti (solo su
       `input.val`): con una tastiera esterna o VoiceOver non si vede dove sei.
-- [ ] **11.AC.4** **Sei schede nella barra** con colonne automatiche: da
+- [x] **11.AC.4** **Sei schede nella barra** con colonne automatiche: da
       guardare su schermo da 320 punti con Fumo e Acqua tutti e due accesi.
-- [ ] **11.AC.5** **`prefers-reduced-motion`** spegne tutte le animazioni. Da
+- [x] **11.AC.5** **`prefers-reduced-motion`** spegne tutte le animazioni. Da
       provare accendendolo nelle impostazioni dell'iPhone.
 
 ## 11.AD — `ISTRUZIONI-BRIEF.md` (384 righe, letto tutto — mai aperto prima)

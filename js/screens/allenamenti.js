@@ -122,8 +122,18 @@ async function elenco() {
     return wrap;
   }
 
+  // Un anno di camminate sono trecento righe, cinque anni duemila: disegnate
+  // tutte insieme l'elenco ci mette un secondo ad aprirsi e da lì in poi
+  // peggiora. Si mostrano le più recenti — le uniche che si guardano davvero —
+  // e le altre si chiedono, come nell'elenco delle attività extra.
+  const A_VISTA = 100;
+  const mostrati = tutti.slice(0, A_VISTA);
+  const nascosti = tutti.length - mostrati.length;
+
   const righe = h("div.list");
-  for (const a of tutti) {
+  for (const a of mostrati) aggiungi(righe, rigaAllenamento(a));
+
+  function rigaAllenamento(a) {
     const numeri = [
       durataOrologio(a.durataSec),
       a.kcalAttive != null ? `${Math.round(a.kcalAttive)} kcal` : null,
@@ -131,22 +141,33 @@ async function elenco() {
       a.fcMedia != null ? `${Math.round(a.fcMedia)} bpm` : null,
     ].filter(Boolean);
     const giorno = GIORNI_ABBR[new Date(a.data + "T00:00:00").getDay()];
-    aggiungi(righe,
+    return h(
+      "button.row.accent",
+      { onclick: () => (location.hash = `#/allenamenti?id=${encodeURIComponent(a.uuid)}`) },
       h(
-        "button.row.accent",
-        { onclick: () => (location.hash = `#/allenamenti?id=${encodeURIComponent(a.uuid)}`) },
-        h(
-          "div.main",
-          h("span.title", nomeAllenamento(a)),
-          h("span.sub", `${giorno} ${dataBreve(a.data)} · ${a.fine ? `${a.inizio}–${a.fine}` : a.inizio || "—"}`),
-          h("span.sub", numeri.join(" · "))
-        ),
-        h("span.chevron", "›")
-      )
+        "div.main",
+        h("span.title", nomeAllenamento(a)),
+        h("span.sub", `${giorno} ${dataBreve(a.data)} · ${a.fine ? `${a.inizio}–${a.fine}` : a.inizio || "—"}`),
+        h("span.sub", numeri.join(" · "))
+      ),
+      h("span.chevron", "›")
     );
   }
 
   aggiungi(wrap, h("div.group", righe));
+  if (nascosti > 0) {
+    const altri = h(
+      "button.btn.secondary",
+      {
+        onclick: () => {
+          altri.remove();
+          for (const a of tutti.slice(A_VISTA)) aggiungi(righe, rigaAllenamento(a));
+        },
+      },
+      `Mostra gli altri ${nascosti}`
+    );
+    aggiungi(wrap, h("div.btn-wrap", altri));
+  }
   aggiungi(wrap,
     h("div.group",
       h("p.footnote",
