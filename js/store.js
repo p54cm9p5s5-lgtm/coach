@@ -3498,14 +3498,24 @@ export function indici({ peso, vitaOmbelico, fianchi, altezzaCm }) {
   }
   if (vitaOmbelico && fianchi) {
     const v = vitaOmbelico / fianchi;
+    // 0,95 è la soglia di riferimento per gli uomini; per le donne è più bassa
+    // (0,85). Era scritta qui dentro, quindi su un altro profilo sarebbe
+    // comparsa la stessa riga con la stessa parola «uomini». Adesso il brief
+    // può dichiararla — «regole.indici.vitaFianchi» — e chi non dichiara
+    // niente vede esattamente quello che vedeva prima.
+    const dichiarata = regole().indici?.vitaFianchi;
+    const soglia = Number.isFinite(dichiarata) && dichiarata > 0 ? dichiarata : 0.95;
     out.push({
       id: "vitaFianchi",
       nome: "Vita / fianchi",
       valore: v,
       decimali: 2,
-      soglia: 0.95,
-      sopraSoglia: v >= 0.95,
-      nota: "Soglia uomini 0,95.",
+      soglia,
+      sopraSoglia: v >= soglia,
+      nota:
+        soglia === 0.95
+          ? "Soglia uomini 0,95."
+          : `Soglia dichiarata nel brief ${num(soglia, 2)}.`,
     });
   }
   if (peso && altezzaCm) {
