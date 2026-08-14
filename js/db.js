@@ -287,6 +287,11 @@ export async function esportaTutto({ salta = [] } = {}) {
 /**
  * modo: 'sostituisci' svuota tutto, 'unisci' sovrascrive le chiavi presenti.
  *
+ * Oggi l'app chiama sempre 'sostituisci': il ripristino da file è uno solo, e
+ * il foglio di conferma promette esattamente quello. La modalità 'unisci' resta
+ * qui perché è il mattone su cui si appoggia il ripristino della copia interna,
+ * ma non c'è nessuna strada dall'interfaccia che la scelga da sola.
+ *
  * Tutto avviene in UNA transazione sola: prima si svuota e poi si riscrive
  * dentro lo stesso blocco, così se qualcosa va storto a metà il database torna
  * com'era. Prima erano decine di transazioni separate: un'interruzione

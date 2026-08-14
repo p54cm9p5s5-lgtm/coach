@@ -827,7 +827,12 @@ async function importaBackup(ridisegna) {
     return;
   }
 
-  const modo = dump.modo === "unisci" ? "unisci" : "sostituisci";
+  // Il ripristino da file è UNO: sostituisce tutto. Il codice sapeva fare anche
+  // «unisci», scegliendo in base a un campo `modo` dentro il file — ma nessun
+  // backup scritto da quest'app quel campo ce l'ha, quindi era una strada che
+  // non si poteva imboccare e una promessa che il foglio di conferma non
+  // faceva. Tolta: meno strade nascoste in una funzione che riscrive tutto
+  // l'archivio. (Voci 2.3, 11.N.2, 11.AF.3.)
   const quando = dump.creatoIl ? new Date(dump.creatoIl).toLocaleString("it-IT") : "?";
 
   // «I dati attuali vengono sostituiti» è vero ma cieco: non dice cosa stai
@@ -838,18 +843,9 @@ async function importaBackup(ridisegna) {
   const quantoCe = await confrontoBackup(dump);
 
   const scelta = await chiedi({
-    titolo: modo === "unisci" ? "Importare questi dati?" : "Ripristinare il backup?",
-    testo:
-      modo === "unisci"
-        ? `File del ${quando}. I dati vengono aggiunti a quelli già presenti. Le voci con lo stesso identificativo vengono sostituite da quelle del file; il resto resta com'è.`
-        : `Backup del ${quando}. I dati attuali vengono sostituiti.\n\n${quantoCe}`,
-    opzioni: [
-      {
-        etichetta: modo === "unisci" ? "Importa" : "Sostituisci tutto",
-        valore: "si",
-        stile: modo === "unisci" ? "secondary" : "destructive",
-      },
-    ],
+    titolo: "Ripristinare il backup?",
+    testo: `Backup del ${quando}. I dati attuali vengono sostituiti.\n\n${quantoCe}`,
+    opzioni: [{ etichetta: "Sostituisci tutto", valore: "si", stile: "destructive" }],
   });
   if (scelta !== "si") return;
 
@@ -865,9 +861,9 @@ async function importaBackup(ridisegna) {
   let esito = null;
   try {
     const tettoPrima2 = await store.statoFumoDaProteggere();
-    esito = await store.db.importaTutto(dump, modo);
+    esito = await store.db.importaTutto(dump, "sostituisci");
     await store.proteggiTettoFumo(tettoPrima2);
-    if (indietro && modo === "sostituisci") {
+    if (indietro) {
       // Il file importato ha riscritto anche le impostazioni: la copia di
       // sicurezza appena fatta va rimessa, altrimenti sparisce proprio quella.
       try {

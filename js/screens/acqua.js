@@ -85,14 +85,41 @@ export async function render({ ridisegna }) {
       )
     );
 
+    // Un giorno passato si può correggere. La regola in cima alla schermata
+    // resta quella — si risponde a fine giornata, prima è una previsione — ma
+    // un giorno sbagliato o dimenticato non deve restare sbagliato per sempre:
+    // era l'unica risposta dell'app che non si poteva più toccare.
     const righe = h("div.list");
     for (const g of rispostiPrima.slice(0, 30)) {
       aggiungi(righe,
         h(
-          "div.row",
+          "button.row",
+          {
+            onclick: async () => {
+              const scelta = await chiedi({
+                titolo: dataLunga(g.data),
+                testo:
+                  `Quel giorno risulta «${g.bevuto ? "sì" : "no"}» sull'obiettivo di ${num(litri)} litri.\n\n` +
+                  "Correggilo solo se ti ricordi com'è andata davvero: una risposta inventata a distanza vale meno di nessuna risposta.",
+                opzioni: [
+                  { etichetta: g.bevuto ? "No, sotto l'obiettivo" : "Sì, obiettivo raggiunto", valore: "cambia" },
+                  { etichetta: "Togli la risposta", valore: "togli", stile: "destructive" },
+                ],
+              });
+              if (scelta === "cambia") {
+                await store.segnaAcqua(!g.bevuto, g.data);
+                toast(`${dataBreve(g.data)}: adesso è «${!g.bevuto ? "sì" : "no"}».`);
+              } else if (scelta === "togli") {
+                await store.cancellaAcqua(g.data);
+                toast(`${dataBreve(g.data)}: risposta tolta.`);
+              } else return;
+              await ridisegna();
+            },
+          },
           h("div.main", h("span.title", dataLunga(g.data))),
           h("span.value", g.bevuto ? "sì" : "no"),
-          h("span.pill", { class: g.bevuto ? "pill ok" : "pill warn" }, g.bevuto ? "a obiettivo" : "sotto")
+          h("span.pill", { class: g.bevuto ? "pill ok" : "pill warn" }, g.bevuto ? "a obiettivo" : "sotto"),
+          h("span.chevron", "›")
         )
       );
     }
@@ -103,7 +130,7 @@ export async function render({ ridisegna }) {
         righe,
         h(
           "p.footnote",
-          `L'obiettivo è ${num(litri)} litri al giorno. La risposta pesa sul punteggio Salute come le altre voci: sì vale pieno, no vale zero, e un giorno senza risposta resta fuori dal conto invece di valere zero.`
+          `L'obiettivo è ${num(litri)} litri al giorno. Tocca un giorno per correggerlo o per togliere la risposta. La risposta pesa sul punteggio Salute come le altre voci: sì vale pieno, no vale zero, e un giorno senza risposta resta fuori dal conto invece di valere zero.`
         )
       )
     );
