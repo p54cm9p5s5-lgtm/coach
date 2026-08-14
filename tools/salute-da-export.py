@@ -213,7 +213,7 @@ def righe(dal, al, giorni, giorni_watch, fc, fasi, allenamenti):
 def main():
     ap = argparse.ArgumentParser(description="Trasforma l'export di Salute nel pacchetto per Coach.")
     ap.add_argument("export", help="export.zip di Salute, oppure l'export.xml già estratto")
-    ap.add_argument("--giorni", type=int, default=21, help="quanti giorni indietro (default 21)")
+    ap.add_argument("--giorni", type=int, default=30, help="quanti giorni indietro (default 30, come l'app)")
     ap.add_argument("--al", default=None, help="ultimo giorno, AAAA-MM-GG (default oggi)")
     ap.add_argument("--dal", default=None, help="primo giorno, AAAA-MM-GG: niente di più vecchio")
     ap.add_argument("--out", default=None, help="dove scrivere (default _privato/pacchetto-salute.txt)")
@@ -225,8 +225,12 @@ def main():
     except ValueError:
         sys.exit(f"Data non valida: {al}")
     dal = (fine - dt.timedelta(days=max(0, args.giorni - 1))).isoformat()
-    # Un pavimento esplicito vince sulla finestra: l'archivio di Salute contiene
-    # anni, e non ha senso importare giornate precedenti all'inizio del programma.
+    # Lo stesso pavimento che applica il telefono: l'app non fa mai entrare dati
+    # più vecchi del giorno in cui è cominciata la storia, e questo strumento
+    # non deve essere la strada che li fa entrare lo stesso. Se il tuo programma
+    # comincia in un altro giorno, si dichiara con --dal (o si cambia qui).
+    INIZIO_STORIA = "2026-07-29"
+    dal = max(dal, INIZIO_STORIA)
     if args.dal:
         try:
             dt.date.fromisoformat(args.dal)

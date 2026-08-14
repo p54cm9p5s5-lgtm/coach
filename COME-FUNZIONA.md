@@ -226,11 +226,21 @@ domanda è il polso destro.
 
 L'app guida la seduta passo per passo. L'ordine è fisso:
 
-**1. Riscaldamento** — circa 10 minuti, con o senza tapis roulant. **Un
-passaggio per volta, non la lista intera**: l'app mostra solo quello che devi
-fare adesso (nome, dose, come si fa), dice qual è il prossimo e in testa scrive
-a che punto sei — «Riscaldamento 3 di 7». Include la serie di avvicinamento sul
-primo esercizio (non viene registrata).
+**1. Riscaldamento** — con o senza tapis roulant. **Un passaggio per volta, non
+la lista intera**: l'app mostra solo quello che devi fare adesso (nome, dose,
+come si fa), dice qual è il prossimo e in testa scrive a che punto sei —
+«Riscaldamento 3 di 7». Include la serie di avvicinamento sul primo esercizio
+(non viene registrata).
+
+Quanti passaggi siano dipende dal giorno, e i due gruppi sono molto diversi: i
+giorni del **vecchio** split (petto-tricipiti, gambe-core, spalle,
+schiena-bicipiti, full-body) hanno 4-5 movimenti di mobilità e un blocco di
+stretching finale, quindi il riscaldamento è di sette passaggi e dura una
+decina di minuti; i giorni del **nuovo** split (push, pull, legs, upper, lower)
+non hanno mobilità in apertura — quel lavoro è stato spostato alla fine, nel
+blocco di mobilità — e lì il riscaldamento è di **due passaggi**: la camminata e
+la serie di avvicinamento. Sabato e domenica c'è la sola camminata, e poi cinque
+movimenti di mobilità.
 
 La serie di avvicinamento **dice quale esercizio è e con quanto**: «Serie di
 avvicinamento: Squat con bilanciere — 1 × 8-10 · bilanciere scarico (10 kg)»,
@@ -891,13 +901,20 @@ tocca Salute e infatti funziona.
 
 ### La mobilità di fine seduta
 
-Dopo lo stretching finale, ogni giorno ha un blocco di
+Dopo lo stretching finale, i giorni del nuovo split hanno un blocco di
 mobilità a **dose fissa**: nessun carico, nessuna soglia tecnica, nessuna
-progressione. Copre le zone che il riscaldamento di quel giorno non tocca già —
-Push, Upper: anca, caviglia, colonna · Pull: anca, caviglia · Legs, Lower:
-spalle, colonna · **sabato e domenica: tutte e quattro**. I movimenti sono
-quelli che già conosci dal riscaldamento, con la stessa spiegazione e lo stesso
-video.
+progressione. Copre le zone che il lavoro di quel giorno non tocca — contate
+sui dati veri, non a memoria:
+
+| Giorno | Passaggi |
+|---|---|
+| Push, Upper | cerchi con il bacino · mobilità di caviglia · cat-cow |
+| Pull | cerchi con il bacino · mobilità di caviglia |
+| Legs, Lower | cerchi con le braccia · rotazioni di spalla · cat-cow |
+| sabato e domenica | tutti e cinque i movimenti |
+
+I movimenti sono quelli che già conosci dal riscaldamento, con la stessa
+spiegazione e lo stesso video.
 
 Nel punteggio entra come il riscaldamento: per il fatto di essere stata fatta o
 saltata, non per quanto bene. **Sabato e domenica sono giorni di sola

@@ -223,9 +223,13 @@ fumoContatoDal · fumoTettoDichiarato · agenda · videoRiscaldamento
 Sequenza rigida, un passo per volta.
 
 1. **Riscaldamento specifico per il giorno** — camminata 5 minuti a 5 km/h (con
-   alternativa concreta senza tapis), poi mobilità mirata al lavoro previsto:
-   5 esercizi per giorno dello split, ciascuno con dose e istruzione. Chiude con
-   la serie di avvicinamento sul primo esercizio. Avviso: avviare sul Watch
+   alternativa concreta senza tapis), poi la mobilità mirata al lavoro previsto,
+   ciascun movimento con dose e istruzione. Quanti siano lo decide il giorno, e
+   i dati del protocollo dicono due cose diverse: i giorni del vecchio split ne
+   hanno 4-7, quelli del nuovo (push, pull, legs, upper, lower) **nessuno** —
+   lì la mobilità sta tutta in fondo alla seduta e il riscaldamento è camminata
+   più serie di avvicinamento. Chiude con la serie di avvicinamento sul primo
+   esercizio. Avviso: avviare sul Watch
    un'unica sessione "Rafforzamento funzionale" che comprenda riscaldamento e pesi.
    **Lo stretching statico non sta qui ma a fine seduta**: allungare a freddo un
    muscolo che poi deve spingere riduce la forza espressa. Il riepilogo mostra
