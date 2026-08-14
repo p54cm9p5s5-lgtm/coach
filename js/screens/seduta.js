@@ -1262,14 +1262,20 @@ async function vistaEsercizio(corpo, piede) {
   // L'ordine è: quello che hai già usato oggi, poi l'obiettivo accettato, poi
   // il carico scritto nel brief, e solo alla fine quello dedotto dallo storico.
   // Prima lo storico veniva prima del brief, e un brief nuovo non si vedeva.
-  const caricoPrec =
-    fatte.at(-1)?.carico ??
-    obiettivo?.carico ??
-    // Una decisione già presa su questo carico viene prima del numero del
-    // brief: l'obiettivo si consuma dopo una esposizione, la decisione no.
-    (await store.caricoDaDecisione(v.esercizioId)) ??
-    (v.carico > 0 ? v.carico : null) ??
-    (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
+  // Uno zero scritto nel brief è una dichiarazione, non un buco: vuol dire
+  // corpo libero. Prima non fermava la catena, e l'app tirava fuori dallo
+  // storico il carico dell'ultima volta — proponendo un bilanciere su un
+  // esercizio che il coach aveva appena tolto dal ferro.
+  const senzaCarico = v.carico === 0;
+  const caricoPrec = senzaCarico
+    ? null
+    : fatte.at(-1)?.carico ??
+      obiettivo?.carico ??
+      // Una decisione già presa su questo carico viene prima del numero del
+      // brief: l'obiettivo si consuma dopo una esposizione, la decisione no.
+      (await store.caricoDaDecisione(v.esercizioId)) ??
+      (v.carico > 0 ? v.carico : null) ??
+      (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
   // L'ordine conta: prima quello che c'è in memoria, poi quello salvato nella
   // seduta (l'app è ripartita), infine il carico dedotto dallo storico.
   S.caricoCorrente = S.caricoCorrente ?? S.sed.progresso?.caricoCorrente ?? caricoPrec;
@@ -3400,8 +3406,43 @@ async function vistaCardioInCorso(corpo, piede, r) {
     "Ferma il suono e continua"
   );
 
+  // Rimandare si poteva solo PRIMA di partire, ed è il caso opposto a quello
+  // per cui la funzione è nata: il tapis che si libera, cominci, e dopo due
+  // minuti devi smettere. Restava solo la strada storta dal menu. Qui il tempo
+  // camminato finora non diventa un dato — sarebbe un cardio da due minuti
+  // registrato come fatto — e viene detto prima di farlo.
+  const rimanda = h(
+    "button.btn.secondary",
+    {
+      onclick: azione(async () => {
+        const trascorsi = Math.max(0, Math.round((Date.now() - inizio) / 60000));
+        const scelta = await chiedi({
+          titolo: "Rimandare il cardio?",
+          testo:
+            `Il cronometro va da ${durataUmana(trascorsi * 60 || 60)}. Rimandandolo quel tempo non viene registrato: il cardio resta da fare e lo ritrovi in Home, con l'allenamento aperto.\n\n` +
+            "Se invece hai camminato e vuoi tenerlo, tocca «Ho finito».",
+          opzioni: [{ etichetta: "Rimanda, non registrare niente", valore: "rimanda" }],
+        });
+        if (scelta !== "rimanda") return;
+        fermaTimer();
+        fermaAllarme();
+        S.sed = await store.aggiornaSeduta(S.sed.id, {
+          cardio: { ...S.sed.cardio, rimandato: true, eseguito: false, durataMin: null, finitoIl: null, saltatoMotivo: null },
+        });
+        toast("Cardio rimandato: lo trovi in Home finché non lo fai.");
+        await salvaProgresso({
+          fase: S.sed.stretching ? "fine" : "stretching",
+          cardioInizio: null,
+          cardioFine: null,
+        });
+        await disegna();
+      }),
+    },
+    "Rimanda il cardio"
+  );
+
   // Niente più «−5 / +5»: non c'è nessun conto alla rovescia da allungare.
-  aggiungiPiede(piede, zittisci, pulsante);
+  aggiungiPiede(piede, zittisci, rimanda, pulsante);
 
   // Il traguardo suona una volta sola. Zittito, resta zitto: il cronometro
   // continua a salire e nessuno ti richiama ogni cinque minuti.
