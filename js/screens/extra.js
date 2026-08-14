@@ -43,8 +43,10 @@ const campo = (nome, etichetta, opzioni = {}) => {
   };
 };
 
-/** Il foglio che registra un'attività. Restituisce true se ha salvato. */
+/** Il foglio che registra un'attività. Restituisce true se ha salvato.
+    Con `precompilato.id` non ne crea una nuova: riscrive quella. */
 async function registra(precompilato = {}) {
+  const modifica = Boolean(precompilato.id);
   const oggi = isoDate();
   let tipoScelto = precompilato.tipo || null;
   let talkScelto = precompilato.talkTest || null;
@@ -121,7 +123,7 @@ async function registra(precompilato = {}) {
   const salvato = await sheet((close) =>
     h(
       "div",
-      h("h2", { style: "text-align:center" }, "Registra un'attività"),
+      h("h2", { style: "text-align:center" }, modifica ? "Correggi l'attività" : "Registra un'attività"),
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px;text-align:center" },
@@ -205,6 +207,11 @@ async function registra(precompilato = {}) {
                 if (scelta !== "salva") return;
               }
               await store.registraExtra({
+                // Correggendo, l'id resta lo stesso: la riga si riscrive, non
+                // se ne aggiunge una seconda. E la data di creazione non si
+                // tocca, perché dice quando quell'attività è stata registrata.
+                id: precompilato.id || null,
+                creatoIl: precompilato.creatoIl || null,
                 data: data.value,
                 tipo: tipoScelto === "Altro" ? scritto : tipoScelto,
                 talkTest: talkScelto,
@@ -220,7 +227,7 @@ async function registra(precompilato = {}) {
               close(true);
             }),
           },
-          "Registra"
+          modifica ? "Salva le correzioni" : "Registra"
         ),
         h("button.btn.secondary", { onclick: () => close(false) }, "Annulla")
       )
@@ -305,8 +312,22 @@ export async function render({ ridisegna }) {
               testo: [descrivi(x), talk ? `Talk-test: ${talk.testo.toLowerCase()}` : "Talk-test non risposto", x.nota]
                 .filter(Boolean)
                 .join("\n"),
-              opzioni: [{ etichetta: "Elimina", valore: "elimina", stile: "danger" }],
+              // Prima l'unica strada era buttarla e rifarla: 45 minuti scritti
+              // al posto di 54 costavano di riscrivere tutto. Adesso il
+              // pannello si riapre con dentro quello che c'era.
+              opzioni: [
+                { etichetta: "Correggi", valore: "correggi" },
+                { etichetta: "Elimina", valore: "elimina", stile: "danger" },
+              ],
             });
+            if (scelta === "correggi") {
+              const salvato = await registra(x);
+              if (salvato) {
+                toast("Attività corretta.");
+                await ridisegna();
+              }
+              return;
+            }
             if (scelta !== "elimina") return;
             await store.eliminaExtra(x.id);
             toast("Attività eliminata.");

@@ -634,22 +634,33 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   lascia solo senza allenamento del giorno: ti lascia anche senza i promemoria
   delle foto e delle misure (voce 11.I.4).
 
-### Decisioni che spettano a te (non le prendo io)
+### Decisioni che spettano a te — **rispose il 14 agosto**
 
-- **Il tuo nome nella cronologia dei commit.** Il nome della tua compagna era
+Le prime quattro sono state decise e **fatte**: acqua correggibile all'indietro,
+attività extra correggibili, «vedi tutti i set» sulle foto, etichetta «caricate a
+mano», ripristino «unisci» tolto, nome ripulito dalla storia di git. Le sigarette
+restano com'erano, per una ragione sua: «se non schiaccio niente vuol dire che ho
+fumato 0 sigarette in quel giorno, quindi deve contare 0 nella media». I documenti
+del controllo escono dalla pubblicazione. Quello che resta qui sotto è la
+motivazione di ognuna, e le domande ancora aperte per il coach.
+
+- **Il nome nella storia di git. DECISO: si riscrive.** Il repository è pubblico
+  (verificato), quindi la storia la legge chiunque. Il testo originale: Il nome della tua compagna era
   finito in `VERIFICA.md`, che è pubblicato: l'ho tolto, aggiunto alle parole
   vietate (ora 19) e ripubblicato — sul sito non c'è più. Ma resta dentro **2
   commit vecchi** della storia di git. Toglierlo da lì significa riscrivere la
   storia del repository (`filter-repo` e un push forzato): si può fare, ma è una
   cosa che cambia tutti gli identificativi dei commit e la decido tu.
 
-- **I set di foto più vecchi non si rivedono.** L'app mostra gli ultimi quattro
+- **I set di foto più vecchi. DECISO e FATTO: c'è «Vedi tutti i set».** In
+  fondo all'elenco, con quanti altri ce ne sono. Il testo originale: L'app mostra gli ultimi quattro
   e basta. Gli altri sono in archivio e nel backup — non si perde niente — ma
   dall'app non c'è modo di guardarli, e chi ne ha nove crede di averne quattro.
   O si aggiunge un «vedi tutti», o lo si scrive a schermo: è una scelta di
   interfaccia, non un difetto.
 
-- **«Set di riferimento» compare su ogni set caricato dalla libreria.** Non è un
+- **L'etichetta dei set caricati. DECISO e FATTO: «caricate a mano».** Il testo
+  originale: Non è un
   errore — l'etichetta dice «queste foto le hai caricate, non scattate con la
   guida» — ma se ne carichi due, a schermo ci sono due «set di riferimento» e
   non si capisce quale sia quello buono. Serve una parola diversa, e la parola
@@ -664,8 +675,11 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   l'etichetta da sola non dice cosa fa. È il nome che hai scelto tu per il
   coach, quindi non lo tocco.
 
-- **11.F.2 e 11.F.4 — la media delle sigarette dice una cosa più bella del
-  vero.** Un giorno in cui non apri l'app entra nella media come **zero**, e la
+- **11.F.2 e 11.F.4 — la media delle sigarette. DECISO: resta com'è.** La tua
+  regola, con le tue parole: «se non schiaccio niente vuol dire che ho fumato 0
+  sigarette in quel giorno, quindi deve contare 0 nella media». Non è più una
+  svista dell'app: è una dichiarazione. Il resto della voce spiega com'è fatto.
+  Il testo originale: Un giorno in cui non apri l'app entra nella media come **zero**, e la
   media include **oggi**, che a metà giornata è mezza. Tutti e due gli effetti
   spingono il numero verso il basso. È la stessa cosa già registrata come
   11.O.3, ed è dichiarata nel codice — l'app non può sapere quello che non le
@@ -673,14 +687,19 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   contare solo i giorni in cui hai davvero aperto la sezione: dimmelo e la
   cambio in cinque minuti.
 
-- **11.H.3 — la risposta sull'acqua si corregge solo per oggi.** Un giorno
+- **11.H.3 — l'acqua. DECISO e FATTO: si corregge all'indietro.** Tocchi un
+  giorno nell'elenco e lo cambi o togli la risposta, con l'avvertenza che una
+  risposta inventata a distanza vale meno di nessuna risposta. Il testo
+  originale: Un giorno
   passato non si può più toccare da nessuna parte. È coerente con la regola
   scritta in cima alla schermata («rispondi a fine giornata: prima è una
   previsione, non un dato») e con il fatto che una risposta ricordata il giorno
   dopo vale poco. Ma è una scelta, non un vincolo: se vuoi poter correggere
   all'indietro, si fa in poco.
 
-- **11.L.1 — un'attività fuori scheda non si corregge, si cancella.** Toccando
+- **11.L.1 — le attività extra. DECISO e FATTO: si correggono.** Tocchi la
+  riga, scegli «Correggi», il pannello si riapre con dentro quello che c'era e
+  salvi: stessa attività, non una seconda. Il testo originale: Toccando
   una riga l'unica scelta è «Elimina»: se hai scritto 45 minuti invece di 54
   devi buttarla e rifarla. Non è un difetto — i dati non si perdono — ma è una
   scomodità vera. Aggiungere la modifica è mezz'ora di lavoro: dimmi se la
@@ -728,7 +747,9 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   COME-FUNZIONA e §4.2 di SPEC dicevano «5 esercizi per giorno», che su cinque
   giorni su sette non è vero), ma i contenuti non li ho inventati.
 
-- **11.AE.1 — il registro di questo controllo è pubblico.** `VERIFICA.md`,
+- **11.AE.1 — il registro. DECISO e FATTO: fuori dalla pubblicazione.** VERIFICA.md,
+  ESITO.md e PIANO.md restano sul computer e nel repository, ma non sul sito. Il
+  testo originale: `VERIFICA.md`,
   `ESITO.md` e questo `PIANO.md` vengono pubblicati insieme all'app: chi ha
   l'indirizzo del sito può leggerli. Dentro non c'è niente di personale — nomi,
   misure, foto, niente: sono elenchi di controlli, di difetti e di correzioni,
@@ -738,7 +759,9 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   una riga da `tools/pubblica.sh` (la lista `DOCUMENTI`) e restano solo sul
   computer: dimmi tu.
 
-- **11.N.2 — il ripristino «unisci» non esiste davvero.** Il codice sa fare due
+- **11.N.2 — il ripristino «unisci». DECISO e FATTO: tolto.** Il ripristino da
+  file adesso è uno solo, quello che il foglio di conferma promette. Il testo
+  originale: Il codice sa fare due
   cose, sostituire e unire, e sceglie in base a un campo `modo` dentro il file
   di backup. Ma il backup che l'app scrive quel campo non ce l'ha: quindi ogni
   ripristino è «sostituisci tutto», ed è anche l'unica scelta offerta a

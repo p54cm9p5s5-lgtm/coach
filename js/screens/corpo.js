@@ -47,6 +47,12 @@ const CONDIZIONI_FOTO = [
   ["pose", "Le quattro pose come le fai tu, respiro normale"],
 ];
 
+/* Quanti set di foto sono in vista. Sta fuori dal disegno perché il tocco su
+   «Vedi tutti» ridisegna la schermata: dentro, la scelta si perderebbe subito.
+   Torna a «solo gli ultimi quattro» ogni volta che si riapre l'app, che è il
+   comportamento di partenza giusto. */
+let mostraTuttiISet = false;
+
 export async function render({ ridisegna }) {
   const wrap = h("div.screen");
   aggiungi(wrap, intestazione("Corpo", { etichetta: "Registra", onclick: unaVoltaSola(() => registra(ridisegna)) }));
@@ -464,7 +470,12 @@ async function bloccoFoto(ridisegna) {
       )
     );
   } else {
-    for (const s of set.slice(0, 4)) {
+    // Se ne vedevano quattro e basta: gli altri restavano in archivio e nel
+    // backup, ma dall'app non c'era modo di guardarli — e niente lo diceva.
+    // Si mostrano i quattro più recenti e gli altri si chiedono.
+    const A_VISTA = 4;
+    const mostrati = mostraTuttiISet ? set : set.slice(0, A_VISTA);
+    for (const s of mostrati) {
       const griglia = h("div.foto-griglia", { style: "margin-top:8px" });
       for (const posa of store.POSE) {
         const scatto = s.scatti.find((x) => x.posa === posa.id);
@@ -484,7 +495,12 @@ async function bloccoFoto(ridisegna) {
           h(
             "p",
             { style: "margin:0;font-size:13px;color:var(--label-secondary)" },
-            `${dataLunga(s.data)}${daLibreria ? " · set di riferimento" : ""}`
+            // «Set di riferimento» compariva su OGNI set caricato dalla
+            // libreria: caricandone due, a schermo ce n'erano due e non si
+            // capiva quale fosse il metro di paragone. L'etichetta dice il
+            // fatto — queste foto le hai prese dalla libreria invece di
+            // scattarle con la guida — e basta.
+            `${dataLunga(s.data)}${daLibreria ? " · caricate a mano" : ""}`
           ),
           h(
             "button",
@@ -535,6 +551,25 @@ async function bloccoFoto(ridisegna) {
           )
         ),
         griglia
+      );
+    }
+    if (!mostraTuttiISet && set.length > A_VISTA) {
+      const quanti = set.length - A_VISTA;
+      aggiungi(gruppo,
+        h(
+          "div.btn-wrap",
+          { style: "margin-left:0;margin-right:0" },
+          h(
+            "button.btn.secondary",
+            {
+              onclick: () => {
+                mostraTuttiISet = true;
+                ridisegna();
+              },
+            },
+            `Vedi tutti i set (altri ${quanti})`
+          )
+        )
       );
     }
   }
