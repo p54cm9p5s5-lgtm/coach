@@ -236,18 +236,37 @@ async function vistaProgramma(vaiA, ridisegna) {
     h(
       "div.btn-wrap",
       previsto
-        ? h(
-            "button.btn",
-            {
-              onclick: unaVoltaSola(async () => {
-                sbloccaAudio();
-                const gia = await store.sedutaInCorso();
-                if (!gia) await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
-                await ridisegna();
-              }),
-            },
-            "Inizia allenamento"
-          )
+        ? (() => {
+            // Se quello di oggi è già stato fatto, il tasto diceva lo stesso
+            // «Inizia allenamento» e ne apriva un secondo in silenzio: due
+            // allenamenti sullo stesso giorno, con lo storico e il pacchetto
+            // che poi devono raccontarli tutti e due. Adesso il tasto dice
+            // cosa fa, e prima di aprirlo lo chiede.
+            const giaFatto = fatteOggi.some((s) => s.tipoId === previsto.id);
+            return h(
+              "button.btn" + (giaFatto ? ".secondary" : ""),
+              {
+                onclick: unaVoltaSola(async () => {
+                  sbloccaAudio();
+                  const gia = await store.sedutaInCorso();
+                  if (!gia) {
+                    if (giaFatto) {
+                      const scelta = await chiedi({
+                        titolo: "Un secondo allenamento oggi?",
+                        testo:
+                          `«${previsto.nome || previsto.id}» risulta già fatto oggi. Iniziandone un altro restano tutti e due in archivio, sulla stessa data, e il coach li vedrà tutti e due.`,
+                        opzioni: [{ etichetta: "Sì, iniziane un altro", valore: "vai" }],
+                      });
+                      if (scelta !== "vai") return;
+                    }
+                    await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
+                  }
+                  await ridisegna();
+                }),
+              },
+              giaFatto ? "Inizia un altro allenamento" : "Inizia allenamento"
+            );
+          })()
         : h(
             // Quale allenamento tocca oggi lo dice lo split del master brief:
             // l'app lo esegue, non lo mette in discussione.
@@ -1018,16 +1037,29 @@ function passiRiscaldamento() {
   return passi;
 }
 
-/** Le parole che contano di un nome, per capire se due esercizi sono lo stesso gesto. */
+const PAROLE_DI_SERVIZIO = new Set([
+  "corpo", "libero", "vuoto", "lente", "lenti", "bilanciere", "manubri", "manubrio", "panca",
+  "sulla", "sulle", "dell", "della", "delle", "degli", "adesso",
+]);
+
+/* I qualificatori che cambiano l'esercizio pur lasciando lo stesso nome
+   d'apertura: alzate LATERALI e alzate POSTERIORI non sono lo stesso gesto. */
+const QUALIFICATORI = new Set(["lateral", "posterior", "anterior", "frontal", "invers", "larg", "strett", "alternat"]);
+
+/** Singolare e plurale della stessa parola devono contare come una: «estensione» ed «estensioni». */
+function radice(parola) {
+  return parola.length > 4 ? parola.replace(/[aeio]$/, "") : parola;
+}
+
+/** Le parole che contano di un nome, in ordine, per capire se due esercizi sono lo stesso gesto. */
 function paroleChiave(nome) {
-  return new Set(
-    String(nome || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .split(/[^a-z0-9]+/)
-      .filter((p) => p.length >= 4 && !["corpo", "libero", "vuoto", "lente", "lenti", "bilanciere", "manubri", "manubrio", "panca"].includes(p))
-  );
+  return String(nome || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter((p) => p.length >= 4 && !PAROLE_DI_SERVIZIO.has(p))
+    .map(radice);
 }
 
 /**
@@ -1067,8 +1099,29 @@ function avvicinamento(def, mobilita) {
 
   // Se lo stesso gesto sta già nella mobilità, dirlo: è la differenza fra
   // «rifallo un'altra volta» e «lo stesso movimento, adesso con il ferro».
+  // Bastava UNA parola in comune di quattro lettere, e l'app dichiarava «lo
+  // stesso gesto» fra cose diverse: «Abduzioni d'anca» con «Flessori
+  // dell'anca» (anca), «Ponte per glutei con piedi sulla panca» con
+  // «Quadricipite in piedi» (piedi). Adesso servono tre cose insieme: la
+  // stessa parola d'apertura — quella che dice il gesto —, nessun
+  // qualificatore in contrasto (laterali contro posteriori), e a parità vince
+  // chi ha più parole in comune.
   const mie = paroleChiave(es.nome);
-  const gemello = (mobilita || []).find((m) => [...paroleChiave(m.nome)].some((p) => mie.has(p)));
+  const primaMia = mie[0];
+  const dirMie = mie.filter((p) => QUALIFICATORI.has(p));
+  let gemello = null;
+  let miglior = 0;
+  for (const m of mobilita || []) {
+    const sue = paroleChiave(m.nome);
+    if (!primaMia || sue[0] !== primaMia) continue;
+    const dirSue = sue.filter((p) => QUALIFICATORI.has(p));
+    if (dirMie.length && dirSue.length && !dirMie.some((d) => dirSue.includes(d))) continue;
+    const comuni = sue.filter((p) => mie.includes(p)).length;
+    if (comuni > miglior) {
+      miglior = comuni;
+      gemello = m;
+    }
+  }
   let nota = "";
   if (gemello) {
     // Quando l'avvicinamento pesa quanto la serie vera non c'è nessuna rampa da
@@ -1584,11 +1637,49 @@ async function vistaGuidata(corpo, piede, cfg) {
   const kFine = `${chiave}Fine`;
 
   if (!passi.length) {
+    // «Niente da fare in questo giorno» e «il file del protocollo non è
+    // arrivato» sono due cose diverse, e prima erano la stessa schermata: si
+    // spuntava un riscaldamento che nessuno aveva scritto. Se il protocollo
+    // manca lo si dice, e si offre di riprovare.
+    const senzaProtocollo = !store.protocolloCaricato();
     aggiungi(corpo,
       h("div.hero", h("p.kicker", kicker), h("h2", titolo), h("p.target", S.sed.tipoNome)),
-      h("div.group", h("div.list", h("div.row", h("div.main", h("span.title", cfg.vuoto || "Niente da fare in questo giorno")))))
+      h(
+        "div.group",
+        h(
+          "div.list",
+          h(
+            "div.row",
+            h(
+              "div.main",
+              h("span.title", senzaProtocollo ? "Protocollo non caricato" : cfg.vuoto || "Niente da fare in questo giorno"),
+              senzaProtocollo
+                ? h("span.sub", "I passaggi stanno in un file che non è arrivato: non so dirti cosa prevede questo giorno. Riprova, oppure vai avanti e fallo a memoria.")
+                : null
+            )
+          )
+        )
+      )
     );
-    aggiungiPiede(piede, ...(cfg.tastiExtra?.(passi.length) || []), h("button.btn", { onclick: azione(onFine) }, etichettaFine));
+    aggiungiPiede(piede, 
+      ...(senzaProtocollo
+        ? [
+            h(
+              "button.btn.secondary",
+              {
+                onclick: azione(async () => {
+                  const preso = await store.riprovaProtocollo();
+                  toast(preso ? "Protocollo caricato." : "Ancora niente: serve la rete una volta sola.");
+                  await disegna();
+                }),
+              },
+              "Riprova a caricarlo"
+            ),
+          ]
+        : []),
+      ...(cfg.tastiExtra?.(passi.length) || []),
+      h("button.btn", { onclick: azione(onFine) }, etichettaFine)
+    );
     return;
   }
 
@@ -2411,8 +2502,8 @@ async function vistaRecupero(corpo, piede) {
   // Il modo per zittire l'allarme restando sul recupero. Prima la memoria
   // «suonoSpento» c'era, con tanto di commento che spiegava come funzionava,
   // ma non la metteva a vero nessuno: l'unico modo di fermare il suono era
-  // «Pronto», che pero chiude il riposo. In palestra capita di non essere
-  // pronti quando suona, e l'allarme restava li a suonare.
+  // «Pronto», che però chiude il riposo. In palestra capita di non essere
+  // pronti quando suona, e l'allarme restava lì a suonare.
   const notaSuono = h("p.footnote", { style: "margin:6px 16px 0;text-align:center" }, "");
   aggiungi(corpo, h("div.hero", h("p.kicker", "Recupero"), quadrante, sottotitolo, notaSuono));
 
@@ -3182,7 +3273,11 @@ async function vistaCardio(corpo, piede) {
             cardio: { ...S.sed.cardio, rimandato: true, saltatoMotivo: null },
           });
           toast("Cardio rimandato: lo trovi in Home finché non lo fai.");
-          await salvaProgresso({ fase: "stretching" });
+          // Rimandandolo una seconda volta lo stretching è già stato fatto:
+          // rimandarci sopra significherebbe rifare da capo passaggi già
+          // chiusi. In quel caso si va al riepilogo, che e il punto in cui si
+          // decide cosa fare dell'allenamento.
+          await salvaProgresso({ fase: S.sed.stretching ? "fine" : "stretching" });
           await disegna();
         }),
       },
@@ -3284,7 +3379,13 @@ async function vistaCardioInCorso(corpo, piede, r) {
     // Una volta qui si chiedevano i numeri dell'orologio, finché l'unico modo di
     // averli era ricopiarli dal quadrante. Adesso li porta l'importazione da
     // Salute — tutti, compreso lo sforzo — e si va dritti allo stretching.
-    await salvaProgresso({ fase: "stretching", cardioInizio: null, cardioFine: null });
+    // Se il cardio era stato rimandato, lo stretching è già stato fatto prima:
+    // rimandarci sopra vorrebbe dire rifare da capo passaggi già chiusi.
+    await salvaProgresso({
+      fase: S.sed.stretching ? "fine" : "stretching",
+      cardioInizio: null,
+      cardioFine: null,
+    });
     await disegna();
   };
 
@@ -3550,7 +3651,14 @@ async function vistaFine(corpo, piede) {
         h("div.row", h("div.main", h("span.title", "Densità")), h("span.value", `${densita} serie/min`)),
         h("div.row", h("div.main", h("span.title", "Recupero medio reale")), h("span.value", recMedio != null ? mmss(recMedio) : "—")),
         S.sed.cardio?.previsto
-          ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", S.sed.cardio.eseguito ? `${num(S.sed.cardio.kmh)} km/h · ${S.sed.cardio.durataMin} min` : "non eseguito"))
+          ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", S.sed.cardio.eseguito
+                ? `${num(S.sed.cardio.kmh)} km/h · ${S.sed.cardio.durataMin} min`
+                // «Non eseguito» e «rimandato» non sono la stessa cosa: il
+                // primo l'hai deciso, il secondo è ancora da fare e
+                // l'allenamento puo restare aperto ad aspettarlo.
+                : S.sed.cardio.rimandato
+                  ? "rimandato"
+                  : "non eseguito"))
           : null
       )
     ),
@@ -3610,7 +3718,18 @@ async function vistaFine(corpo, piede) {
               { etichetta: "Chiudi senza cardio", valore: "chiudi", stile: "destructive" },
             ],
           });
-          if (scelta !== "chiudi") return;
+          if (scelta !== "chiudi") {
+            // «Lo trovi in Home» va preso alla lettera: restando qui, sul
+            // riepilogo, l'unica cosa a portata di dito era di nuovo «Chiudi
+            // allenamento». Il cronometro si ferma e lo schermo si libera,
+            // l'allenamento resta aperto ad aspettare il cardio.
+            if (scelta === "aspetta") {
+              fermaTimer();
+              rilasciaSchermo();
+              location.hash = "#/oggi";
+            }
+            return;
+          }
         }
         await store.chiudiSeduta(S.sed.id, { notaGenerale: qs("#nota-seduta")?.value || null });
         try {
