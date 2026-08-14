@@ -607,7 +607,12 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
 export function bloccoExtra(righe, { talkTest = [], oggi = isoDate() } = {}) {
   if (!righe?.length) return null;
   const parola = (id) => talkTest.find((t) => t.id === id)?.testo?.toLowerCase() || "—";
-  const tab = righe.slice(0, 30).map((x) => [
+  // Il taglio va dichiarato, come lo dichiara la tabella del Watch: una
+  // tabella che finisce senza dire che manca qualcosa si legge come completa,
+  // e il coach conterebbe le attività sbagliate.
+  const MASSIMO = 30;
+  const quantiTagliati = Math.max(0, righe.length - MASSIMO);
+  const tab = righe.slice(0, MASSIMO).map((x) => [
     dataBreve(x.data),
     GIORNI_ABBR[new Date(x.data + "T00:00:00").getDay()],
     x.tipo || "—",
@@ -632,7 +637,12 @@ export function bloccoExtra(righe, { talkTest = [], oggi = isoDate() } = {}) {
     "Non sono esercizi tracciati: niente carico, niente tecnica, niente RPE. Nessun giorno le prevede, quindi non farle non toglie niente al punteggio.",
     "Una giornata con un'attività qui vale come giornata di allenamento nel punteggio Salute, ma solo se il talk-test è stato risposto: senza resta fuori dal conto invece di valere zero.",
     "Talk-test: «frasi intere comode» zona bassa · «frasi intere con fiatone» zona media · «a fatica» zona alta.",
-  ].join("\n");
+    quantiTagliati
+      ? `Ce ne sono altre ${quantiTagliati} nel periodo, non elencate qui per non allungare la tabella.`
+      : null,
+  ]
+    .filter((r) => r !== null)
+    .join("\n");
 }
 
 /**

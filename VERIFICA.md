@@ -1422,34 +1422,34 @@ c'è modo di accorgersene se non dal risultato.
       sua data, senza nessun limite di recenza. Il commento promette un filtro
       che non c'è. (La data di ogni misura è scritta, quindi non è un dato
       falso — è la descrizione a essere falsa.)
-- [ ] **11.W.4** ⚠️ **`bloccoExtra` taglia a 30 righe in silenzio**, mentre
+- [x] **11.W.4** ⚠️ **`bloccoExtra` taglia a 30 righe in silenzio**, mentre
       `bloccoWatch` dice quante ne restano fuori. Da uniformare.
-- [ ] **11.W.5** **Le note che spezzano le tabelle**: le barre verticali sono
+- [x] **11.W.5** **Le note che spezzano le tabelle**: le barre verticali sono
       protette e gli a capo diventano «·», in tutte le tabelle. Da provare con
       una nota che contiene `|`, un a capo e le virgolette.
-- [ ] **11.W.6** **Esercizi previsti e mai iniziati** compaiono come «NON
+- [x] **11.W.6** **Esercizi previsti e mai iniziati** compaiono come «NON
       INIZIATO (previsto dal programma)»; quelli interrotti a metà tengono le
       serie fatte. Da provare tutti e due i casi.
-- [ ] **11.W.7** **Carico cambiato in corsa**: la riga passa alla forma «serie
+- [x] **11.W.7** **Carico cambiato in corsa**: la riga passa alla forma «serie
       per serie». Da provare scalando il carico all'ultima serie.
-- [ ] **11.W.8** **«per manubrio» / «barra compresa»**: l'unità del carico è
+- [x] **11.W.8** **«per manubrio» / «barra compresa»**: l'unità del carico è
       scritta secondo l'attrezzo. Da verificare su un esercizio con i manubri.
-- [ ] **11.W.9** **Recuperi in blocco**: le serie senza riposo previsto escono
+- [x] **11.W.9** **Recuperi in blocco**: le serie senza riposo previsto escono
       dalla media e viene detto quante sono. Da provare su una seduta a blocchi.
-- [ ] **11.W.10** **«Obiettivi chiesti dall'app diversi dal brief»**: è l'unica
+- [x] **11.W.10** **«Obiettivi chiesti dall'app diversi dal brief»**: è l'unica
       riga che spiega al coach perché una serie da 13 non è un errore. Da
       provare con una proposta accettata.
-- [ ] **11.W.11** **Tabella salute a 21 righe** ma «resto del movimento» su 7
+- [x] **11.W.11** **Tabella salute a 21 righe** ma «resto del movimento» su 7
       giorni, nello stesso blocco. Da verificare che entrambe le finestre siano
       dichiarate.
-- [ ] **11.W.12** **La colonna «Punteggio» del sonno resta sempre vuota** e c'è
+- [x] **11.W.12** **La colonna «Punteggio» del sonno resta sempre vuota** e c'è
       la riga che lo spiega. Da verificare che il coach non la legga come un
       buco dei dati.
-- [ ] **11.W.13** **Proposte accettate ma non più in vigore**: vengono elencate a
+- [x] **11.W.13** **Proposte accettate ma non più in vigore**: vengono elencate a
       parte col motivo («già allenata», «annullata dal brief nuovo»,
       «sostituita»). Da verificare che `inVigore` e `motivoScarto` siano davvero
       valorizzati da `proposteAccettate`.
-- [ ] **11.W.14** **Intestazione del pacchetto**: le voci a zero non si
+- [x] **11.W.14** **Intestazione del pacchetto**: le voci a zero non si
       elencano. Da provare con l'archivio quasi vuoto.
 
 ## 11.X — `js/screens/seduta.js`, terza tornata (esercizio, cardio in corso, stretching)
