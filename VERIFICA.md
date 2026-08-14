@@ -1491,44 +1491,44 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.Y — `js/brief.js` (354 righe, lette tutte) e `sw.js` (131, lette tutte)
 
-- [ ] **11.Y.1** ⚠️ **«Regole e soglie aggiornate.»** è tutto quello che il
+- [x] **11.Y.1** ⚠️ **«Regole e soglie aggiornate.»** è tutto quello che il
       confronto dice quando il coach cambia le regole. Un brief che sposta le
       soglie del cardio, i pesi del punteggio Salute o il numero di esposizioni
       minime produce **una riga generica**, mentre per un carico da 20 a 22 kg
       l'app scrive la differenza esatta. Sono proprio le modifiche che non si
       vedono in nessun altro posto. Da migliorare prima di partire.
-- [ ] **11.Y.2** ⚠️ **La validazione del brief non guarda dentro `regole`.**
+- [x] **11.Y.2** ⚠️ **La validazione del brief non guarda dentro `regole`.**
       Nessun controllo su `salute.pesi`, `cardio`, `finestra`, `cadenze`: un
       blocco scritto a metà passa, e poi `regole()` lo fonde a un livello solo
       (11.Q.2) spegnendo in silenzio metà del punteggio. Da aggiungere almeno un
       controllo di forma.
-- [ ] **11.Y.3** ⚠️ **Due giorni con lo stesso `id`, o due giorni sullo stesso
+- [x] **11.Y.3** ⚠️ **Due giorni con lo stesso `id`, o due giorni sullo stesso
       giorno della settimana**, non vengono segnalati: vince il primo scritto e
       l'altro sparisce senza dirlo. Da provare (succede quando nel brief
       convivono due programmi — vedi 11.Q.1).
-- [ ] **11.Y.4** **Blocchi**: almeno due esercizi, scritti di seguito, con lo
+- [x] **11.Y.4** **Blocchi**: almeno due esercizi, scritti di seguito, con lo
       stesso numero di serie. Tutte e tre le regole sono controllate. Da provare
       con un brief che le viola, una alla volta.
-- [ ] **11.Y.5** **Esercizio a tempo scritto a ripetizioni**: la libreria lo sa e
+- [x] **11.Y.5** **Esercizio a tempo scritto a ripetizioni**: la libreria lo sa e
       il controllo lo blocca. Da provare col plank.
-- [ ] **11.Y.6** **Dischi in numero dispari**, carichi negativi, id maiuscoli,
+- [x] **11.Y.6** **Dischi in numero dispari**, carichi negativi, id maiuscoli,
       esercizi sconosciuti, esercizio ripetuto nello stesso giorno: tutti
       controllati. Da provare almeno due di questi con un brief finto.
-- [ ] **11.Y.7** **Brief copiato dalla chat senza i commenti HTML**: c'è la forma
+- [x] **11.Y.7** **Brief copiato dalla chat senza i commenti HTML**: c'è la forma
       di riserva («COACH-DATA v1» nuda). Da provare, perché è come arriverà il
       brief mentre sei via.
-- [ ] **11.Y.8** **Verificato**: tutti i 26 file JavaScript sono nella lista di
+- [x] **11.Y.8** **Verificato**: tutti i 26 file JavaScript sono nella lista di
       precaricamento di `sw.js` — niente resta fuori dalla copia offline.
-- [ ] **11.Y.9** **L'installazione della cache è tutto-o-niente** (`Promise.all`
+- [x] **11.Y.9** **L'installazione della cache è tutto-o-niente** (`Promise.all`
       con `cache: "reload"`): se un file non si scarica, la versione vecchia
       resta al comando. Da provare pubblicando con la rete che va e viene.
-- [ ] **11.Y.10** **Le cache vecchie si cancellano solo dopo aver verificato**
+- [x] **11.Y.10** **Le cache vecchie si cancellano solo dopo aver verificato**
       che la nuova contenga index, app.js e il CSS. Da verificare che dopo un
       aggiornamento resti **una sola** cache (vedi 11.C.1).
-- [ ] **11.Y.11** **Navigazione con rete lenta**: dopo 3 secondi si apre la copia
+- [x] **11.Y.11** **Navigazione con rete lenta**: dopo 3 secondi si apre la copia
       salvata. Da provare col wifi di un hotel che chiede il login — è
       esattamente lo scenario dei prossimi dieci giorni.
-- [ ] **11.Y.12** **`skipWaiting` + `clients.claim`**: la versione nuova prende
+- [x] **11.Y.12** **`skipWaiting` + `clients.claim`**: la versione nuova prende
       il comando subito. Da verificare che, dentro l'allenamento, cambiare fase
       non carichi un modulo della versione nuova mescolato ai vecchi (la rete
       c'è in `app.js`, va provata).
