@@ -1312,19 +1312,19 @@ c'è modo di accorgersene se non dal risultato.
 - [x] **11.T.2** **Chiusura con cardio rimandato**: la conferma c'è e propone di
       lasciare aperto. Da provare tutta la strada, e verificare che l'allenamento
       lasciato aperto si ritrovi in Home.
-- [ ] **11.T.3** **Densità e durata nel riepilogo** usano lo stesso conto della
+- [x] **11.T.3** **Densità e durata nel riepilogo** usano lo stesso conto della
       chiusura. Con il cardio rimandato sono tutti e due gonfiati (vedi 11.O.1).
 - [x] **11.T.4** **La nota generale si salva anche tornando indietro**. Da
       provare scrivendo e toccando «Torna agli esercizi».
 - [x] **11.T.5** **Copia interna a fine allenamento**: se fallisce non deve
       impedire la chiusura. Da provare con l'archivio pieno.
-- [ ] **11.T.6** **Il riquadro «Dall'orologio»** compare solo con dati vecchi, e
+- [x] **11.T.6** **Il riquadro «Dall'orologio»** compare solo con dati vecchi, e
       la sua nota adesso rimanda a Home → Watch. Da guardare su una seduta di
       luglio.
 
 ## 11.U — `js/screens/oggi.js` (882 righe, lette tutte)
 
-- [ ] **11.U.1** ⚠️ **Aprire la Home ricalcola tutta la storia.**
+- [x] **11.U.1** ⚠️ **Aprire la Home ricalcola tutta la storia.**
       `punteggiSalute` gira giorno per giorno dal **primo dato** fino a oggi e
       per ogni seduta chiusa chiama `completezzaSeduta`; in più la Home fa
       girare il motore delle proposte e dei segnali, rilegge tutte le sedute,
@@ -1336,33 +1336,33 @@ c'è modo di accorgersene se non dal risultato.
       partendo dalla fotografia letta al disegno, invece di usare
       `aggiornaProgresso`. È il difetto che tutto il resto del file evita per
       scritto. È codice di oggi. Da correggere.
-- [ ] **11.U.3** ⚠️ **Due etichette diverse per la stessa cosa**: in Home il
+- [x] **11.U.3** ⚠️ **Due etichette diverse per la stessa cosa**: in Home il
       tasto dice «Rifai questo allenamento», nella schermata della seduta dice
       «Inizia allenamento» anche se oggi è già stato completato. Da uniformare, e
       da decidere se il secondo allenamento dello stesso giorno si può fare
       (vedi 11.O.7, 11.J.5, 11.S.16).
-- [ ] **11.U.4** **Blocco «allenamento aperto»**: le tre varianti (di oggi, di un
+- [x] **11.U.4** **Blocco «allenamento aperto»**: le tre varianti (di oggi, di un
       altro giorno, con solo il cardio da fare) mostrano tasti diversi. Da
       provarle tutte e tre, e la quarta: aperto da ieri **e** con il cardio da
       fare.
-- [ ] **11.U.5** **Un allenamento aperto e vuoto di ieri**: niente «chiudi e
+- [x] **11.U.5** **Un allenamento aperto e vuoto di ieri**: niente «chiudi e
       archivia», solo «elimina». Da provare.
 - [x] **11.U.6** **«In ritardo» in fondo al calendario**: backup e import salute
       non hanno un «risolto», quindi restano accesi finché non li fai. In dieci
       giorni saranno sempre accesi (vedi 11.I.3).
-- [ ] **11.U.7** **Il punteggio Salute con «1 gg» mostra oggi, con gli altri
+- [x] **11.U.7** **Il punteggio Salute con «1 gg» mostra oggi, con gli altri
       periodi la media** e lo scrive. Da provare tutti e quattro i tasti.
-- [ ] **11.U.8** **Il dettaglio «Da cosa viene» resta aperto** fra un disegno e
+- [x] **11.U.8** **Il dettaglio «Da cosa viene» resta aperto** fra un disegno e
       l'altro. Da provare cambiando periodo con il dettaglio aperto.
-- [ ] **11.U.9** **La notte di stanotte è datata oggi**: con «1 gg» si mostra
+- [x] **11.U.9** **La notte di stanotte è datata oggi**: con «1 gg» si mostra
       solo quella, e se manca si dice che manca. Da provare al mattino prima
       dell'import.
-- [ ] **11.U.10** **La riga della versione in fondo** deve dire la versione
+- [x] **11.U.10** **La riga della versione in fondo** deve dire la versione
       davvero installata (vedi 11.C.1).
-- [ ] **11.U.11** **Blocco Watch**: sempre tre righe più «Tutti gli
+- [x] **11.U.11** **Blocco Watch**: sempre tre righe più «Tutti gli
       allenamenti», anche con meno di tre in archivio. Da provare con zero (il
       blocco sparisce del tutto) e con uno solo.
-- [ ] **11.U.13** ⚠️ **«Rifai questo allenamento» non compare mai.** Trovato
+- [x] **11.U.13** ⚠️ **«Rifai questo allenamento» non compare mai.** Trovato
       eseguendo: chiusa una seduta oggi, `bloccoAllenamento` mostra il riquadro
       col punteggio e **torna subito**, prima di arrivare al ramo che disegna
       quel tasto. Perché il tasto compaia servirebbe una seduta «completata»
@@ -1370,7 +1370,7 @@ c'è modo di accorgersene se non dal risultato.
       chiuso, dalla Home e da Oggi non se ne può cominciare un altro lo stesso
       giorno — l'unica strada è l'indirizzo `#/seduta?programma=1`, che nessuno
       conosce. Rende inoffensiva la 11.S.16 e contraddice la 11.U.3.
-- [ ] **11.U.12** **Nota del coach sull'evento di oggi**: si vede in Home dentro
+- [x] **11.U.12** **Nota del coach sull'evento di oggi**: si vede in Home dentro
       un riquadro. Da provare con un evento che ha una nota lunga.
 
 ## 11.V — `js/screens/salute.js` (lette righe 1-360 e i grafici del passo)

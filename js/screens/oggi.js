@@ -193,7 +193,10 @@ async function bloccoGrafico(ridisegna) {
   // Anche la scomposizione segue il periodo: su più giorni ogni voce è la
   // media dei giorni in cui quel dato c'era davvero.
   const voci = (() => {
-    if (soloOggiSalute) return (oggiSalute?.voci || []).filter((v) => v.quota != null);
+    // Su un giorno solo restano anche le voci senza dato: sparire non è la
+    // stessa cosa che dire «non registrato», e la notte che manca è proprio
+    // quello che uno vuole sapere al mattino, prima dell'importazione.
+    if (soloOggiSalute) return oggiSalute?.voci || [];
     const per = new Map();
     for (const p of conPunteggio) {
       for (const v of p.voci || []) {
@@ -226,10 +229,12 @@ async function bloccoGrafico(ridisegna) {
             h(
               "div.row",
               h("div.main", h("span.title", v.nome), h("span.sub", v.dettaglio)),
-              coloraPunteggio(
-                h("span.value", `${Math.round(v.quota * 100)}%`),
-                Math.round(v.quota * 100)
-              )
+              v.quota == null
+                ? h("span.value", { style: "color:var(--label-tertiary)" }, "—")
+                : coloraPunteggio(
+                    h("span.value", `${Math.round(v.quota * 100)}%`),
+                    Math.round(v.quota * 100)
+                  )
             )
           )
         )
@@ -505,7 +510,38 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
           ? anello(comp.totale, { dimensione: 168, sottotitolo: giudizio(comp.totale).testo })
           : h("p", { style: "margin:0;color:var(--label-secondary)" }, "completato oggi"),
         h("p", { style: "margin:14px 0 0;font-size:13px;color:var(--label-secondary)" }, "Vedi il risultato ›")
-      )
+      ),
+      // Il tasto per farne un altro c'era, più sotto, con scritto «Rifai questo
+      // allenamento» — ma non lo vedeva nessuno: questa carta esce prima e
+      // torna subito. Dalla Home, dopo un allenamento chiuso, non se ne poteva
+      // cominciare un secondo. Adesso il tasto è qui, dice la stessa cosa che
+      // dice la schermata del programma, e chiede conferma come lì.
+      previsto
+        ? h(
+            "div.btn-wrap",
+            { style: "margin-top:12px" },
+            h(
+              "button.btn.secondary",
+              {
+                onclick: unaVoltaSola(async () => {
+                  sbloccaAudio();
+                  const gia = await store.sedutaInCorso();
+                  if (!gia) {
+                    const scelta = await chiedi({
+                      titolo: "Un secondo allenamento oggi?",
+                      testo: `«${previsto.nome || previsto.id}» risulta già fatto oggi. Iniziandone un altro restano tutti e due in archivio, sulla stessa data, e il coach li vedrà tutti e due.`,
+                      opzioni: [{ etichetta: "Sì, iniziane un altro", valore: "vai" }],
+                    });
+                    if (scelta !== "vai") return;
+                    await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
+                  }
+                  vaiA("seduta");
+                }),
+              },
+              "Inizia un altro allenamento"
+            )
+          )
+        : null
     );
   }
 
@@ -587,11 +623,23 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
                 // Se una seduta è già aperta non se ne crea una seconda: il
                 // doppio tocco lasciava due allenamenti aperti insieme.
                 const gia = await store.sedutaInCorso();
-                if (!gia) await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
+                if (!gia) {
+                  if (giaFatto) {
+                    const scelta = await chiedi({
+                      titolo: "Un secondo allenamento oggi?",
+                      testo: `«${previsto.nome || previsto.id}» risulta già fatto oggi. Iniziandone un altro restano tutti e due in archivio, sulla stessa data, e il coach li vedrà tutti e due.`,
+                      opzioni: [{ etichetta: "Sì, iniziane un altro", valore: "vai" }],
+                    });
+                    if (scelta !== "vai") return;
+                  }
+                  await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
+                }
                 vaiA("seduta");
               }),
             },
-            giaFatto ? "Rifai questo allenamento" : "Inizia allenamento"
+            // La stessa parola che usa la schermata del programma: erano due
+            // nomi diversi per lo stesso gesto.
+            giaFatto ? "Inizia un altro allenamento" : "Inizia allenamento"
           )
         : null,
       // Quale allenamento si fa in un dato giorno lo decide lo split del master

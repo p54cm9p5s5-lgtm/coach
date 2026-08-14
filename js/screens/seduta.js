@@ -3616,6 +3616,12 @@ async function vistaFine(corpo, piede) {
   // Sul tempo di lavoro netto, come nel pacchetto per il coach.
   const netto = store.durataLavoroSec(S.sed, serie) || durataSec;
   const densita = netto > 0 ? (serie.length / (netto / 60)).toFixed(2).replace(".", ",") : "—";
+  // Durata e densita stavano una sotto l'altra e raccontavano due tempi
+  // diversi: la durata contava anche le pause (col cardio rimandato erano ore),
+  // la densita no. E la durata qui non era nemmeno quella che poi finiva in
+  // archivio alla chiusura. Adesso e la stessa, con lo stesso nome che ha nel
+  // risultato: il tempo di allenamento.
+  const durataMostrata = netto;
 
   const mancanti = [];
   for (const v of S.esercizi) {
@@ -3646,7 +3652,11 @@ async function vistaFine(corpo, piede) {
     h(
       "div.group",
       h("div.list",
-        h("div.row", h("div.main", h("span.title", "Durata")), h("span.value", durataUmana(durataSec))),
+        h(
+          "div.row",
+          h("div.main", h("span.title", "Durata"), h("span.sub", "tempo di allenamento")),
+          h("span.value", durataUmana(durataMostrata))
+        ),
         h("div.row", h("div.main", h("span.title", "Serie registrate")), h("span.value", String(serie.length))),
         h("div.row", h("div.main", h("span.title", "Densità")), h("span.value", `${densita} serie/min`)),
         h("div.row", h("div.main", h("span.title", "Recupero medio reale")), h("span.value", recMedio != null ? mmss(recMedio) : "—")),
