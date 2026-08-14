@@ -851,9 +851,25 @@ export function durataLavoroSec(sed, serie = []) {
     if (passo > 0 && passo <= BUCO) totale += passo;
     prec = g;
   }
+  // La coda è il tratto fra l'ultima serie e la fine: quasi sempre è il cardio.
+  // Contarla per intero significava contare anche l'attesa — il tapis occupato,
+  // il cardio rimandato di due ore — e scartarla del tutto (quando l'attesa
+  // supera le tre ore) significava buttare via mezz'ora di camminata vera.
+  // Quando il cardio è stato fatto e dice quanto è durato, vale quello.
   const fine = sed?.oraFine || fineStimata(sed, serie);
   const coda = fine - prec;
-  if (coda > 0 && coda <= BUCO) totale += coda;
+  // Senza cardio registrato la coda copre solo quello che viene dopo l'ultima
+  // serie e non lascia un orario: stretching o mobilità. Vale al massimo il
+  // tempo che serve a farli — venti minuti — invece delle tre ore di prima:
+  // un cardio rimandato e mai fatto faceva risultare due ore e mezza di
+  // allenamento a chi aveva alzato pesi per un quarto d'ora.
+  const CODA_SENZA_CARDIO = 20 * 60000;
+  const cardioMin = sed?.cardio?.eseguito ? Number(sed.cardio.durataMin) : null;
+  if (Number.isFinite(cardioMin) && cardioMin > 0) {
+    totale += Math.min(Math.max(coda, 0), cardioMin * 60000);
+  } else if (coda > 0) {
+    totale += Math.min(coda, CODA_SENZA_CARDIO);
+  }
   return Math.round(totale / 1000);
 }
 
