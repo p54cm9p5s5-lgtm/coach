@@ -29,7 +29,11 @@ cd "$(dirname "$0")/.." 2>/dev/null || exit 0
 # che non è un numero. Il confronto allora fallisce e la guardia blocca per
 # sempre, proprio quando il lavoro è finito. Si prende l'output e basta, si
 # tolgono le cifre-non-cifre, e il vuoto vale zero.
-APERTE="$(grep -cE '^\|.*DA FARE' ESITO.md 2>/dev/null)"
+# Si conta la COLONNA dello stato, non la riga intera: da quando il registro
+# cita quello che l'app scrive a schermo, dentro le spiegazioni compaiono
+# frasi come «CARDIO DA FARE» — testo virgolettato, non voci aperte. Contando
+# la riga intera la guardia avrebbe bloccato per sempre su un lavoro finito.
+APERTE="$(grep -cE '^\|[^|]*\|[^|]*\|[^|]*\| DA FARE \|' ESITO.md 2>/dev/null)"
 APERTE="${APERTE//[^0-9]/}"
 [ -z "$APERTE" ] && APERTE=0
 [ "$APERTE" -eq 0 ] && exit 0

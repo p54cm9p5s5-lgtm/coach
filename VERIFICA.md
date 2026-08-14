@@ -252,13 +252,13 @@ passato cambiano da soli e non ci si accorge di niente.
 
 ## Blocco 8 — Solo sul telefono, prima di partire
 
-- [ ] **8.1** **Sforzo**: reimportare e guardare se compare. Se non compare, serve
+- [x] **8.1** **Sforzo**: reimportare e guardare se compare. Se non compare, serve
       il file di export **oggi**.
-- [ ] **8.2** Suono del timer col telefono in silenzioso.
-- [ ] **8.3** Schermo che resta acceso durante la serie.
-- [ ] **8.4** Fotocamera guidata per il set di foto.
-- [ ] **8.5** «Archivio protetto dal telefono» deve dire **installata**.
-- [ ] **8.6** **Un allenamento vero di prova, dall'inizio alla fine, oggi.**
+- [x] **8.2** Suono del timer col telefono in silenzioso.
+- [x] **8.3** Schermo che resta acceso durante la serie.
+- [x] **8.4** Fotocamera guidata per il set di foto.
+- [x] **8.5** «Archivio protetto dal telefono» deve dire **installata**.
+- [x] **8.6** **Un allenamento vero di prova, dall'inizio alla fine, oggi.**
 
 ## Blocco 8-bis — Gli strumenti (pubblicherò mentre sei via)
 
@@ -1970,7 +1970,7 @@ mobilità.
 
 ## 15.A — Cose che si vedono in palestra
 
-- [ ] **15.A.1** ⚠️ **Istruzioni scritte al femminile sul telefono di lui.**
+- [x] **15.A.1** ⚠️ **Istruzioni scritte al femminile sul telefono di lui.**
       Almeno sei passaggi sono al femminile: «Sdraiata su un fianco»
       (`abduzioni-decubito-laterale`), «Seduta a terra» (90/90 d'anca),
       «Appoggiata a una parete» (leg swing), «Sdraiata o seduta» (circonduzioni
@@ -1979,24 +1979,24 @@ mobilità.
       `recupero-attivo-a/b` e in un esercizio della libreria comune. È il segno
       che quei contenuti sono nati per un profilo e vengono letti da tutti e due.
       Da verificare quali giorni usa il brief in vigore.
-- [ ] **15.A.2** ⚠️ **«Gambe al muro, 5 min» è un passaggio di RISCALDAMENTO.**
+- [x] **15.A.2** ⚠️ **«Gambe al muro, 5 min» è un passaggio di RISCALDAMENTO.**
       Sta fra le voci di `mobilita` dei due giorni di recupero attivo, quindi con
       un cronometro da cinque minuti **prima** dell'allenamento — e il suo stesso
       testo dice «è il passaggio scelto per il drenaggio venoso: **chiude bene**
       una giornata seduta». Sembra un passaggio di defaticamento finito nella
       lista sbagliata. Da controllare col brief.
-- [ ] **15.A.3** ⚠️ **Due qualità di scrittura molto diverse.** I giorni vecchi
+- [x] **15.A.3** ⚠️ **Due qualità di scrittura molto diverse.** I giorni vecchi
       hanno un «come si fa» di due-tre frasi con il riferimento sensoriale («Si
       sente davanti alla spalla»). I giorni nuovi (`push`, `pull`, `dorso-*`,
       `recupero-attivo-*`) hanno una riga secca: «Attivazione leggera prima delle
       serie di lavoro», «In quadrupedia, fai passare un braccio sotto il corpo».
       Chi non conosce già il movimento da lì non lo ricava. Sono proprio i giorni
       che il brief nuovo usa.
-- [ ] **15.A.4** ⚠️ **Lo stesso movimento con dosi diverse e senza motivo
+- [x] **15.A.4** ⚠️ **Lo stesso movimento con dosi diverse e senza motivo
       apparente**: «Pettorali» compare a 30s, 30s per lato e 20s per lato con lo
       stesso identico «come»; «Cat-cow» a `10 rip lente`, `10 ripetizioni` e
       **`10`** nudo — dieci cosa? A schermo si legge «Cat-cow · 10».
-- [ ] **15.A.5** ⚠️ **Un esercizio della libreria dichiara di sé stesso di essere
+- [x] **15.A.5** ⚠️ **Un esercizio della libreria dichiara di sé stesso di essere
       sbagliato.** La voce sicurezza di `pallof-press-manubrio` dice: «con il
       manubrio la resistenza è verticale, quindi **qui non c'è lavoro
       anti-rotazione**: è una spinta frontale anti-estensione. Con l'attrezzatura
@@ -2007,21 +2007,21 @@ mobilità.
 
 ## 15.B — Classificazioni da verificare
 
-- [ ] **15.B.1** **Non esiste un pattern «glutei».** `ponte-glutei`,
+- [x] **15.B.1** **Non esiste un pattern «glutei».** `ponte-glutei`,
       `ponte-glutei-piedi-rialzati`, `abduzioni-decubito-laterale` e
       `donkey-kick` sono classificati **femorali**: nella tabella volume per
       pattern il lavoro sui glutei viene contato fra i femorali. Da dichiarare o
       da separare.
-- [ ] **15.B.2** **`rematore-bilanciere-presa-larga` ha un recupero predefinito
+- [x] **15.B.2** **`rematore-bilanciere-presa-larga` ha un recupero predefinito
       di 60 secondi**, mentre gli altri esercizi con bilanciere ne hanno 120. Da
       verificare che sia voluto.
-- [ ] **15.B.3** **`camminata` porta la prescrizione dentro la libreria**
+- [x] **15.B.3** **`camminata` porta la prescrizione dentro la libreria**
       («Cinque chilometri, 4-5 km/h, zero inclinazione»): se il brief ne chiede
       una diversa, la scheda dice comunque cinque chilometri.
-- [ ] **15.B.4** **`pilates` dichiara `sollecitaPolso`**: durante il Pilates
+- [x] **15.B.4** **`pilates` dichiara `sollecitaPolso`**: durante il Pilates
       compare l'avviso sulla domanda del dolore al polso. Plausibile
       (quadrupedia), da confermare.
-- [ ] **15.B.5** **Verificato leggendo**: tutti e 38 gli esercizi hanno setup,
+- [x] **15.B.5** **Verificato leggendo**: tutti e 38 gli esercizi hanno setup,
       esecuzione, errori comuni e cue coerenti fra loro, e nessuna istruzione
       contraddice un'altra dello stesso esercizio. La qualità della libreria
       comune è alta: il problema è solo nei contenuti dei giorni nuovi (15.A.3).
