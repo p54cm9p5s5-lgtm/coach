@@ -242,15 +242,17 @@ Oggi esistono per diciassette id: `petto-tricipiti`, `gambe-core`, `spalle`,
 `recupero-attivo-b`, `push`, `pull`, `legs`, `upper`, `lower`, `sabato`,
 `domenica`.
 
-**Attenzione**: i cinque id nuovi dello split (`push`, `pull`, `legs`, `upper`,
-`lower`) e i due del fine settimana **non hanno mobilità in riscaldamento né
-stretching finale**: hanno un blocco di mobilità a fine seduta. Su quei giorni
-il riscaldamento è camminata più serie di avvicinamento, e basta.
+I cinque id dello split nuovo (`push`, `pull`, `legs`, `upper`, `lower`) sono
+rimasti vuoti fino al **14/08/2026** — le loro scalette stavano nel master brief
+ma non erano mai state trascritte qui — e adesso hanno mobilità in apertura
+(5-6 movimenti), stretching finale (4-5 allunghi) e il blocco di mobilità di
+fine seduta. I due del fine settimana (`sabato`, `domenica`) hanno solo la
+camminata e cinque movimenti di mobilità, perché esercizi non ne prevedono.
 
 - Se lo split usa **questi stessi id**, riscaldamento e stretching compaiono già.
 - Se usa id diversi, quelle schermate restano vuote finché non vengono scritti i
-  protocolli. In quel caso **allega anche**, per ogni giorno: 5-7 passaggi di
-  mobilità (nome, dose, come si fa) e 2-4 allungamenti finali.
+  protocolli. In quel caso **allega anche**, per ogni giorno: 4-7 passaggi di
+  mobilità (nome, dose, come si fa) e 3-5 allungamenti finali.
 
 Le dosi a tempo vengono riconosciute e l'app ci mette un cronometro:
 `30 s per lato`, `3 × 15 s per lato`, `5 min`, `45s`, `1 minuto`, `1,5 min`.
