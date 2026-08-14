@@ -1454,39 +1454,39 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.X — `js/screens/seduta.js`, terza tornata (esercizio, cardio in corso, stretching)
 
-- [ ] **11.X.1** ⚠️ **«Rimanda il cardio» esiste solo PRIMA di avviarlo.** Una
+- [x] **11.X.1** ⚠️ **«Rimanda il cardio» esiste solo PRIMA di avviarlo.** Una
       volta partito il cronometro la schermata passa a «cardio in corso», dove
       ci sono solo «Ho finito» e «Ferma il suono»: se cominci a camminare e devi
       interromperti, non c'è nessun modo di rimandare. Resta la strada storta:
       menu → «vai allo stretching» → «registralo/buttalo via». Da decidere se il
       tasto va anche lì. È il caso che ha fatto nascere la funzione.
-- [ ] **11.X.2** ⚠️ **Un esercizio con `carico: 0` nel brief può prendere un
+- [x] **11.X.2** ⚠️ **Un esercizio con `carico: 0` nel brief può prendere un
       carico dallo storico.** La catena è
       `(v.carico > 0 ? v.carico : null) ?? ultimoCarico(...)`: uno zero
       dichiarato — che vuol dire corpo libero — non ferma la ricerca, e l'app
       propone il carico dell'ultima volta. Collegato a 11.A.4.
-- [ ] **11.X.3** **Carico non componibile**: l'app scrive i due carichi vicini
+- [x] **11.X.3** **Carico non componibile**: l'app scrive i due carichi vicini
       montabili, sia col bilanciere sia coi manubri. Da provare chiedendo 31 kg
       con dischi che non lo fanno.
-- [ ] **11.X.4** **Cardio più lungo del previsto di oltre 20 minuti**: chiede se
+- [x] **11.X.4** **Cardio più lungo del previsto di oltre 20 minuti**: chiede se
       hai camminato davvero tanto o se hai toccato «Ho finito» in ritardo. Da
       provare lasciando il cronometro acceso un'ora.
-- [ ] **11.X.5** **Il traguardo del cardio suona una volta sola** e «Ferma il
+- [x] **11.X.5** **Il traguardo del cardio suona una volta sola** e «Ferma il
       suono e continua» non chiude l'esercizio. Da provare.
-- [ ] **11.X.6** **Il cronometro del cardio si conta sull'orologio**: bloccare lo
+- [x] **11.X.6** **Il cronometro del cardio si conta sull'orologio**: bloccare lo
       schermo o chiudere l'app non falsa il conto. Da provare uscendo dall'app
       per venti minuti.
-- [ ] **11.X.7** **«Non eseguito» cancella davvero durata e ora di fine**, così
+- [x] **11.X.7** **«Non eseguito» cancella davvero durata e ora di fine**, così
       non resta una durata accanto a «non eseguito». Da provare dopo aver già
       registrato un cardio.
-- [ ] **11.X.8** **Stretching «Salta»** scrive `stretching: {fatto:false}` e va
+- [x] **11.X.8** **Stretching «Salta»** scrive `stretching: {fatto:false}` e va
       alla mobilità se quel giorno ce l'ha. Da provare su un giorno del nuovo
       split.
-- [ ] **11.X.9** **Rete di sicurezza in `vistaEsercizio`**: se le serie
+- [x] **11.X.9** **Rete di sicurezza in `vistaEsercizio`**: se le serie
       registrate hanno già raggiunto il previsto si passa al questionario, e
       dentro un blocco solo quando li ha finiti tutti e due. Da provare
       registrando serie in più.
-- [ ] **11.X.10** **Blocco: la nota «subito dopo, senza riposo: …»** deve
+- [x] **11.X.10** **Blocco: la nota «subito dopo, senza riposo: …»** deve
       nominare l'esercizio giusto. Da provare.
 
 ## 11.Y — `js/brief.js` (354 righe, lette tutte) e `sw.js` (131, lette tutte)
