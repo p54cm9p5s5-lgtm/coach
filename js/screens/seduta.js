@@ -2077,10 +2077,30 @@ async function modificaCarico(def, inv) {
     // dell'esercizio, il numero che legge il coach e la base delle proposte.
     // Non si vieta — un carico strano può essere vero — ma si chiede una volta,
     // e solo quando è fuori scala rispetto a quello che l'app stava proponendo.
+    // Il massimo che si puo davvero montare con quello che hai in casa: barra
+    // piu tutti i dischi. Serve al primissimo carico di un esercizio, quando
+    // non c'e nessun numero di partenza con cui confrontarsi — ed era proprio
+    // il caso scoperto: «1750» entrava senza una domanda.
+    const massimoMontabile = (() => {
+      const barra = Number.isFinite(inv?.barra) ? inv.barra : 0;
+      const dischi = Object.entries(inv?.dischi || {}).reduce(
+        (tot, [peso, quanti]) => tot + Number(peso) * Number(quanti || 0),
+        0
+      );
+      const manubri = Math.max(0, ...(inv?.manubri?.fissi || [0]));
+      const tetto = Math.max(barra + dischi, manubri, 0);
+      return tetto > 0 ? tetto : null;
+    })();
+
     const fuoriScala = (v) => {
-      if (v == null || !(partenza > 0)) return null;
-      if (v > partenza * 3 && v - partenza >= 20) return true;
-      if (v * 3 < partenza && partenza - v >= 20) return true;
+      if (v == null) return null;
+      if (partenza > 0) {
+        if (v > partenza * 3 && v - partenza >= 20) return true;
+        if (v * 3 < partenza && partenza - v >= 20) return true;
+        return null;
+      }
+      // Primo carico in assoluto: l'unico metro e quello che hai in casa.
+      if (massimoMontabile && v > massimoMontabile) return "oltre";
       return null;
     };
 
@@ -2097,9 +2117,13 @@ async function modificaCarico(def, inv) {
         toast("Numero non valido.");
         return;
       }
-      if (fuoriScala(v) && !inAttesaDiConferma) {
+      const strano = fuoriScala(v);
+      if (strano && !inAttesaDiConferma) {
         inAttesaDiConferma = true;
-        aiuto.textContent = `${num(v)} kg: prima erano ${num(partenza)}. Se è giusto, tocca ancora.`;
+        aiuto.textContent =
+          strano === "oltre"
+            ? `${num(v)} kg: con quello che hai in casa il massimo è ${num(massimoMontabile)} kg. Se è giusto, tocca ancora.`
+            : `${num(v)} kg: prima erano ${num(partenza)}. Se è giusto, tocca ancora.`;
         conferma.textContent = `Sì, ${num(v)} kg`;
         conferma.classList.add("secondary");
         return;

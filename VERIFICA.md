@@ -1535,20 +1535,20 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.Z — `js/screens/seduta.js`, quarta tornata (carico, riepilogo dallo storico)
 
-- [ ] **11.Z.1** **Conferma del carico fuori scala**: scatta solo se c'era già un
+- [x] **11.Z.1** **Conferma del carico fuori scala**: scatta solo se c'era già un
       carico di partenza (`partenza > 0`). Il primissimo carico di un esercizio
       non è protetto: `1750` al primo inserimento entra senza domande.
-- [ ] **11.Z.2** **Campo carico vuoto ≠ zero**: `leggi()` torna `null` e il
+- [x] **11.Z.2** **Campo carico vuoto ≠ zero**: `leggi()` torna `null` e il
       salvataggio viene rifiutato. Da provare.
-- [ ] **11.Z.3** **Il carico scelto si scrive subito nel progresso**: riavviando
+- [x] **11.Z.3** **Il carico scelto si scrive subito nel progresso**: riavviando
       l'app fra due serie non deve tornare quello vecchio. Da provare.
-- [ ] **11.Z.4** **Riepilogo aperto dallo Storico**: mostra note dell'esercizio,
+- [x] **11.Z.4** **Riepilogo aperto dallo Storico**: mostra note dell'esercizio,
       note del salto, serie di un esercizio interrotto e quelli senza
       questionario. Da riaprire un allenamento vecchio e controllarli tutti.
-- [ ] **11.Z.5** **«Esercizi n/m» usa i numeri congelati** quando ci sono, così
+- [x] **11.Z.5** **«Esercizi n/m» usa i numeri congelati** quando ci sono, così
       non contraddice l'anello. Da provare su una seduta di prima del
       congelamento.
-- [ ] **11.Z.6** **«Il punto debole è …»**: con 90 di media ma una voce a metà
+- [x] **11.Z.6** **«Il punto debole è …»**: con 90 di media ma una voce a metà
       non deve dire «allenamento pieno». Da provare.
 
 ## 11.AA — `js/salute.js` (434) e `js/salute-export.js` (429), lette tutte
