@@ -441,29 +441,18 @@ export async function render({ ridisegna }) {
     const totali = dentro.reduce((t, [, r]) => ({ km: t.km + r.km, sec: t.sec + r.sec, quanti: t.quanti + r.quanti }), { km: 0, sec: 0, quanti: 0 });
     // Il grafico copre tutti i giorni del periodo, non solo quelli con
     // allenamenti: un buco di tre giorni deve vedersi come un buco.
-    // I giorni li davano solo i dati di movimento importati: un allenamento
-    // del Watch caduto in un giorno senza riga di movimento entrava nella
-    // media scritta sopra ma **non** nel grafico — un punto che manca, e i
-    // numeri che non tornano fra loro. Adesso i giorni sono l'unione dei due.
-    const dateGrafico = [
-      ...new Set([
-        ...giorni.filter(f.dentro).map((g) => g.data),
-        ...dentro.map(([data]) => data),
-      ]),
-    ].sort();
-    const punti = perGrafico(
-      dateGrafico.map((data) => {
-        const r = perData.get(data);
-        return { data, presente: Boolean(r), valore: r ? minutiAlKm(r.sec, r.km) : null, r };
-      })
-    );
-    // Se in archivio non ci sono giorni di salute che coprono quelle date, il
-    // grafico si costruisce comunque dai soli giorni con allenamento.
-    const finali = punti.length
-      ? punti
-      : dentro
-          .sort((a, b) => (a[0] < b[0] ? -1 : 1))
-          .map(([data, r]) => ({ data, presente: true, valore: minutiAlKm(r.sec, r.km), r }));
+    // Qui i buchi non si disegnano.
+    //
+    // Il passo si cammina due o tre volte a settimana, non tutti i giorni:
+    // mettendo un punto vuoto per ogni giorno senza allenamento la linea si
+    // spezzava in tanti trattini scollegati — 30/07, poi 02/08, poi 04/08,
+    // ognuno per conto suo — e non si leggeva più niente. Nel grafico entrano
+    // **solo i giorni che un dato ce l'hanno**, in ordine di calendario, e la
+    // linea li collega tutti. La data vera di ogni punto si legge toccandolo,
+    // e il piede della scheda dice che la distanza fra due punti non è tempo.
+    const finali = [...dentro]
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([data, r]) => ({ data, presente: true, valore: minutiAlKm(r.sec, r.km), r }));
     const validi = finali.filter((p) => p.valore != null).map((p) => p.valore);
     // Un passo vive in una fascia stretta: partendo da zero la linea si
     // schiaccerebbe in cima. Il fondo scende un minuto sotto il più veloce.
@@ -493,6 +482,7 @@ export async function render({ ridisegna }) {
         : null,
       piede:
         piede +
+        " Nel grafico ci sono solo i giorni in cui hai camminato o corso: la linea non ha buchi, ma la distanza fra due punti non è il tempo passato." +
         (scartati
           ? ` ${scartati} ${scartati === 1 ? "allenamento è rimasto" : "allenamenti sono rimasti"} fuori dal conto: sotto ${num(store.PASSO_KM_MIN, 1)} km, o con una distanza che l'orologio non ha registrato bene. ${scartati === 1 ? "Resta" : "Restano"} nell'elenco, ${scartati === 1 ? "ma da solo non dice" : "ma da soli non dicono"} niente sul passo.`
           : ""),
@@ -547,9 +537,12 @@ export async function render({ ridisegna }) {
   const ultimaNotte = [...notti]
     .filter((n) => n.presente && n.data <= oggiIso)
     .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
-  const nottiOrd = perGrafico(
-    soloOggi ? (notteDiStanotte ? [notteDiStanotte] : []) : notti.filter(fSonno2.dentro)
-  );
+  // Come per il passo: una notte non registrata non diventa un buco nella
+  // linea. Nel grafico ci sono solo le notti che hanno una durata, in ordine
+  // di calendario, e la linea le collega.
+  const nottiOrd = (soloOggi ? (notteDiStanotte ? [notteDiStanotte] : []) : notti.filter(fSonno2.dentro))
+    .filter((n) => n.presente && n.durataMin != null)
+    .sort((a, b) => (a.data < b.data ? -1 : 1));
   const etichettaSonno = soloOggi
     ? notteDiStanotte
       ? "stanotte"
@@ -595,7 +588,9 @@ export async function render({ ridisegna }) {
           formatta: (v) => durataUmana(v * 60),
           invito: "Tocca una notte per vedere durata e fasi",
         }),
-        piede: "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali.",
+        piede:
+          "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali. " +
+          "Nel grafico ci sono solo le notti registrate: la linea non ha buchi, ma la distanza fra due punti non è il tempo passato.",
       })
     );
     // L'orologio il sonno lo indovina, e a volte lo sbaglia di ore. Questa è
