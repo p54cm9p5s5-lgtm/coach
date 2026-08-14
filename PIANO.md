@@ -769,3 +769,25 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   invece di sostituire (13.1) — ma resta uno strumento che produce pacchetti
   poveri. Allinearlo vuol dire riscriverne la lettura degli allenamenti:
   lavoro vero, nessuna urgenza.
+
+- **15.A.2 — «Gambe al muro, 5 min» è un passaggio di riscaldamento.** Sta fra
+  le voci di mobilità in apertura dei due giorni di recupero attivo, quindi con
+  un cronometro da cinque minuti **prima** dell'allenamento — e il suo stesso
+  testo dice che «è il passaggio scelto per il drenaggio venoso: chiude bene una
+  giornata seduta». Sembra un passaggio di defaticamento finito nella lista
+  sbagliata. Quei due giorni il tuo brief non li usa, quindi non è urgente: da
+  chiedere al coach.
+
+- **15.A.5 — il Pallof press dichiara di sé stesso di essere inadatto.** La sua
+  voce sicurezza dice che «con il manubrio la resistenza è verticale, quindi qui
+  non c'è lavoro anti-rotazione» e indica come sostituto corretto il **suitcase
+  hold** — che nella libreria non c'è, quindi il brief non può prescriverlo. O
+  si aggiunge il suitcase hold, o si toglie il Pallof press, o si riscrive
+  quella nota: è una contraddizione dei contenuti, non del codice.
+
+- **15.B.3 — la camminata porta la prescrizione dentro la scheda.** «Cinque
+  chilometri, 4-5 km/h, zero inclinazione» è scritto nella libreria: se un
+  giorno il brief prescrivesse una camminata diversa, la scheda direbbe comunque
+  cinque chilometri. Oggi non succede (la camminata non è nello split e il
+  cardio ha le sue soglie, che il brief cambia), ma se un domani entra nello
+  split va spostata nel brief.
