@@ -441,10 +441,20 @@ export async function render({ ridisegna }) {
     const totali = dentro.reduce((t, [, r]) => ({ km: t.km + r.km, sec: t.sec + r.sec, quanti: t.quanti + r.quanti }), { km: 0, sec: 0, quanti: 0 });
     // Il grafico copre tutti i giorni del periodo, non solo quelli con
     // allenamenti: un buco di tre giorni deve vedersi come un buco.
+    // I giorni li davano solo i dati di movimento importati: un allenamento
+    // del Watch caduto in un giorno senza riga di movimento entrava nella
+    // media scritta sopra ma **non** nel grafico — un punto che manca, e i
+    // numeri che non tornano fra loro. Adesso i giorni sono l'unione dei due.
+    const dateGrafico = [
+      ...new Set([
+        ...giorni.filter(f.dentro).map((g) => g.data),
+        ...dentro.map(([data]) => data),
+      ]),
+    ].sort();
     const punti = perGrafico(
-      giorni.filter(f.dentro).map((g) => {
-        const r = perData.get(g.data);
-        return { data: g.data, presente: Boolean(r), valore: r ? minutiAlKm(r.sec, r.km) : null, r };
+      dateGrafico.map((data) => {
+        const r = perData.get(data);
+        return { data, presente: Boolean(r), valore: r ? minutiAlKm(r.sec, r.km) : null, r };
       })
     );
     // Se in archivio non ci sono giorni di salute che coprono quelle date, il

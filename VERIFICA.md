@@ -1646,20 +1646,20 @@ c'è modo di accorgersene se non dal risultato.
 
 ## 11.AE — `tools/pubblica.sh` (199 righe, letto tutto)
 
-- [ ] **11.AE.1** ⚠️ **`VERIFICA.md` verrà pubblicato online.** La lista bianca
+- [x] **11.AE.1** ⚠️ **`VERIFICA.md` verrà pubblicato online.** La lista bianca
       accetta `^[A-Z0-9-]+\.md$`, e questo documento ha il nome tutto maiuscolo:
       al prossimo `pubblica.sh` finisce sul sito pubblico. Non contiene dati
       personali — è un elenco di controlli — ma è una decisione da prendere
       apposta, non da subire.
-- [ ] **11.AE.2** **I sei controlli**: `_privato/`, file di dati personali,
+- [x] **11.AE.2** **I sei controlli**: `_privato/`, file di dati personali,
       immagini incorporate, parole vietate, lista bianca, copertura di `sw.js`.
       Da far girare `bash tools/pubblica.sh --controlla` **prima di partire**, e
       verificare che dica «Parole vietate controllate: N» con N giusto.
-- [ ] **11.AE.3** **Se un controllo fallisce lo staging viene annullato**: da
+- [x] **11.AE.3** **Se un controllo fallisce lo staging viene annullato**: da
       provare di proposito, mettendo un file finto fuori lista.
-- [ ] **11.AE.4** **Avviso sulla documentazione rimasta indietro**: non blocca.
+- [x] **11.AE.4** **Avviso sulla documentazione rimasta indietro**: non blocca.
       Con tutte le modifiche di oggi va letto e seguito (vedi 11.AD).
-- [ ] **11.AE.5** **Il push non ha nessun tentativo di ripetizione**: GitHub
+- [x] **11.AE.5** **Il push non ha nessun tentativo di ripetizione**: GitHub
       risponde a volte «Internal Server Error». Da sapere: si rilancia e basta.
 - [x] **11.AE.6** ⚠️⚠️ **Qualunque `.md` con nome maiuscolo entra nel repository
       pubblico senza nessun controllo sul contenuto.** Trovato eseguendo la Fase
@@ -1678,33 +1678,33 @@ c'è modo di accorgersene se non dal risultato.
       questionario azzerando RPE, tecnica e dolori: se hai risposto e poi decidi
       di segnarlo saltato, quelle risposte spariscono senza avviso.
       (`store.js:968`)
-- [ ] **11.AF.2** ⚠️ **La soglia vita/fianchi è quella maschile, scritta nel
+- [x] **11.AF.2** ⚠️ **La soglia vita/fianchi è quella maschile, scritta nel
       codice**: «Soglia uomini 0,95» (`store.js:3223`). Sul telefono di lei
       comparirebbe la stessa soglia. Da rendere dichiarabile nel brief o almeno
       da verificare che quella scheda non le compaia.
-- [ ] **11.AF.3** ⚠️ **La modalità «unisci» del ripristino è irraggiungibile**:
+- [x] **11.AF.3** ⚠️ **La modalità «unisci» del ripristino è irraggiungibile**:
       `esportaCompleto` non scrive mai il campo `modo`, quindi ogni ripristino da
       file è «sostituisci tutto». Conferma di 11.N.2.
-- [ ] **11.AF.4** **Il confronto del brief mostra solo le prime 40 differenze**
+- [x] **11.AF.4** **Il confronto del brief mostra solo le prime 40 differenze**
       e la validazione solo i primi 6 problemi, senza dire quanti ne restano
       fuori. Da provare con un brief molto diverso.
-- [ ] **11.AF.5** **«Scarica l'ultima versione» svuota la copia locale dopo aver
+- [x] **11.AF.5** **«Scarica l'ultima versione» svuota la copia locale dopo aver
       controllato tre file**: fra la cancellazione e il ricaricamento c'è una
       finestra in cui, se la rete cade, l'app resta senza copia. Piccola, ma da
       non usare con la rete ballerina.
-- [ ] **11.AF.6** **Il grafico del passo prende i giorni da `giorniSalute`**: un
+- [x] **11.AF.6** **Il grafico del passo prende i giorni da `giorniSalute`**: un
       giorno con un allenamento del Watch ma **senza** riga di movimento importata
       non compare nel grafico, pur entrando nella media scritta sopra. Da provare
       importando solo gli allenamenti.
-- [ ] **11.AF.7** **`bloccoProssimo` dice «finiti i pesi: tocca il cardio»**
+- [x] **11.AF.7** **`bloccoProssimo` dice «finiti i pesi: tocca il cardio»**
       anche quando il cardio è stato rimandato. Da uniformare con 11.S.3.
-- [ ] **11.AF.8** **Il cronometro degli esercizi a tempo**: arrivato a zero
+- [x] **11.AF.8** **Il cronometro degli esercizi a tempo**: arrivato a zero
       suona e il tempo in più non viene contato; «Fine» prima registra i secondi
       tenuti davvero. Da provare mollando a metà e tenendo oltre.
-- [ ] **11.AF.9** **Dosi a tempo riconosciute a parole** («30 s per lato»,
+- [x] **11.AF.9** **Dosi a tempo riconosciute a parole** («30 s per lato»,
       «3 × 15 s per lato», «1,5 min», «6-7 min»): da provare tutte le forme che
       compaiono davvero in `data/riscaldamento.json`.
-- [ ] **11.AF.10** **Cambio video**: campo vuoto + Salva rimette il video di
+- [x] **11.AF.10** **Cambio video**: campo vuoto + Salva rimette il video di
       partenza, e funziona sia sugli esercizi sia sui passaggi di riscaldamento.
       Da provare su tutti e due.
 

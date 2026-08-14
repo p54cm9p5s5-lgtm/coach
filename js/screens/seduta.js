@@ -2418,7 +2418,10 @@ async function bloccoProssimo(inv) {
   const prossima = vocePrevista(S.sed.progresso.indice + 1);
 
   if (!prossima) {
-    const dopo = S.sed.cardio?.previsto ? "il cardio" : "lo stretching";
+    // Un cardio già rimandato non è «il prossimo passo»: dirlo lo stesso
+    // manderebbe a cercare una schermata che quella strada non apre più.
+    const cardioDaFare = S.sed.cardio?.previsto && !S.sed.cardio?.rimandato && !S.sed.cardio?.eseguito;
+    const dopo = cardioDaFare ? "il cardio" : "lo stretching";
     return h(
       "div.group",
       h("h2", "Dopo questo"),

@@ -686,6 +686,16 @@ Se dovessi fermarmi a metà, quello che conta di più sarebbe già a posto.
   scomodità vera. Aggiungere la modifica è mezz'ora di lavoro: dimmi se la
   vuoi.
 
+- **11.AE.1 — il registro di questo controllo è pubblico.** `VERIFICA.md`,
+  `ESITO.md` e questo `PIANO.md` vengono pubblicati insieme all'app: chi ha
+  l'indirizzo del sito può leggerli. Dentro non c'è niente di personale — nomi,
+  misure, foto, niente: sono elenchi di controlli, di difetti e di correzioni,
+  e il nome che c'era è stato tolto e messo fra le parole vietate. Li ho tenuti
+  pubblici perché servono a te quanto a me: dal telefono, mentre sei via, sono
+  l'unico modo di sapere cosa è stato toccato. Se preferisci di no, si toglie
+  una riga da `tools/pubblica.sh` (la lista `DOCUMENTI`) e restano solo sul
+  computer: dimmi tu.
+
 - **11.N.2 — il ripristino «unisci» non esiste davvero.** Il codice sa fare due
   cose, sostituire e unire, e sceglie in base a un campo `modo` dentro il file
   di backup. Ma il backup che l'app scrive quel campo non ce l'ha: quindi ogni

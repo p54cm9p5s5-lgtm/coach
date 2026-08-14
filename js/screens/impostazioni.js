@@ -467,7 +467,14 @@ async function caricaBrief(ridisegna) {
   if (problemi.length) {
     await chiedi({
       titolo: "Blocco non valido",
-      testo: problemi.slice(0, 6).join("\n"),
+      // Sei problemi e poi il silenzio: chi legge non sa se sono sei o
+      // sessanta, e sistemati quelli scopre che ce n'erano altri. Il numero
+      // vero si dice, come fanno le tabelle del pacchetto.
+      testo:
+        problemi.slice(0, 6).join("\n") +
+        (problemi.length > 6
+          ? `\n\nE altri ${problemi.length - 6}: sistemati questi, ricarica il brief e te li mostro.`
+          : ""),
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
       annulla: false,
     });
@@ -500,6 +507,15 @@ async function caricaBrief(ridisegna) {
           )
         )
       ),
+      differenze.length > 40
+        ? h(
+            "p.footnote",
+            { style: "margin:10px 16px 0" },
+            // Quaranta righe e poi basta: senza dirlo, un brief molto diverso
+            // sembrava cambiare meno di quanto cambia davvero.
+            `Qui ne vedi 40 su ${differenze.length}: le altre ${differenze.length - 40} sono dello stesso tipo, e vengono applicate insieme a queste.`
+          )
+        : null,
       h(
         "p.footnote",
         { style: "margin:10px 16px 0" },
