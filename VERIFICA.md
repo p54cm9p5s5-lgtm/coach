@@ -1216,17 +1216,17 @@ c'è modo di accorgersene se non dal risultato.
       lascia in archivio un numero che non ha mai dichiarato — e su quel numero
       il motore decide le progressioni. Da verificare quanto è visibile la
       correzione durante il recupero.
-- [ ] **11.S.2** ⚠️ **Il recupero dal «l'esercizio non c'è più» non controlla che
+- [x] **11.S.2** ⚠️ **Il recupero dal «l'esercizio non c'è più» non controlla che
       il nuovo esista.** `S.esercizi.findIndex((_, i) => i >= indice)` guarda solo
       l'indice, mai il valore: se l'elemento a quell'indice manca, si torna
       esattamente dov'eravamo. Nel caso normale (brief più corto) funziona
       perché l'indice esce dall'elenco. Da provare cambiando il brief con
       l'allenamento aperto.
-- [ ] **11.S.3** ⚠️ **Cardio rimandato e ripreso**: `avanzaEsercizio` manda alla
+- [x] **11.S.3** ⚠️ **Cardio rimandato e ripreso**: `avanzaEsercizio` manda alla
       fase cardio se `cardio.previsto`, senza guardare `rimandato`. Da provare
       tutta la sequenza: pesi → rimanda → stretching → chiudi? no → Home → «Fai
       il cardio» → cardio → chiudi. E provare anche a rimandare **due volte**.
-- [ ] **11.S.4** **Ogni tocco dentro la seduta sblocca l'audio** (`azione`): è
+- [x] **11.S.4** **Ogni tocco dentro la seduta sblocca l'audio** (`azione`): è
       la rete che fa suonare il recupero. Da provare con l'interruttore su
       silenzioso e con la musica in cuffia.
 - [x] **11.S.5** **Blocchi (due esercizi attaccati)**: giro senza riposo, riposo
@@ -1235,13 +1235,13 @@ c'è modo di accorgersene se non dal risultato.
       vigore usa i blocchi.
 - [x] **11.S.6** **Salto di un esercizio**: nota obbligatoria di almeno tre
       caratteri, e chiudere il pannello senza scrivere **non** salta. Da provare.
-- [ ] **11.S.7** **Limiti del cardio**: 0,5-20 km/h e 5-180 minuti. Da provare a
+- [x] **11.S.7** **Limiti del cardio**: 0,5-20 km/h e 5-180 minuti. Da provare a
       sbattere contro i quattro estremi.
-- [ ] **11.S.8** **Cardio già registrato**: rifarlo chiede conferma e sostituisce;
+- [x] **11.S.8** **Cardio già registrato**: rifarlo chiede conferma e sostituisce;
       «non eseguito» chiede conferma e cancella. Da provare tutti e due.
-- [ ] **11.S.9** **`pulisci()`**: uscendo dalla seduta si fermano cronometro e
+- [x] **11.S.9** **`pulisci()`**: uscendo dalla seduta si fermano cronometro e
       allarme. Da provare uscendo mentre il recupero suona.
-- [ ] **11.S.10** **Recupero senza `recuperoSec` nel brief**: ripiego a 120
+- [x] **11.S.10** **Recupero senza `recuperoSec` nel brief**: ripiego a 120
       secondi. Da verificare quali esercizi ci cascano.
 
 ## 11.S-bis — `js/screens/seduta.js`, seconda tornata (righe 14-264, 860-1060, 2346-2800)
@@ -1264,23 +1264,23 @@ c'è modo di accorgersene se non dal risultato.
       rapidi possono arrivare in ordine invertito e lasciare il numero
       sbagliato. È lo stesso difetto che è stato corretto per il progresso della
       seduta. Da provare tenendo premuto.
-- [ ] **11.S.14** ⚠️ **«Esci» non chiede cosa fare del cronometro del cardio.**
+- [x] **11.S.14** ⚠️ **«Esci» non chiede cosa fare del cronometro del cardio.**
       Lo chiedono solo le voci del menu («vai allo stretching», «chiudi
       adesso»). Uscendo con «Esci» il cronometro resta acceso — probabilmente è
       voluto (esci dall'app mentre cammini) — ma va provato insieme a «Rimanda
       il cardio» e alla chiusura da Home, perché lì il tempo continua a correre.
-- [ ] **11.S.15** ⚠️ **Un giorno di sola mobilità apre un allenamento senza
+- [x] **11.S.15** ⚠️ **Un giorno di sola mobilità apre un allenamento senza
       esercizi**: la fase «esercizio» non trova niente e cade nel ricupero
       descritto in 11.S.2. Da provare sabato e domenica dall'inizio alla fine.
-- [ ] **11.S.16** ⚠️ **Si può iniziare un secondo allenamento dello stesso
+- [x] **11.S.16** ⚠️ **Si può iniziare un secondo allenamento dello stesso
       giorno**: la scritta dice «già completato oggi» ma il tasto resta «Inizia
       allenamento». Combinato con 11.O.7 (l'elenco mette per primo il più
       vecchio) e con 11.J.5, è la strada per un pacchetto che racconta la
       giornata sbagliata.
-- [ ] **11.S.17** **Recupero molto più lungo del previsto**: dopo target + 10
+- [x] **11.S.17** **Recupero molto più lungo del previsto**: dopo target + 10
       minuti chiede se registrare il previsto o il tempo vero, e annullare non
       tocca niente. Da provare — succede spesso in palestra.
-- [ ] **11.S.18** **Preavviso a 3 secondi + allarme a zero**, con il controllo
+- [x] **11.S.18** **Preavviso a 3 secondi + allarme a zero**, con il controllo
       ogni 250 ms. Da provare con lo schermo bloccato e con l'app in secondo
       piano.
 - [x] **11.S.19** **`spostaTimer` non passa da `azione()`** e salva senza
@@ -1293,11 +1293,11 @@ c'è modo di accorgersene se non dal risultato.
 - [x] **11.S.22** **Correzione di TUTTE le serie** dell'esercizio nel
       questionario, con il punteggio che si aggiorna a ogni tocco. Da provare
       con tre serie e correggerne una di mezzo.
-- [ ] **11.S.23** **Serie di avvicinamento**: non compare sugli esercizi a corpo
+- [x] **11.S.23** **Serie di avvicinamento**: non compare sugli esercizi a corpo
       libero, e dice se è lo stesso gesto della mobilità. Il riconoscimento è a
       parole chiave di almeno 4 lettere: da verificare che non accoppi due
       esercizi diversi.
-- [ ] **11.S.24** **Riscaldamento senza `riscaldamento.json`** (vedi 11.Q.3): la
+- [x] **11.S.24** **Riscaldamento senza `riscaldamento.json`** (vedi 11.Q.3): la
       schermata resta senza passaggi. Da provare.
 - [x] **11.S.25** **`inBlocco()` non è chiamata da nessuno**: funzione morta, da
       togliere.
@@ -1309,7 +1309,7 @@ c'è modo di accorgersene se non dal risultato.
       ripiego è `indice: 0`: si finisce sul primo esercizio già chiuso, con il
       questionario da rifare — esattamente quello che il commento dice di voler
       evitare. Da provare a fine allenamento.
-- [ ] **11.T.2** **Chiusura con cardio rimandato**: la conferma c'è e propone di
+- [x] **11.T.2** **Chiusura con cardio rimandato**: la conferma c'è e propone di
       lasciare aperto. Da provare tutta la strada, e verificare che l'allenamento
       lasciato aperto si ritrovi in Home.
 - [ ] **11.T.3** **Densità e durata nel riepilogo** usano lo stesso conto della

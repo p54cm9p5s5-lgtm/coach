@@ -68,6 +68,31 @@ async function caricaRiscaldamento() {
   return RISCALDAMENTO;
 }
 
+/**
+ * Il protocollo di riscaldamento è arrivato oppure no.
+ *
+ * Serve a non confondere due cose molto diverse: «questo giorno non prevede
+ * riscaldamento» e «il file del protocollo non si è caricato». Senza questa
+ * differenza le schermate dicevano «niente da fare in questo giorno» anche
+ * quando il giorno aveva sette passaggi, e il punteggio contava il
+ * riscaldamento come fatto.
+ */
+export function protocolloCaricato() {
+  return Boolean(RISCALDAMENTO);
+}
+
+/** Riprova a prendere il protocollo, per chi era senza rete al primo avvio. */
+export async function riprovaProtocollo() {
+  if (RISCALDAMENTO) return true;
+  try {
+    const r = await fetch("data/riscaldamento.json", { cache: "reload" });
+    if (r.ok) RISCALDAMENTO = await r.json();
+  } catch {
+    /* ancora niente: chi chiama lo vede dal valore di ritorno */
+  }
+  return Boolean(RISCALDAMENTO);
+}
+
 /** Se quel passaggio ha un video scelto a mano, e non quello del protocollo. */
 export const videoPassoPersonalizzato = (nome) => Boolean(VIDEO_PASSI[String(nome || "").trim()]);
 
@@ -207,10 +232,10 @@ export async function inventario() {
 
 /* Due brief con lo stesso contenuto tecnico devono avere la stessa firma anche
    se le voci sono scritte in un altro ordine. Con il confronto testuale secco
-   bastava riscrivere il documento mettendo «serie» prima di «carico» perche
+   bastava riscrivere il documento mettendo «serie» prima di «carico» perché
    l'app lo prendesse per un programma nuovo: e un programma nuovo scarta tutte
    le proposte accettate prima. Qui le chiavi si ordinano sempre allo stesso
-   modo, cosi conta quello che c'e scritto, non come e disposto. */
+   modo, così conta quello che c'è scritto, non come è disposto. */
 function firmaTecnica(valore) {
   const ordina = (v) => {
     if (Array.isArray(v)) return v.map(ordina);
@@ -329,7 +354,7 @@ export function inizioDichiarato() {
 }
 
 export async function inizioStoria() {
-  // Il pavimento scritto nel codice e la data in cui e cominciata QUESTA storia.
+  // Il pavimento scritto nel codice è la data in cui è cominciata QUESTA storia.
   // Un secondo profilo comincia un altro giorno, e senza poterlo dire si
   // porterebbe dentro settimane di dati precedenti al suo programma. Basta che
   // il brief scriva «atleta.dal»: quello vince sul pavimento di partenza.
@@ -512,7 +537,7 @@ export function regole() {
   // Un brief può scrivere una soglia come numero invece che come oggetto: senza
   // questa rete ogni schermata che chiama regole() esploderebbe e l'app
   // resterebbe utilizzabile solo dalle Impostazioni.
-  // La fusione qui sopra e a un livello solo: un brief che scrive
+  // La fusione qui sopra è a un livello solo: un brief che scrive
   // «salute.pesi» con una voce sostituirebbe l'intero blocco dei pesi e
   // farebbe sparire tutte le altre. I pesi sono l'unica famiglia annidata,
   // e si fondono voce per voce come tutto il resto.
