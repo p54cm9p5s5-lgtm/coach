@@ -661,7 +661,7 @@ export function bloccoExtra(righe, { talkTest = [], oggi = isoDate() } = {}) {
 // `nomeSeduta` non c'è più: era un parametro che questa funzione riceveva e
 // non usava da quando i ruoli sono spariti. Chi la chiamava costruiva una
 // mappa di tutte le sedute solo per passarglielo.
-export function bloccoWatch(allenamenti, { giorni = 7 } = {}) {
+export function bloccoWatch(allenamenti, { giorni = 7, note = new Map(), talkTest = [] } = {}) {
   // Questa tabella esiste solo se il pacchetto di Salute porta righe
   // ALLENAMENTO. Molti Comandi Rapidi non le mandano — l'Apple Watch non
   // espone i suoi allenamenti a Comandi — e in quel caso la strada è
@@ -669,6 +669,16 @@ export function bloccoWatch(allenamenti, { giorni = 7 } = {}) {
   // dall'Apple Watch» dentro il log resta solo sulle sedute vecchie: quei
   // numeri non si trascrivono più a mano.
   if (!allenamenti?.length) return null;
+  // Il talk-test è l'unica colonna che l'orologio non misura: la scrive lui
+  // sopra l'allenamento, ed è quella che dice a che intensità stava andando
+  // davvero. Prima arrivava al coach dalla tabella delle attività fuori
+  // scheda, dove la stessa camminata veniva registrata una seconda volta.
+  const parolaTalk = (uuid) => {
+    const n = note.get?.(uuid);
+    if (!n?.talkTest) return "—";
+    return talkTest.find((t) => t.id === n.talkTest)?.testo || n.talkTest;
+  };
+  const conNote = allenamenti.some((a) => note.get?.(a.uuid)?.talkTest || note.get?.(a.uuid)?.nota);
   const righe = allenamenti.slice(0, 20).map((a) => [
     dataBreve(a.data),
     GIORNI_ABBR[new Date(a.data + "T00:00:00").getDay()],
@@ -681,18 +691,33 @@ export function bloccoWatch(allenamenti, { giorni = 7 } = {}) {
     a.fcMedia != null ? num(a.fcMedia, 0) : "—",
     a.fcMax != null ? num(a.fcMax, 0) : "—",
     a.sforzo != null ? String(Math.round(a.sforzo)) : "—",
+    ...(conNote ? [parolaTalk(a.uuid)] : []),
   ]);
+  // Le note scritte a mano non stanno in tabella — sono frasi, e una frasa in
+  // una colonna la spezza — ma sotto, per esteso, solo dove ci sono.
+  const noteScritte = allenamenti
+    .slice(0, 20)
+    .map((a) => {
+      const n = note.get?.(a.uuid);
+      return n?.nota ? `${dataBreve(a.data)} ${a.tipo || ""}: ${n.nota}` : null;
+    })
+    .filter(Boolean);
   const quantiTagliati = Math.max(0, allenamenti.length - 20);
   return [
     `ALLENAMENTI LETTI DALL'APPLE WATCH (ultimi ${giorni} giorni)`,
     "",
     tabella(
-      ["Data", "G", "Ora", "Tipo", "Durata", "km", "Kcal att.", "Kcal tot.", "FC media", "FC max", "Sforzo"],
+      ["Data", "G", "Ora", "Tipo", "Durata", "km", "Kcal att.", "Kcal tot.", "FC media", "FC max", "Sforzo", ...(conNote ? ["Talk-test"] : [])],
       righe
     ),
     "",
+    noteScritte.length ? ["NOTE SCRITTE DALL'ATLETA", "", ...noteScritte, ""].join("\n") : null,
     "Sono gli allenamenti registrati dall'Apple Watch e importati dall'app Salute: numeri misurati dall'orologio, non stime dell'app, e non trascritti a mano.",
-    "L'app non li interpreta e non li usa per nessun punteggio. Vanno letti accanto al log della seduta, non al posto suo: un allenamento di forza compare in tutti e due — qui come lo ha visto l'orologio, là come è stato eseguito — e le camminate sono movimento della giornata.",
+    conNote
+      ? "«Talk-test» è l'unica colonna scritta dall'atleta e non misurata dall'orologio: dice se durante l'allenamento riusciva a parlare. Un allenamento con il talk-test risposto fa valere quella giornata come giornata di allenamento nel punteggio Salute; senza risposta la giornata resta fuori dal conto, non vale zero."
+      : null,
+    `${conNote ? "A parte il talk-test, l'app" : "L'app"} non interpreta questi numeri e non li usa per nessun punteggio. ` +
+      "Vanno letti accanto al log della seduta, non al posto suo: un allenamento di forza compare in tutti e due — qui come lo ha visto l'orologio, là come è stato eseguito — e le camminate sono movimento della giornata.",
     "«Sforzo» è la valutazione da 1 a 10 che l'orologio registra a fine allenamento.",
     quantiTagliati
       ? `Ce ne sono altri ${quantiTagliati} nel periodo, non elencati qui per non allungare la tabella.`

@@ -4,7 +4,7 @@
 const DB_NAME = "coach";
 // Sale solo quando si aggiunge un archivio: l'aggiornamento qui sotto crea
 // quello che manca e non tocca niente di quello che c'è già.
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 /** store -> { keyPath, indexes: { nome: keyPath } } */
 export const SCHEMA = {
@@ -34,6 +34,12 @@ export const SCHEMA = {
   // Attività fuori scheda: una corsa, una camminata, una nuotata. Più d'una
   // nello stesso giorno è normale, quindi la chiave è la riga e non la data.
   extra: { keyPath: "id", indexes: { data: "data" } },
+  // Quello che scrivi tu su un allenamento dell'orologio: il talk-test e una
+  // nota. Sta in un archivio a parte e non dentro `allenamentiWatch` per una
+  // ragione precisa: quello è roba dell'orologio, si riscrive a ogni import e
+  // si può svuotare in blocco. Quello che scrivi tu non deve sparire con lui.
+  // Chiave: lo stesso uuid dell'allenamento.
+  noteWatch: { keyPath: "uuid" },
   // Le copertine dei video, scaricate una volta sola e tenute qui.
   //
   // Non sono un tuo dato: sono immagini pubbliche di YouTube. Stanno in un

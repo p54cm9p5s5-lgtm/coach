@@ -639,7 +639,7 @@ export async function render({ ridisegna }) {
             h(
               "div.main",
               h("span.title", "Tutti gli allenamenti del Watch"),
-              h("span.sub", `${allenamentiOrologio.length} in archivio, con battito e dettagli`)
+              h("span.sub", `${allenamentiOrologio.length} in archivio, con battito, dettagli e talk-test`)
             ),
             h("span.chevron", "›")
           )

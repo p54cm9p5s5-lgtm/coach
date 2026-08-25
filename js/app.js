@@ -14,7 +14,6 @@ const ROTTE = {
   allenamenti: () => import("./screens/allenamenti.js"),
   proposte: () => import("./screens/proposte.js"),
   acqua: () => import("./screens/acqua.js"),
-  extra: () => import("./screens/extra.js"),
   export: () => import("./screens/export.js"),
   impostazioni: () => import("./screens/impostazioni.js"),
 };
@@ -277,7 +276,7 @@ export async function ridisegna() {
   // Corpo e Storico si aprono da dentro Salute e non hanno una scheda loro:
   // senza questa riga la barra resterebbe spenta del tutto, e sembrerebbe di
   // essere finiti fuori dall'app.
-  const schedaAccesa = { corpo: "salute", storico: "salute", allenamenti: "salute" }[nome] || nome;
+  const schedaAccesa = { corpo: "salute", storico: "salute" }[nome] || nome;
   for (const a of qsa(".tabbar a")) {
     a.classList.toggle("active", a.dataset.tab === schedaAccesa);
     if (a.dataset.tab === "fumo") a.classList.toggle("hidden", !contaFumo);

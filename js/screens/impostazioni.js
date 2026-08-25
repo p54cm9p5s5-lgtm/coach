@@ -836,6 +836,7 @@ async function confrontoBackup(dump) {
   await conta("notti", "notte", "notti");
   await conta("giorniSalute", "giorno di salute", "giorni di salute");
   await conta("allenamentiWatch", "allenamento letto", "allenamenti letti");
+  await conta("noteWatch", "talk-test scritto", "talk-test scritti");
   await conta("extra", "attività", "attività extra");
   return righe.length ? righe.join("\n") : "Il file non contiene niente da confrontare.";
 }

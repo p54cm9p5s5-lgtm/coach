@@ -331,7 +331,11 @@ async function componi(stato) {
     const watch = (await store.db.all("allenamentiWatch"))
       .filter((a) => a.data >= daQuando)
       .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : (b.inizio || "").localeCompare(a.inizio || "")));
-    const bloccoW = bloccoWatch(watch, { giorni: GIORNI_WATCH });
+    const bloccoW = bloccoWatch(watch, {
+      giorni: GIORNI_WATCH,
+      note: await store.noteAllenamenti(),
+      talkTest: store.TALK_TEST,
+    });
     if (bloccoW) {
       pezzi.push(bloccoW);
       contenuto.push(`${watch.length} ${watch.length === 1 ? "allenamento" : "allenamenti"} dal Watch`);

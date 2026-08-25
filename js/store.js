@@ -2786,6 +2786,21 @@ export async function punteggiSalute(dal, al = isoDate()) {
     const v = valoreExtra(righe);
     if (v != null) perData.set(data, v);
   }
+  // Lo stesso vale per un allenamento dell'orologio a cui hai risposto il
+  // talk-test. È la regola che prima stava sulle attività fuori scheda, e si è
+  // spostata dove sta adesso la risposta: una camminata registrata dal polso e
+  // una camminata scritta a mano erano la stessa camminata, contata due volte.
+  //
+  // Senza talk-test l'allenamento resta fuori dal conto invece di valere zero:
+  // l'orologio dice che ti sei mosso, non a che intensità, e questa voce del
+  // punteggio nasce per misurare la seconda cosa.
+  const noteWatch = await noteAllenamenti();
+  if (noteWatch.size) {
+    for (const a of await db.all("allenamentiWatch")) {
+      if (perData.has(a.data)) continue;
+      if (noteWatch.get(a.uuid)?.talkTest) perData.set(a.data, 100);
+    }
+  }
 
   const inizio = await inizioProgramma();
   const out = [];
@@ -3112,61 +3127,75 @@ export const TALK_TEST = [
   { id: "fatica", testo: "A fatica" },
 ];
 
-export const TIPI_EXTRA = ["Corsa", "Camminata", "Bici", "Nuoto", "Altro"];
-
-/**
- * Un campo che non hai scritto resta «non registrato», mai zero.
- *
- * La virgola vale come il punto: in italiano si scrive «18,4 km», e un numero
- * scritto così finiva a null — cioè il dato spariva invece di entrare.
- */
-const NUM_O_NULL = (v) => {
-  if (v === "" || v == null) return null;
-  const n = Number(String(v).replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-};
-
-export async function registraExtra(dati) {
-  // Il formato non basta: «2026-13-45» ha la faccia di una data ma il mese 13
-  // e il giorno 45 non esistono, e passando il solo controllo qui sopra
-  // finiva in archivio tale e quale — una riga che non si ordina e non si
-  // ritrova più. Come nel calendario (11.I.9), la data si costruisce e si
-  // controlla davvero; se non regge, vale oggi.
-  const dataScritta = String(dati.data ?? "");
-  const dataBuona =
-    /^\d{4}-\d{2}-\d{2}$/.test(dataScritta) && !Number.isNaN(parseIso(dataScritta).getTime());
-  const data = dataBuona ? dataScritta : isoDate();
-  if (!dati.tipo) throw new Error("Serve il tipo di attività.");
-  if (dati.talkTest && !TALK_TEST.some((t) => t.id === dati.talkTest)) {
-    throw new Error("Talk-test non riconosciuto.");
-  }
-  const rec = {
-    id: dati.id || db.nuovoId("ext"),
-    data,
-    tipo: String(dati.tipo),
-    durataMin: NUM_O_NULL(dati.durataMin),
-    fcMedia: NUM_O_NULL(dati.fcMedia),
-    fcMax: NUM_O_NULL(dati.fcMax),
-    kcalAttive: NUM_O_NULL(dati.kcalAttive),
-    kcalTotali: NUM_O_NULL(dati.kcalTotali),
-    km: NUM_O_NULL(dati.km),
-    // Il ritmo si scrive come lo legge l'orologio («6'40"»), non è un numero.
-    ritmo: dati.ritmo ? String(dati.ritmo).trim() : null,
-    talkTest: dati.talkTest || null,
-    nota: dati.nota ? String(dati.nota).trim() : null,
-    creatoIl: dati.creatoIl || new Date().toISOString(),
-  };
-  await db.put("extra", rec);
-  return rec;
-}
+/* Le attività si registravano a mano finché esisteva la sezione «Extra».
+   Adesso non si scrivono più: l'orologio le ha già scritte lui, e il talk-test
+   si risponde sul suo allenamento. Quello che resta qui sotto serve solo alle
+   righe già in archivio — leggerle, mandarle al coach, buttarle. */
 
 export async function extra() {
   const r = await db.all("extra");
   return r.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : (b.creatoIl || "").localeCompare(a.creatoIl || "")));
 }
 
-export async function eliminaExtra(id) {
-  await db.del("extra", id);
+/** Le butta via tutte in un colpo. Torna quante ne ha tolte. */
+export async function eliminaTutteLeExtra() {
+  const righe = await db.all("extra");
+  await db.delMulti({ extra: righe.map((x) => x.id) });
+  return righe.length;
+}
+
+/* ---------------------------------------------------------------------------
+   Il talk-test sugli allenamenti dell'orologio.
+
+   L'orologio misura tutto tranne l'unica cosa che dice a che intensità stavi
+   andando davvero: se riuscivi a parlare. Quella la sai solo tu, e prima si
+   scriveva a mano registrando una seconda volta un'attività che l'orologio
+   aveva già registrato da solo. Adesso si aggiunge sopra il suo allenamento.
+
+   Sta in un archivio suo (`noteWatch`) e non dentro l'allenamento: quello è
+   roba dell'orologio — si riscrive a ogni import e si può svuotare in blocco —
+   mentre questo è tuo e non deve sparire con lui.
+--------------------------------------------------------------------------- */
+
+/** La nota di un allenamento, o null. */
+export async function notaAllenamento(uuid) {
+  if (!uuid) return null;
+  return (await db.get("noteWatch", String(uuid))) || null;
+}
+
+/** Tutte, in una mappa uuid → nota: per l'elenco e per il punteggio. */
+export async function noteAllenamenti() {
+  const m = new Map();
+  for (const n of await db.all("noteWatch")) m.set(n.uuid, n);
+  return m;
+}
+
+/**
+ * Scrive il talk-test e la nota. Un talk-test tolto (null) toglie anche il
+ * valore che quella giornata aveva nel punteggio: è la stessa risposta che
+ * conta, quindi cancellarla deve riportare tutto com'era.
+ */
+export async function salvaNotaAllenamento(uuid, { talkTest = null, nota = null } = {}) {
+  const id = String(uuid || "");
+  if (!id) throw new Error("Serve l'allenamento.");
+  if (talkTest && !TALK_TEST.some((t) => t.id === talkTest)) {
+    throw new Error("Talk-test non riconosciuto.");
+  }
+  const testo = nota ? String(nota).trim() : "";
+  // Niente talk-test e niente nota vuol dire che non c'è più niente da tenere:
+  // una riga vuota in archivio si comporta come una risposta data.
+  if (!talkTest && !testo) {
+    await db.del("noteWatch", id);
+    return null;
+  }
+  const rec = {
+    uuid: id,
+    talkTest: talkTest || null,
+    nota: testo || null,
+    aggiornatoIl: new Date().toISOString(),
+  };
+  await db.put("noteWatch", rec);
+  return rec;
 }
 
 /**

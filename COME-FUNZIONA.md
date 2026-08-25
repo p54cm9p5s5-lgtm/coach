@@ -487,7 +487,7 @@ Sette voci di base, nessuna capace di decidere da sola:
 | Voce | Peso | Bersaglio |
 |---|---|---|
 | Sonno | 22 | 8 h, **più l'ora in cui vai a letto** |
-| Allenamento | 22 | completezza della seduta chiusa |
+| Allenamento | 22 | completezza della seduta chiusa, o 100 se hai risposto il talk-test su un allenamento dell'orologio |
 | Fumo | 20 | 0 sigarette = pieno, 10 = zero |
 | Movimento | 12 | 1000 kcal attive |
 | Passi | 10 | 10.000 |
@@ -675,8 +675,10 @@ una via obbligata per correggere un errore.
 
 Da quando i dati arrivano dall'esportazione di Salute, ogni sessione avviata
 sull'Apple Watch entra nell'app per conto suo: le camminate, la sessione di
-pesi, tutto. Stanno in **Home → Watch** — le ultime tre, e da lì l'elenco
-completo, uno dietro l'altro dal più recente.
+pesi, tutto. Hanno una **sezione loro nella barra in basso, «Allenamenti»**, che
+si apre sulla settimana in corso — quanti allenamenti, quanto tempo, chilocalorie
+e chilometri, e sette barrette che dicono quanto ti sei mosso ogni giorno — e
+prosegue con l'elenco completo raggruppato settimana per settimana.
 
 Il dettaglio è quello che l'orologio mostra a te, con gli stessi numeri e gli
 stessi colori: durata, chilocalorie attive e totali, media e massimo del
@@ -727,9 +729,26 @@ letti **accanto** al log della seduta e non al posto suo: un allenamento di forz
 compare in tutti e due, qui come lo ha visto l'orologio e là come è stato
 eseguito.
 
-**Non entrano in nessun punteggio**: né in quello della seduta, né in quello
-Salute, né nelle proposte di progressione. Sono l'osservazione di quello che è
-successo, non la misura di quanto hai seguito il programma.
+**I numeri dell'orologio non entrano in nessun punteggio**: né in quello della
+seduta, né in quello Salute, né nelle proposte di progressione. Sono
+l'osservazione di quello che è successo, non la misura di quanto hai seguito il
+programma.
+
+**Il talk-test invece pesa, ed è l'unica cosa qui dentro che scrivi tu.** Sotto
+ogni allenamento ci sono tre risposte alla domanda «riuscivi a parlare?» — *sì,
+comodo* · *sì, col fiatone* · *no* — più una nota libera. È la sola misura di
+intensità che non esce da un sensore, ed è quella che il coach legge: nella
+tabella del pacchetto diventa una colonna in più, e le note scritte a mano
+arrivano per esteso sotto la tabella. Una giornata con un allenamento a cui hai
+risposto **vale come giornata di allenamento nel punteggio Salute**, piena;
+senza risposta resta fuori dal conto invece di valere zero, perché l'orologio
+dice che ti sei mosso, non a che intensità.
+
+La sezione mette in cima quelli degli ultimi sette giorni ancora senza risposta,
+con le tre pastiglie lì accanto: il talk-test lo ricordi per un giorno o due, non
+per un mese. Ritoccare la risposta già data la toglie. Talk-test e note stanno in
+un **archivio a parte**: rifare l'importazione da Salute riscrive i numeri
+dell'orologio ma non tocca quello che hai scritto tu, ed entrano nei backup.
 
 ## 10. Il conteggio delle sigarette
 
@@ -841,16 +860,22 @@ si può leggere in tre modi diversi
 - **Mobilità**: fatta o saltata, quando quel giorno ne prevede una
 - **Dati salute**: stato delle finestre a 3 settimane e la tabella giorno per
   giorno con movimento, percentuale sull'obiettivo, passi e note
-- **Extra — attività fuori scheda** (sezione sua nella barra in basso): corse,
-  camminate, bici, nuoto. Data,
-  tipo, durata, km, ritmo, FC media e massima, kcal attive e totali, e il
-  **talk-test** (frasi intere comode / frasi intere con fiatone / a fatica).
-  Non sono esercizi tracciati — niente carico, tecnica o RPE — e nessun giorno
-  le prevede, quindi non farle non toglie niente. Ma una giornata con
-  un'attività registrata vale come giornata di allenamento nel **punteggio
-  Salute**, e vale pieno: solo però se il talk-test è stato risposto, altrimenti
-  resta fuori dal conto invece di valere zero. Dove c'è anche una seduta vera
-  comanda il punteggio della seduta, che dice di più
+- **Il talk-test sugli allenamenti dell'orologio** (sezione «Allenamenti» nella
+  barra in basso, dove prima c'era «Extra»): *frasi intere comode / frasi intere
+  con fiatone / a fatica*, più una nota scritta a mano. È l'unica colonna della
+  tabella del Watch che l'orologio non misura — la scrivi tu, e dice a che
+  intensità stavi andando davvero. Una giornata con un allenamento a cui hai
+  risposto il talk-test vale come giornata di allenamento nel **punteggio
+  Salute**, e vale pieno; senza risposta resta fuori dal conto invece di valere
+  zero. Dove c'è anche una seduta vera comanda il punteggio della seduta, che
+  dice di più.
+
+  Prima queste attività si registravano una seconda volta a mano, nella sezione
+  «Extra»: la stessa camminata che l'orologio aveva già scritto da solo, con
+  durata, km e battito da ricopiare. Adesso la camminata c'è già, e sopra ci
+  metti la sola cosa che mancava. Le righe scritte a mano prima del cambio
+  restano in archivio finché non le butti — la sezione Allenamenti le mostra e
+  le elimina in blocco, dicendo prima quali giornate perdono il punteggio
 - **Allenamenti letti dall'Apple Watch** — vedi §9-bis. Degli ultimi 7 giorni:
   data, ora, tipo, durata, km, kcal attive e totali, FC media e massima, sforzo.
   L'app **non dice cos'era** ognuno — se la seduta, il cardio che le va dietro o

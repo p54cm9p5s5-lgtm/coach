@@ -76,7 +76,7 @@ resta nella conversazione con Claude.
 - Struttura: liste raggruppate in stile Impostazioni, `border-radius` 10px,
   separatori sottili, header grandi (Large Title) che si contraggono allo scroll.
 - Navigazione: **tab bar in basso, 6 voci** — Home · Oggi · Salute · Fumo ·
-  Acqua · Extra. Fumo e Acqua compaiono solo per chi le dichiara nel brief:
+  Acqua · Allenamenti. Fumo e Acqua compaiono solo per chi le dichiara nel brief:
   chi non conta le sigarette non vede la scheda, e viceversa per l'acqua, quindi
   in pratica sono cinque. **Corpo e Storico si aprono da dentro Salute**, in
   fondo alla schermata: sono due letture dei dati, non due posti dove si
