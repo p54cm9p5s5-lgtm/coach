@@ -4,7 +4,7 @@
 const DB_NAME = "coach";
 // Sale solo quando si aggiunge un archivio: l'aggiornamento qui sotto crea
 // quello che manca e non tocca niente di quello che c'è già.
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 /** store -> { keyPath, indexes: { nome: keyPath } } */
 export const SCHEMA = {
@@ -34,6 +34,13 @@ export const SCHEMA = {
   // Attività fuori scheda: una corsa, una camminata, una nuotata. Più d'una
   // nello stesso giorno è normale, quindi la chiave è la riga e non la data.
   extra: { keyPath: "id", indexes: { data: "data" } },
+  // Le copertine dei video, scaricate una volta sola e tenute qui.
+  //
+  // Non sono un tuo dato: sono immagini pubbliche di YouTube. Stanno in un
+  // archivio a parte per due motivi — restano fuori dai backup (peserebbero
+  // più di tutto il resto messo insieme) e si possono buttare in blocco senza
+  // toccare niente di tuo. Chiave: l'id del video.
+  copertine: { keyPath: "id" },
 };
 
 let dbPromise = null;

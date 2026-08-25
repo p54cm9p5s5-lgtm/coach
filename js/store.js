@@ -93,6 +93,70 @@ export async function riprovaProtocollo() {
   return Boolean(RISCALDAMENTO);
 }
 
+/* ---------------------------------------------------------------------------
+   Le copertine dei video.
+
+   Prima erano disegnate dall'app, per non far partire una richiesta a Google
+   ogni volta che una scheda esercizio compariva a schermo. Il risultato però
+   era un rettangolo nero: la copertina vera dice cosa stai per guardare, e in
+   palestra serve.
+
+   La via di mezzo: si scarica **una volta sola per video** e si tiene qui. Da
+   allora in poi zero richieste, e la copertina c'è anche senza rete — che è
+   poi il caso in cui il rettangolo nero dava più fastidio. Google vede una
+   richiesta per video, non una per occhiata.
+--------------------------------------------------------------------------- */
+
+/** La copertina già scaricata, o null. */
+export async function copertinaSalvata(idVideo) {
+  if (!idVideo) return null;
+  const r = await db.get("copertine", String(idVideo));
+  return r?.immagine || null;
+}
+
+/**
+ * Scarica la copertina e la tiene. Torna il data URL, oppure null se la rete
+ * non c'è o YouTube non la dà: in quel caso resta la copertina disegnata.
+ */
+export async function scaricaCopertina(idVideo) {
+  const id = String(idVideo || "");
+  if (!id) return null;
+  const gia = await copertinaSalvata(id);
+  if (gia) return gia;
+  // `hqdefault` esiste per ogni video ed è leggera (dieci-venti kilobyte);
+  // `maxresdefault` non c'è sempre e pesa dieci volte tanto.
+  const url = `https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`;
+  try {
+    const r = await fetch(url, { mode: "cors", cache: "force-cache" });
+    if (!r.ok) return null;
+    const blob = await r.blob();
+    if (!blob.size || !/^image\//.test(blob.type)) return null;
+    const immagine = await new Promise((ok, no) => {
+      const lettore = new FileReader();
+      lettore.onload = () => ok(String(lettore.result));
+      lettore.onerror = () => no(lettore.error);
+      lettore.readAsDataURL(blob);
+    });
+    await db.put("copertine", { id, immagine, presaIl: new Date().toISOString() });
+    return immagine;
+  } catch {
+    // Offline, o YouTube che non risponde: non è un errore da mostrare.
+    return null;
+  }
+}
+
+/** Quante copertine sono state tenute, e quanto pesano. Per le Impostazioni. */
+export async function pesoCopertine() {
+  const tutte = await db.all("copertine");
+  const byte = tutte.reduce((t, x) => t + Math.round((String(x.immagine || "").length * 3) / 4), 0);
+  return { quante: tutte.length, byte };
+}
+
+/** Le butta via tutte: si riscaricano da sole quando servono. */
+export async function svuotaCopertine() {
+  await db.clearStore("copertine");
+}
+
 /** Se quel passaggio ha un video scelto a mano, e non quello del protocollo. */
 export const videoPassoPersonalizzato = (nome) => Boolean(VIDEO_PASSI[String(nome || "").trim()]);
 
@@ -3550,7 +3614,7 @@ export async function snapshotAutomatico(motivo = "") {
   // Le foto non entrano nella copia interna: prima venivano lette tutte a
   // piena risoluzione per essere buttate via subito dopo, a ogni fine
   // allenamento e a ogni import.
-  const dump = await db.esportaTutto({ salta: ["foto"] });
+  const dump = await db.esportaTutto({ salta: ["foto", "copertine"] });
   dump.motivo = motivo;
   dump.parziale = ["foto"];
   dump.dati.foto = [];
@@ -3586,7 +3650,10 @@ export async function snapshotSalvato() {
  * mai salvato, ed è chi lo salva a poterlo confermare.
  */
 export async function esportaCompleto() {
-  const dump = await db.esportaTutto();
+  // Le copertine dei video non sono tue: sono immagini pubbliche di YouTube,
+  // riscaricabili in un istante. Dentro il backup peserebbero più di tutti i
+  // dati veri messi insieme, e ripristinarle non serve a niente.
+  const dump = await db.esportaTutto({ salta: ["copertine"] });
   dump.motivo = "esportazione manuale";
   return dump;
 }

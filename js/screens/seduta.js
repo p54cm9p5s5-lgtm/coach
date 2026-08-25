@@ -1883,17 +1883,18 @@ function riquadroVideo(def) {
     );
   };
 
-  // La copertina si disegna qui dentro, non si scarica.
+  // La copertina vera del video, scaricata una volta sola.
   //
-  // Prima era l'immagine di anteprima di YouTube (`i.ytimg.com`), e partiva da
-  // sola appena l'esercizio compariva a schermo: senza toccare niente, il
-  // telefono diceva a Google il tuo indirizzo e quale esercizio stavi facendo,
-  // ogni volta. Il player era già fatto per non farlo — «nocookie» e solo su
-  // richiesta — ma la copertina lo tradiva, e in fondo alle Impostazioni c'è
-  // scritto che da qui non esce niente.
+  // Per un periodo è stata disegnata dall'app: l'anteprima di YouTube parte da
+  // `i.ytimg.com`, e caricarla a ogni scheda voleva dire dire a Google, ogni
+  // volta, quale esercizio stavi facendo. Ma un rettangolo nero non dice cosa
+  // stai per guardare, e in palestra quella miniatura serve.
   //
-  // Disegnata costa zero, non dipende dalla rete (offline l'anteprima non
-  // arrivava comunque) e dice più di un fotogramma: cosa stai per guardare.
+  // La via di mezzo: si scarica **una volta per video** e si tiene
+  // nell'archivio (`store.scaricaCopertina`). Da lì in poi zero richieste, e la
+  // copertina c'è anche senza rete — che è il caso in cui il rettangolo nero
+  // dava più fastidio. Finché non arriva, e se non arriva mai, resta la
+  // copertina disegnata con su scritto dove va a prenderlo.
   const verticale = Boolean(def.video?.verticale);
   // Titolo e canale stanno già nella riga qui sotto, insieme a «Cambia»:
   // ripeterli qui sopra era la stessa cosa scritta due volte a due centimetri
@@ -1907,6 +1908,19 @@ function riquadroVideo(def) {
     copertina,
     h("span.play", h("span", "▶"))
   );
+
+  // La miniatura arriva quando arriva: se il riquadro nel frattempo è stato
+  // sostituito (esercizio cambiato, player aperto) non si tocca più niente.
+  store
+    .scaricaCopertina(id)
+    .then((immagine) => {
+      if (!immagine || !copertina.isConnected) return;
+      copertina.style.backgroundImage = `url("${immagine}")`;
+      copertina.classList.add("con-foto");
+    })
+    .catch(() => {
+      /* resta quella disegnata */
+    });
 
   box.append(
     riquadro,

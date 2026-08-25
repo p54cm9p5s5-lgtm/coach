@@ -1,4 +1,4 @@
-import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, aggiungi, toast } from "../ui.js";
+import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, giorniTra, aggiungi, toast } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
@@ -19,54 +19,82 @@ async function schedaSigarette({ conPeriodo, oggiIso }) {
   const primoFumo = await store.fumoContatoDal();
   if (!primoFumo) return null;
   const conteggi = await store.conteggioFumo();
-  // Il massimo non è più un numero fisso: scende ogni volta che tocchi un nuovo
-  // minimo e da lì non risale. Quindi ogni giorno va giudicato con la soglia che
-  // aveva quel giorno, non con quella di oggi, altrimenti il grafico riscrive il
-  // passato ogni volta che scendi.
-  const { limiti, corrente: limiteDomani, partenza } = await store.limitiFumo(oggiIso);
-  const sogliaDi = (g) => limiti.get(g) ?? partenza;
-  const tollerate = sogliaDi(oggiIso);
-  const fFumo = conPeriodo();
-  // Dal giorno in cui hai cominciato a contare in poi, «nessuna riga» vuol
-  // dire zero: è un dato, non un buco. Prima di quel giorno il conteggio non
-  // esisteva e il grafico non deve inventarlo.
-  const daFumo = fFumo.dentro({ data: primoFumo }) ? primoFumo : inizioPeriodo(fFumo.periodo, oggiIso) || primoFumo;
-  const serieFumo = [];
-  const passo = (iso, n) => {
-    const d = new Date(iso + "T00:00:00");
-    d.setDate(d.getDate() + n);
-    const p = (x) => String(x).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-  };
-  for (let g = daFumo > primoFumo ? daFumo : primoFumo; g <= oggiIso; g = passo(g, 1)) {
-    serieFumo.push({ data: g, presente: true, sigarette: conteggi.get(g) || 0 });
-  }
-  if (!serieFumo.length) return null;
-  const valori = serieFumo.map((x) => x.sigarette);
-  const mediaFumo = Math.round((valori.reduce((a, b) => a + b, 0) / valori.length) * 10) / 10;
-  return schedaGrafico({
-    selettore: fFumo.selettore,
-    titolo: "Sigarette",
-    valore: num(mediaFumo, 1),
-    unita: "al giorno",
-    nota: `${serieFumo.length} ${serieFumo.length === 1 ? "giorno" : "giorni"} · ${fFumo.etichetta}`,
-    grafico: graficoLinea({
-      punti: serieFumo.map((x) => ({
-        data: x.data,
-        valore: x.sigarette,
-        evidenza: x.sigarette === 0,
-        nota:
-          x.sigarette > sogliaDi(x.data)
-            ? `${x.sigarette - sogliaDi(x.data)} oltre il massimo di quel giorno (${sogliaDi(x.data)})`
-            : `massimo di quel giorno ${sogliaDi(x.data)}`,
-      })),
-      obiettivo: tollerate,
-      etichettaObiettivo: `massimo oggi ${tollerate}`,
-      formatta: (v) => `${Math.round(v)} ${Math.round(v) === 1 ? "sigaretta" : "sigarette"}`,
-      invito: "Tocca un giorno per vedere quante",
-    }),
-    piede: `Da quando conti (${dataBreve(primoFumo)}). I punti più grandi sono i giorni a zero. Il massimo scende da solo: quando tocchi un nuovo minimo, dal giorno dopo quello diventa il tetto e non risale più. Oggi il massimo è ${tollerate}, domani ${limiteDomani}. Oltre il massimo la giornata non supera 50.`,
-  });
+  const { corrente: limiteDomani, limiti, partenza } = await store.limitiFumo(oggiIso);
+  const tollerate = limiti.get(oggiIso) ?? partenza;
+
+  // La media non serviva a niente.
+  //
+  // «0,3 sigarette al giorno» è un numero che non esiste — non si fuma un
+  // terzo di sigaretta — e soprattutto racconta il passato quando quello che
+  // conta è una cosa sola: da quanto non fumi. Il grafico a linee, con una
+  // riga piatta sullo zero, diceva ancora meno. Qui adesso c'è la striscia:
+  // quanti giorni sono, e quanto manca al prossimo traguardo.
+  const oggiFumate = conteggi.get(oggiIso) || 0;
+  const ultimaConFumo = [...conteggi.entries()]
+    .filter(([, n]) => n > 0)
+    .map(([data]) => data)
+    .sort()
+    .pop() || null;
+  const giorniPuliti = ultimaConFumo
+    ? giorniTra(ultimaConFumo, oggiIso)
+    : giorniTra(primoFumo, oggiIso) + 1;
+
+  // I traguardi servono a dare un fondo al cerchio: senza, un anello che conta
+  // giorni non saprebbe mai quando è «pieno». Sono le tappe che si usano di
+  // solito quando si smette, e quando le superi tutte il cerchio conta gli anni.
+  const TRAGUARDI = [3, 7, 14, 30, 60, 90, 180, 365];
+  const prossimo = TRAGUARDI.find((t) => t > giorniPuliti) || Math.ceil((giorniPuliti + 1) / 365) * 365;
+  const quota = Math.max(0, Math.min(100, Math.round((giorniPuliti / prossimo) * 100)));
+
+  const titoloGrande = oggiFumate
+    ? `${oggiFumate} ${oggiFumate === 1 ? "sigaretta" : "sigarette"} oggi`
+    : giorniPuliti === 0
+      ? "Nessuna sigaretta oggi"
+      : `Nessuna sigaretta fumata da ${giorniPuliti} ${giorniPuliti === 1 ? "giorno" : "giorni"}`;
+
+  return h(
+    "div.group",
+    h("h2", "Sigarette"),
+    h(
+      "div",
+      { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 16px" },
+      h(
+        "p",
+        { style: "margin:0 0 14px;text-align:center;font-size:17px;font-weight:600;letter-spacing:-0.2px" },
+        titoloGrande
+      ),
+      anello(oggiFumate ? 0 : quota, {
+        dimensione: 168,
+        etichetta: giorniPuliti === 1 ? "giorno pulito" : "giorni puliti",
+        mostra: String(giorniPuliti),
+        // Sempre il colore d'accento: una striscia non è un voto, e vedere il
+        // primo giorno colorato di rosso «da rivedere» sarebbe il contrario di
+        // quello che serve.
+        colore: oggiFumate ? "var(--orange)" : "var(--accent)",
+        // Il sottotitolo sta FUORI dall'anello: dentro, una frase come
+        // «prossimo traguardo: 14 giorni» finiva sotto l'arco e si leggeva a
+        // metà sugli schermi stretti.
+      }),
+      h(
+        "p",
+        { style: "margin:12px 0 0;text-align:center;font-size:13px;color:var(--label-secondary)" },
+        oggiFumate
+          ? "La striscia riparte da domani."
+          : `Prossimo traguardo: ${prossimo} ${prossimo === 1 ? "giorno" : "giorni"}.`
+      ),
+      h(
+        "p",
+        { style: "margin:2px 0 0;text-align:center;font-size:13px;color:var(--label-tertiary)" },
+        ultimaConFumo
+          ? `Ultima sigaretta segnata il ${dataBreve(ultimaConFumo)}.`
+          : `Nessuna sigaretta da quando conti, dal ${dataBreve(primoFumo)}.`
+      )
+    ),
+    h(
+      "p.footnote",
+      `Il massimo scende da solo: quando tocchi un nuovo minimo, dal giorno dopo quello diventa il tetto e non risale più. Oggi il massimo è ${tollerate}, domani ${limiteDomani}. Oltre il massimo la giornata non supera 50. Le sigarette di ogni giorno restano nella scheda Fumo, una per una.`
+    )
+  );
 }
 
 export async function render({ ridisegna }) {
@@ -226,9 +254,12 @@ export async function render({ ridisegna }) {
     const voci = [];
     for (const sed of chiuse) {
       const comp = await store.completezzaSeduta(sed.id);
-      voci.push({ sed, totale: comp?.totale ?? null });
+      voci.push({ sed, totale: comp?.totale ?? null, inProgramma: Boolean(store.giornoSplit(sed.tipoId)) });
     }
-    const validi = voci.map((v) => v.totale).filter((x) => x != null);
+    // Il numero grande e l'elenco sotto devono contare le stesse cose: se la
+    // media comprendesse anche i giorni non più in programma, la scheda
+    // direbbe due cose diverse a due centimetri di distanza.
+    const validi = voci.filter((v) => v.totale != null && v.inProgramma).map((v) => v.totale);
     const mediaComp = validi.length
       ? Math.round(validi.reduce((a, b) => a + b, 0) / validi.length)
       : null;
@@ -241,9 +272,20 @@ export async function render({ ridisegna }) {
     // Il raggruppamento è per `tipoId`, non per nome: rinominare un giorno nel
     // brief non deve spezzare in due lo stesso allenamento. Il nome mostrato è
     // il più recente, così si legge come lo chiami adesso.
+    //
+    // E solo i giorni del programma **in vigore**: quando lo split cambia, le
+    // medie dei giorni vecchi restano lì a occupare la scheda e a confondere il
+    // confronto — un «Gambe/Core» chiuso a luglio non dice niente su come sta
+    // andando adesso. Le sedute non si perdono: restano nello Storico, nel
+    // pacchetto e nel loro punteggio congelato. Qui si guarda il presente.
     const gruppi = new Map();
+    let fuoriProgramma = 0;
     for (const v of voci) {
       if (v.totale == null) continue;
+      if (!v.inProgramma) {
+        fuoriProgramma++;
+        continue;
+      }
       const chiave = v.sed.tipoId || v.sed.tipoNome;
       if (!gruppi.has(chiave)) gruppi.set(chiave, { nome: v.sed.tipoNome, totali: [] });
       gruppi.get(chiave).totali.push(v.totale);
@@ -312,7 +354,10 @@ export async function render({ ridisegna }) {
         ),
         h(
           "p.footnote",
-          "Quanto ogni tipo di allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching. Ogni riga è la media delle sedute di quel tipo nel periodo scelto — il singolo allenamento si apre dallo Storico."
+          "Quanto ogni tipo di allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching. Ogni riga è la media delle sedute di quel tipo nel periodo scelto — il singolo allenamento si apre dallo Storico." +
+            (fuoriProgramma
+              ? ` Qui ci sono solo i giorni del programma in vigore: ${fuoriProgramma} ${fuoriProgramma === 1 ? "allenamento di un giorno che il brief non prevede più resta" : "allenamenti di giorni che il brief non prevede più restano"} nello Storico, con il ${fuoriProgramma === 1 ? "suo punteggio" : "loro punteggio"}, ma non ${fuoriProgramma === 1 ? "entra" : "entrano"} in queste medie.`
+              : "")
         )
       )
     );
@@ -726,14 +771,19 @@ export async function render({ ridisegna }) {
 // ---------- import ----------
 
 async function aggiorna(ridisegna) {
+  // Il tasto del comando rapido era stato tolto perché su una versione di iOS
+  // le azioni di Salute dentro Comandi Rapidi restavano appese, e un tasto che
+  // apre una cosa che non risponde è peggio di nessun tasto. Dopo
+  // l'aggiornamento del telefono (25/08) «Coach Salute» funziona di nuovo, e il
+  // tasto torna — senza togliere niente: le altre due strade restano tutte e
+  // due, gli appunti e il file.
   return apriImport(ridisegna, {
     titolo: "Aggiorna dati salute",
     testo:
-      "Scegli l'esportazione di Salute (profilo → «Esporta tutti i dati», poi estrai lo zip in File) " +
-      "oppure incolla un pacchetto già pronto.",
-    // Nessun comando rapido: le azioni di Salute dentro Comandi Rapidi restano
-    // appese, e un tasto che apre una cosa che non risponde è peggio che
-    // nessun tasto. Il calendario, che invece funziona, il suo ce l'ha ancora.
+      "«Coach Salute» legge gli ultimi 30 giorni e li copia negli appunti: poi torna qui e incolla. " +
+      "Se preferisci, puoi anche incollare un pacchetto già copiato o scegliere un file — " +
+      "l'esportazione completa di Salute (profilo → «Esporta tutti i dati», zip estratto in File).",
+    shortcut: "Coach Salute",
   });
 }
 

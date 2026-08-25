@@ -253,6 +253,12 @@ export async function render({ vaiA, ridisegna }) {
   // Conteggi a vista: quando ci si chiede «è rimasto dentro qualcosa di una
   // prova?», questa riga risponde senza aprire un backup.
   const conta = await store.conteggioArchivio();
+  const copertine = await store.pesoCopertine();
+  // Sotto il mega «0,0 MB» sembra un guasto: si scrive in kB.
+  const quantoPesa = (byte) =>
+    byte >= 1024 * 1024
+      ? `${(byte / 1024 / 1024).toFixed(1).replace(".", ",")} MB`
+      : `${Math.max(1, Math.round(byte / 1024))} kB`;
   aggiungi(wrap,
     h(
       "div.group",
@@ -266,6 +272,31 @@ export async function render({ vaiA, ridisegna }) {
         h("div.row", h("div.main", h("span.title", "Giorni di salute"), h("span.sub", `${conta.notti} ${conta.notti === 1 ? "notte" : "notti"} di sonno`)), h("span.value", String(conta.giorniSalute))),
         conta.aperti
           ? h("div.row", h("div.main", h("span.title", "Allenamenti aperti e mai chiusi")), h("span.pill.warn", String(conta.aperti)))
+          : null,
+        // Le uniche cose in archivio che non sono tue: si riscaricano da sole,
+        // quindi la riga serve solo a dire quanto occupano e a poterle buttare.
+        copertine.quante
+          ? h(
+              "button.row",
+              {
+                onclick: async () => {
+                  const ok = await chiedi({
+                    titolo: "Buttare le copertine dei video?",
+                    testo:
+                      `Sono ${copertine.quante} anteprime di YouTube, ${quantoPesa(copertine.byte)}.\n\n` +
+                      "Non sono dati tuoi e si riscaricano da sole la prossima volta che l'esercizio ti compare davanti — ma finché non le riscarichi, senza rete resta il rettangolo disegnato.",
+                    opzioni: [{ etichetta: "Butta le copertine", valore: "butta", stile: "destructive" }],
+                  });
+                  if (ok !== "butta") return;
+                  await store.svuotaCopertine();
+                  toast("Copertine buttate.");
+                  await ridisegna();
+                },
+              },
+              h("div.main", h("span.title", "Copertine dei video"), h("span.sub", "anteprime di YouTube, non dati tuoi")),
+              h("span.value", quantoPesa(copertine.byte)),
+              h("span.chevron", "›")
+            )
           : null
       ),
       h(

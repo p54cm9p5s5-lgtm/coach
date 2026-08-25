@@ -786,7 +786,17 @@ export function coloreDaPunteggio(totale) {
 }
 
 /** Anello grande con il numero al centro. */
-export function anello(totale, { etichetta = "Completezza", dimensione = 176, sottotitolo = null } = {}) {
+/**
+ * L'anello del punteggio.
+ *
+ * `mostra` e `colore` servono a chi non sta disegnando un punteggio: la scheda
+ * delle sigarette usa l'anello per contare i **giorni senza fumare**, dove il
+ * numero al centro non è la quota del cerchio (i giorni) e il colore non deve
+ * seguire la scala dei voti — un giorno pulito su sette non è «rosso, da
+ * rivedere», è l'inizio di una striscia. Chi passa solo il totale non vede
+ * nessuna differenza.
+ */
+export function anello(totale, { etichetta = "Completezza", dimensione = 176, sottotitolo = null, mostra = null, colore: coloreForzato = null } = {}) {
   const R = 76;
   const CIRC = 2 * Math.PI * R;
   const spessore = Math.max(9, Math.round(dimensione / 18));
@@ -799,19 +809,18 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
   });
   // Tre livelli come le barrette della scomposizione: con due soli colori,
   // «sufficiente» e «ottimo» erano indistinguibili a colpo d'occhio.
-  const colore = coloreDaPunteggio(totale);
+  const colore = coloreForzato || coloreDaPunteggio(totale);
   svg.append(
     el("circle", { cx: 88, cy: 88, r: R, fill: "none", stroke: "currentColor", "stroke-width": spessore, opacity: 0.14 }),
-    coloraPunteggio(
-      el("circle", {
+    (() => {
+      const arco = el("circle", {
         cx: 88, cy: 88, r: R, fill: "none", stroke: colore, "stroke-width": spessore,
         "stroke-linecap": "round", "stroke-dasharray": CIRC,
         "stroke-dashoffset": CIRC * (1 - limita(totale / 100)),
         style: "transition:stroke-dashoffset .45s ease",
-      }),
-      totale,
-      "stroke"
-    )
+      });
+      return coloreForzato ? arco : coloraPunteggio(arco, totale, "stroke");
+    })()
   );
 
   const scala = dimensione / 176;
@@ -825,16 +834,16 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
         style:
           "position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px",
       },
-      coloraPunteggio(
-        h(
+      (() => {
+        const numero = h(
           "p",
           {
             style: `margin:0;font-size:${Math.round(44 * scala)}px;font-weight:700;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1;color:${colore}`,
           },
-          String(totale)
-        ),
-        totale
-      ),
+          mostra != null ? String(mostra) : String(totale)
+        );
+        return coloreForzato ? numero : coloraPunteggio(numero, totale);
+      })(),
       h(
         "p",
         { style: `margin:0;font-size:${Math.max(9, Math.round(10 * scala))}px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--label-secondary)` },

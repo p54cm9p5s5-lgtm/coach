@@ -1088,8 +1088,9 @@ textarea.note {
   border-radius: 12px;
 }
 
-/* La copertina disegnata: prende il posto dell'anteprima scaricata da YouTube,
-   che partiva da sola e raccontava a Google cosa stavi allenando. */
+/* La copertina. È disegnata finché la miniatura vera non è arrivata: si
+   scarica una volta per video e poi resta nell'archivio, quindi il fondo
+   disegnato si vede solo la primissima volta, o se la rete non c'è. */
 .video .copertina {
   position: absolute;
   inset: 0;
@@ -1108,6 +1109,15 @@ textarea.note {
   background: linear-gradient(160deg, #2a2a2e, #000);
 }
 
+/* Con la miniatura vera sotto, la scritta va protetta: bianco su una foto
+   qualsiasi non si legge. Una velatura scura solo in basso, dove sta il testo,
+   invece di offuscare tutta l'immagine. */
+.video .copertina.con-foto {
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 -64px 48px -24px rgba(0, 0, 0, 0.72);
+}
+
 /* Detto dove si decide di toccare: il player è l'unico punto in cui l'app
    contatta l'esterno, e chi tocca deve saperlo prima, non dopo. */
 .video .copertina .dove {
@@ -1116,6 +1126,8 @@ textarea.note {
   text-transform: uppercase;
   /* Chiaro sempre, per lo stesso motivo del fondo qui sopra. */
   color: rgba(255, 255, 255, 0.78);
+  /* Sopra la miniatura serve un'ombra, se no su un fotogramma chiaro sparisce. */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 .video img,

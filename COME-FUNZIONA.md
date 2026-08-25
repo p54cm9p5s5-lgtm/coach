@@ -996,21 +996,29 @@ Sono la parte che conta più delle funzioni.
 - **Non manda fuori dal telefono nessun tuo dato.** Allenamenti, misure, foto,
   sonno, sigarette: restano nell'archivio del telefono e non esistono altrove.
   Non c'è nessun server, nessun account, nessuna statistica raccolta.
-  L'unica richiesta che può uscire è il **player di YouTube**, e parte **solo se
-  tocchi il video**: fino a quel momento, aprire una scheda esercizio non produce
-  nessuna richiesta fuori dal telefono. La copertina del video è disegnata
-  dall'app e porta scritto «si apre su YouTube», così la scelta è tua e la fai
-  sapendo dove va a prendere il filmato.
+  Le uniche richieste che possono uscire riguardano i **video degli esercizi**, e
+  non portano fuori niente di tuo.
 
-  Prima non era così: la copertina era l'anteprima di YouTube e partiva da sola
-  appena l'esercizio compariva a schermo. Non portava con sé niente di tuo, ma
-  bastava a dire a Google, a ogni serie, che da quell'indirizzo si stava facendo
-  quell'esercizio. Il player era già stato scelto nella versione «nocookie» e a
-  richiesta, proprio per non farlo: la copertina lo tradiva. Ora l'app tace
-  finché non sei tu a chiedere.
+  La prima è il **player di YouTube**, e parte **solo se tocchi il video**: fino a
+  quel momento il filmato non viene caricato, e il player è quello «nocookie».
 
-  Misurato aprendo tutte le schermate: **zero** richieste fuori dal telefono
-  (rifatto il 13/08/2026, dopo le correzioni).
+  La seconda è la **copertina del video**. La prima volta che un esercizio ti
+  compare davanti, l'app scarica la sua anteprima da `i.ytimg.com` — un'immagine
+  pubblica, uguale per chiunque guardi quel video — e **la tiene nell'archivio del
+  telefono**. Dalla seconda volta in poi non parte più niente: la copertina viene
+  presa da lì, anche senza rete. La richiesta dice a Google che qualcuno ha
+  chiesto l'anteprima di quel video, e nient'altro: non il tuo nome, non il tuo
+  archivio, non quante serie hai fatto. Sopra la copertina resta scritto «si apre
+  su YouTube», così sai sempre dove va a finire il tocco.
+
+  Per un periodo la copertina era invece un rettangolo disegnato dall'app, per non
+  far partire nemmeno quella richiesta. Il risultato però era uno schermo nero
+  davanti a un esercizio che non conosci, e la copertina vera serve proprio a
+  farti capire cosa stai per guardare: quel rettangolo è tornato a essere solo il
+  ripiego di quando la rete non c'è.
+
+  Le copertine **non entrano nei backup**: non sono roba tua, e si riscaricano da
+  sole. Da Impostazioni puoi vedere quanto pesano e buttarle via quando vuoi.
 
 ---
 
