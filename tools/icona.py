@@ -1,183 +1,112 @@
-#!/usr/bin/env python3
-"""Prepara l'icona dell'app da un'immagine PNG, senza dipendenze esterne.
+"""L'icona di Coach: l'anello del punteggio, disegnato a mano.
 
-Le icone iOS vanno a filo: niente margini, niente angoli arrotondati, niente
-trasparenza — la maschera la applica il sistema. Un'icona già smussata, messa
-dentro la maschera di iOS, mostra un doppio angolo.
+   Stessa grammatica della direzione «Referto»: fondo di carta calda, un arco
+   d'inchiostro, la traccia grigia sotto. Nessun degradé, nessuna ombra,
+   nessun rilievo — la stessa cosa che l'app mostra a schermo tutto il giorno.
 
-Qui il margine viene ritagliato e gli angoli arrotondati vengono riempiti
-estendendo il colore del pixel opaco più vicino sulla stessa riga: il risultato
-prolunga il verde e il nero fin dentro gli spigoli, invece di inventare un colore.
+   Niente librerie: si scrive il PNG a mano con zlib. Il cerchio si calcola
+   per-pixel con 4x4 campioni, così il bordo è morbido come quello di un SVG.
 """
+
+import math
 import struct
-import sys
 import zlib
-from pathlib import Path
+
+CARTA = (0xFA, 0xF9, 0xF6)
+INCHIOSTRO = (0x10, 0x11, 0x13)
+TRACCIA = (0xD9, 0xD6, 0xCD)
+
+# Quanto dell'anello è pieno: 85%, come il punteggio nelle schermate.
+# Non 100: l'app non finge mai di essere a posto.
+QUOTA = 0.85
+# Raggio e spessore in frazione del lato. Il margine tiene l'anello dentro la
+# «zona sicura» dell'80% che Android ritaglia sulle icone mascherate.
+RAGGIO = 0.315
+SPESSORE = 0.088
+SPESSORE_TRACCIA = 0.020
+CAMPIONI = 4
+
+# Il bilanciere è lo stesso disegno della scheda «Oggi» nella barra in basso:
+# cinque segmenti su una griglia 24x24. Dentro l'anello diventa il secondo
+# segno dell'app — la misura fuori, l'allenamento dentro.
+BILANCIERE = [(3, 9, 3, 15), (6, 7, 6, 17), (18, 7, 18, 17), (21, 9, 21, 15), (6, 12, 18, 12)]
+BILANCIERE_LATO = 0.455   # frazione del lato dell'icona
+BILANCIERE_TRATTO = 2.6   # nella griglia 24x24
 
 
-def leggi_png(percorso):
-    dati = Path(percorso).read_bytes()
-    if dati[:8] != b"\x89PNG\r\n\x1a\n":
-        raise SystemExit("Non è un file PNG.")
-
-    i, idat, info = 8, b"", None
-    while i < len(dati):
-        (lung,) = struct.unpack(">I", dati[i : i + 4])
-        tag = dati[i + 4 : i + 8]
-        corpo = dati[i + 8 : i + 8 + lung]
-        if tag == b"IHDR":
-            larg, alt, prof, tipo, comp, filtro, interlacciato = struct.unpack(">IIBBBBB", corpo)
-            info = (larg, alt, prof, tipo, interlacciato)
-        elif tag == b"IDAT":
-            idat += corpo
-        elif tag == b"IEND":
-            break
-        i += 12 + lung
-
-    larg, alt, prof, tipo, interlacciato = info
-    if prof != 8 or interlacciato or tipo not in (2, 6):
-        raise SystemExit(f"PNG non gestito (profondità {prof}, tipo {tipo}, interlacciato {interlacciato}).")
-
-    canali = 4 if tipo == 6 else 3
-    grezzo = zlib.decompress(idat)
-    passo = larg * canali
-
-    pixel = bytearray(alt * passo)
-    precedente = bytearray(passo)
-    pos = 0
-    for y in range(alt):
-        filtro = grezzo[pos]
-        pos += 1
-        riga = bytearray(grezzo[pos : pos + passo])
-        pos += passo
-        for x in range(passo):
-            a = riga[x - canali] if x >= canali else 0
-            b = precedente[x]
-            c = precedente[x - canali] if x >= canali else 0
-            if filtro == 1:
-                riga[x] = (riga[x] + a) & 0xFF
-            elif filtro == 2:
-                riga[x] = (riga[x] + b) & 0xFF
-            elif filtro == 3:
-                riga[x] = (riga[x] + (a + b) // 2) & 0xFF
-            elif filtro == 4:
-                p = a + b - c
-                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
-                pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
-                riga[x] = (riga[x] + pr) & 0xFF
-        pixel[y * passo : (y + 1) * passo] = riga
-        precedente = riga
-
-    return larg, alt, canali, pixel
+def dist_segmento(px, py, ax, ay, bx, by):
+    vx, vy = bx - ax, by - ay
+    lung2 = vx * vx + vy * vy
+    t = 0.0 if lung2 == 0 else max(0.0, min(1.0, ((px - ax) * vx + (py - ay) * vy) / lung2))
+    return math.hypot(px - (ax + t * vx), py - (ay + t * vy))
 
 
-def scrivi_png(percorso, larg, alt, rgb):
-    raw = b"".join(b"\x00" + bytes(rgb[y * larg * 3 : (y + 1) * larg * 3]) for y in range(alt))
+def colore_pixel(x, y, lato):
+    """Media dei campioni: carta, traccia o inchiostro."""
+    cx = cy = lato / 2
+    r = RAGGIO * lato
+    mezzo_arco = SPESSORE * lato / 2
+    mezza_traccia = SPESSORE_TRACCIA * lato / 2
+    acc = [0.0, 0.0, 0.0]
+    passo = 1.0 / CAMPIONI
+    for i in range(CAMPIONI):
+        for j in range(CAMPIONI):
+            px = x + (i + 0.5) * passo
+            py = y + (j + 0.5) * passo
+            dx, dy = px - cx, py - cy
+            d = math.hypot(dx, dy)
+            # L'angolo parte dalle 12 e gira in senso orario, come l'anello
+            # dell'app (che ruota di -90° e disegna in avanti).
+            ang = (math.degrees(math.atan2(dx, -dy))) % 360
+            dentro_arco = abs(d - r) <= mezzo_arco and ang <= QUOTA * 360
+            dentro_traccia = abs(d - r) <= mezza_traccia
+            # il bilanciere, riportato dalla griglia 24x24 al centro dell'icona
+            lato_g = BILANCIERE_LATO * lato
+            gx = (px - (cx - lato_g / 2)) * 24 / lato_g
+            gy = (py - (cy - lato_g / 2)) * 24 / lato_g
+            mezzo_tratto = BILANCIERE_TRATTO / 2
+            dentro_bilanciere = any(
+                dist_segmento(gx, gy, *seg) <= mezzo_tratto for seg in BILANCIERE
+            )
+            c = (
+                INCHIOSTRO
+                if (dentro_arco or dentro_bilanciere)
+                else (TRACCIA if dentro_traccia else CARTA)
+            )
+            for k in range(3):
+                acc[k] += c[k]
+    n = CAMPIONI * CAMPIONI
+    return tuple(int(round(v / n)) for v in acc)
 
-    def blocco(tag, corpo):
-        return struct.pack(">I", len(corpo)) + tag + corpo + struct.pack(">I", zlib.crc32(tag + corpo) & 0xFFFFFFFF)
 
-    out = b"\x89PNG\r\n\x1a\n"
-    out += blocco(b"IHDR", struct.pack(">IIBBBBB", larg, alt, 8, 2, 0, 0, 0))
-    out += blocco(b"IDAT", zlib.compress(raw, 9))
-    out += blocco(b"IEND", b"")
-    Path(percorso).write_bytes(out)
-
-
-def main():
-    sorgente = sys.argv[1]
-    destinazione = sys.argv[2] if len(sys.argv) > 2 else "icona-piena.png"
-
-    larg, alt, canali, pixel = leggi_png(sorgente)
-    print(f"origine: {larg}×{alt}, {canali} canali")
-
-    def campiona(x, y):
-        i = (y * larg + x) * canali
-        r, g, b = pixel[i], pixel[i + 1], pixel[i + 2]
-        a = pixel[i + 3] if canali == 4 else 255
-        return r, g, b, a
-
-    # Un pixel è "margine" se trasparente oppure quasi bianco.
-    def margine(x, y):
-        r, g, b, a = campiona(x, y)
-        return a < 24 or (r > 244 and g > 244 and b > 244)
-
-    ang = campiona(0, 0)
-    print(f"angolo in alto a sinistra: rgba{ang} → {'margine' if margine(0, 0) else 'contenuto'}")
-
-    # riquadro del contenuto
-    x0, y0, x1, y1 = larg, alt, -1, -1
-    for y in range(alt):
-        for x in range(larg):
-            if not margine(x, y):
-                if x < x0: x0 = x
-                if x > x1: x1 = x
-                if y < y0: y0 = y
-                if y > y1: y1 = y
-    print(f"contenuto: da ({x0},{y0}) a ({x1},{y1}) — {x1 - x0 + 1}×{y1 - y0 + 1}")
-
-    lato = min(x1 - x0 + 1, y1 - y0 + 1)
-    cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
-    sx, sy = cx - lato // 2, cy - lato // 2
-
-    # ritaglia e riempi gli angoli con il pixel opaco più vicino sulla riga
-    #
-    # Gli estremi opachi si calcolano PRIMA, per tutte le righe: una riga
-    # senza nessun pixel opaco — capita quando il ritaglio quadrato centrato
-    # prende una riga di margine sopra o sotto il contenuto — veniva riempita
-    # di nero, cioè esattamente il colore inventato che questo strumento dice
-    # di non voler mettere. Su un'icona iOS è una fascia nera sul bordo, ben
-    # visibile. Adesso quella riga prende i colori della riga opaca più
-    # vicina: si estende, non si inventa.
-    estremi = []
+def scrivi_png(percorso, lato):
+    righe = bytearray()
     for y in range(lato):
-        riga_src = sy + y
-        sinistra = None
-        destra = None
+        righe.append(0)  # filtro «nessuno»
         for x in range(lato):
-            if not margine(sx + x, riga_src):
-                if sinistra is None:
-                    sinistra = x
-                destra = x
-        estremi.append((sinistra, destra))
+            righe.extend(colore_pixel(x, y, lato))
 
-    def riga_con_contenuto(y):
-        """La riga più vicina a `y` che ha almeno un pixel opaco."""
-        if estremi[y][0] is not None:
-            return y
-        for d in range(1, lato):
-            for k in (y - d, y + d):
-                if 0 <= k < lato and estremi[k][0] is not None:
-                    return k
-        return None
+    def blocco(tipo, dati):
+        return (
+            struct.pack(">I", len(dati))
+            + tipo
+            + dati
+            + struct.pack(">I", zlib.crc32(tipo + dati) & 0xFFFFFFFF)
+        )
 
-    fuori = 0
-    righe_prestate = 0
-    out = bytearray(lato * lato * 3)
-    for y in range(lato):
-        sorgente_y = riga_con_contenuto(y)
-        if sorgente_y is None:
-            continue  # immagine tutta margine: non c'è niente da estendere
-        if sorgente_y != y:
-            righe_prestate += 1
-        riga_src = sy + sorgente_y
-        sinistra, destra = estremi[sorgente_y]
-        for x in range(lato):
-            if x < sinistra:
-                r, g, b, _ = campiona(sx + sinistra, riga_src); fuori += 1
-            elif x > destra:
-                r, g, b, _ = campiona(sx + destra, riga_src); fuori += 1
-            else:
-                r, g, b, _ = campiona(sx + x, riga_src)
-            i = (y * lato + x) * 3
-            out[i], out[i + 1], out[i + 2] = r, g, b
-
-    scrivi_png(destinazione, lato, lato, out)
-    print(
-        f"scritta {destinazione}: {lato}×{lato}, {fuori} pixel di bordo riempiti per estensione"
-        + (f", {righe_prestate} righe prese dalla riga vicina" if righe_prestate else "")
-    )
+    png = b"\x89PNG\r\n\x1a\n"
+    png += blocco(b"IHDR", struct.pack(">IIBBBBB", lato, lato, 8, 2, 0, 0, 0))
+    png += blocco(b"IDAT", zlib.compress(bytes(righe), 9))
+    png += blocco(b"IEND", b"")
+    with open(percorso, "wb") as f:
+        f.write(png)
+    return len(png)
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    cartella = sys.argv[1]
+    for lato in (60, 120, 180, 192, 512):
+        peso = scrivi_png(f"{cartella}/icon-{lato}.png", lato)
+        print(f"icon-{lato}.png  {peso // 1024} kB")
