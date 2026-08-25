@@ -750,7 +750,14 @@ dice che ti sei mosso, non a che intensità.
 
 Il talk-test sta **in fondo** alla scheda, dopo i numeri: quelli si leggono,
 questo si scrive, e le cose da fare vanno dopo quelle da guardare. Ritoccare la
-risposta già data la toglie. Talk-test e note stanno in
+risposta già data la toglie. In cima all'elenco compaiono le uscite degli ultimi
+sette giorni ancora senza risposta, con le tre pastiglie lì accanto: il
+talk-test lo ricordi per un giorno o due, non per un mese.
+
+**L'elenco è in bianco e nero, il dettaglio no.** I colori dell'orologio —
+calorie verdi, battito rosso, sforzo viola, durata gialla — stanno dove sono un
+dato misurato, cioè dentro la scheda di un allenamento. Nell'elenco, dove sono
+nomi e somme fatte dall'app, tutto è inchiostro. Talk-test e note stanno in
 un **archivio a parte**: rifare l'importazione da Salute riscrive i numeri
 dell'orologio ma non tocca quello che hai scritto tu, ed entrano nei backup.
 

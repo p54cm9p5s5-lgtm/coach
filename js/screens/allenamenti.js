@@ -41,32 +41,23 @@ const TIPI = {
 
 export const nomeTipo = (t) => TIPI[t] || t || "Allenamento";
 
-/* Un colore per famiglia di attività, non uno per tipo: cinque tinte si
-   riconoscono a colpo d'occhio, quindici diventano un arcobaleno in cui non si
-   distingue più niente. Sono le stesse variabili del resto dell'app, quindi il
-   tema chiaro e «nero e lime» restano coerenti da soli. */
-const COLORI = {
-  Walking: "var(--accent)",
-  Hiking: "var(--accent)",
-  Running: "var(--battito)",
-  Cycling: "var(--giallo)",
-  IndoorCycling: "var(--giallo)",
-  Rowing: "var(--giallo)",
-  Elliptical: "var(--giallo)",
-  StairClimbing: "var(--giallo)",
-  Swimming: "var(--sforzo)",
-  Yoga: "var(--sforzo)",
-  Pilates: "var(--sforzo)",
-  FunctionalStrengthTraining: "var(--orange)",
-  TraditionalStrengthTraining: "var(--orange)",
-  CoreTraining: "var(--orange)",
-  HighIntensityIntervalTraining: "var(--orange)",
-};
-const coloreTipo = (t) => COLORI[t] || "var(--label-tertiary)";
+/* L'elenco è in bianco e nero, e non è una rinuncia.
 
-/* Il talk-test ha tre risposte e tre colori: bassa, media, alta. Sono gli
-   stessi con cui l'app dice «tranquillo», «in mezzo», «tirato» dappertutto. */
-const COLORI_TALK = { comode: "var(--accent)", fiatone: "var(--giallo)", fatica: "var(--battito)" };
+   Qui dentro i colori erano cinque, uno per famiglia di attività: servivano a
+   riconoscere una riga senza leggerla. Ma questa schermata è una lista di
+   nomi — «Camminata outdoor», «Pesi» — e il nome lo dice meglio di un pallino;
+   cinque tinte sparse su una pagina di carta facevano rumore e basta. I colori
+   dell'orologio restano dove sono un dato e non una decorazione: dentro il
+   dettaglio di un allenamento, sui suoi numeri.
+
+   I pallini e le barre restano perché la FORMA continua a servire — quanto è
+   alta la barra, dove cade il punto — ma sono tutti d'inchiostro. */
+const coloreTipo = () => "var(--label)";
+
+/* Le tre risposte non hanno tre colori: hanno tre parole, e sono quelle che si
+   leggono. La differenza fra «parlavo comodo» e «non parlavo» la fa la frase,
+   non la tinta. */
+const COLORI_TALK = { comode: "var(--label)", fiatone: "var(--label)", fatica: "var(--label)" };
 const BREVE_TALK = { comode: "parlavo comodo", fiatone: "parlavo col fiatone", fatica: "non parlavo" };
 /* Sotto la domanda «Riuscivi a parlare?» la risposta è una risposta, non una
    descrizione: tre frasi intere una sotto l'altra occupavano mezzo schermo per
@@ -240,7 +231,7 @@ async function elenco({ ridisegna }) {
     { style: "display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;margin:16px 0 0;height:74px" },
     ...perGiorno.map((g) => {
       const alt = g.minuti ? Math.max(8, Math.round((g.minuti / piu) * 62)) : 4;
-      const colore = g.righe.length ? coloreTipo(g.righe[0].tipo) : "var(--fill-tertiary)";
+      const colore = g.righe.length ? "var(--label)" : "var(--fill-tertiary)";
       return h(
         "div",
         { style: "display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:6px" },
@@ -286,18 +277,19 @@ async function elenco({ ridisegna }) {
       h(
         "div",
         { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 0" },
-        numeroConEtichetta(minutiSettimana ? durataUmana(minutiSettimana * 60) : "—", null, "in movimento", "var(--giallo)"),
+        // Inchiostro anche questi: i colori dell'orologio stanno sui numeri
+        // dell'orologio, cioè dentro il dettaglio di un allenamento. Qui sono
+        // somme fatte dall'app su una settimana.
+        numeroConEtichetta(minutiSettimana ? durataUmana(minutiSettimana * 60) : "—", null, "in movimento"),
         numeroConEtichetta(
           somma(settimana, "kcalAttive") ? String(Math.round(somma(settimana, "kcalAttive"))) : "—",
           somma(settimana, "kcalAttive") ? "kcal" : null,
-          "attive",
-          "var(--battito)"
+          "attive"
         ),
         numeroConEtichetta(
           somma(settimana, "km") ? num(somma(settimana, "km"), 1) : "—",
           somma(settimana, "km") ? "km" : null,
-          "percorsi",
-          "var(--accent)"
+          "percorsi"
         )
       ),
       conDomanda.length
@@ -306,11 +298,44 @@ async function elenco({ ridisegna }) {
             { style: "margin:16px 0 0;font-size:13px;color:var(--label-secondary);line-height:1.4" },
             rispostiSettimana === conDomanda.length
               ? "Talk-test risposto su tutte le uscite: il coach sa a che intensità stavi andando."
-              : `Talk-test risposto su ${rispostiSettimana} ${conDomanda.length === 1 ? "uscita" : `uscite su ${conDomanda.length}`}.`
+              : rispostiSettimana === 0
+                ? `Talk-test ancora da rispondere${conDomanda.length === 1 ? "" : ` su ${conDomanda.length} uscite`}.`
+                : `Talk-test risposto su ${rispostiSettimana} uscite su ${conDomanda.length}.`
           )
         : null
     )
   );
+
+  // ---- da rispondere ----
+  /* Le uscite degli ultimi giorni a cui non hai ancora risposto, con le tre
+     pastiglie lì accanto: il talk-test lo ricordi per un giorno o due, non per
+     un mese, e andarlo a cercare dentro la scheda di ieri vuol dire non
+     rispondere mai. Nel dettaglio si risponde lo stesso, in fondo.
+
+     Solo camminate e corse — al chiuso o all'aperto — ed escursioni: sono le
+     uscite in cui l'intensità la decidi tu andando. */
+  const daRispondere = tutti
+    .filter((a) => haTalkTest(a) && a.data >= giorniIndietro(oggiIso, 6) && a.data <= oggiIso && !note.get(a.uuid)?.talkTest)
+    .slice(0, 3);
+  if (daRispondere.length) {
+    const lista = h("div", { style: "display:grid;gap:16px" });
+    for (const a of daRispondere) aggiungi(lista, bloccoRisposta(a, ridisegna));
+    aggiungi(wrap,
+      h(
+        "div",
+        { style: "margin:14px 16px 0;padding:18px 0 0;border-top:1px solid var(--separator)" },
+        h("p", { style: "margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-0.5px" }, "Riuscivi a parlare?"),
+        h(
+          "p",
+          { style: "margin:0 0 16px;font-size:13px;color:var(--label-secondary);line-height:1.4" },
+          daRispondere.length === 1
+            ? "L'unica cosa che l'orologio non misura. Rispondi e la giornata vale come giornata di allenamento."
+            : "L'unica cosa che l'orologio non misura. Rispondi e quelle giornate valgono come giornate di allenamento."
+        ),
+        lista
+      )
+    );
+  }
 
   // ---- come stavi andando ----
   const conTalk = tutti.filter((a) => haTalkTest(a) && note.get(a.uuid)?.talkTest);
@@ -508,9 +533,48 @@ function rigaAllenamento(a, note) {
       h("span.title", nomeAllenamento(a)),
       h("span.sub", `${giorno} ${dataBreve(a.data)} · ${a.fine ? `${a.inizio}–${a.fine}` : a.inizio || "—"}`),
       h("span.sub", numeri.join(" · ")),
-      talk ? h("span.sub", { style: `color:${COLORI_TALK[talk]}` }, BREVE_TALK[talk]) : null
+      talk ? h("span.sub", { style: "color:var(--label)" }, BREVE_TALK[talk]) : null
     ),
     h("span.chevron", "›")
+  );
+}
+
+/** Le tre pastiglie che salvano il talk-test senza uscire dall'elenco. */
+function bloccoRisposta(a, ridisegna) {
+  const giorno = GIORNI_ABBR[new Date(a.data + "T00:00:00").getDay()];
+  const scelte = h(
+    "div.scelte",
+    { style: "justify-content:flex-start;margin:10px 0 0" },
+    ...store.TALK_TEST.map((t) =>
+      h(
+        "button",
+        {
+          "aria-pressed": "false",
+          onclick: unaVoltaSola(async () => {
+            const nota = await store.notaAllenamento(a.uuid);
+            await store.salvaNotaAllenamento(a.uuid, { talkTest: t.id, nota: nota?.nota || null });
+            toast("Segnato.");
+            await ridisegna();
+          }),
+        },
+        RISPOSTA_BREVE[t.id] || t.testo
+      )
+    )
+  );
+  return h(
+    "div",
+    h(
+      "div",
+      { style: "display:flex;align-items:baseline;gap:8px" },
+      h("span", { style: "width:9px;height:9px;border-radius:50%;background:var(--label);flex:none" }),
+      h("span", { style: "font-size:16px;font-weight:700" }, nomeAllenamento(a)),
+      h(
+        "span",
+        { style: "font-size:13px;color:var(--label-secondary);margin-left:auto;white-space:nowrap" },
+        `${giorno} ${dataBreve(a.data)} · ${durataOrologio(a.durataSec)}`
+      )
+    ),
+    scelte
   );
 }
 
