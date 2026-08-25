@@ -2,7 +2,6 @@
 
 import { h, qs, qsa, clear, toast, chiudiFogli, foglioAperto } from "./ui.js";
 import * as store from "./store.js";
-import { aggiornaColoriPunteggio } from "./punteggio.js";
 
 const ROTTE = {
   oggi: () => import("./screens/oggi.js"),
@@ -21,45 +20,14 @@ const ROTTE = {
 const view = qs("#view");
 let rottaCorrente = null;
 
-/** Il tema si legge prima del primo disegno per non far lampeggiare i colori. */
-export function applicaTema(nome) {
-  if (nome && nome !== "sistema") document.documentElement.setAttribute("data-tema", nome);
-  else document.documentElement.removeAttribute("data-tema");
-  try {
-    localStorage.setItem("coach-tema", nome || "sistema");
-  } catch {
-    /* niente localStorage in navigazione privata: il tema resta solo per questa sessione */
-  }
-}
+/* Il tema è uno solo.
 
-export function temaCorrente() {
-  try {
-    return localStorage.getItem("coach-tema") || "lime";
-  } catch {
-    return "lime";
-  }
-}
-
-applicaTema(temaCorrente());
-
-/* Con «Sistema», l'iPhone può passare da chiaro a scuro mentre l'app è aperta:
-   al tramonto, o con un tocco in Centro di Controllo. I colori del foglio di
-   stile cambiano da soli; quelli calcolati qui dentro — il colore del punteggio,
-   che si sceglie in base al fondo — no, e resterebbero quelli del fondo di
-   prima. Basta ridisegnare. Non durante l'allenamento: lì c'è un cronometro che
-   scorre e una schermata su cui si sta lavorando, e un colore leggermente fuori
-   posto è meno peggio di un ridisegno a metà serie. */
-window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
-  if (temaCorrente() !== "sistema") return;
-  // I colori del punteggio si calcolano al momento del disegno e dipendono dal
-  // fondo: vanno rifatti SEMPRE, anche dentro l'allenamento dove il ridisegno
-  // è vietato di proposito. Senza questa riga, un tramonto a metà seduta
-  // lasciava quei numeri della tinta di prima — misurati a 1,95:1 su fondo
-  // chiaro, cioè illeggibili — fino alla fine dell'allenamento.
-  aggiornaColoriPunteggio();
-  if (rottaCorrente === "seduta") return;
-  ridisegna();
-});
+   Prima ce n'erano tre: chiaro di sistema, scuro di sistema e «nero e lime»,
+   con un interruttore in Impostazioni e un colore del punteggio che si
+   ricalcolava a ogni tramonto per restare leggibile sul fondo nuovo. Adesso
+   l'app ha un fondo solo — carta calda — e i colori non dipendono più da
+   quello che fa l'iPhone: niente attributo di tema, niente ricalcolo, niente
+   ridisegno a metà allenamento perché fuori è calato il buio. */
 
 function nomeRotta() {
   const raw = location.hash.replace(/^#\/?/, "").split("?")[0];

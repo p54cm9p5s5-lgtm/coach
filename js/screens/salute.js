@@ -2,8 +2,8 @@ import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, gior
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
-import { graficoLinea, schedaGrafico, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
-import { anello, giudizio, coloreDaPunteggio, coloraPunteggio } from "../punteggio.js";
+import { graficoLinea, schedaGrafico, tastoSpiegazione, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
+import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
 
 
 /**
@@ -101,6 +101,17 @@ export async function render({ ridisegna }) {
   const wrap = h("div.screen");
   const oggiIso = isoDate();
   aggiungi(wrap, intestazione("Salute", { etichetta: "Aggiorna", onclick: () => aggiorna(ridisegna) }));
+  aggiungi(wrap,
+    h(
+      "div",
+      {
+        // Non «sticky»: sopra c'è già il titolo grande appiccicato, e due
+        // elementi incollati a top:0 finivano uno sotto l'altro.
+        style: "padding:0 var(--pad) 14px;border-bottom:1px solid var(--separator)",
+      },
+      selettorePeriodo(periodoSalvato(), ridisegna)
+    )
+  );
 
   const giorni = await store.giorniSalute();
   const notti = await store.notti();
@@ -115,12 +126,21 @@ export async function render({ ridisegna }) {
   // legge e lo scrive nello stesso posto. Sta qui in cima perché serve anche
   // alla scheda delle sigarette, che esce prima di tutto il resto quando
   // dall'app Salute non è stato importato niente.
+  // Il selettore è UNO, e sta appiccicato sotto il titolo.
+  //
+  // Prima ogni scheda aveva il suo: quattro controlli identici impilati nella
+  // stessa schermata, che scrivevano tutti nello stesso posto — cambiarne uno
+  // cambiava anche gli altri tre, che però restavano lì a farsi guardare. Il
+  // periodo non è una proprietà della singola scheda: è il contesto di lettura
+  // di tutta la schermata, e adesso sta dove stanno i contesti, in testata.
+  // Quello che serviva davvero sotto ogni numero — su quanti giorni è fatta
+  // quella media — resta scritto accanto al numero.
   const conPeriodo = () => {
     const periodo = periodoSalvato();
     const da = inizioPeriodo(periodo, oggiIso);
     return {
       periodo,
-      selettore: selettorePeriodo(periodo, ridisegna),
+      selettore: null,
       dentro: (r) => !da || (r.data >= da && r.data <= oggiIso),
       etichetta: etichettaPeriodo(periodo),
     };
@@ -298,28 +318,49 @@ export async function render({ ridisegna }) {
       }))
       .sort((a, b) => a.media - b.media);
 
-    // Stessa scala di colori del punteggio Salute: lime acceso da 95 in su,
-    // rosso acceso da 20 in giù, e in mezzo il passaggio graduale.
-    // La pastiglia porta con sé il proprio numero (`coloraPunteggio`): se il
-    // tema cambia senza ridisegnare, la tinta si rifà da sola invece di
-    // restare quella del fondo di prima.
+    const spiegazioneCompletezza =
+      "Quanto ogni tipo di allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching. " +
+      "Ogni riga è la media delle sedute di quel tipo nel periodo scelto — il singolo allenamento si apre dallo Storico." +
+      (fuoriProgramma
+        ? ` Qui ci sono solo i giorni del programma in vigore: ${fuoriProgramma} ${fuoriProgramma === 1 ? "allenamento di un giorno che il brief non prevede più resta" : "allenamenti di giorni che il brief non prevede più restano"} nello Storico, con il ${fuoriProgramma === 1 ? "suo punteggio" : "loro punteggio"}, ma non ${fuoriProgramma === 1 ? "entra" : "entrano"} in queste medie.`
+        : "");
+
+    // La pastiglia non si riempie: il numero è già inchiostro su carta, e un
+    // fondo grigio dietro ogni riga rimetteva addosso alla lista quei
+    // rettangoli che tutta la schermata ha appena tolto. Resta il contorno,
+    // che serve a dire «questo è un voto, non una quantità».
     const pillola = (n) => {
       const c = coloreDaPunteggio(n);
-      const el = h(
+      return h(
         "span.pill",
         {
           style:
-            `font-variant-numeric:tabular-nums;background:color-mix(in srgb, ${c} 16%, transparent);color:${c}`,
+            "font-variant-numeric:tabular-nums lining-nums;font-size:15px;font-weight:700;" +
+            `background:none;color:${c};` +
+            `border-color:${n >= 90 ? "color-mix(in srgb, var(--raggiunto) 40%, transparent)" : "var(--separator)"}`,
         },
         String(n)
       );
-      return coloraPunteggio(el, n, "color", true);
     };
 
     aggiungi(wrap,
       h(
         "div.group",
-        h("h2", "Completezza degli allenamenti"),
+        // Stessa regola del resto della schermata: la spiegazione lunga sta
+        // dietro la «i», non sotto il grafico.
+        h(
+          "div",
+          { style: "display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px" },
+          h(
+            "h2",
+            {
+              style:
+                "margin:0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--label-tertiary)",
+            },
+            "Completezza degli allenamenti"
+          ),
+          tastoSpiegazione("Completezza degli allenamenti", spiegazioneCompletezza)
+        ),
         h(
           "div",
           { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 16px" },
@@ -352,13 +393,6 @@ export async function render({ ridisegna }) {
             )
           )
         ),
-        h(
-          "p.footnote",
-          "Quanto ogni tipo di allenamento ha rispettato il programma: esercizi, cardio, riscaldamento e stretching. Ogni riga è la media delle sedute di quel tipo nel periodo scelto — il singolo allenamento si apre dallo Storico." +
-            (fuoriProgramma
-              ? ` Qui ci sono solo i giorni del programma in vigore: ${fuoriProgramma} ${fuoriProgramma === 1 ? "allenamento di un giorno che il brief non prevede più resta" : "allenamenti di giorni che il brief non prevede più restano"} nello Storico, con il ${fuoriProgramma === 1 ? "suo punteggio" : "loro punteggio"}, ma non ${fuoriProgramma === 1 ? "entra" : "entrano"} in queste medie.`
-              : "")
-        )
       )
     );
   }

@@ -2,7 +2,7 @@
    Un solo grafico in Home: il movimento giornaliero con i giorni di allenamento
    in evidenza, e i giorni già in programma sulla destra. */
 
-import { h, num, dataBreve, weekdayOf, isoDate } from "./ui.js";
+import { h, num, dataBreve, weekdayOf, isoDate, sheet } from "./ui.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const el = (tag, attrs = {}) => {
@@ -87,7 +87,7 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
       stroke: "currentColor", "stroke-width": 1, "stroke-dasharray": "3 4", opacity: 0.35,
     }),
     el("text", {
-      x: L - 1, y: yObiettivo - 4, "font-size": 8, "text-anchor": "end",
+      x: L - 1, y: yObiettivo - 4, "font-size": 9.5, "text-anchor": "end",
       fill: "currentColor", opacity: 0.5,
     })
   );
@@ -112,8 +112,11 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
       if (d.previsto) {
         svg.append(
           el("rect", {
-            x, y: areaBarre - 7, width: larghezza, height: 7, rx: 1,
-            fill: "none", stroke: "var(--accent)", "stroke-width": 1, opacity: 0.45,
+            // In programma: contorno tratteggiato. Lo stato lo dice la forma,
+            // non la tinta — qui la tinta è una sola.
+            x, y: areaBarre - 9, width: larghezza, height: 9, rx: 0,
+            fill: "none", stroke: "var(--label-tertiary)", "stroke-width": 1,
+            "stroke-dasharray": "2 2",
           })
         );
       }
@@ -129,25 +132,29 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
       const alt = Math.max(2, (d.kcal / massimo) * areaBarre);
       svg.append(
         el("rect", {
-          x, y: areaBarre - alt, width: larghezza, height: alt, rx: Math.min(2, larghezza / 2),
-          fill: d.allenamento ? "var(--accent)" : "currentColor",
-          opacity: d.allenamento ? 0.95 : 0.3,
+          x, y: areaBarre - alt, width: larghezza, height: alt, rx: 0,
+          fill: "var(--label)",
+          opacity: d.allenamento ? 1 : 0.24,
         })
       );
     }
 
 
-    // etichette solo i lunedì e l'ultimo giorno
+    // Etichette solo i lunedì e l'ultimo giorno — ma non tutte e due quando
+    // cadono vicine: «31/08» e «01/09» finivano una sopra l'altra all'estremo
+    // destro, e si leggeva una parola sola fatta di due date.
     const wd = new Date(d.data + "T00:00:00").getDay();
-    if (wd === 1 || i === dati.length - 1) {
+    const xCentro = x + larghezza / 2;
+    const troppoVicinoAllEstremo = i !== dati.length - 1 && L - xCentro < 34;
+    if ((wd === 1 && !troppoVicinoAllEstremo) || i === dati.length - 1) {
       const ultimo = i === dati.length - 1;
       const t = el("text", {
-        x: ultimo ? L - 1 : x + larghezza / 2, y: A - 8, "font-size": 8,
+        x: ultimo ? L - 1 : xCentro, y: A - 8, "font-size": 9,
         "text-anchor": ultimo ? "end" : "middle",
-        fill: "currentColor", opacity: 0.45,
+        fill: "var(--label-tertiary)",
       });
       t.textContent = dataBreve(d.data).slice(0, 5);
-      if (d.futuro) t.setAttribute("opacity", "0.3");
+      if (d.futuro) t.setAttribute("opacity", "0.55");
       svg.append(t);
     }
   });
@@ -167,7 +174,7 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
   const evidenza = el("line", {
     y1: 0, y2: areaBarre, stroke: "currentColor", "stroke-width": 1, opacity: 0,
   });
-  const pallino = el("circle", { r: 2.6, fill: "var(--accent)", opacity: 0 });
+  const pallino = el("circle", { r: 2.6, fill: "var(--label)", opacity: 0 });
   svg.append(evidenza, pallino);
 
   const descrivi = (d) => {
@@ -251,10 +258,17 @@ export function fascia(voci) {
     ...voci.map((v) =>
       h(
         "div",
-        h("p", { style: "margin:0;font-size:11px;color:var(--label-secondary);letter-spacing:.2px" }, v.etichetta),
         h(
           "p",
-          { style: "margin:3px 0 0;font-size:21px;font-weight:700;letter-spacing:-0.5px;font-variant-numeric:tabular-nums" },
+          {
+            style:
+              "margin:0;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--label-tertiary)",
+          },
+          v.etichetta
+        ),
+        h(
+          "p",
+          { style: "margin:6px 0 0;font-size:26px;font-weight:700;letter-spacing:-0.04em;font-variant-numeric:tabular-nums lining-nums;white-space:nowrap" },
           v.valore,
           v.unita ? h("span", { style: "font-size:12px;font-weight:400;color:var(--label-secondary)" }, ` ${v.unita}`) : null
         ),
@@ -270,16 +284,19 @@ export function legenda() {
     h(
       "span",
       { style: "display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--label-secondary)" },
-      h("span", { style: `width:8px;height:8px;border-radius:2px;${stile}` }),
+      h("span", { style: `width:8px;height:8px;border-radius:2px;flex:none;box-sizing:border-box;${stile}` }),
       testo
     );
   return h(
     "div",
     { style: "display:flex;flex-wrap:wrap;gap:12px;margin-top:8px" },
-    punto("background:var(--accent)", "giorno di allenamento"),
-    punto("background:currentColor;opacity:.3", "giorno di riposo"),
-    punto("background:currentColor;opacity:.3;width:5px;height:5px;border-radius:50%", "nessun dato"),
-    punto("background:none;box-shadow:inset 0 0 0 1px var(--accent);opacity:.5", "in programma")
+    // Le chiavi hanno la forma della barra che spiegano: pieno, mezzo tono,
+    // pallino, contorno tratteggiato. In una pagina di un colore solo la
+    // legenda non può essere fatta di colori.
+    punto("background:var(--label);border-radius:0;width:7px;height:12px", "allenamento"),
+    punto("background:var(--label);opacity:.24;border-radius:0;width:7px;height:12px", "riposo"),
+    punto("background:var(--label-tertiary);width:5px;height:5px;border-radius:50%", "nessun dato"),
+    punto("background:none;border:1px dashed var(--label-tertiary);border-radius:0;width:7px;height:12px", "in programma")
   );
 }
 
@@ -406,6 +423,9 @@ export function graficoLinea({
   const x = (i) => i * passo + passo / 2;
   const y = (v) => margineAlto + area - ((v - minimo) / (massimo - minimo)) * area;
 
+  // L'etichetta del bersaglio si disegna per ultima: messa qui, la linea dei
+  // dati le passava sopra e il rettangolo di carta non serviva a niente.
+  let etichettaSopra = null;
   if (obiettivo) {
     const yo = y(obiettivo);
     svg.append(
@@ -415,11 +435,24 @@ export function graficoLinea({
       })
     );
     if (etichettaObiettivo) {
+      // Il bersaglio scritto sulla sua riga: è l'unica riga di quel paragrafo
+      // grigio che serviva a ogni occhiata, e adesso sta dove serve.
+      // A destra ci finisce sempre l'ultimo punto — quello grande, quello che
+      // guardi — e l'etichetta ci passava sopra. A sinistra c'è più spazio, ma
+      // «più spazio» non è «sempre libero»: la linea può passare di lì. Sotto
+      // l'etichetta si stampa un rettangolo del colore della carta, e la
+      // scritta resta leggibile qualunque cosa le passi sotto.
+      const larghezzaStimata = etichettaObiettivo.length * 5.4 + 6;
+      etichettaSopra = el("g", {});
+      etichettaSopra.append(
+        el("rect", { x: 0, y: yo - 13, width: larghezzaStimata, height: 12, fill: "var(--bg)" })
+      );
       const t = el("text", {
-        x: L - 1, y: yo - 3, "font-size": 7.5, "text-anchor": "end", fill: "currentColor", opacity: 0.45,
+        x: 3, y: yo - 4, "font-size": 9.5, "text-anchor": "start",
+        fill: "var(--label-tertiary)", "letter-spacing": "0.04em",
       });
       t.textContent = etichettaObiettivo;
-      svg.append(t);
+      etichettaSopra.append(t);
     }
   }
 
@@ -431,8 +464,8 @@ export function graficoLinea({
         el("polyline", {
           points: tratto.map((p) => `${p[0]},${p[1]}`).join(" "),
           fill: "none",
-          stroke: "var(--accent)",
-          "stroke-width": 1.8,
+          stroke: "var(--label)",
+          "stroke-width": 1.4,
           "stroke-linejoin": "round",
           "stroke-linecap": "round",
         })
@@ -456,25 +489,36 @@ export function graficoLinea({
   // più grande: la linea è tutta dello stesso colore, e senza questo si
   // perderebbe l'informazione che nel grafico a barre stava nel lime.
   const raggio = punti.length > 40 ? 1.4 : 2.2;
+  // L'ultimo punto con un dato è quello che stai guardando: si vede di più, e
+  // se il bersaglio è stato passato è l'unico pezzo colorato del grafico.
+  let ultimoConDato = -1;
+  punti.forEach((p, i) => {
+    if (p.valore != null) ultimoConDato = i;
+  });
   punti.forEach((p, i) => {
     if (p.valore == null) return;
+    const finale = i === ultimoConDato;
+    const raggiunto = finale && obiettivo && p.valore >= obiettivo;
     svg.append(
       el("circle", {
-        cx: x(i), cy: y(p.valore), r: p.evidenza ? raggio + 1.4 : raggio,
-        fill: "var(--accent)", opacity: p.evidenza ? 1 : 0.85,
+        cx: x(i), cy: y(p.valore), r: finale ? raggio + 1.6 : p.evidenza ? raggio + 1 : raggio,
+        fill: raggiunto ? "var(--raggiunto)" : "var(--label)",
+        opacity: finale || p.evidenza ? 1 : 0.55,
       })
     );
   });
 
+  if (etichettaSopra) svg.append(etichettaSopra);
+
   const aiBordi = estremo || ((p) => dataBreve(p.data));
   if (punti.length) {
-    const primo = el("text", { x: 0, y: A - 5, "font-size": 8, fill: "currentColor", opacity: 0.4 });
+    const primo = el("text", { x: 0, y: A - 4, "font-size": 9.5, fill: "var(--label-tertiary)" });
     primo.textContent = aiBordi(punti[0]);
     svg.append(primo);
     // Un solo giorno: la stessa data ai due estremi sembrava un intervallo.
     if (punti.length > 1 && aiBordi(punti[0]) !== aiBordi(punti[punti.length - 1])) {
       const ultimo = el("text", {
-        x: L - 1, y: A - 5, "font-size": 8, "text-anchor": "end", fill: "currentColor", opacity: 0.4,
+        x: L - 1, y: A - 4, "font-size": 9.5, "text-anchor": "end", fill: "var(--label-tertiary)",
       });
       ultimo.textContent = aiBordi(punti[punti.length - 1]);
       svg.append(ultimo);
@@ -492,7 +536,7 @@ export function graficoLinea({
     y1: margineAlto, y2: margineAlto + area, stroke: "currentColor", "stroke-width": 1, opacity: 0,
   });
   const scelto = el("circle", {
-    r: 4, fill: "var(--accent)", stroke: "var(--bg-grouped)", "stroke-width": 1.6, opacity: 0,
+    r: 4, fill: "var(--label)", stroke: "var(--bg)", "stroke-width": 1.6, opacity: 0,
   });
   svg.append(guida, scelto);
 
@@ -551,26 +595,88 @@ export function graficoLinea({
 export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede, selettore = null }) {
   return h(
     "div.group",
-    h("h2", titolo),
     h(
       "div",
-      { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 10px" },
-      selettore,
+      { style: "display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px" },
+      // L'unità di misura sta qui, nell'occhiello, non accanto alla cifra:
+      // con «1144» a corpo 56 la parola «kcal» finiva a capo su una riga sua.
       h(
-        "div",
-        { style: "display:flex;align-items:baseline;gap:8px;margin-bottom:12px" },
-        h(
-          "p",
-          { style: "margin:0;font-size:26px;font-weight:700;letter-spacing:-0.6px;font-variant-numeric:tabular-nums" },
-          valore,
-          unita ? h("span", { style: "font-size:13px;font-weight:400;color:var(--label-secondary)" }, ` ${unita}`) : null
-        ),
-        nota ? h("p", { style: "margin:0;font-size:12px;color:var(--label-tertiary)" }, nota) : null
+        "h2",
+        { style: "margin:0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--label-tertiary)" },
+        unita ? `${titolo} · ${unita}` : titolo
       ),
-      grafico
+      // Difetto numero uno: sotto ogni grafico c'era un paragrafo grigio di
+      // tre righe — obiettivo, provenienza del dato, che cosa vogliono dire i
+      // punti grandi. Roba giusta, letta una volta sola e poi per sempre in
+      // mezzo ai piedi. Non si butta: si mette qui dietro, e ci si torna
+      // quando serve. Quello che invece serve OGNI volta — il bersaglio — è
+      // rimasto sul grafico, scritto sulla sua riga tratteggiata.
+      piede ? tastoSpiegazione(titolo, piede) : null
     ),
-    piede ? h("p.footnote", piede) : null
+    selettore,
+    // La cifra su una riga sua e la copertura sotto: affiancate, «12.421» e
+    // «27 giorni con dati · tutto lo storico» non ci stanno insieme in 350
+    // punti, e la seconda usciva dallo schermo a destra.
+    h(
+      "div",
+      { style: "margin:2px 0 14px" },
+      h(
+        "p",
+        {
+          style:
+            "margin:0;font-size:56px;font-weight:700;letter-spacing:-0.055em;line-height:.9;" +
+            "font-variant-numeric:tabular-nums lining-nums;white-space:nowrap;" +
+            "overflow:hidden;text-overflow:clip",
+        },
+        valore
+      ),
+      nota
+        ? h("p", { style: "margin:8px 0 0;font-size:12.5px;line-height:1.35;color:var(--label-tertiary)" }, nota)
+        : null
+    ),
+    grafico
   );
+}
+
+/** Il tondino «i»: apre la spiegazione che prima stava sotto al grafico. */
+export function tastoSpiegazione(titolo, testo) {
+  const b = h(
+    "button",
+    {
+      type: "button",
+      "aria-label": `Come si legge: ${titolo}`,
+      style:
+        "flex:none;width:26px;height:26px;min-width:26px;border-radius:999px;border:1px solid var(--separator);" +
+        "background:none;color:var(--label-tertiary);font-size:12px;font-weight:700;font-style:italic;cursor:pointer;" +
+        "display:flex;align-items:center;justify-content:center;padding:0",
+      onclick: () =>
+        sheet((close) =>
+          h(
+            "div",
+            h("h2", { style: "text-align:center" }, titolo),
+            h(
+              "p",
+              { style: "margin:10px 22px 0;font-size:15px;line-height:1.5;color:var(--label-secondary)" },
+              testo
+            ),
+            h("div.btn-wrap", h("button.btn", { onclick: () => close(true) }, "Ho capito"))
+          )
+        ),
+    },
+    "i"
+  );
+  // L'area toccabile arriva a 44 punti senza che il tondino cresca.
+  b.style.padding = "0";
+  b.style.margin = "-9px 0";
+  b.style.boxSizing = "content-box";
+  b.style.borderWidth = "1px";
+  b.style.outlineOffset = "2px";
+  const guscio = h(
+    "span",
+    { style: "display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-9px -9px -9px 0" },
+    b
+  );
+  return guscio;
 }
 
 /**

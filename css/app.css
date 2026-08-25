@@ -1,141 +1,75 @@
 /* Coach — stile iOS nativo. Nessun font esterno, nessuna dipendenza. */
 
+/* ---- i colori ----
+
+   Tre colori in tutto, e ognuno vuol dire una cosa sola.
+
+   **Inchiostro** è il testo, i grafici, i tasti, la scheda accesa in fondo:
+   tutto quello che non ha bisogno di gridare. **Blu inchiostro** compare solo
+   dove un obiettivo è stato raggiunto — un punteggio da 90 in su, le kcal
+   sopra il bersaglio, un giorno senza sigarette — e da nessun'altra parte:
+   aprire l'app e contare le macchie blu è già leggerla. **Rosso** non è un
+   accento ma un allarme, e sta dove qualcosa si rompe o si cancella.
+
+   Prima l'accento faceva sette mestieri insieme (scheda accesa, anelli, linee,
+   tasti, celle del calendario, titoli, icone) e per questo non ne faceva
+   nessuno. Le gerarchie adesso le fanno corpo, peso e posizione.
+
+   Fondo di carta calda, un tono solo: le schede non esistono più: quello che
+   separa due blocchi è una riga da un pixel, non un rettangolo bianco. */
+
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
-  --bg: #f2f2f7;
-  --bg-grouped: #ffffff;
+  --bg: #faf9f6;
+  /* Stesso colore del fondo: le «schede» dell'app diventano piano, e resta
+     solo la riga che le divide. */
+  --bg-grouped: #faf9f6;
+  /* I fogli che salgono dal basso: quelli devono staccarsi dalla pagina, e lo
+     fanno con un bianco più chiaro della carta più una riga di contorno. */
   --bg-elevated: #ffffff;
-  --fill-quaternary: rgba(116, 116, 128, 0.08);
-  --fill-tertiary: rgba(118, 118, 128, 0.12);
-  --label: #000000;
-  /* Questi due sono i grigi di sistema di iOS (0.6 e 0.3). Sul bianco danno
-     3,4:1 e 1,7:1, sotto il minimo leggibile — e tutti e due portano testo
-     vero, non solo contorni: note, sottotitoli, «5 giorni · tutto lo storico».
-     Qui salgono a 6,9:1 e 4,9:1: leggibili tutti e due, e ancora distinguibili
-     fra loro. Il tema scuro e il nero-lime erano già a posto. */
-  --label-secondary: rgba(60, 60, 67, 0.85);
-  --label-tertiary: rgba(60, 60, 67, 0.73);
-  --separator: rgba(60, 60, 67, 0.29);
-  /* I colori di sistema di iOS sono pensati per superfici chiare ma sul bianco
-     danno 2,2:1 (arancione), 3,5:1 (rosso), 4,0:1 (blu): un'etichetta piccola
-     scritta così non si legge. Qui sono gli stessi colori scuriti quanto basta
-     per stare sopra 4,5:1 sia sul bianco sia sul grigio delle schede, hue
-     invariata. Il tema scuro e il nero-lime restano com'erano: là il contrasto
-     era già alto.
-     Il conto va fatto anche sul grigio traslucido dei tasti secondari e delle
-     frecce del calendario — rgba(118,118,128,0.12) sul bianco, che è più scuro
-     del grigio delle schede: lì #006be0 si fermava a 4,4:1. Il fondo peggiore è
-     quel grigio sopra il grigio di pagina — (227,227,233) — e su quello questo
-     blu sta a 4,7:1; sul bianco arriva a 6,0:1. */
-  --accent: #005fcc;
-  /* Due usi opposti dello stesso colore: come TESTO deve staccare dal fondo
-     della pagina, come SFONDO di un bottone deve reggere il bianco sopra. Nel
-     tema chiaro basta un colore solo; nel tema scuro no, e per questo esiste
-     «--accent-pieno». */
-  --accent-pieno: var(--accent);
-  --su-accent: #ffffff;
-  /* Stesso conto dell'accento: il fondo peggiore è il grigio traslucido dei
-     tasti (227,227,233), non la pagina. Tarati sulla pagina si fermavano tutti
-     e tre a 3,9:1 — e il tasto rosso «annulla l'allenamento», che sta proprio
-     su quel grigio, era il caso peggiore. */
-  --red: #c40b00;
-  --green: #1c6e31;
-  --orange: #8a5100;
-  /* Il giallo esiste solo per il contatore delle sigarette: la soglia di mezzo
-     va vista subito, e fra verde e arancione non c'era niente. Lì il numero
-     riempie lo schermo — testo grande, soglia 3:1 — e resta più chiaro degli
-     altri due invece di confondersi con l'arancione. */
-  --giallo: #ab8800;
-  /* Il battito è rosso ovunque — sull'orologio, in Salute, dappertutto — e il
-     viola dello sforzo è quello che usa Apple. Non seguono l'accento del tema:
-     cambiarli col tema vorrebbe dire non farli riconoscere. Cambiano invece
-     con chiaro e scuro, perché su fondo bianco un rosso acceso non si legge. */
-  --battito: #c9271b;
-  --sforzo: #6b2fb5;
-  --bar-bg: rgba(249, 249, 249, 0.94);
+  --fill-quaternary: rgba(16, 17, 19, 0.05);
+  --fill-tertiary: rgba(16, 17, 19, 0.07);
+  --label: #101113;
+  /* 7,2:1 sulla carta: è testo vero — sottotitoli, note, coperture dati. */
+  --label-secondary: #55585c;
+  /* 4,7:1: conta meno, si legge lo stesso. Il grigio più chiaro che avevo
+     scelto a occhio stava a 4,27 — sotto la soglia — e ci sta sopra testo
+     vero: occhielli di sezione, date degli assi, «27 giorni con dati». */
+  --label-tertiary: #6d7076;
+  --separator: #d9d6cd;
 
-  --radius: 10px;
-  --pad: 16px;
+  /* Tutto quello che si tocca è inchiostro. Il colore non è più il modo per
+     dire «questo è un tasto»: lo dicono il bordo, il gallone e la freccia. */
+  --accent: #101113;
+  --accent-pieno: #101113;
+  --su-accent: #faf9f6;
+
+  /* L'UNICO accento cromatico: obiettivo raggiunto. 10,4:1 sulla carta. */
+  --raggiunto: #16307a;
+
+  /* Allarme e cancellazione. Non è decorazione: compare solo nelle conferme
+     distruttive e quando un tetto viene superato. 6,4:1 sulla carta. */
+  --red: #a3241a;
+
+  /* Gli altri nomi restano perché mezzo codice li usa, ma non portano più
+     colori diversi: verde vuol dire «raggiunto», giallo e arancione tornano
+     inchiostro — la cifra dice già da sola dov'è arrivata. Battito e sforzo
+     erano due tinte da cruscotto: qui i grafici sono monocromatici e le
+     etichette scritte a parole. */
+  --green: var(--raggiunto);
+  --orange: var(--label);
+  --giallo: var(--label);
+  --battito: var(--label);
+  --sforzo: var(--label-secondary);
+  --bar-bg: rgba(250, 249, 246, 0.94);
+
+  /* Niente angoli tondi: la separazione è una riga da un pixel. Il raggio
+     resta minimo dove un rettangolo pieno servirebbe comunque a distinguere
+     un tasto — 2 px, non 10. */
+  --radius: 2px;
+  --pad: 22px;
   --tabbar-h: 49px;
-}
-
-/* ---- tema alternativo: nero e lime ----
-   Il testo sopra l'accento diventa scuro: il lime è chiaro, il bianco sopra
-   sarebbe illeggibile. */
-:root[data-tema="lime"] {
-  color-scheme: dark;
-
-  --bg: #08080a;
-  --bg-grouped: #141417;
-  --bg-elevated: #1d1d21;
-  --fill-quaternary: rgba(184, 255, 78, 0.06);
-  --fill-tertiary: rgba(255, 255, 255, 0.09);
-  --label: #f4f4f2;
-  --label-secondary: rgba(244, 244, 242, 0.62);
-  /* Il terzo livello serviva a dire «questo conta meno», non «questo non si
-     legge»: a 0,32 il contrasto era 2,6:1 — sotto la soglia dei 4,5:1 — e a
-     quel colore ci stanno le intestazioni delle sezioni, le frecce e le note
-     piccole. In palestra, con la luce storta e il telefono sudato, era la
-     parte peggiore da leggere. A 0,50 il contrasto è 4,9:1 e resta comunque
-     più quieto del secondo livello, che sta a 6,9:1. */
-  --label-tertiary: rgba(244, 244, 242, 0.5);
-  --separator: rgba(255, 255, 255, 0.12);
-  --accent: #b8ff4e;
-  --accent-pieno: var(--accent);
-  --su-accent: #0b0e06;
-  --red: #ff5c47;
-  --green: #b8ff4e;
-  --orange: #ffc24e;
-  --giallo: #ffe066;
-  --battito: #ff6a5c;
-  --sforzo: #c99bff;
-  --bar-bg: rgba(8, 8, 10, 0.92);
-}
-
-:root[data-tema="lime"] .topbar h1,
-:root[data-tema="lime"] .hero h2 {
-  letter-spacing: -0.6px;
-}
-
-:root[data-tema="lime"] .hero .load {
-  color: var(--accent);
-}
-
-:root[data-tema="lime"] .group > h2 {
-  color: var(--label-tertiary);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #000000;
-    --bg-grouped: #1c1c1e;
-    --bg-elevated: #2c2c2e;
-    --fill-quaternary: rgba(118, 118, 128, 0.18);
-    --fill-tertiary: rgba(118, 118, 128, 0.24);
-    --label: #ffffff;
-    --label-secondary: rgba(235, 235, 245, 0.6);
-    /* stesso motivo del tema nero e lime: 2,5:1 era troppo poco */
-    --label-tertiary: rgba(235, 235, 245, 0.5);
-    --separator: rgba(84, 84, 88, 0.65);
-    /* Il blu di sistema #0a84ff scritto sopra una scheda chiara dà 3,8:1, e il
-       bianco scritto sopra di lui 3,6:1: nessuno dei due arriva a 4,5. Come
-       testo va un filo più chiaro, come sfondo un filo più scuro — e sono due
-       colori diversi perché tirano da parti opposte.
-       Anche qui il fondo peggiore non è la scheda ma il grigio traslucido dei
-       tasti sopra la scheda — (50,50,54) — dove #2b94ff si fermava a 4,2:1.
-       Questo sta a 5,0:1 lì, 6,4:1 sulla scheda, 8,2:1 sul nero. */
-    --accent: #4da6ff;
-    --accent-pieno: #0068d6;
-    --su-accent: #ffffff;
-    --red: #ff453a;
-    --green: #30d158;
-    --orange: #ff9f0a;
-    --giallo: #ffd60a;
-    --battito: #ff453a;
-    --sforzo: #bf5af2;
-    --bar-bg: rgba(28, 28, 30, 0.94);
-  }
 }
 
 * {
@@ -237,7 +171,7 @@ textarea {
   margin: 0;
   font-size: 34px;
   font-weight: 700;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.035em;
   /* Senza queste due righe il titolo non si stringe mai, e con Safari impostato
      a ingrandire le pagine spingeva «Fine» fuori dallo schermo: il tasto c'era
      ma per arrivarci bisognava trascinare la pagina di lato. */
@@ -247,12 +181,18 @@ textarea {
   white-space: nowrap;
 }
 
+/* «Fine», «Aggiorna», «Home»: inchiostro come tutto il resto, e a dire che si
+   toccano è la sottolineatura. Il colore non fa più questo mestiere. */
 .topbar .bar-action {
   flex: none;
   background: none;
   border: 0;
-  color: var(--accent);
-  font-size: 17px;
+  color: var(--label);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  font-size: 16px;
   /* Area toccabile piena: il testo resta dov'è, ma il dito ha 44 punti. */
   min-width: 44px;
   min-height: 44px;
@@ -266,28 +206,33 @@ textarea {
 /* ---------- liste raggruppate ---------- */
 
 .group {
-  margin: 22px var(--pad) 0;
+  margin: 32px var(--pad) 0;
 }
 
 .group > h2 {
-  margin: 0 4px 7px;
-  font-size: 13px;
-  font-weight: 400;
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--label-secondary);
+  letter-spacing: 0.16em;
+  color: var(--label-tertiary);
 }
 
 .group > .footnote {
-  margin: 7px 4px 0;
+  margin: 10px 0 0;
   font-size: 13px;
   color: var(--label-secondary);
 }
 
+/* Le liste non sono più schede: un filo sopra, un filo sotto, e le righe
+   dentro separate da un filo. Il rettangolo bianco serviva a staccarle dal
+   grigio della pagina; qui la pagina è una sola carta e il rettangolo non
+   staccava più niente — faceva solo rumore. */
 .list {
-  background: var(--bg-grouped);
-  border-radius: var(--radius);
-  overflow: hidden;
+  background: none;
+  border-radius: 0;
+  border-top: 1px solid var(--separator);
+  border-bottom: 1px solid var(--separator);
 }
 
 .row {
@@ -295,8 +240,8 @@ textarea {
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  padding: 11px var(--pad);
-  border-bottom: 0.5px solid var(--separator);
+  padding: 13px 0;
+  border-bottom: 1px solid var(--separator);
   background: none;
   border-left: 0;
   border-right: 0;
@@ -317,9 +262,12 @@ a.row {
   text-decoration: none;
 }
 
+/* Il tocco si vede lo stesso, ma il velo si allarga fino al bordo della
+   pagina: la riga non ha più un rettangolo suo dentro cui accendersi. */
 button.row:active,
 a.row:active {
   background: var(--fill-quaternary);
+  box-shadow: -8px 0 0 var(--fill-quaternary), 8px 0 0 var(--fill-quaternary);
 }
 
 .row .main {
@@ -349,8 +297,16 @@ a.row:active {
   font-size: 15px;
 }
 
+/* Una riga che fa qualcosa non si distingue più per la tinta: si distingue
+   per la sottolineatura, come i tasti in testata. Il gallone «›» resta dov'è
+   per chi legge le forme prima delle parole. */
 .row.accent .title {
-  color: var(--accent);
+  color: var(--label);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--separator);
 }
 
 .row.danger .title {
@@ -370,6 +326,11 @@ input[type="checkbox"],
   touch-action: manipulation;
 }
 
+/* Il tasto principale è un rettangolo di contorno, non un rettangolo pieno:
+   il pieno di colore era il settimo mestiere dell'accento, e in una pagina di
+   carta un blocco colorato tira l'occhio più del numero che dovresti leggere.
+   Il bordo da 1,5 px basta a dire «questo si tocca», e premendolo si riempie
+   d'inchiostro — che è il solo momento in cui deve gridare. */
 .btn {
   display: block;
   /* Su iOS un elemento senza questa riga aspetta di capire se stai facendo un
@@ -377,21 +338,22 @@ input[type="checkbox"],
      perso. Con «manipulation» il tocco è immediato. */
   touch-action: manipulation;
   width: 100%;
-  min-height: 44px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--accent-pieno);
-  color: var(--su-accent);
-  font-size: 16px;
+  min-height: 48px;
+  border: 1.5px solid var(--label);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--label);
+  font-size: 17px;
   font-weight: 600;
-  letter-spacing: -0.1px;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  padding: 10px 14px;
-  transition: filter 0.12s, opacity 0.12s;
+  padding: 12px 14px;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
 }
 
 .btn:active {
-  filter: brightness(0.92);
+  background: var(--label);
+  color: var(--su-accent);
 }
 
 .btn[disabled] {
@@ -400,13 +362,27 @@ input[type="checkbox"],
 }
 
 .btn.secondary {
-  background: var(--fill-tertiary);
-  color: var(--accent);
+  background: none;
+  border-color: var(--separator);
+  color: var(--label-secondary);
+  font-weight: 500;
 }
 
-.btn.destructive {
+.btn.secondary:active {
   background: var(--fill-tertiary);
+  color: var(--label);
+}
+
+/* Il rosso non è un accento: è l'unico posto in cui l'app alza la voce. */
+.btn.destructive {
+  background: none;
+  border-color: var(--red);
   color: var(--red);
+}
+
+.btn.destructive:active {
+  background: var(--red);
+  color: var(--bg);
 }
 
 .btn-wrap {
@@ -470,8 +446,16 @@ input[type="checkbox"],
   white-space: nowrap;
 }
 
+/* La scheda accesa si riconosce dal peso e dal contrasto, non dalla tinta:
+   una barra colorata in fondo allo schermo era il primo dei sette mestieri
+   dell'accento, e il più inutile — quale scheda sei l'hai appena toccata tu. */
 .tabbar a.active {
-  color: var(--accent);
+  color: var(--label);
+  font-weight: 700;
+}
+
+.tabbar a.active svg {
+  stroke-width: 2.2;
 }
 
 .tabbar svg {
@@ -500,26 +484,32 @@ input[type="checkbox"],
 
 .pill {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--fill-tertiary);
+  background: none;
+  border: 1px solid var(--separator);
   color: var(--label-secondary);
 }
 
+/* «Sotto l'obiettivo» resta inchiostro: la pastiglia porta già la parola, e
+   una tinta in più direbbe la stessa cosa due volte. */
 .pill.warn {
-  background: color-mix(in srgb, var(--orange) 18%, transparent);
-  color: var(--orange);
+  background: none;
+  border-color: var(--separator);
+  color: var(--label);
 }
 
 .pill.ok {
-  background: color-mix(in srgb, var(--green) 18%, transparent);
-  color: var(--green);
+  background: color-mix(in srgb, var(--raggiunto) 10%, transparent);
+  border-color: color-mix(in srgb, var(--raggiunto) 35%, transparent);
+  color: var(--raggiunto);
 }
 
 .pill.bad {
-  background: color-mix(in srgb, var(--red) 18%, transparent);
+  background: none;
+  border-color: color-mix(in srgb, var(--red) 45%, transparent);
   color: var(--red);
 }
 
@@ -755,30 +745,43 @@ input[type="checkbox"],
 
 /* ---------- segmenti sì/no ---------- */
 
+/* Una cornice sola, divisa da fili verticali: il cuscinetto grigio con dentro
+   il tastino bianco in rilievo era l'unico oggetto dell'app con un'ombra, e
+   sopra la carta si vedeva galleggiare. La scelta fatta è un rettangolo pieno
+   d'inchiostro — l'unico pieno della pagina insieme al tasto premuto. */
 .segmented {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: 4px;
-  padding: 3px;
-  background: var(--fill-tertiary);
-  border-radius: 10px;
+  gap: 0;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
+  overflow: hidden;
   margin: 10px var(--pad) 0;
 }
 
 .segmented button {
   min-height: 44px;
   border: 0;
-  border-radius: 8px;
+  border-left: 1px solid var(--separator);
+  border-radius: 0;
   background: none;
-  font-size: 16px;
+  color: var(--label-tertiary);
+  font-size: 15px;
   cursor: pointer;
 }
 
+.segmented button:first-child {
+  border-left: 0;
+}
+
 .segmented button[aria-pressed="true"] {
-  background: var(--bg-elevated);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+  background: var(--label);
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: none;
 }
 
 /* ---------- campi data e ora ----------
@@ -1196,8 +1199,9 @@ textarea.note {
 .plates {
   margin: 14px var(--pad) 0;
   padding: 12px 14px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border-radius: 12px;
+  background: none;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
   font-size: 15px;
   color: var(--label);
   display: flex;
@@ -1208,9 +1212,9 @@ textarea.note {
 .plates .etichetta {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--label-tertiary);
   white-space: nowrap;
 }
 
@@ -1243,8 +1247,15 @@ textarea.note {
   overflow-x: hidden;
   touch-action: pan-y;
   overscroll-behavior: contain;
-  background: var(--bg);
-  border-radius: 14px 14px 0 0;
+  /* Il foglio è l'unica superficie che deve staccarsi dalla pagina: sulla
+     carta, carta su carta non si vedrebbe. Un bianco più chiaro, una riga
+     sopra e un'ombra bassa — l'unica ombra dell'app, e c'è perché qui il
+     rilievo è un'informazione: questo pannello sta sopra, e sotto c'è ancora
+     la schermata. */
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--separator);
+  box-shadow: 0 -12px 32px rgba(16, 17, 19, 0.14);
+  border-radius: 10px 10px 0 0;
   padding: 8px 0 calc(env(safe-area-inset-bottom) + 16px);
   animation: rise 0.22s ease-out;
 }
@@ -1436,9 +1447,10 @@ textarea.note {
 /* ---------- calendario ---------- */
 
 .calendario {
-  background: var(--bg-grouped);
-  border-radius: 14px;
-  padding: 10px 8px 12px;
+  background: none;
+  border-radius: 0;
+  border-top: 1px solid var(--separator);
+  padding: 12px 0 4px;
 }
 
 .cal-barra {
@@ -1456,10 +1468,10 @@ textarea.note {
   flex: 0 0 44px;
   width: 44px;
   height: 44px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--fill-tertiary);
-  color: var(--accent);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--label);
   font-size: 17px;
   cursor: pointer;
 }
@@ -1492,7 +1504,7 @@ textarea.note {
   min-height: 44px;
   border: 0;
   background: none;
-  border-radius: 9px;
+  border-radius: 0;
   color: var(--label);
   font-size: 14px;
   cursor: pointer;
@@ -1513,17 +1525,25 @@ textarea.note {
   line-height: 1;
 }
 
-.cal-giorno.previsto {
-  background: var(--fill-quaternary);
+/* Il giorno non si colora: si sottolinea. Le caselle piene erano quadrati
+   grigi sparsi su una pagina che non ne ha nessun altro, e a colpo d'occhio
+   sembravano un guasto della griglia più che un calendario. Adesso un giorno
+   già fatto porta una riga d'inchiostro sotto il numero, uno previsto una riga
+   leggera, e oggi è l'unico dentro una cornice. */
+.cal-giorno.previsto .n {
+  box-shadow: 0 3px 0 -2px var(--separator);
 }
 
 .cal-giorno.fatto {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.cal-giorno.fatto .n {
+  box-shadow: 0 3px 0 -2px var(--label);
 }
 
 .cal-giorno.oggi {
-  outline: 1.5px solid var(--accent);
+  outline: 1.5px solid var(--label);
   outline-offset: -1.5px;
   font-weight: 700;
 }
@@ -1558,8 +1578,11 @@ textarea.note {
   box-shadow: inset 0 0 0 1.2px var(--label-tertiary);
 }
 
+/* Una scadenza saltata è l'unica cosa del calendario che chiede attenzione:
+   pallino vuoto col contorno, non un altro pieno uguale agli altri. */
 .cal-punti .p-scaduto {
-  background: var(--orange);
+  background: none;
+  box-shadow: inset 0 0 0 1.4px var(--label);
 }
 
 .cal-punti .p-foto,

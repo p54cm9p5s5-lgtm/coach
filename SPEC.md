@@ -70,11 +70,30 @@ resta nella conversazione con Claude.
 **Look iOS nativo.** L'app deve sembrare un'app di sistema, non un sito.
 
 - Font: `-apple-system` / SF. Nessun font caricato dalla rete.
-- Colori: variabili di sistema, `prefers-color-scheme` automatico chiaro/scuro,
-  accento blu di sistema. In più un tema dichiarato, **«nero e lime»**, che resta
-  scuro sempre: è l'unica palette non di sistema, e si sceglie da Impostazioni.
-- Struttura: liste raggruppate in stile Impostazioni, `border-radius` 10px,
-  separatori sottili, header grandi (Large Title) che si contraggono allo scroll.
+- Colori: **tre, e ognuno vuol dire una cosa sola.** Inchiostro `#101113` per
+  tutto quello che si legge e si tocca; **blu inchiostro `#16307A` solo per
+  «obiettivo raggiunto»** (punteggio da 90 in su, kcal sopra il bersaglio, zero
+  sigarette); **rosso `#A3241A` solo per allarme e cancellazione**. Fondo di
+  carta calda `#FAF9F6`, uno solo. Non c'è tema scuro e non si segue
+  `prefers-color-scheme`: l'app ha un fondo solo, e i colori non dipendono più
+  da cosa fa l'iPhone. Il tema «nero e lime» e l'interruttore in Impostazioni
+  non esistono più.
+- Struttura: **nessuna scheda.** Quello che divide due blocchi è una riga da
+  1 px, non un rettangolo bianco; `border-radius` 2px, e solo dove un pieno
+  serve davvero (tasto premuto, segmento scelto). Header grandi (Large Title)
+  che si contraggono allo scroll.
+- Gerarchia: la fanno **corpo, peso e posizione**, non la tinta. Le cifre sono
+  l'elemento grafico dominante (fino a 76 pt negli anelli, 56 pt nelle schede
+  di Salute); gli anelli sono fili da 2 px, i grafici linee da 1,4 px senza
+  riempimenti.
+- Stati che non sono testo si codificano con la **forma**, non col colore:
+  barra piena = allenamento, mezzo tono = riposo, pallino = nessun dato,
+  contorno tratteggiato = in programma.
+- Le spiegazioni lunghe sotto i grafici stanno dietro un tondino **ⓘ**: quello
+  che serve a ogni occhiata — il bersaglio — resta scritto sul grafico, sulla
+  sua riga tratteggiata.
+- Un solo selettore di periodo per schermata, in testata: il periodo è il
+  contesto di lettura, non una proprietà della singola scheda.
 - Navigazione: **tab bar in basso, 6 voci** — Home · Oggi · Salute · Fumo ·
   Acqua · Allenamenti. Fumo e Acqua compaiono solo per chi le dichiara nel brief:
   chi non conta le sigarette non vede la scheda, e viceversa per l'acqua, quindi

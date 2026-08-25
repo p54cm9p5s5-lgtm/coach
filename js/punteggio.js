@@ -645,144 +645,39 @@ export function giudizio(totale) {
 }
 
 /**
- * Il colore di un punteggio, su una scala continua: lime acceso da 95 in su,
- * rosso acceso da 20 in giù, e in mezzo il passaggio graduale per giallo e
- * arancione. Un numero che scende deve VEDERSI scendere, non aspettare una
- * soglia per cambiare pastello.
+ * Il colore di un punteggio: due soli valori, perché due sono i significati.
  *
- * I colori sono fissi e non variabili di tema: sono un dato, come le tacche di
- * un termometro, e devono voler dire la stessa cosa su fondo chiaro e scuro.
+ * Prima era una scala continua — rosso a 20, arancione, giallo, lime a 95 —
+ * e serviva a far VEDERE un numero che scendeva senza aspettare una soglia.
+ * Il prezzo era che il colore parlava sempre, dappertutto, di qualunque cosa:
+ * con sette tinte a schermo nessuna vuol dire più niente.
+ *
+ * Adesso il colore dice una cosa sola: **obiettivo raggiunto**. La soglia non
+ * è nuova, è quella che l'app già usava per scrivere «ottimo» — 90 — quindi
+ * numero e parola non possono più contraddirsi. Sotto quella soglia il numero
+ * è inchiostro: quanto è basso lo dice la cifra, che è grande apposta.
  */
-const SCALA = [
-  [20, [255, 59, 48]],   // rosso acceso
-  [45, [255, 140, 0]],   // arancione
-  [70, [250, 204, 21]],  // giallo
-  [85, [163, 230, 53]],  // lime-verde
-  [95, [168, 240, 58]],  // lime acceso
-];
-
-/** Fondo chiaro: nessun attributo di tema e iPhone non in scuro. */
-function fondoChiaro() {
-  if (typeof document === "undefined") return false;
-  if (document.documentElement.getAttribute("data-tema") === "lime") return false;
-  return !window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-}
-
-const luminanza = ([r, g, b]) => {
-  const f = (c) => (c / 255 <= 0.03928 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4);
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-};
+export const SOGLIA_RAGGIUNTO = 90;
 
 /**
- * Il fondo su cui questi numeri stanno davvero, nel tema chiaro.
+ * Applica il colore di un punteggio a un elemento.
  *
- * Non è il bianco: i numeri stanno dentro le schede, che sono un grigio
- * appena accennato. Mirare al bianco lasciava i numeri piccoli a 3,65:1 —
- * sotto la soglia — mentre il conto diceva 4,5. Si legge la variabile del
- * tema, e se per qualsiasi motivo non si può leggere si ripiega su un bianco
- * un po' più scuro del vero, che è l'errore dalla parte giusta.
- */
-function fondoDelleSchede() {
-  try {
-    const v = getComputedStyle(document.documentElement).getPropertyValue("--bg-grouped").trim();
-    const n = (v.match(/[\d.]+/g) || []).map(Number);
-    if (n.length >= 3) {
-      const scala = /color\(srgb/.test(v) ? 255 : 1;
-      return luminanza([n[0] * scala, n[1] * scala, n[2] * scala]);
-    }
-  } catch {
-    /* nessun DOM, o variabile assente: si usa il ripiego qui sotto */
-  }
-  return luminanza([242, 242, 247]);
-}
-
-/**
- * Gli stessi colori, visibili sul fondo chiaro.
- *
- * La scala qui sopra è un dato e non cambia: quello che cambia è solo quanto è
- * chiaro il colore, perché il giallo e il lime sul bianco danno 2:1 e il numero
- * non si legge. La tinta resta identica — un 60 è giallo su tutti e due i fondi
- * — e questo vale solo dove il fondo è chiaro davvero.
- */
-function visibileSulBianco(rgb) {
-  // Il velo della pastiglia. Questi numeri stanno spesso dentro una `pill`,
-  // che ha un fondo della stessa tinta al 16%: il fondo vero sotto il testo è
-  // più scuro della scheda, e mirare alla scheda lasciava il numero a 4,03:1
-  // invece dei 4,5 che il conto prometteva. Si mira un po' più in basso, che
-  // è l'errore dalla parte giusta anche dove la pastiglia non c'è.
-  const fondo = fondoDelleSchede() * 0.85 + 0.05;
-  const contrasto = (c) => fondo / (luminanza(c) + 0.05);
-  if (contrasto(rgb) >= 4.5) return rgb;
-  let basso = 0;
-  let alto = 1;
-  for (let i = 0; i < 20; i++) {
-    const k = (basso + alto) / 2;
-    const prova = rgb.map((c) => Math.round(c * k));
-    if (contrasto(prova) >= 4.5) basso = k;
-    else alto = k;
-  }
-  return rgb.map((c) => Math.round(c * basso));
-}
-
-const tinta = (rgb) => `rgb(${(fondoChiaro() ? visibileSulBianco(rgb) : rgb).join(",")})`;
-
-/**
- * Applica il colore di un punteggio a un elemento **ricordandosi il numero**.
- *
- * Serve perché questi colori si calcolano una volta sola, al disegno, e
- * dipendono dal tema. Se il telefono passa da chiaro a scuro dopo — al
- * tramonto, con il tema «Sistema» — i numeri restano della tinta di prima. Di
- * solito non si vede, perché il cambio di tema ridisegna la schermata; ma
- * **dentro l'allenamento il ridisegno è soppresso apposta** (perderebbe quello
- * che stai scrivendo), e lì i numeri restavano illeggibili fino alla fine
- * della seduta: misurati a 1,95:1 su fondo chiaro, contro i 4,5 richiesti.
- *
- * Con il numero appeso all'elemento, `aggiornaColoriPunteggio()` può
- * ricalcolare la tinta senza toccare niente altro.
+ * Prima si portava dietro il numero in un attributo, perché la tinta dipendeva
+ * dal fondo e andava rifatta a ogni cambio di tema — anche a metà allenamento,
+ * dove il ridisegno è vietato. Adesso il fondo è uno solo e il colore è una
+ * variabile CSS: si scrive una volta e resta giusto.
  */
 export function coloraPunteggio(el, totale, proprieta = "color", conSfondo = false) {
   if (!el) return el;
-  el.dataset.punteggio = totale == null ? "" : String(totale);
-  el.dataset.punteggioProp = proprieta;
-  if (conSfondo) el.dataset.punteggioSfondo = "1";
-  el.style[proprieta] = coloreDaPunteggio(totale);
-  if (conSfondo) el.style.background = velo(coloreDaPunteggio(totale));
+  const c = coloreDaPunteggio(totale);
+  el.style[proprieta] = c;
+  if (conSfondo) el.style.background = `color-mix(in srgb, ${c} 10%, transparent)`;
   return el;
-}
-
-/** Il velo dietro le pastiglie: lo stesso colore del numero, al 16%. */
-const velo = (c) => `color-mix(in srgb, ${c} 16%, transparent)`;
-
-/** Rimette in tinta tutto quello che è stato colorato con `coloraPunteggio`. */
-export function aggiornaColoriPunteggio(radice = document) {
-  for (const el of radice.querySelectorAll("[data-punteggio]")) {
-    const grezzo = el.dataset.punteggio;
-    if (grezzo === "") continue;
-    const n = Number(grezzo);
-    if (!Number.isFinite(n)) continue;
-    const c = coloreDaPunteggio(n);
-    el.style[el.dataset.punteggioProp || "color"] = c;
-    // Il velo dietro la pastiglia è fatto dello stesso colore del numero:
-    // rifarne uno senza rifare l'altro lascerebbe il fondo della tinta vecchia.
-    if (el.dataset.punteggioSfondo === "1") el.style.background = velo(c);
-  }
 }
 
 export function coloreDaPunteggio(totale) {
   if (totale == null || Number.isNaN(totale)) return "var(--label-secondary)";
-  const v = Math.max(0, Math.min(100, totale));
-  if (v <= SCALA[0][0]) return tinta(SCALA[0][1]);
-  if (v >= SCALA[SCALA.length - 1][0]) return tinta(SCALA[SCALA.length - 1][1]);
-  for (let i = 1; i < SCALA.length; i++) {
-    const [x1, c1] = SCALA[i - 1];
-    const [x2, c2] = SCALA[i];
-    if (v <= x2) {
-      const q = (v - x1) / (x2 - x1);
-      const mix = c1.map((c, k) => Math.round(c + (c2[k] - c) * q));
-      return tinta(mix);
-    }
-  }
-  return "var(--label-secondary)";
+  return totale >= SOGLIA_RAGGIUNTO ? "var(--raggiunto)" : "var(--label)";
 }
 
 /** Anello grande con il numero al centro. */
@@ -799,7 +694,10 @@ export function coloreDaPunteggio(totale) {
 export function anello(totale, { etichetta = "Completezza", dimensione = 176, sottotitolo = null, mostra = null, colore: coloreForzato = null } = {}) {
   const R = 76;
   const CIRC = 2 * Math.PI * R;
-  const spessore = Math.max(9, Math.round(dimensione / 18));
+  // Un filo, non una fascia. L'anello qui non è il protagonista: è la nota a
+  // margine di un numero grande, e a 2 px si legge come una riga tirata col
+  // tiralinee invece che come un grafico a torta.
+  const spessore = Math.max(2, Math.round(dimensione / 64));
   const svg = el("svg", {
     viewBox: "0 0 176 176",
     width: dimensione,
@@ -811,11 +709,11 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
   // «sufficiente» e «ottimo» erano indistinguibili a colpo d'occhio.
   const colore = coloreForzato || coloreDaPunteggio(totale);
   svg.append(
-    el("circle", { cx: 88, cy: 88, r: R, fill: "none", stroke: "currentColor", "stroke-width": spessore, opacity: 0.14 }),
+    el("circle", { cx: 88, cy: 88, r: R, fill: "none", stroke: "var(--separator)", "stroke-width": Math.max(1, spessore - 1) }),
     (() => {
       const arco = el("circle", {
         cx: 88, cy: 88, r: R, fill: "none", stroke: colore, "stroke-width": spessore,
-        "stroke-linecap": "round", "stroke-dasharray": CIRC,
+        "stroke-linecap": "butt", "stroke-dasharray": CIRC,
         "stroke-dashoffset": CIRC * (1 - limita(totale / 100)),
         style: "transition:stroke-dashoffset .45s ease",
       });
@@ -826,7 +724,7 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
   const scala = dimensione / 176;
   return h(
     "div",
-    { style: `position:relative;width:${dimensione}px;height:${dimensione}px;margin:0 auto` },
+    { style: `position:relative;width:${dimensione}px;height:${dimensione}px;margin:0 auto ${sottotitolo ? 30 : 0}px` },
     svg,
     h(
       "div",
@@ -838,7 +736,7 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
         const numero = h(
           "p",
           {
-            style: `margin:0;font-size:${Math.round(44 * scala)}px;font-weight:700;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1;color:${colore}`,
+            style: `margin:0;font-size:${Math.round(76 * scala)}px;font-weight:700;letter-spacing:-0.055em;font-variant-numeric:tabular-nums lining-nums;line-height:.86;color:${colore}`,
           },
           mostra != null ? String(mostra) : String(totale)
         );
@@ -846,13 +744,25 @@ export function anello(totale, { etichetta = "Completezza", dimensione = 176, so
       })(),
       h(
         "p",
-        { style: `margin:0;font-size:${Math.max(9, Math.round(10 * scala))}px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--label-secondary)` },
+        { style: `margin:6px 0 0;font-size:${Math.max(9, Math.round(11 * scala))}px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--label-tertiary)` },
         etichetta
       ),
-      sottotitolo
-        ? h("p", { style: `margin:2px 0 0;font-size:${Math.max(10, Math.round(12 * scala))}px;color:var(--label-secondary)` }, sottotitolo)
-        : null
-    )
+      null
+    ),
+    // Il giudizio esce dall'anello e va sotto: dentro, accanto a una cifra da
+    // settanta punti, finiva sopra l'arco e si leggeva a fatica. Fuori è una
+    // riga sola, centrata, e l'anello resta pulito.
+    sottotitolo
+      ? h(
+          "p",
+          {
+            style:
+              `position:absolute;left:0;right:0;top:100%;margin:10px 0 0;text-align:center;` +
+              `font-size:${Math.max(12, Math.round(14 * scala))}px;color:var(--label-secondary)`,
+          },
+          sottotitolo
+        )
+      : null
   );
 }
 

@@ -1,5 +1,5 @@
 import { h, toast, sheet, chiedi, num, dataLunga, isoDate, aggiungi, versioneInstallata } from "../ui.js";
-import { intestazione, applicaTema, temaCorrente } from "../app.js";
+import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { estraiBlocco, valida, confronta } from "../brief.js";
 import { apriImport } from "./salute.js";
@@ -110,36 +110,6 @@ export async function render({ vaiA, ridisegna }) {
         )
       ),
       h("p.footnote", "Normalmente l'app si aggiorna da sola alla riapertura. Questo serve solo se resta indietro.")
-    )
-  );
-
-  // ---- aspetto ----
-  const tema = temaCorrente();
-  aggiungi(wrap,
-    h(
-      "div.group",
-      h("h2", "Aspetto"),
-      h(
-        "div.segmented",
-        { style: "margin-left:0;margin-right:0" },
-        ...[
-          ["sistema", "Sistema"],
-          ["lime", "Nero e lime"],
-        ].map(([valore, etichetta]) =>
-          h(
-            "button",
-            {
-              "aria-pressed": tema === valore,
-              onclick: async () => {
-                applicaTema(valore);
-                await ridisegna();
-              },
-            },
-            etichetta
-          )
-        )
-      ),
-      h("p.footnote", "«Sistema» segue chiaro e scuro dell'iPhone. «Nero e lime» resta sempre scuro.")
     )
   );
 
