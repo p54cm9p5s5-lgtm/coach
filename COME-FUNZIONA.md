@@ -734,9 +734,13 @@ seduta, né in quello Salute, né nelle proposte di progressione. Sono
 l'osservazione di quello che è successo, non la misura di quanto hai seguito il
 programma.
 
-**Il talk-test invece pesa, ed è l'unica cosa qui dentro che scrivi tu.** Sotto
-ogni allenamento ci sono tre risposte alla domanda «riuscivi a parlare?» — *sì,
-comodo* · *sì, col fiatone* · *no* — più una nota libera. È la sola misura di
+**Il talk-test invece pesa, ed è l'unica cosa qui dentro che scrivi tu.** In
+fondo alla scheda di una **camminata, di una corsa o di un'escursione** — e solo
+lì — ci sono tre risposte alla domanda «riuscivi a parlare?» — *sì, comodo* ·
+*sì, col fiatone* · *no* — più una nota libera. Su una sessione di pesi la
+domanda non compare: là l'intensità la dicono carico e RPE, che stanno nel log
+della seduta, e chiederla su ogni riga voleva dire lasciare per sempre due terzi
+degli allenamenti «senza risposta». È la sola misura di
 intensità che non esce da un sensore, ed è quella che il coach legge: nella
 tabella del pacchetto diventa una colonna in più, e le note scritte a mano
 arrivano per esteso sotto la tabella. Una giornata con un allenamento a cui hai
@@ -744,9 +748,9 @@ risposto **vale come giornata di allenamento nel punteggio Salute**, piena;
 senza risposta resta fuori dal conto invece di valere zero, perché l'orologio
 dice che ti sei mosso, non a che intensità.
 
-La sezione mette in cima quelli degli ultimi sette giorni ancora senza risposta,
-con le tre pastiglie lì accanto: il talk-test lo ricordi per un giorno o due, non
-per un mese. Ritoccare la risposta già data la toglie. Talk-test e note stanno in
+Il talk-test sta **in fondo** alla scheda, dopo i numeri: quelli si leggono,
+questo si scrive, e le cose da fare vanno dopo quelle da guardare. Ritoccare la
+risposta già data la toglie. Talk-test e note stanno in
 un **archivio a parte**: rifare l'importazione da Salute riscrive i numeri
 dell'orologio ma non tocca quello che hai scritto tu, ed entrano nei backup.
 

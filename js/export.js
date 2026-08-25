@@ -714,7 +714,7 @@ export function bloccoWatch(allenamenti, { giorni = 7, note = new Map(), talkTes
     noteScritte.length ? ["NOTE SCRITTE DALL'ATLETA", "", ...noteScritte, ""].join("\n") : null,
     "Sono gli allenamenti registrati dall'Apple Watch e importati dall'app Salute: numeri misurati dall'orologio, non stime dell'app, e non trascritti a mano.",
     conNote
-      ? "«Talk-test» è l'unica colonna scritta dall'atleta e non misurata dall'orologio: dice se durante l'allenamento riusciva a parlare. Un allenamento con il talk-test risposto fa valere quella giornata come giornata di allenamento nel punteggio Salute; senza risposta la giornata resta fuori dal conto, non vale zero."
+      ? "«Talk-test» è l'unica colonna scritta dall'atleta e non misurata dall'orologio: dice se durante l'allenamento riusciva a parlare. Si risponde solo su camminate, corse ed escursioni — altrove l'intensità la dicono carico e RPE del log — quindi il trattino su una sessione di pesi non è una risposta mancante. Un allenamento con il talk-test risposto fa valere quella giornata come giornata di allenamento nel punteggio Salute; senza risposta la giornata resta fuori dal conto, non vale zero."
       : null,
     `${conNote ? "A parte il talk-test, l'app" : "L'app"} non interpreta questi numeri e non li usa per nessun punteggio. ` +
       "Vanno letti accanto al log della seduta, non al posto suo: un allenamento di forza compare in tutti e due — qui come lo ha visto l'orologio, là come è stato eseguito — e le camminate sono movimento della giornata.",

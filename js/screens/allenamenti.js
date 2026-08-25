@@ -74,6 +74,15 @@ const BREVE_TALK = { comode: "parlavo comodo", fiatone: "parlavo col fiatone", f
    lontana, restano per esteso. */
 const RISPOSTA_BREVE = { comode: "Sì, comodo", fiatone: "Sì, col fiatone", fatica: "No" };
 
+/* Il talk-test ha senso solo dove l'intensità la decidi tu camminando: una
+   camminata, una corsa, un'escursione. Su una sessione di pesi la domanda «e
+   riuscivi a parlare?» non vuol dire niente — lì l'intensità sta nel carico e
+   nell'RPE, che l'app registra da un'altra parte — e chiederla su ogni riga
+   voleva dire lasciare per sempre due terzi degli allenamenti «senza risposta».
+   Dove non si applica, il talk-test non compare né si conta. */
+const CON_TALK_TEST = new Set(["Walking", "Running", "Hiking"]);
+const haTalkTest = (a) => CON_TALK_TEST.has(a?.tipo);
+
 /* Al chiuso o all'aperto lo dice il nome.
    Per Salute una camminata è sempre «Walking»: il tapis e il giro dell'isolato
    hanno lo stesso tipo, e la differenza sta in un dato a parte. Sul passo al
@@ -213,7 +222,8 @@ async function elenco({ ridisegna }) {
   const settimana = tutti.filter((a) => a.data >= daLunedi && a.data <= oggiIso);
   const somma = (righe, campo) => righe.reduce((t, x) => t + (Number(x[campo]) || 0), 0);
   const minutiSettimana = Math.round(somma(settimana, "durataSec") / 60);
-  const rispostiSettimana = settimana.filter((a) => note.get(a.uuid)?.talkTest).length;
+  const conDomanda = settimana.filter(haTalkTest);
+  const rispostiSettimana = conDomanda.filter((a) => note.get(a.uuid)?.talkTest).length;
 
   /* Sette barrette, una per giorno da lunedì a oggi: quanto ti sei mosso, non
      quanto avresti dovuto. Un giorno vuoto resta una tacca bassa e spenta —
@@ -290,47 +300,20 @@ async function elenco({ ridisegna }) {
           "var(--accent)"
         )
       ),
-      settimana.length
+      conDomanda.length
         ? h(
             "p",
             { style: "margin:16px 0 0;font-size:13px;color:var(--label-secondary);line-height:1.4" },
-            rispostiSettimana === settimana.length
-              ? "Talk-test risposto su tutti: il coach sa a che intensità stavi andando."
-              : `Talk-test risposto su ${rispostiSettimana} ${rispostiSettimana === 1 ? "allenamento" : "allenamenti"} su ${settimana.length}.`
+            rispostiSettimana === conDomanda.length
+              ? "Talk-test risposto su tutte le uscite: il coach sa a che intensità stavi andando."
+              : `Talk-test risposto su ${rispostiSettimana} ${conDomanda.length === 1 ? "uscita" : `uscite su ${conDomanda.length}`}.`
           )
         : null
     )
   );
 
-  // ---- da rispondere ----
-  /* Il talk-test si ricorda per un giorno o due, non per un mese: quello che
-     conta è chiudere gli ultimi. Più giù nell'elenco si può rispondere lo
-     stesso, ma qui stanno quelli che vale ancora la pena di ricordare. */
-  const daRispondere = tutti
-    .filter((a) => a.data >= giorniIndietro(oggiIso, 6) && a.data <= oggiIso && !note.get(a.uuid)?.talkTest)
-    .slice(0, 3);
-  if (daRispondere.length) {
-    const lista = h("div", { style: "display:grid;gap:14px" });
-    for (const a of daRispondere) {
-      aggiungi(lista, bloccoRisposta(a, ridisegna));
-    }
-    aggiungi(wrap,
-      h(
-        "div",
-        { style: "margin:14px 16px 0;background:var(--bg-grouped);border-radius:18px;padding:18px" },
-        h("p", { style: "margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-0.5px" }, "Riuscivi a parlare?"),
-        h(
-          "p",
-          { style: "margin:0 0 16px;font-size:13px;color:var(--label-secondary);line-height:1.4" },
-          "L'unica cosa che l'orologio non misura. Rispondi e la giornata vale come giornata di allenamento."
-        ),
-        lista
-      )
-    );
-  }
-
   // ---- come stavi andando ----
-  const conTalk = tutti.filter((a) => note.get(a.uuid)?.talkTest);
+  const conTalk = tutti.filter((a) => haTalkTest(a) && note.get(a.uuid)?.talkTest);
   if (conTalk.length >= 3) {
     const conteggi = store.TALK_TEST.map((t) => ({
       ...t,
@@ -370,7 +353,7 @@ async function elenco({ ridisegna }) {
         h(
           "p",
           { style: "margin:2px 0 0;font-size:12px;color:var(--label-tertiary);line-height:1.4" },
-          `Su ${totale} ${totale === 1 ? "allenamento" : "allenamenti"} con il talk-test risposto, su ${tutti.length} registrati.`
+          `Su ${totale} ${totale === 1 ? "uscita" : "uscite"} con il talk-test risposto, su ${tutti.filter(haTalkTest).length} fra camminate, corse ed escursioni.`
         )
       )
     );
@@ -481,9 +464,10 @@ async function elenco({ ridisegna }) {
     h("div.group",
       h("p.footnote",
         `${tutti.length} ${tutti.length === 1 ? "allenamento" : "allenamenti"} registrati dall'orologio. ` +
-          "I numeri li scrive lui e l'app non li tocca. Il talk-test invece lo scrivi tu: è l'unica cosa qui dentro " +
-          "che l'orologio non può sapere, arriva al coach, e fa valere la giornata come giornata di allenamento nel " +
-          "punteggio Salute. Senza risposta la giornata resta fuori dal conto, non vale zero."
+          "I numeri li scrive lui e l'app non li tocca. Il talk-test invece lo scrivi tu, in fondo alla scheda di una " +
+          "camminata, di una corsa o di un'escursione: è l'unica cosa qui dentro che l'orologio non può sapere, arriva " +
+          "al coach, e fa valere la giornata come giornata di allenamento nel punteggio Salute. Senza risposta la " +
+          "giornata resta fuori dal conto, non vale zero."
       )
     )
   );
@@ -511,7 +495,7 @@ function rigaAllenamento(a, note) {
     a.fcMedia != null ? `${Math.round(a.fcMedia)} bpm` : null,
   ].filter(Boolean);
   const giorno = GIORNI_ABBR[new Date(a.data + "T00:00:00").getDay()];
-  const talk = note.get(a.uuid)?.talkTest || null;
+  const talk = haTalkTest(a) ? note.get(a.uuid)?.talkTest || null : null;
   return h(
     "button.row",
     { onclick: () => (location.hash = `#/allenamenti?id=${encodeURIComponent(a.uuid)}`) },
@@ -527,48 +511,6 @@ function rigaAllenamento(a, note) {
       talk ? h("span.sub", { style: `color:${COLORI_TALK[talk]}` }, BREVE_TALK[talk]) : null
     ),
     h("span.chevron", "›")
-  );
-}
-
-/** Le tre pastiglie che salvano il talk-test senza uscire dalla schermata. */
-function bloccoRisposta(a, ridisegna, { talkCorrente = null } = {}) {
-  const giorno = GIORNI_ABBR[new Date(a.data + "T00:00:00").getDay()];
-  const scelte = h(
-    "div.scelte",
-    { style: "justify-content:flex-start;margin:10px 0 0" },
-    ...store.TALK_TEST.map((t) =>
-      h(
-        "button",
-        {
-          "aria-pressed": talkCorrente === t.id ? "true" : "false",
-          onclick: unaVoltaSola(async () => {
-            // Ritoccare la stessa risposta la toglie: è l'unico modo per
-            // disfare uno sbaglio senza un tasto in più che non serve a niente.
-            const nuovo = talkCorrente === t.id ? null : t.id;
-            const nota = await store.notaAllenamento(a.uuid);
-            await store.salvaNotaAllenamento(a.uuid, { talkTest: nuovo, nota: nota?.nota || null });
-            toast(nuovo ? "Segnato." : "Risposta tolta.");
-            await ridisegna();
-          }),
-        },
-        RISPOSTA_BREVE[t.id] || t.testo
-      )
-    )
-  );
-  return h(
-    "div",
-    h(
-      "div",
-      { style: "display:flex;align-items:baseline;gap:8px" },
-      h("span", { style: `width:9px;height:9px;border-radius:50%;background:${coloreTipo(a.tipo)};flex:none` }),
-      h("span", { style: "font-size:16px;font-weight:700" }, nomeAllenamento(a)),
-      h(
-        "span",
-        { style: "font-size:13px;color:var(--label-secondary);margin-left:auto;white-space:nowrap" },
-        `${giorno} ${dataBreve(a.data)} · ${durataOrologio(a.durataSec)}`
-      )
-    ),
-    scelte
   );
 }
 
@@ -665,74 +607,6 @@ async function dettaglio(uuid, { ridisegna }) {
         `${dataEstesa}, ${a.fine ? `${a.inizio}–${a.fine}` : a.inizio || "—"}`
       ),
       h("p", { style: "margin:2px 0 0;font-size:15px;color:var(--label-secondary)" }, "Apple Watch")
-    )
-  );
-
-  // ---- il talk-test: l'unica cosa che si scrive qui dentro ----
-  const talkAttuale = nota?.talkTest || null;
-  const scelteTalk = h(
-    "div.scelte.righe",
-    { style: "margin:12px 0 0" },
-    ...store.TALK_TEST.map((t) =>
-      h(
-        "button",
-        {
-          "aria-pressed": talkAttuale === t.id ? "true" : "false",
-          onclick: unaVoltaSola(async () => {
-            const nuovo = talkAttuale === t.id ? null : t.id;
-            await store.salvaNotaAllenamento(uuid, { talkTest: nuovo, nota: nota?.nota || null });
-            toast(nuovo ? "Segnato." : "Risposta tolta.");
-            await ridisegna();
-          }),
-        },
-        t.testo
-      )
-    )
-  );
-
-  // La nota si legge come una citazione: staccata dai tasti, con una riga di
-  // colore a sinistra. Attaccata sotto le pastiglie sembrava l'etichetta di
-  // quella premuta.
-  const scrittaNota = h("p", {
-    style:
-      "margin:14px 0 0;padding:2px 0 2px 12px;border-left:3px solid var(--separator);" +
-      "font-size:15px;color:var(--label);line-height:1.45;white-space:pre-wrap",
-  });
-  if (nota?.nota) scrittaNota.textContent = nota.nota;
-
-  aggiungi(wrap,
-    h(
-      "div",
-      { style: "margin:14px 16px 0;background:var(--bg-grouped);border-radius:16px;padding:18px" },
-      h("p", { style: "margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px" }, "Riuscivi a parlare?"),
-      h(
-        "p",
-        { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);line-height:1.4" },
-        "Il talk-test è la sola misura di intensità che l'orologio non prende. Rispondendo, la giornata vale come " +
-          "giornata di allenamento nel punteggio Salute, e la risposta arriva al coach."
-      ),
-      scelteTalk,
-      nota?.nota ? scrittaNota : null,
-      h(
-        "div",
-        { style: "margin:14px 0 0" },
-        h(
-          "button.btn.secondary",
-          {
-            onclick: unaVoltaSola(async () => {
-              const scritto = await chiediTesto({
-                titolo: nota?.nota ? "Correggi la nota" : "Scrivi una nota",
-                valore: nota?.nota || "",
-              });
-              if (scritto === null) return;
-              await store.salvaNotaAllenamento(uuid, { talkTest: talkAttuale, nota: scritto });
-              toast(scritto ? "Nota salvata." : "Nota tolta.");
-              await ridisegna();
-            }),
-          },
-          nota?.nota ? "Correggi la nota" : "Aggiungi una nota"
-        )
-      )
     )
   );
 
@@ -869,16 +743,90 @@ async function dettaglio(uuid, { ridisegna }) {
     );
   }
 
+  aggiungi(wrap, bloccoTalkTest(a, nota, ridisegna));
+
   aggiungi(wrap,
     h("div.group",
       h("p.footnote",
         "Numeri scritti dall'orologio e importati da Salute: l'app non li cambia e li manda al coach così come sono. " +
-          "Il talk-test e la nota sono gli unici campi scritti da te, stanno in un archivio a parte, e non spariscono " +
-          "se rifai l'importazione."
+          (haTalkTest(a)
+            ? "Il talk-test e la nota sono gli unici campi scritti da te, stanno in un archivio a parte, e non spariscono se rifai l'importazione."
+            : "Il talk-test qui non c'è: si risponde solo su camminate, corse ed escursioni, dove l'intensità la decidi tu andando. Su una sessione come questa la dicono carico e RPE, che stanno nel log della seduta.")
       )
     )
   );
   return wrap;
+}
+
+/* Il talk-test, in fondo alla scheda.
+   Sta dopo i numeri e non prima per due motivi: quello che apri a vedere sono
+   i numeri dell'orologio, e questa è l'unica cosa che invece scrivi tu — le
+   cose da fare vanno in fondo, dopo quelle da leggere. Compare solo su
+   camminate, corse ed escursioni: altrove la domanda non vuol dire niente. */
+function bloccoTalkTest(a, nota, ridisegna) {
+  if (!haTalkTest(a)) return null;
+  const uuid = a.uuid;
+  const talkAttuale = nota?.talkTest || null;
+  const scelteTalk = h(
+    "div.scelte",
+    { style: "margin:12px 0 0;justify-content:flex-start" },
+    ...store.TALK_TEST.map((t) =>
+      h(
+        "button",
+        {
+          "aria-pressed": talkAttuale === t.id ? "true" : "false",
+          onclick: unaVoltaSola(async () => {
+            const nuovo = talkAttuale === t.id ? null : t.id;
+            await store.salvaNotaAllenamento(uuid, { talkTest: nuovo, nota: nota?.nota || null });
+            toast(nuovo ? "Segnato." : "Risposta tolta.");
+            await ridisegna();
+          }),
+        },
+        RISPOSTA_BREVE[t.id] || t.testo
+      )
+    )
+  );
+
+  const scrittaNota = h("p", {
+    style:
+      "margin:14px 0 0;padding:2px 0 2px 12px;border-left:3px solid var(--separator);" +
+      "font-size:15px;color:var(--label);line-height:1.45;white-space:pre-wrap",
+  });
+  if (nota?.nota) scrittaNota.textContent = nota.nota;
+
+  return h(
+    "div",
+    { style: "margin:24px 16px 0;padding:18px 0 0;border-top:1px solid var(--separator)" },
+    h("p", { style: "margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px" }, "Riuscivi a parlare?"),
+    h(
+      "p",
+      { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);line-height:1.4" },
+      "Il talk-test è la sola misura di intensità che l'orologio non prende. Rispondendo, la giornata vale come " +
+        "giornata di allenamento nel punteggio Salute, e la risposta arriva al coach."
+    ),
+    scelteTalk,
+    nota?.nota ? scrittaNota : null,
+    h(
+      "div",
+      { style: "margin:14px 0 0" },
+      h(
+        "button.btn.secondary",
+        {
+          onclick: unaVoltaSola(async () => {
+            const scritto = await chiediTesto({
+              titolo: nota?.nota ? "Correggi la nota" : "Scrivi una nota",
+              valore: nota?.nota || "",
+            });
+            if (scritto === null) return;
+            await store.salvaNotaAllenamento(uuid, { talkTest: talkAttuale, nota: scritto });
+            toast(scritto ? "Nota salvata." : "Nota tolta.");
+            await ridisegna();
+          }),
+        },
+        nota?.nota ? "Correggi la nota" : "Aggiungi una nota"
+      )
+    )
+  );
 }
 
 /* Un foglio con una casella di testo sola. Non esisteva: le note dell'app si
