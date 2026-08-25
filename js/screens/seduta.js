@@ -1877,56 +1877,68 @@ function riquadroVideo(def) {
   const { id, titolo, canale } = def.video;
   const box = h("div");
 
-  const apri = () => {
-    clear(riquadro).append(
-      h("iframe", {
-        src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1`,
-        title: titolo || def.nome,
-        allow: "accelerometer; autoplay; encrypted-media; picture-in-picture",
-        allowfullscreen: true,
-        loading: "lazy",
-      })
-    );
-  };
+  /* Il player c'è già, pronto.
 
-  // La copertina vera del video, scaricata una volta sola.
-  //
-  // Per un periodo è stata disegnata dall'app: l'anteprima di YouTube parte da
-  // `i.ytimg.com`, e caricarla a ogni scheda voleva dire dire a Google, ogni
-  // volta, quale esercizio stavi facendo. Ma un rettangolo nero non dice cosa
-  // stai per guardare, e in palestra quella miniatura serve.
-  //
-  // La via di mezzo: si scarica **una volta per video** e si tiene
-  // nell'archivio (`store.scaricaCopertina`). Da lì in poi zero richieste, e la
-  // copertina c'è anche senza rete — che è il caso in cui il rettangolo nero
-  // dava più fastidio. Finché non arriva, e se non arriva mai, resta la
-  // copertina disegnata con su scritto dove va a prenderlo.
+     Prima al posto del video c'era una copertina con sopra il triangolo del
+     play: toccandola partiva il caricamento del player, e solo dopo un secondo
+     o due si poteva guardare. In palestra, fra una serie e l'altra, quel
+     secondo capita sempre nel momento sbagliato — e la copertina, per quanto
+     sia la miniatura vera, resta una fotografia: non si può mandare avanti, non
+     si può mettere in pausa, non è il video.
+
+     Adesso il player di YouTube è montato insieme alla scheda dell'esercizio.
+     Non parte da solo (`autoplay=0`): compare col suo tasto grande in mezzo, e
+     al tocco parte subito perché è già caricato.
+
+     Il prezzo, detto chiaro: la richiesta a YouTube adesso parte quando
+     l'esercizio compare a schermo, non quando decidi tu di guardarlo. Resta il
+     dominio «nocookie», e resta l'unica richiesta che esce dal telefono in
+     tutta l'app.
+
+     Senza rete il player non si carica: lì torna la copertina salvata, con il
+     suo tasto, e al tocco riprova. */
   const verticale = Boolean(def.video?.verticale);
-  // Titolo e canale stanno già nella riga qui sotto, insieme a «Cambia»:
-  // ripeterli qui sopra era la stessa cosa scritta due volte a due centimetri
-  // di distanza. Sulla copertina resta l'unica cosa che lì sotto non c'è, ed è
-  // quella che serve prima di toccare: dove va a prenderlo.
-  const copertina = h("span.copertina", h("span.dove", "si apre su YouTube"));
 
-  const riquadro = h(
-    verticale ? "button.video.verticale" : "button.video",
-    { onclick: apri, "aria-label": `Riproduci: ${titolo || def.nome}` },
-    copertina,
-    h("span.play", h("span", "▶"))
-  );
-
-  // La miniatura arriva quando arriva: se il riquadro nel frattempo è stato
-  // sostituito (esercizio cambiato, player aperto) non si tocca più niente.
-  store
-    .scaricaCopertina(id)
-    .then((immagine) => {
-      if (!immagine || !copertina.isConnected) return;
-      copertina.style.backgroundImage = `url("${immagine}")`;
-      copertina.classList.add("con-foto");
-    })
-    .catch(() => {
-      /* resta quella disegnata */
+  const player = () =>
+    h("iframe", {
+      src: `https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1&autoplay=0`,
+      title: titolo || def.nome,
+      allow: "accelerometer; autoplay; encrypted-media; picture-in-picture",
+      allowfullscreen: true,
     });
+
+  const riquadro = h(verticale ? "div.video.verticale" : "div.video");
+
+  if (navigator.onLine !== false) {
+    riquadro.append(player());
+    // La miniatura si scarica lo stesso, in sottofondo: adesso non serve a
+    // vedere il video — c'è il player — ma serve il giorno in cui la rete non
+    // c'è, ed è una richiesta sola per video contro le mille che il player fa
+    // comunque. Se fallisce, pazienza.
+    store.scaricaCopertina(id).catch(() => {});
+  } else {
+    // Offline: la copertina salvata, e il tocco riprova a caricare il player.
+    const copertina = h("span.copertina", h("span.dove", "senza rete: tocca per riprovare"));
+    const tasto = h(
+      "button.video-riprova",
+      {
+        style: "position:absolute;inset:0;width:100%;background:none;border:0;padding:0;cursor:pointer",
+        "aria-label": `Riproduci: ${titolo || def.nome}`,
+        onclick: () => clear(riquadro).append(player()),
+      },
+      copertina,
+      h("span.play", h("span", "▶"))
+    );
+    riquadro.append(tasto);
+    store
+      .copertinaSalvata(id)
+      .then((immagine) => {
+        if (!immagine || !copertina.isConnected) return;
+        copertina.style.backgroundImage = `url("${immagine}")`;
+        copertina.classList.add("con-foto");
+      })
+      .catch(() => {});
+  }
 
   box.append(
     riquadro,

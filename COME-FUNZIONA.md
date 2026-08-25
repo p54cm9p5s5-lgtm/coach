@@ -1035,26 +1035,28 @@ Sono la parte che conta più delle funzioni.
   Le uniche richieste che possono uscire riguardano i **video degli esercizi**, e
   non portano fuori niente di tuo.
 
-  La prima è il **player di YouTube**, e parte **solo se tocchi il video**: fino a
-  quel momento il filmato non viene caricato, e il player è quello «nocookie».
+  **Il player di YouTube è già montato quando l'esercizio compare a schermo.**
+  Non parte da solo — ha il suo tasto grande in mezzo — ma è caricato, e al
+  tocco parte subito. Prima al suo posto c'era una copertina: toccandola
+  cominciava il caricamento, e solo dopo un secondo o due si poteva guardare.
+  Fra una serie e l'altra quel secondo capita sempre nel momento sbagliato, e
+  una fotografia non si può mandare avanti né mettere in pausa.
 
-  La seconda è la **copertina del video**. La prima volta che un esercizio ti
-  compare davanti, l'app scarica la sua anteprima da `i.ytimg.com` — un'immagine
-  pubblica, uguale per chiunque guardi quel video — e **la tiene nell'archivio del
-  telefono**. Dalla seconda volta in poi non parte più niente: la copertina viene
-  presa da lì, anche senza rete. La richiesta dice a Google che qualcuno ha
-  chiesto l'anteprima di quel video, e nient'altro: non il tuo nome, non il tuo
-  archivio, non quante serie hai fatto. Sopra la copertina resta scritto «si apre
-  su YouTube», così sai sempre dove va a finire il tocco.
+  Il prezzo, detto chiaro: **la richiesta a YouTube parte quando l'esercizio ti
+  compare davanti**, non quando decidi tu di guardare il video. YouTube vede
+  che da quell'indirizzo si sta aprendo quell'esercizio; non vede il tuo nome,
+  il tuo archivio, i tuoi carichi — quelli non escono dal telefono in nessun
+  caso. Il dominio è quello «nocookie», che è il meno invadente dei due.
 
-  Per un periodo la copertina era invece un rettangolo disegnato dall'app, per non
-  far partire nemmeno quella richiesta. Il risultato però era uno schermo nero
-  davanti a un esercizio che non conosci, e la copertina vera serve proprio a
-  farti capire cosa stai per guardare: quel rettangolo è tornato a essere solo il
-  ripiego di quando la rete non c'è.
+  Insieme al player si scarica anche la **miniatura** del video (`i.ytimg.com`),
+  una volta sola per video, e resta nell'archivio del telefono: serve il giorno
+  in cui la rete non c'è. **Senza rete** il player non si carica e al suo posto
+  torna quella miniatura, con il suo tasto: toccandola riprova.
 
-  Le copertine **non entrano nei backup**: non sono roba tua, e si riscaricano da
-  sole. Da Impostazioni puoi vedere quanto pesano e buttarle via quando vuoi.
+  Le miniature **non entrano nei backup** — non sono roba tua e si riscaricano
+  da sole — e da Impostazioni si può vedere quanto pesano e buttarle via.
+
+
 
 ---
 
