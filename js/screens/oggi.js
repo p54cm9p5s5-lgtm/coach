@@ -12,7 +12,6 @@ import { sbloccaAudio, unaVoltaSola } from "../ui.js";
 let meseMostrato = null;
 // Aperto o chiuso il dettaglio del punteggio Salute: si ricorda fra un disegno
 // e l'altro, altrimenti cambiando periodo si richiuderebbe da solo.
-let apertoSalute = false;
 
 export async function render({ vaiA, ridisegna }) {
   const oggi = isoDate();
@@ -215,12 +214,15 @@ async function bloccoGrafico(ridisegna) {
     }));
   })();
 
-  // La scomposizione sta dietro un tocco: in Home serve il numero, non
-  // l'elenco. Chi vuole sapere da cosa viene lo apre — e resta aperto finché
-  // non lo richiude, perché chi lo apre di solito lo vuole guardare più volte.
+  // La scomposizione sta sempre a schermo.
+  //
+  // Stava dietro un tocco («Da cosa viene ⌄») per non allungare la Home. Ma il
+  // numero da solo non dice niente di utile — 85 perché? — e la risposta è
+  // sette righe che si leggono in due secondi: nasconderle voleva dire
+  // costringere a un tocco ogni volta per sapere l'unica cosa che serve
+  // davvero, cioè quale voce sta tirando giù il punteggio.
   const dettagli = h(
     "div",
-    { style: `display:${apertoSalute ? "block" : "none"}` },
     voci.length
       ? h(
           "div.list",
@@ -246,33 +248,6 @@ async function bloccoGrafico(ridisegna) {
         ? `Oggi il punteggio è fermo a ${oggiSalute.totale}: ${oggiSalute.limite.perche}.`
         : "Sonno, allenamento, fumo, movimento, passi, minuti di esercizio e tempo in piedi. Le voci senza dato restano fuori dal conto invece di valere zero."
     )
-  );
-
-  const freccia = h(
-    "span",
-    { style: "display:inline-block;transition:transform .2s ease;transform:rotate(" + (apertoSalute ? "180" : "0") + "deg)" },
-    "⌄"
-  );
-
-  const apri = h(
-    "button",
-    {
-      "aria-expanded": apertoSalute ? "true" : "false",
-      style:
-        // 44 px come ogni altro tasto: era alto trenta, e in un'app che si usa
-        // con le mani sudate anche un tasto innocuo va preso al primo colpo.
-        "display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:6px 0 0;" +
-        "min-height:44px;background:none;border:0;padding:6px 0;color:var(--label-secondary);font:inherit;font-size:13px",
-      onclick: () => {
-        apertoSalute = !apertoSalute;
-        dettagli.style.display = apertoSalute ? "block" : "none";
-        apri.setAttribute("aria-expanded", apertoSalute ? "true" : "false");
-        apri.firstChild.textContent = apertoSalute ? "Nascondi il dettaglio" : "Da cosa viene";
-        freccia.style.transform = `rotate(${apertoSalute ? 180 : 0}deg)`;
-      },
-    },
-    h("span", apertoSalute ? "Nascondi il dettaglio" : "Da cosa viene"),
-    freccia
   );
 
   const bloccoSalute = h(
@@ -302,8 +277,7 @@ async function bloccoGrafico(ridisegna) {
             : "oggi · nessun dato ancora"
           : `media di ${conPunteggio.length} ${conPunteggio.length === 1 ? "giorno" : "giorni"} · ${etichettaPeriodo(periodoSalute)}`
       ),
-      mostrato != null ? apri : null,
-      dettagli
+      mostrato != null ? dettagli : null
     )
   );
 

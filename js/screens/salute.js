@@ -165,38 +165,14 @@ export async function render({ ridisegna }) {
     return wrap;
   }
 
-  const regole = store.regole().finestre || {};
-  const fMov = store.statoFinestra(giorni, {
-    campo: "kcalAttive",
-    settimane: regole.movimento?.settimane ?? 3,
-    minimoSettimana: regole.movimento?.giorniMinSettimana ?? 5,
-  });
-  const fSonno = store.statoFinestra(notti, {
-    campo: "durataMin",
-    settimane: regole.sonno?.settimane ?? 3,
-    minimoSettimana: regole.sonno?.nottiMinSettimana ?? 5,
-  });
-
-  const finestra = (nome, f, unita) =>
-    h(
-      "div.list",
-      h(
-        "div.row",
-        h("div.main", h("span.title", nome), h("span.sub", f.completa ? "finestra completa" : "in raccolta")),
-        h("span.value", `${f.registratiTotali}/${f.richiesti} ${unita}`),
-        h("span.pill", { class: f.completa ? "pill ok" : "pill warn" }, f.completa ? "pronta" : "incompleta")
-      ),
-      ...f.perSettimana.map((s, i) =>
-        h(
-          "div.row",
-          h("div.main", h("span.sub", `Settimana ${i + 1} · ${dataBreve(s.da)}–${dataBreve(s.a)}`)),
-          h("span.value", String(s.registrati)),
-          s.primaDeiDati
-            ? h("span.pill", "prima dell'app")
-            : h("span.pill", { class: s.sufficiente ? "pill ok" : "pill warn" }, s.sufficiente ? "ok" : "sotto minimo")
-        )
-      )
-    );
+  /* Il pannello «Finestre dati» non c'è più.
+     Contava quanti giorni su 21 erano stati importati, settimana per
+     settimana, per movimento e sonno. Serviva quando l'importazione era nuova
+     e non si sapeva se stesse funzionando: adesso funziona, il comando rapido
+     gira ogni mattina, e quella tabella diceva ogni giorno la stessa cosa —
+     «completa» — occupando mezzo schermo. Quanti giorni ha davvero ogni media
+     resta scritto accanto al numero, che è l'unico posto in cui serve. Al
+     coach il conto delle finestre continua ad arrivare nel pacchetto. */
 
   // Un obiettivo solo per tutta la scheda: quello più recente che Salute ha
   // mandato, altrimenti quello impostato nell'app. Prima la linea, le
@@ -745,20 +721,6 @@ export async function render({ ridisegna }) {
     );
   }
 
-  aggiungi(wrap,
-    h(
-      "div.group",
-      h("h2", "Finestre dati"),
-      finestra("Movimento", fMov, "giorni"),
-      h("div", { style: "height:10px" }),
-      finestra("Sonno", fSonno, "notti"),
-      h(
-        "p.footnote",
-        "Un giorno senza dati non vale zero: resta fuori dalle medie e dal conteggio. Finché la finestra non è completa questi numeri sono raccolta, non azione."
-      )
-    )
-  );
-
   // Corpo e Storico stanno qui, non nella barra in basso: sono due letture dei
   // dati, non due posti dove si registra qualcosa ogni giorno. La barra resta
   // per quello che si tocca durante la giornata.
@@ -793,8 +755,7 @@ export async function render({ ridisegna }) {
           h("div.main", h("span.title", "Ultimo import")),
           h("span.value", imp.ultimoImportSalute ? new Date(imp.ultimoImportSalute).toLocaleString("it-IT") : "mai")
         ),
-        h("button.row.accent", { onclick: () => aggiorna(ridisegna) }, h("div.main", h("span.title", "Aggiorna dati salute")), h("span.chevron", "›")),
-        h("button.row.accent", { onclick: istruzioni }, h("div.main", h("span.title", "Come si configura il comando rapido")), h("span.chevron", "›"))
+        h("button.row.accent", { onclick: () => aggiorna(ridisegna) }, h("div.main", h("span.title", "Aggiorna dati salute")), h("span.chevron", "›"))
       )
     )
   );
