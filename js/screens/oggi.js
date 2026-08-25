@@ -7,11 +7,9 @@ import * as store from "../store.js";
 import { graficoAttivita, graficoLinea, fascia, legenda, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo, CHIAVE_PERIODO_SALUTE } from "../grafico.js";
 import { calendario, calcolaAttese, riassuntoGiorno } from "../calendario.js";
 import { anello, giudizio, coloreDaPunteggio, coloraPunteggio } from "../punteggio.js";
-import { sbloccaAudio, unaVoltaSola } from "../ui.js";
+import { unaVoltaSola } from "../ui.js";
 
 let meseMostrato = null;
-// Aperto o chiuso il dettaglio del punteggio Salute: si ricorda fra un disegno
-// e l'altro, altrimenti cambiando periodo si richiuderebbe da solo.
 
 export async function render({ vaiA, ridisegna }) {
   const oggi = isoDate();
@@ -459,195 +457,19 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
     );
   }
 
-  const previsto = store.giornoPrevisto(oggi);
-  const fatteOggi = (await store.allenamenti()).filter((s) => s.data === oggi && s.stato === "completata");
-  const giaFatto = fatteOggi.some((s) => s.tipoId === previsto?.id);
+  /* La sezione «Oggi» non sta più in Home.
+     C'era la carta del giorno — il nome dell'allenamento, la nota del coach,
+     il tasto per cominciare — e a lavoro finito il punteggio della seduta. È
+     esattamente quello che si apre toccando la scheda «Oggi» in fondo, e
+     averlo in due posti voleva dire due tasti «Inizia allenamento» a due tocchi
+     di distanza. In Home resta quello che in «Oggi» non c'è: il punteggio
+     Salute, l'andamento, gli allenamenti del Watch, il calendario.
 
-  // Allenamento già chiuso: al posto dei pulsanti si vede il punteggio, che è
-  // l'unica cosa che serve sapere a lavoro finito.
-  const ultima = fatteOggi.filter((s) => s.oraFine).sort((a, b) => a.oraFine - b.oraFine).at(-1);
-  if (ultima) {
-    const comp = await store.completezzaSeduta(ultima.id);
-    return h(
-      "div.group",
-      h("h2", "Oggi"),
-      h(
-        "button",
-        {
-          style:
-            "display:block;width:calc(100% - 32px);margin:0 16px;background:var(--bg-grouped);border:0;border-radius:14px;padding:20px 16px 18px;text-align:center;color:inherit;font:inherit",
-          onclick: () => (location.hash = `#/seduta?riepilogo=${ultima.id}`),
-        },
-        h("p", { style: "margin:0 0 14px;font-size:26px;font-weight:700;letter-spacing:-0.5px" }, ultima.tipoNome),
-        comp
-          ? anello(comp.totale, { sottotitolo: giudizio(comp.totale).testo })
-          : h("p", { style: "margin:0;color:var(--label-secondary)" }, "completato oggi"),
-        h("p", { style: "margin:14px 0 0;font-size:13px;color:var(--label-secondary)" }, "Vedi il risultato ›")
-      ),
-      // Il tasto per farne un altro c'era, più sotto, con scritto «Rifai questo
-      // allenamento» — ma non lo vedeva nessuno: questa carta esce prima e
-      // torna subito. Dalla Home, dopo un allenamento chiuso, non se ne poteva
-      // cominciare un secondo. Adesso il tasto è qui, dice la stessa cosa che
-      // dice la schermata del programma, e chiede conferma come lì.
-      previsto
-        ? h(
-            "div.btn-wrap",
-            { style: "margin-top:12px" },
-            h(
-              "button.btn.secondary",
-              {
-                onclick: unaVoltaSola(async () => {
-                  sbloccaAudio();
-                  const gia = await store.sedutaInCorso();
-                  if (!gia) {
-                    const scelta = await chiedi({
-                      titolo: "Un secondo allenamento oggi?",
-                      testo: `«${previsto.nome || previsto.id}» risulta già fatto oggi. Iniziandone un altro restano tutti e due in archivio, sulla stessa data, e il coach li vedrà tutti e due.`,
-                      opzioni: [{ etichetta: "Sì, iniziane un altro", valore: "vai" }],
-                    });
-                    if (scelta !== "vai") return;
-                    await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
-                  }
-                  vaiA("seduta");
-                }),
-              },
-              "Inizia un altro allenamento"
-            )
-          )
-        : null
-    );
-  }
-
-  const origine = store.origineGiorno(oggi);
-  // «Riposo» va scritto solo quando è davvero riposo. Se il calendario dice
-  // qualcosa che l'app non riconosce, o se il pacchetto è vecchio, l'app non
-  // sa cosa tocca oggi: dirlo è l'unica risposta onesta.
-  const titolo = previsto
-    ? previsto.nome
-    : origine.sconosciuto
-      ? origine.titolo || "Da vedere sul calendario"
-      : origine.scaduta
-        ? "Calendario da aggiornare"
-        : origine.oltreProgrammato
-          ? "Non ancora programmato"
-          : origine.nonLetta
-            ? "Giorno non letto"
-            : "Riposo";
-  // Un giorno di sola mobilità ha zero esercizi ma non è vuoto: ha i suoi
-  // passaggi, ed è un impegno come gli altri — se lo salti conta come un Push
-  // saltato. Scrivere «0 esercizi» lo faceva sembrare una casella vuota o un
-  // programma rotto, ed era l'unico posto rimasto a dirlo così: la schermata
-  // del programma lo conta già per quello che è.
-  const sotto = giaFatto
-    ? "completato oggi"
-    : previsto
-      ? store.giornoDiSolaMobilita(previsto.id)
-        ? (() => {
-            const quanti = (store.riscaldamento(previsto.id)?.mobilitaFinale || []).length;
-            return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità`;
-          })()
-        : `${previsto.esercizi?.length || 0} ${(previsto.esercizi?.length || 0) === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}`
-      : origine.riposo
-        ? "riposo, dal calendario del coach"
-        : origine.sconosciuto
-        ? `«${origine.titolo}» non è un allenamento del programma`
-        : origine.scaduta
-          ? `il calendario importato arriva al ${dataBreve(origine.fine)}: aggiornalo con il comando Coach Calendario`
-          : origine.oltreProgrammato
-            ? `il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}`
-            : origine.nonLetta
-              ? "questo giorno non è mai stato letto dal calendario"
-              : origine.fonte === "calendario"
-              ? "niente sul calendario per oggi"
-              : "nessun allenamento previsto dallo split";
-
-  return h(
-    "div.group",
-    h("h2", "Oggi"),
-    h(
-      "div",
-      { style: "background:var(--bg-grouped);border-radius:14px;padding:20px 16px 16px;text-align:center" },
-      h(
-        "p",
-        { style: "margin:0;font-size:26px;font-weight:700;letter-spacing:-0.5px" },
-        titolo
-      ),
-      h("p", { style: "margin:6px 0 16px;font-size:13px;color:var(--label-secondary)" }, sotto),
-      origine.fonte === "calendario" && previsto
-        ? h(
-            "p",
-            { style: "margin:-8px 0 14px;font-size:11px;color:var(--label-tertiary)" },
-            "dal calendario"
-          )
-        : null,
-      // La nota che il coach ha scritto nell'evento è un'istruzione per oggi
-      // («porta la cintura»): si vedeva solo toccando il giorno sul
-      // calendarietto, cioè quasi mai.
-      origine.nota
-        ? h(
-            "p",
-            {
-              style:
-                "margin:-4px 16px 14px;padding:10px 12px;background:var(--fill-tertiary);border-radius:10px;" +
-                "font-size:13px;color:var(--label);text-align:left",
-            },
-            origine.nota
-          )
-        : null,
-      previsto
-        ? h(
-            "button.btn",
-            {
-              class: giaFatto ? "btn secondary" : "btn",
-              onclick: unaVoltaSola(async () => {
-                // Il tocco che avvia l'allenamento è anche quello che autorizza
-                // il suono del recupero: dopo non ci sono più occasioni utili.
-                sbloccaAudio();
-                // Se una seduta è già aperta non se ne crea una seconda: il
-                // doppio tocco lasciava due allenamenti aperti insieme.
-                const gia = await store.sedutaInCorso();
-                if (!gia) {
-                  if (giaFatto) {
-                    const scelta = await chiedi({
-                      titolo: "Un secondo allenamento oggi?",
-                      testo: `«${previsto.nome || previsto.id}» risulta già fatto oggi. Iniziandone un altro restano tutti e due in archivio, sulla stessa data, e il coach li vedrà tutti e due.`,
-                      opzioni: [{ etichetta: "Sì, iniziane un altro", valore: "vai" }],
-                    });
-                    if (scelta !== "vai") return;
-                  }
-                  await store.iniziaSeduta({ data: oggi, giornoId: previsto.id });
-                }
-                vaiA("seduta");
-              }),
-            },
-            // La stessa parola che usa la schermata del programma: erano due
-            // nomi diversi per lo stesso gesto.
-            giaFatto ? "Inizia un altro allenamento" : "Inizia allenamento"
-          )
-        : null,
-      // Quale allenamento si fa in un dato giorno lo decide lo split del master
-      // brief. L'app non offre alternative: non è una scelta che spetta a lei.
-      previsto
-        ? null
-        : h(
-            "p",
-            { style: "margin:10px 0 0;font-size:12px;color:var(--label-tertiary)" },
-            origine.riposo
-              ? "Riposo, e lo dice il calendario del coach."
-              : origine.oltreProgrammato
-              ? `Il coach ha programmato fino al ${dataBreve(origine.ultimoEvento)}: oltre non c'è ancora niente.`
-              : origine.scaduta
-              ? "Il calendario letto è vecchio: rileggilo per sapere cosa tocca."
-              : origine.nonLetta
-              ? "Nessuna lettura del calendario copre questo giorno: rileggilo per sapere cosa c'era."
-              : origine.sconosciuto
-                ? "Sul calendario c'è qualcosa, ma non è un allenamento del programma."
-                : origine.vuoto
-                  ? "Sul calendario oggi non c'è niente."
-                  : "Il giorno di riposo fa parte del programma."
-          )
-    )
-  );
+     Quello che NON è la sezione «Oggi» è rimasto: un allenamento lasciato
+     aperto — o un cardio rimandato — continua a comparire qui sopra con la sua
+     intestazione e i suoi tasti, perché è un avviso, non la scheda del giorno,
+     e se sparisse dalla Home nessuno se ne accorgerebbe più. */
+  return null;
 }
 
 // ---------- proposte ----------
