@@ -840,7 +840,7 @@ async function disegna() {
   // chiedeva «fatto o saltato?» di niente — e rispondere «saltato» tirava giù
   // il punteggio per una cosa che il programma non chiede.
   if (fase === "stretching" && !passiStretching().length) {
-    await salvaProgresso({ fase: "fine" });
+    await salvaProgresso({ fase: dopoLoStretching() });
     fase = S.sed.progresso.fase;
   }
 
@@ -879,21 +879,21 @@ function testata() {
   let avanzamento = 0;
   if (fase === "cardio") {
     passo = "Cardio";
-    avanzamento = 94;
+    avanzamento = 96;
   } else if (fase === "stretching") {
     // Anche qui si va un passaggio per volta: la testata dice quale, come fa
     // con gli esercizi.
     const q = passiStretching().length;
     const k = Math.min((S.sed.progresso?.strPasso ?? 0) + 1, Math.max(q, 1));
     passo = q ? `Stretching ${k} di ${q}` : "Stretching";
-    avanzamento = q ? 97 + ((k - 1) / q) * 3 : 97;
+    avanzamento = q ? 88 + ((k - 1) / q) * 3 : 88;
   } else if (fase === "mobilita") {
-    // La mobilità adesso sta fra i pesi e il cardio: la barra deve salire in
-    // quell'ordine, se no torna indietro a metà allenamento.
+    // Stretching, mobilità e cardio in quest'ordine: la barra deve salire come
+    // sale la seduta, se no torna indietro a metà allenamento.
     const q = passiMobilita().length;
     const k = Math.min((S.sed.progresso?.mobPasso ?? 0) + 1, Math.max(q, 1));
     passo = q ? `Mobilità ${k} di ${q}` : "Mobilità";
-    avanzamento = q ? 90 + ((k - 1) / q) * 3 : 90;
+    avanzamento = q ? 92 + ((k - 1) / q) * 3 : 92;
   } else if (fase === "fine") {
     passo = "Riepilogo";
     avanzamento = 100;
@@ -3202,7 +3202,7 @@ async function vistaCardio(corpo, piede) {
   aggiungi(corpo,
     h(
       "div.hero",
-      h("p.kicker", "Dopo i pesi"),
+      h("p.kicker", "In chiusura"),
       h("h2", "Cardio"),
       h("p.target", `${r.durataMin} min · ${num(r.kmhMin)}-${num(r.kmhMax)} km/h · FC ${r.fcMin}-${r.fcMax}`)
     ),
@@ -3334,12 +3334,11 @@ async function vistaCardio(corpo, piede) {
       "Non eseguito"
     ),
     /* Il cardio si può rimandare senza dichiararlo saltato.
-       Capita di finire i pesi e di dover aspettare — il tapis occupato, un
-       impegno in mezzo — e siccome dopo il cardio viene lo stretching, si
-       finiva per saltare anche quello, che è la parte che non si recupera.
-       Rimandandolo si va dritti allo stretching; il cardio resta da fare e la
-       Home lo tiene lì, con l'allenamento aperto, finché non lo fai o non lo
-       dichiari non eseguito. */
+       Capita di finire i pesi e di dover aspettare: il tapis occupato, un
+       impegno in mezzo. Da quando il cardio è l'ultimo passaggio, stretching e
+       mobilità sono già stati fatti — rimandandolo si va dritti al riepilogo,
+       il cardio resta da fare e la Home lo tiene lì, con l'allenamento aperto,
+       finché non lo fai o non lo dichiari non eseguito. */
     h(
       "button.btn.secondary",
       {
@@ -3352,7 +3351,7 @@ async function vistaCardio(corpo, piede) {
           // rimandarci sopra significherebbe rifare da capo passaggi già
           // chiusi. In quel caso si va al riepilogo, che e il punto in cui si
           // decide cosa fare dell'allenamento.
-          await salvaProgresso({ fase: S.sed.stretching ? "fine" : dopoIlCardio() });
+          await salvaProgresso({ fase: dopoIlCardio() });
           await disegna();
         }),
       },
@@ -3457,7 +3456,7 @@ async function vistaCardioInCorso(corpo, piede, r) {
     // Se il cardio era stato rimandato, lo stretching è già stato fatto prima:
     // rimandarci sopra vorrebbe dire rifare da capo passaggi già chiusi.
     await salvaProgresso({
-      fase: S.sed.stretching ? "fine" : dopoIlCardio(),
+      fase: dopoIlCardio(),
       cardioInizio: null,
       cardioFine: null,
     });
@@ -3500,7 +3499,7 @@ async function vistaCardioInCorso(corpo, piede, r) {
         });
         toast("Cardio rimandato: lo trovi in Home finché non lo fai.");
         await salvaProgresso({
-          fase: S.sed.stretching ? "fine" : dopoIlCardio(),
+          fase: dopoIlCardio(),
           cardioInizio: null,
           cardioFine: null,
         });
@@ -3583,7 +3582,7 @@ async function vistaStretching(corpo, piede) {
         {
           onclick: azione(async () => {
             S.sed = await store.aggiornaSeduta(S.sed.id, { stretching: { fatto: false } });
-            await salvaProgresso({ fase: "fine" });
+            await salvaProgresso({ fase: dopoLoStretching() });
             await disegna();
           }),
         },
@@ -3594,7 +3593,7 @@ async function vistaStretching(corpo, piede) {
       S.sed = await store.aggiornaSeduta(S.sed.id, {
         stretching: { fatto: true, quando: Date.now() },
       });
-      await salvaProgresso({ fase: "fine" });
+      await salvaProgresso({ fase: dopoLoStretching() });
       await disegna();
     },
   });
@@ -3602,18 +3601,22 @@ async function vistaStretching(corpo, piede) {
 
 /* L'ordine della seduta, in un posto solo.
 
-   Il coach l'ha cambiato il 26/08: la mobilità generale è passata da **dopo lo
-   stretching finale** a **subito dopo i pesi, prima del cardio**. Motivo
-   pratico dichiarato nel brief, nessuno fisiologico.
+   **riscaldamento → pesi → stretching → mobilità → cardio**
 
-   L'ordine però non sta nel blocco tecnico del master — lì ci sono lo split,
-   gli esercizi e le soglie — quindi ricaricare il brief non lo cambia: sta
-   qui. Se cambia di nuovo, si toccano queste tre righe e basta.
+   Cambiato il 26/08 su richiesta dell'atleta: il cardio è andato in fondo, e
+   stretching e mobilità sono risaliti subito dopo i pesi. Prima era
+   pesi → cardio → stretching → mobilità.
 
-   pesi → mobilità → cardio → stretching finale */
-const dopoGliEsercizi = () => (passiMobilita().length ? "mobilita" : dopoLaMobilita());
-const dopoLaMobilita = () => (S.sed.cardio?.previsto ? "cardio" : dopoIlCardio());
-const dopoIlCardio = () => (passiStretching().length ? "stretching" : "fine");
+   L'ordine non sta nel blocco tecnico del master — lì ci sono lo split, gli
+   esercizi e le soglie — quindi ricaricare il brief non lo cambia: sta qui. Se
+   cambia di nuovo si toccano queste quattro righe e basta.
+
+   Ogni passaggio che quel giorno non esiste viene saltato invece di mostrare
+   una schermata vuota che chiede «fatto o saltato?» di niente. */
+const dopoGliEsercizi = () => (passiStretching().length ? "stretching" : dopoLoStretching());
+const dopoLoStretching = () => (passiMobilita().length ? "mobilita" : dopoLaMobilita());
+const dopoLaMobilita = () => (S.sed.cardio?.previsto ? "cardio" : "fine");
+const dopoIlCardio = () => "fine";
 
 /**
  * Il blocco di mobilità di fine seduta.
@@ -3643,10 +3646,7 @@ async function vistaMobilita(corpo, piede) {
                 h("h3", "Perché adesso"),
                 h(
                   "p",
-                  // Dal 26/08 la mobilità sta fra i pesi e il cardio: dirle
-                  // «dopo lo stretching» mandava a cercare un passaggio che a
-                  // quel punto non è ancora arrivato.
-                  `${S.sed.cardio?.previsto ? "Finiti i pesi, prima del cardio." : "Finiti i pesi."} Copre le zone che il riscaldamento di oggi non ha toccato: caviglia, anca, colonna, spalle. Dose fissa, non si progredisce.`
+                  `${S.sed.cardio?.previsto ? "Dopo lo stretching, prima del cardio." : "Dopo lo stretching, a lavoro finito."} Copre le zone che il riscaldamento di oggi non ha toccato: caviglia, anca, colonna, spalle. Dose fissa, non si progredisce.`
                 )
               )
             ),

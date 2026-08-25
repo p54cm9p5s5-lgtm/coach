@@ -336,20 +336,27 @@ esercizio** già in vista (nome, carico, dischi da montare). Prima le due cose
 stavano insieme: il tasto che mandava le risposte chiudeva anche il riposo, e
 rispondendo si finiva per saltare il recupero — che è la parte che conta.
 
-**4. Mobilità** — dal 26 agosto 2026 sta **qui**, finiti i pesi e **prima del
-cardio**; prima veniva in coda, dopo lo stretching finale. Lo ha chiesto lui per
-comodità pratica e il coach l'ha messo nel master: nessun motivo fisiologico,
-solo un ordine più comodo. Dose fissa, un passaggio per volta, come il
-riscaldamento — vedi «La mobilità dopo i pesi» più sotto. Un giorno che non ne
-prevede non si ferma su una schermata vuota: passa oltre.
+**4. Stretching** — come il riscaldamento: **un allungamento per volta**, con il
+cronometro sulla durata che dice il protocollo (di solito 30 secondi per lato)
+che parte con «Avvia» e si chiude con «Fatto · altro lato». Chi vuole saltarlo
+può ancora farlo con un tocco.
 
-**5. Cardio**, se previsto: si può eseguire, **rimandare**, o dichiarare non
+**5. Mobilità** — dose fissa, un passaggio per volta, come il riscaldamento:
+vedi «La mobilità dopo lo stretching» più sotto.
+
+**Dal 26 agosto 2026 l'ordine è questo**: riscaldamento → pesi → stretching →
+mobilità → **cardio in fondo**. Prima il cardio veniva subito dopo i pesi e
+stretching e mobilità lo seguivano. Un passaggio che quel giorno non è previsto
+non compare affatto: si passa oltre, invece di fermarsi su una schermata vuota
+che chiede «fatto o saltato?» di niente.
+
+**6. Cardio**, se previsto: si può eseguire, **rimandare**, o dichiarare non
 eseguito con motivo obbligatorio.
 
-**Rimandare** serve a un caso preciso: i pesi sono finiti ma il cardio non si può
-fare subito — il tapis occupato, un impegno in mezzo. Siccome dopo il cardio
-viene lo stretching, aspettare significava saltare anche quello, che è la parte
-che non si recupera. Con «Rimanda il cardio» si va dritti allo stretching; l'allenamento resta aperto e in **Home compare «Cardio da fare»**
+**Rimandare** serve a un caso preciso: l'allenamento è finito ma il cardio non si
+può fare subito — il tapis occupato, un impegno in mezzo. Da quando il cardio è
+l'ultimo passaggio, stretching e mobilità sono già stati fatti: con «Rimanda il
+cardio» si va dritti al riepilogo; l'allenamento resta aperto e in **Home compare «Cardio da fare»**
 con un tasto che porta lì. Rimandato non vuol dire saltato: nel punteggio non
 conta niente finché non lo fai o non lo dichiari non eseguito. Se si chiude
 l'allenamento con il cardio ancora in sospeso, l'app lo dice prima — da lì in poi
@@ -371,7 +378,7 @@ silenzio e sotto il cronometro c'è scritto quanto sei andato oltre. Prima era u
 conto alla rovescia: per camminare di più bisognava premere «+5 min» mentre si
 camminava.
 
-**5-bis. I numeri dell'orologio non si scrivono più.** Fino a che l'unica strada
+**6-bis. I numeri dell'orologio non si scrivono più.** Fino a che l'unica strada
 per averli era ricopiarli dal quadrante, l'app apriva sei caselle a fine
 allenamento e chiedeva di riempirle. Adesso li legge l'importazione da Salute —
 durata, calorie attive e totali, battito medio e massimo, sforzo, e in più la
@@ -384,16 +391,7 @@ battito, sforzo). Erano facoltativi e finivano nel pacchetto. Stavano lì perch�
 in quel momento il riepilogo era ancora quello sul quadrante: chiesti dopo lo
 stretching, al polso c'è già dell'altro.
 
-**6. Stretching** — come il riscaldamento: **un allungamento per volta**, con
-il cronometro sulla durata che dice il protocollo (di solito 30 secondi per
-lato) che parte con «Avvia» e si chiude con «Fatto · altro lato». Chi vuole
-saltarlo può ancora farlo con un tocco.
-
-È l'**ultimo** passaggio: dopo c'è solo il riepilogo. Un giorno che lo
-stretching finale non ce l'ha non si ferma su una pagina vuota che chiede «fatto
-o saltato?» di niente: va dritto al riepilogo.
-
-**7. Riepilogo e chiusura.** Durata, densità, recuperi medi reali, punteggio
+**7. Riepilogo e chiusura.** Il cardio è l'ultimo passaggio, quindi da qui si chiude. Durata, densità, recuperi medi reali, punteggio
 scomposto, dati mancanti e nota generale. I numeri dell'orologio **non si
 scrivono più**: li porta l'importazione da Salute (vedi 4-bis). Quelli trascritti
 a mano prima di quel cambio restano visibili, in sola lettura.
@@ -961,10 +959,10 @@ tocca Salute e infatti funziona.
 
 ---
 
-### La mobilità dopo i pesi
+### La mobilità dopo lo stretching
 
-Finiti i pesi e **prima del cardio**, i giorni del nuovo split hanno un blocco di
-mobilità a **dose fissa**: nessun carico, nessuna soglia tecnica, nessuna
+Dopo lo stretching e **prima del cardio**, i giorni del nuovo split hanno un
+blocco di mobilità a **dose fissa**: nessun carico, nessuna soglia tecnica, nessuna
 progressione. Copre le zone che il lavoro di quel giorno non tocca — contate
 sui dati veri, non a memoria:
 
