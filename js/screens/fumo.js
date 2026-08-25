@@ -12,17 +12,14 @@ import * as store from "../store.js";
 
 /** Le soglie sono quelle chieste: 4-6 giallo, 7-9 arancione, 10 e oltre rosso. */
 function colore(n) {
-  // Il tetto dichiarato è zero, quindi qui «obiettivo raggiunto» vuol dire una
-  // cosa sola: nessuna sigaretta. Quel numero è blu, come il 97 di Salute e
-  // come le kcal sopra il bersaglio. Da 1 in su è inchiostro — la cifra dice
-  // già quanto è alta — e dalla decima diventa rosso, che nell'app non è un
-  // accento ma un allarme.
+  // Il tetto dichiarato è zero: qui non c'è una scala di grigi da percorrere,
+  // c'è una riga superata o no. Zero è inchiostro come il resto — la parola
+  // sotto dice «il massimo è zero, e ci sei» — e dalla decima il numero
+  // diventa rosso, che in questa app non è un accento ma un allarme.
   //
-  // Prima erano quattro gradini di colore (giallo da 4, arancione da 7, rosso
-  // da 10): un semaforo che raccontava una storia sfumata dove la regola,
-  // invece, è netta.
+  // Prima erano quattro gradini (giallo da 4, arancione da 7, rosso da 10): un
+  // semaforo che raccontava una storia sfumata dove la regola è netta.
   if (n >= 10) return "var(--red)";
-  if (n === 0) return "var(--raggiunto)";
   return "var(--label)";
 }
 

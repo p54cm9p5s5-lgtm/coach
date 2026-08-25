@@ -489,8 +489,9 @@ export function graficoLinea({
   // più grande: la linea è tutta dello stesso colore, e senza questo si
   // perderebbe l'informazione che nel grafico a barre stava nel lime.
   const raggio = punti.length > 40 ? 1.4 : 2.2;
-  // L'ultimo punto con un dato è quello che stai guardando: si vede di più, e
-  // se il bersaglio è stato passato è l'unico pezzo colorato del grafico.
+  // L'ultimo punto con un dato è quello che stai guardando: si vede di più.
+  // Che abbia passato il bersaglio o no lo dice la sua posizione rispetto alla
+  // riga tratteggiata — che è lì apposta — non una tinta diversa.
   let ultimoConDato = -1;
   punti.forEach((p, i) => {
     if (p.valore != null) ultimoConDato = i;
@@ -498,11 +499,10 @@ export function graficoLinea({
   punti.forEach((p, i) => {
     if (p.valore == null) return;
     const finale = i === ultimoConDato;
-    const raggiunto = finale && obiettivo && p.valore >= obiettivo;
     svg.append(
       el("circle", {
         cx: x(i), cy: y(p.valore), r: finale ? raggio + 1.6 : p.evidenza ? raggio + 1 : raggio,
-        fill: raggiunto ? "var(--raggiunto)" : "var(--label)",
+        fill: "var(--label)",
         opacity: finale || p.evidenza ? 1 : 0.55,
       })
     );

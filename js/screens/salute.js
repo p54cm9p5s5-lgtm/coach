@@ -70,7 +70,7 @@ async function schedaSigarette({ conPeriodo, oggiIso }) {
         // Sempre il colore d'accento: una striscia non è un voto, e vedere il
         // primo giorno colorato di rosso «da rivedere» sarebbe il contrario di
         // quello che serve.
-        colore: oggiFumate ? "var(--orange)" : "var(--accent)",
+        colore: oggiFumate ? "var(--orange)" : "var(--label)",
         // Il sottotitolo sta FUORI dall'anello: dentro, una frase come
         // «prossimo traguardo: 14 giorni» finiva sotto l'arco e si leggeva a
         // metà sugli schermi stretti.
@@ -337,7 +337,7 @@ export async function render({ ridisegna }) {
           style:
             "font-variant-numeric:tabular-nums lining-nums;font-size:15px;font-weight:700;" +
             `background:none;color:${c};` +
-            `border-color:${n >= 90 ? "color-mix(in srgb, var(--raggiunto) 40%, transparent)" : "var(--separator)"}`,
+            `border-color:${n >= 90 ? "var(--label)" : "var(--separator)"}`,
         },
         String(n)
       );

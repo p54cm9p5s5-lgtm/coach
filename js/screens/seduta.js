@@ -105,10 +105,13 @@ async function vistaProgramma(vaiA, ridisegna) {
       h(
         "div",
         {
-          // Nei giorni di riposo resta neutro: il lime segnala che c'è da fare.
+          // Il giorno con un allenamento previsto si stacca da quello di
+          // riposo con una cornice d'inchiostro, non con un rettangolo pieno:
+          // pieno era un blocco di colore grande mezzo schermo, e su una
+          // pagina di carta tirava l'occhio più del nome che ci sta dentro.
           style: previsto
-            ? "background:var(--accent);color:var(--su-accent);border-radius:14px;padding:18px 16px"
-            : "background:var(--bg-grouped);border-radius:14px;padding:18px 16px",
+            ? "border:1.5px solid var(--label);border-radius:2px;padding:18px 16px"
+            : "border:1px solid var(--separator);border-radius:2px;padding:18px 16px",
         },
         h(
           "p",
@@ -511,7 +514,10 @@ async function vistaRisultato(id, vaiA, da = null) {
           return h(
             "span.pill",
             {
-              style: `font-variant-numeric:tabular-nums;background:${g.livello === 1 ? "var(--fill-tertiary)" : "color-mix(in srgb, var(--accent) 18%, transparent)"};color:${g.livello === 1 ? "var(--orange)" : "var(--accent)"}`,
+              style:
+                "font-variant-numeric:tabular-nums;background:none;border:1px solid " +
+                (g.livello === 1 ? "color-mix(in srgb, var(--orange) 45%, transparent)" : "var(--separator)") +
+                `;color:${g.livello === 1 ? "var(--orange)" : "var(--label)"}`,
             },
             String(p.totale)
           );

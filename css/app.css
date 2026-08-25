@@ -2,21 +2,22 @@
 
 /* ---- i colori ----
 
-   Tre colori in tutto, e ognuno vuol dire una cosa sola.
+   Due regole, e stanno in una riga: **l'interfaccia è nera su carta, i dati
+   tengono i colori con cui li hai misurati.**
 
-   **Inchiostro** è il testo, i grafici, i tasti, la scheda accesa in fondo:
-   tutto quello che non ha bisogno di gridare. **Blu inchiostro** compare solo
-   dove un obiettivo è stato raggiunto — un punteggio da 90 in su, le kcal
-   sopra il bersaglio, un giorno senza sigarette — e da nessun'altra parte:
-   aprire l'app e contare le macchie blu è già leggerla. **Rosso** non è un
-   accento ma un allarme, e sta dove qualcosa si rompe o si cancella.
+   Tutto quello che è comando — tasti, barra delle sezioni, titoli, anelli,
+   celle del calendario, righe da toccare — è **inchiostro**. Prima l'accento
+   faceva sette mestieri insieme e per questo non ne faceva nessuno: adesso le
+   gerarchie le fanno corpo, peso e posizione. Il **rosso** non è un accento ma
+   un allarme, e sta dove qualcosa si rompe o si cancella.
 
-   Prima l'accento faceva sette mestieri insieme (scheda accesa, anelli, linee,
-   tasti, celle del calendario, titoli, icone) e per questo non ne faceva
-   nessuno. Le gerarchie adesso le fanno corpo, peso e posizione.
+   Quello che invece è un **dato misurato** resta della sua tinta: calorie
+   verdi, battito rosso, sforzo viola, durata gialla. Sono i colori con cui
+   l'orologio te li ha già mostrati al polso, e cambiarli vorrebbe dire non
+   farli riconoscere più.
 
-   Fondo di carta calda, un tono solo: le schede non esistono più: quello che
-   separa due blocchi è una riga da un pixel, non un rettangolo bianco. */
+   Fondo di carta calda, un tono solo: le schede non esistono più, e quello che
+   separa due blocchi è una riga da un pixel. */
 
 :root {
   color-scheme: light;
@@ -45,23 +46,36 @@
   --accent-pieno: #101113;
   --su-accent: #faf9f6;
 
-  /* L'UNICO accento cromatico: obiettivo raggiunto. 10,4:1 sulla carta. */
-  --raggiunto: #16307a;
+  /* Niente blu, da nessuna parte. «Obiettivo raggiunto» non ha più una tinta
+     sua: lo dicono la parola («ottimo», «obiettivo raggiunto») e la cifra, che
+     è grande apposta. Il nome resta perché il codice lo usa, e punta
+     all'inchiostro. */
+  --raggiunto: var(--label);
 
   /* Allarme e cancellazione. Non è decorazione: compare solo nelle conferme
-     distruttive e quando un tetto viene superato. 6,4:1 sulla carta. */
+     distruttive e quando un tetto viene superato. 7,1:1 sulla carta. */
   --red: #a3241a;
 
-  /* Gli altri nomi restano perché mezzo codice li usa, ma non portano più
-     colori diversi: verde vuol dire «raggiunto», giallo e arancione tornano
-     inchiostro — la cifra dice già da sola dov'è arrivata. Battito e sforzo
-     erano due tinte da cruscotto: qui i grafici sono monocromatici e le
-     etichette scritte a parole. */
-  --green: var(--raggiunto);
-  --orange: var(--label);
-  --giallo: var(--label);
-  --battito: var(--label);
-  --sforzo: var(--label-secondary);
+  /* ---- i colori dei DATI ----
+
+     Qui la regola dell'inchiostro finisce, ed è voluto. Questi non sono
+     decorazione dell'interfaccia: sono le tinte con cui l'orologio ti ha già
+     mostrato quei numeri — calorie verdi, battito rosso, sforzo viola — e
+     cambiarle vorrebbe dire non farli riconoscere. Valgono dove c'è un dato
+     misurato, non dove c'è un comando: i tasti, la barra e i titoli restano
+     inchiostro.
+
+     Sono i colori di sistema di iOS scuriti quanto basta per stare sopra
+     4,5:1 sulla carta, hue invariata. */
+  --green: #1c6e31;
+  --orange: #8a5100;
+  /* Il giallo resta quello di prima: deve restare più chiaro dell'arancione
+     per distinguersi da lui, e sta solo su cifre grandi — 34 pt la durata
+     dell'allenamento, 26 il tempo in movimento — dove la soglia è 3:1 e lui
+     sta a 3,19. Scurirlo lo faceva diventare un secondo arancione. */
+  --giallo: #ab8800;
+  --battito: #c9271b;
+  --sforzo: #6b2fb5;
   --bar-bg: rgba(250, 249, 246, 0.94);
 
   /* Niente angoli tondi: la separazione è una riga da un pixel. Il raggio
@@ -501,10 +515,13 @@ input[type="checkbox"],
   color: var(--label);
 }
 
+/* «A obiettivo» non ha un colore suo: ha la parola, il contorno pieno e il
+   peso. Il colore, in questa app, o è un dato misurato o è un allarme. */
 .pill.ok {
-  background: color-mix(in srgb, var(--raggiunto) 10%, transparent);
-  border-color: color-mix(in srgb, var(--raggiunto) 35%, transparent);
-  color: var(--raggiunto);
+  background: none;
+  border-color: var(--label);
+  color: var(--label);
+  font-weight: 700;
 }
 
 .pill.bad {

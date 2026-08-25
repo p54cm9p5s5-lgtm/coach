@@ -645,19 +645,15 @@ export function giudizio(totale) {
 }
 
 /**
- * Il colore di un punteggio: due soli valori, perché due sono i significati.
+ * Il colore di un punteggio: nessuno.
  *
  * Prima era una scala continua — rosso a 20, arancione, giallo, lime a 95 —
- * e serviva a far VEDERE un numero che scendeva senza aspettare una soglia.
- * Il prezzo era che il colore parlava sempre, dappertutto, di qualunque cosa:
- * con sette tinte a schermo nessuna vuol dire più niente.
- *
- * Adesso il colore dice una cosa sola: **obiettivo raggiunto**. La soglia non
- * è nuova, è quella che l'app già usava per scrivere «ottimo» — 90 — quindi
- * numero e parola non possono più contraddirsi. Sotto quella soglia il numero
- * è inchiostro: quanto è basso lo dice la cifra, che è grande apposta.
+ * poi per un attimo è stato un blu che diceva «obiettivo raggiunto». Adesso è
+ * inchiostro e basta: quanto sei andato bene lo dicono la cifra, che è grande
+ * apposta, e la parola che le sta sotto («ottimo», «sufficiente», «da
+ * rivedere»). In questa app il colore o è un dato misurato — le calorie, il
+ * battito, lo sforzo — o è un allarme. Un voto non è né l'uno né l'altro.
  */
-export const SOGLIA_RAGGIUNTO = 90;
 
 /**
  * Applica il colore di un punteggio a un elemento.
@@ -677,7 +673,7 @@ export function coloraPunteggio(el, totale, proprieta = "color", conSfondo = fal
 
 export function coloreDaPunteggio(totale) {
   if (totale == null || Number.isNaN(totale)) return "var(--label-secondary)";
-  return totale >= SOGLIA_RAGGIUNTO ? "var(--raggiunto)" : "var(--label)";
+  return "var(--label)";
 }
 
 /** Anello grande con il numero al centro. */

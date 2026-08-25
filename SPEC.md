@@ -70,19 +70,28 @@ resta nella conversazione con Claude.
 **Look iOS nativo.** L'app deve sembrare un'app di sistema, non un sito.
 
 - Font: `-apple-system` / SF. Nessun font caricato dalla rete.
-- Colori: **tre, e ognuno vuol dire una cosa sola.** Inchiostro `#101113` per
-  tutto quello che si legge e si tocca; **blu inchiostro `#16307A` solo per
-  «obiettivo raggiunto»** (punteggio da 90 in su, kcal sopra il bersaglio, zero
-  sigarette); **rosso `#A3241A` solo per allarme e cancellazione**. Fondo di
-  carta calda `#FAF9F6`, uno solo. Non c'è tema scuro e non si segue
-  `prefers-color-scheme`: l'app ha un fondo solo, e i colori non dipendono più
-  da cosa fa l'iPhone. Il tema «nero e lime» e l'interruttore in Impostazioni
-  non esistono più.
+- Colori — **due regole in una riga: l'interfaccia è nera su carta, i dati
+  tengono i colori con cui li hai misurati.**
+  - **Interfaccia**: inchiostro `#101113` per tutto quello che si legge e si
+    tocca (tasti, barra delle sezioni, titoli, anelli, calendario, righe).
+    **Niente blu, da nessuna parte.** Anche i punteggi sono inchiostro: quanto
+    sei andato bene lo dicono la cifra, che è grande apposta, e la parola sotto
+    («ottimo», «sufficiente», «da rivedere»).
+  - **Dati misurati**: tengono la tinta dell'orologio — calorie `#1C6E31`,
+    battito `#C9271B`, sforzo `#6B2FB5`, durata `#AB8800`, bpm `#8A5100`. Non
+    sono decorazione: sono i colori con cui quei numeri ti sono già stati
+    mostrati al polso, e cambiarli vorrebbe dire non farli riconoscere.
+  - **Rosso `#A3241A`**: allarme e cancellazione, mai decorazione.
+  - Fondo di carta calda `#FAF9F6`, uno solo. Non c'è tema scuro e non si segue
+    `prefers-color-scheme`: l'app ha un fondo solo, e i colori non dipendono più
+    da cosa fa l'iPhone. Il tema «nero e lime» e l'interruttore in Impostazioni
+    non esistono più.
 - Struttura: **nessuna scheda.** Quello che divide due blocchi è una riga da
   1 px, non un rettangolo bianco; `border-radius` 2px, e solo dove un pieno
   serve davvero (tasto premuto, segmento scelto). Header grandi (Large Title)
   che si contraggono allo scroll.
-- Gerarchia: la fanno **corpo, peso e posizione**, non la tinta. Le cifre sono
+- Gerarchia: dentro l'interfaccia la fanno **corpo, peso e posizione**, non la
+  tinta. Le cifre sono
   l'elemento grafico dominante (fino a 76 pt negli anelli, 56 pt nelle schede
   di Salute); gli anelli sono fili da 2 px, i grafici linee da 1,4 px senza
   riempimenti.
