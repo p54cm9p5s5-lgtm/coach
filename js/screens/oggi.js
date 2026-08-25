@@ -560,10 +560,20 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
           : origine.nonLetta
             ? "Giorno non letto"
             : "Riposo";
+  // Un giorno di sola mobilità ha zero esercizi ma non è vuoto: ha i suoi
+  // passaggi, ed è un impegno come gli altri — se lo salti conta come un Push
+  // saltato. Scrivere «0 esercizi» lo faceva sembrare una casella vuota o un
+  // programma rotto, ed era l'unico posto rimasto a dirlo così: la schermata
+  // del programma lo conta già per quello che è.
   const sotto = giaFatto
     ? "completato oggi"
     : previsto
-      ? `${previsto.esercizi?.length || 0} ${(previsto.esercizi?.length || 0) === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}`
+      ? store.giornoDiSolaMobilita(previsto.id)
+        ? (() => {
+            const quanti = (store.riscaldamento(previsto.id)?.mobilitaFinale || []).length;
+            return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità`;
+          })()
+        : `${previsto.esercizi?.length || 0} ${(previsto.esercizi?.length || 0) === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}`
       : origine.riposo
         ? "riposo, dal calendario del coach"
         : origine.sconosciuto

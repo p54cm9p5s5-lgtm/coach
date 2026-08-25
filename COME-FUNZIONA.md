@@ -944,13 +944,13 @@ il punteggio: aprire il giorno e farla vale 100, aprirlo e saltarla vale 0. In
 quei due giorni riscaldamento e stretching non contano, perché non sono
 previsti.
 
-**Punto ancora aperto (14/08/2026):** non farsi vedere affatto — non aprire
-nemmeno l'allenamento — oggi non produce lo stesso «previsto, non fatto» di un
-Push saltato, perché l'app ha una regola per cui un giorno senza esercizi non
-genera mai quella voce. Il coach ha chiesto che sabato e domenica pesino come
-tutti gli altri giorni e ha già messo i due eventi ricorrenti sul calendario;
-il pezzo dalla parte dell'app resta da fare. La mobilità parte il 24/08 e i
-primi sabato/domenica reali sono il 29-30/08.
+**Non farsi vedere pesa come saltare un Push** (verificato il 25/08/2026). Un
+sabato con l'evento «Allenamento: Mobilità» sul calendario e nessuna seduta
+aperta produce esattamente quello che produce un Push saltato: nel punteggio
+Salute la voce Allenamento vale **zero** con lo stesso peso di sempre, nella
+tabella del pacchetto per il coach la riga dice «**Non fatto (era previsto
+Mobilità)**», e sul calendarietto il giorno è giallo con scritto «Mobilità —
+non registrato». Farla vale **100** e riporta la voce Allenamento a pieno.
 
 ---
 
