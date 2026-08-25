@@ -788,6 +788,17 @@ poter iniziare. Le pose sono **quelle che l'atleta fa già**, sul modello del se
 di riferimento esistente. Le foto restano sul telefono e **non entrano mai nel
 pacchetto**.
 
+**Portarle nella galleria del telefono.** Le foto scattate dall'app vivono nel
+suo archivio, non in Foto: un'app web su iPhone **non può scrivere nella
+galleria**, quel permesso iOS non lo concede a nessun sito. Quello che si può
+fare è arrivare a un tocco solo, ed è quello che l'app fa: appena finito un set
+compare il foglio «Salva in galleria», e lo stesso tasto sta accanto a ogni set
+dell'elenco e dentro ogni singola foto. Da lì si apre la condivisione di iOS con
+le quattro immagini già pronte e in ordine di posa — fronte, profilo, schiena,
+braccia aperte — e si sceglie «Salva 4 immagini». Su un browser da computer,
+dove quel foglio non esiste, i file vengono scaricati e l'app lo dice invece di
+fingere.
+
 ---
 
 ## 12. Il pacchetto per il coach

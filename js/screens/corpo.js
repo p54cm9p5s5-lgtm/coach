@@ -4,6 +4,90 @@ import {
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 
+/* ---------------------------------------------------------------------------
+   Salvare le foto nella galleria del telefono.
+
+   Una cosa va detta subito, perché cambia cosa ci si può aspettare: **un'app
+   web su iPhone non può scrivere da sola in Foto.** Quel permesso iOS non lo
+   dà a nessun sito, e non è una mancanza dell'app. L'unica strada che esiste è
+   il foglio di condivisione del sistema: l'app gli passa le immagini già
+   pronte, tu tocchi «Salva N immagini» e finiscono nella galleria — un tocco,
+   tutte insieme, senza sceglierle una per una.
+
+   Due dettagli che fanno la differenza fra «funziona» e «a volte no»:
+
+   - la conversione da data URL a file è **sincrona** (niente `await` prima di
+     `navigator.share`). Safari concede la condivisione solo dentro il gesto
+     che l'ha chiesta: bastava un `await` in mezzo per far fallire il foglio
+     con «NotAllowedError», e a schermo sembrava un guasto senza motivo;
+   - dove il foglio non esiste — un browser da computer — non si finge: si
+     scaricano i file e lo si dice.
+--------------------------------------------------------------------------- */
+
+/** Da data URL a File, senza await: il gesto dell'utente non si può perdere. */
+function fileDaScatto(scatto, indice) {
+  const url = String(scatto.immagine || "");
+  const virgola = url.indexOf(",");
+  if (!url.startsWith("data:") || virgola < 0) return null;
+  const tipo = url.slice(5, url.indexOf(";")) || "image/jpeg";
+  const grezzo = atob(url.slice(virgola + 1));
+  const buf = new Uint8Array(grezzo.length);
+  for (let i = 0; i < grezzo.length; i++) buf[i] = grezzo.charCodeAt(i);
+  const posa = store.POSE.find((p) => p.id === scatto.posa);
+  const estensione = tipo.includes("png") ? "png" : "jpg";
+  const nome = `coach-${scatto.data}-${indice + 1}-${(posa?.id || scatto.posa || "foto")}.${estensione}`;
+  return new File([buf], nome, { type: tipo });
+}
+
+/**
+ * Manda gli scatti al foglio di condivisione di iOS. Va chiamata **dentro** il
+ * gestore del tocco, senza niente di asincrono prima.
+ */
+function salvaNellaGalleria(scatti, { quando } = {}) {
+  // Nell'ordine del protocollo, non in quello in cui capitano: nella galleria
+  // le quattro foto devono stare in fila come le guardi — fronte, profilo,
+  // schiena, braccia aperte — e il numero nel nome serve a questo.
+  const ordinati = [...scatti].sort(
+    (a, b) => store.POSE.findIndex((p) => p.id === a.posa) - store.POSE.findIndex((p) => p.id === b.posa)
+  );
+  const file = ordinati.map(fileDaScatto).filter(Boolean);
+  if (!file.length) {
+    toast("Queste foto non si riescono a leggere: non le ho toccate.", 4000);
+    return;
+  }
+  const dati = {
+    files: file,
+    title: `Coach — foto del ${dataBreve(quando || ordinati[0]?.data || isoDate())}`,
+  };
+  if (navigator.canShare && navigator.canShare({ files: file }) && navigator.share) {
+    navigator
+      .share(dati)
+      .then(() => toast(file.length === 1 ? "Foto passata a iOS: tocca «Salva immagine»." : `${file.length} foto passate a iOS: tocca «Salva ${file.length} immagini».`, 5000))
+      .catch((e) => {
+        // Annullare il foglio non è un errore: è una scelta, e non va urlata.
+        if (e && (e.name === "AbortError" || /abort|cancel/i.test(e.message || ""))) return;
+        toast(`Il foglio di condivisione non si è aperto: ${puntoFinale(e?.message)}`, 5000);
+      });
+    return;
+  }
+  // Niente foglio: qui siamo su un computer. Si scaricano e lo si dice.
+  for (const f of file) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(f);
+    a.download = f.name;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+  }
+  toast(
+    file.length === 1
+      ? "Questo browser non ha il foglio di condivisione: la foto è stata scaricata."
+      : `Questo browser non ha il foglio di condivisione: ${file.length} foto scaricate.`,
+    5000
+  );
+}
+
 /**
  * I messaggi degli errori a volte finiscono col punto e a volte no: incollati
  * dentro una frase davano «…e ricarica..» oppure «…spazio finito Riapri».
@@ -491,7 +575,7 @@ async function bloccoFoto(ridisegna) {
       aggiungi(gruppo,
         h(
           "div",
-          { style: "display:flex;align-items:baseline;justify-content:space-between;margin:14px 4px 0;gap:10px" },
+          { style: "display:flex;align-items:baseline;justify-content:space-between;margin:14px 4px 0;gap:6px;flex-wrap:wrap" },
           h(
             "p",
             { style: "margin:0;font-size:13px;color:var(--label-secondary)" },
@@ -501,6 +585,20 @@ async function bloccoFoto(ridisegna) {
             // fatto — queste foto le hai prese dalla libreria invece di
             // scattarle con la guida — e basta.
             `${dataLunga(s.data)}${daLibreria ? " · caricate a mano" : ""}`
+          ),
+          h(
+            "button",
+            {
+              // Stesso trattamento del tasto rosso qui accanto: testo piccolo,
+              // area toccabile da 44 punti.
+              style:
+                "background:none;border:0;color:var(--accent);font:inherit;font-size:13px;" +
+                "min-height:44px;padding:0 8px;margin:-14px 0 -14px -8px;",
+              // Niente `async` e niente await prima di `share`: iOS concede il
+              // foglio solo dentro il gesto che l'ha chiesto.
+              onclick: () => salvaNellaGalleria(s.scatti, { quando: s.data }),
+            },
+            "Salva in galleria"
           ),
           h(
             "button",
@@ -616,6 +714,12 @@ async function mostraFoto(scatto, posa) {
       h(
         "div.btn-wrap",
         h(
+          "button.btn.secondary",
+          { onclick: () => salvaNellaGalleria([scatto]) },
+          "Salva in galleria"
+        ),
+        h("div", { style: "height:8px" }),
+        h(
           "button.btn.destructive",
           {
             onclick: async () => {
@@ -722,8 +826,60 @@ async function nuovoSet(ridisegna) {
       // la copia interna è una comodità: le foto sono già salvate
     }
     toast(fatte === store.POSE.length ? "Set completo." : `Set parziale: ${fatte} pose su ${store.POSE.length}.`);
+    // Appena finito, la galleria. Non si può salvare da soli — iOS non lo
+    // concede a nessun sito — ma si può arrivare a un tocco solo, subito,
+    // invece di ricordarsene tre giorni dopo.
+    await offriGalleria(oggi, fatte);
   }
   await ridisegna();
+}
+
+/**
+ * Il foglio che porta il set appena fatto nella galleria del telefono.
+ *
+ * Esiste perché il tocco su «Salva in galleria» **è** il gesto che iOS pretende
+ * per aprire la condivisione: chiamarla da sola a fine set, senza che tu abbia
+ * toccato niente, verrebbe rifiutata dal sistema. Un tocco è il minimo
+ * possibile, e questo è quel tocco.
+ */
+async function offriGalleria(data, quante) {
+  const scatti = (await store.db.byIndex("foto", "data", data)).sort(
+    (a, b) => store.POSE.findIndex((p) => p.id === a.posa) - store.POSE.findIndex((p) => p.id === b.posa)
+  );
+  if (!scatti.length) return;
+  await sheet((close) =>
+    h(
+      "div",
+      h("h2", quante === 1 ? "Foto salvata" : "Set salvato"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
+        `${scatti.length} ${scatti.length === 1 ? "foto è" : "foto sono"} nell'archivio dell'app e ${scatti.length === 1 ? "entra" : "entrano"} nel backup. ` +
+          "Nella galleria del telefono non ci vanno da sole: iOS non lascia che un'app web ci scriva. " +
+          `Toccando qui sotto si apre il foglio di iOS con ${scatti.length === 1 ? "la foto" : `tutte e ${scatti.length}`} già ${scatti.length === 1 ? "pronta" : "pronte"}: scegli «Salva ${scatti.length === 1 ? "immagine" : `${scatti.length} immagini`}».`
+      ),
+      h(
+        "div.btn-wrap",
+        { style: "display:grid;gap:12px" },
+        h(
+          "button.btn",
+          {
+            onclick: () => {
+              salvaNellaGalleria(scatti, { quando: data });
+              close();
+            },
+          },
+          "Salva in galleria"
+        ),
+        h("button.btn.secondary", { onclick: () => close() }, "Non adesso")
+      ),
+      h(
+        "p.footnote",
+        { style: "margin:10px 16px 0" },
+        "Se salti, le foto restano nell'app: le ritrovi qui sotto, e ogni set ha il suo «Salva in galleria»."
+      )
+    )
+  );
 }
 
 /**
