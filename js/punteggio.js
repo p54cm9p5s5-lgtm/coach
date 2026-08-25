@@ -676,6 +676,17 @@ export function coloreDaPunteggio(totale) {
   return "var(--label)";
 }
 
+/**
+ * La misura degli anelli, uguale in tutta l'app.
+ *
+ * Erano tre: 168 in Home e in Salute, 176 nel punteggio di un esercizio, 224
+ * nel riepilogo dell'allenamento. Tre cerchi con dentro lo stesso tipo di
+ * numero, grandi in tre modi diversi a seconda della schermata: cambiando
+ * pagina sembrava di cambiare app. Adesso è una costante, e chi disegna un
+ * anello nuovo non deve più scegliere.
+ */
+export const ANELLO = 224;
+
 /** Anello grande con il numero al centro. */
 /**
  * L'anello del punteggio.
@@ -687,7 +698,7 @@ export function coloreDaPunteggio(totale) {
  * rivedere», è l'inizio di una striscia. Chi passa solo il totale non vede
  * nessuna differenza.
  */
-export function anello(totale, { etichetta = "Completezza", dimensione = 176, sottotitolo = null, mostra = null, colore: coloreForzato = null } = {}) {
+export function anello(totale, { etichetta = "Completezza", dimensione = ANELLO, sottotitolo = null, mostra = null, colore: coloreForzato = null } = {}) {
   const R = 76;
   const CIRC = 2 * Math.PI * R;
   // Un filo, non una fascia. L'anello qui non è il protagonista: è la nota a

@@ -260,7 +260,6 @@ async function bloccoGrafico(ridisegna) {
       mostrato != null
         ? anello(mostrato, {
             etichetta: "Salute",
-            dimensione: 168,
             sottotitolo: giudizio(mostrato).testo,
           })
         : h(
@@ -481,7 +480,7 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         },
         h("p", { style: "margin:0 0 14px;font-size:26px;font-weight:700;letter-spacing:-0.5px" }, ultima.tipoNome),
         comp
-          ? anello(comp.totale, { dimensione: 168, sottotitolo: giudizio(comp.totale).testo })
+          ? anello(comp.totale, { sottotitolo: giudizio(comp.totale).testo })
           : h("p", { style: "margin:0;color:var(--label-secondary)" }, "completato oggi"),
         h("p", { style: "margin:14px 0 0;font-size:13px;color:var(--label-secondary)" }, "Vedi il risultato ›")
       ),

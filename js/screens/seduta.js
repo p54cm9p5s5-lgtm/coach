@@ -356,7 +356,7 @@ async function vistaRisultato(id, vaiA, da = null) {
       h(
         "div",
         { style: "margin:6px 0 2px" },
-        anello(comp.totale, { dimensione: 224, sottotitolo: giudizio(comp.totale).testo }),
+        anello(comp.totale, { sottotitolo: giudizio(comp.totale).testo }),
         h(
           "p",
           { style: "margin:14px 16px 0;text-align:center;font-size:13px;color:var(--label-secondary);line-height:1.4" },

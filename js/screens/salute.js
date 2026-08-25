@@ -64,7 +64,6 @@ async function schedaSigarette({ conPeriodo, oggiIso }) {
         titoloGrande
       ),
       anello(oggiFumate ? 0 : quota, {
-        dimensione: 168,
         etichetta: giorniPuliti === 1 ? "giorno pulito" : "giorni puliti",
         mostra: String(giorniPuliti),
         // Sempre il colore d'accento: una striscia non è un voto, e vedere il
@@ -341,7 +340,7 @@ export async function render({ ridisegna }) {
           "div",
           { style: "background:var(--bg-grouped);border-radius:14px;padding:16px 14px 16px" },
           fComp.selettore,
-          mediaComp != null ? anello(mediaComp, { dimensione: 168 }) : null,
+          mediaComp != null ? anello(mediaComp) : null,
           mediaComp != null
             ? h(
                 "p",
