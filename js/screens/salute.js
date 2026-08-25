@@ -434,6 +434,82 @@ export async function render({ ridisegna }) {
     );
   }
 
+  // ---- sonno ----
+  const fSonno2 = conPeriodo();
+  // Una notte porta la data del RISVEGLIO: quella di stanotte è datata oggi.
+  // Con «1 gg» si mostra soltanto quella, e se non c'è si dice che non c'è.
+  // Mostrare al suo posto l'ultima notte disponibile faceva leggere come sonno
+  // di stanotte una notte di giorni prima.
+  const notteDiStanotte = notti.find((n) => n.presente && n.data === oggiIso) || null;
+  const ultimaNotte = [...notti]
+    .filter((n) => n.presente && n.data <= oggiIso)
+    .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
+  // Come per il passo: una notte non registrata non diventa un buco nella
+  // linea. Nel grafico ci sono solo le notti che hanno una durata, in ordine
+  // di calendario, e la linea le collega.
+  const nottiOrd = (soloOggi ? (notteDiStanotte ? [notteDiStanotte] : []) : notti.filter(fSonno2.dentro))
+    .filter((n) => n.presente && n.durataMin != null)
+    .sort((a, b) => (a.data < b.data ? -1 : 1));
+  const etichettaSonno = soloOggi
+    ? notteDiStanotte
+      ? "stanotte"
+      : ultimaNotte
+        ? `stanotte nessun dato · ultima notte ${dataBreve(ultimaNotte.data)}`
+        : "nessuna notte registrata"
+    : fSonno2.etichetta;
+  // Con «1 gg» la notte mostrata è di ieri: la media non deve escluderla come
+  // fa con la giornata in corso.
+  const mSonno = soloOggi
+    ? (() => {
+        const v = nottiOrd.map((n) => n.durataMin).filter((x) => x != null);
+        return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
+      })()
+    : media(nottiOrd, "durataMin", { includiOggi: true });
+  if (notti.some((n) => n.presente && n.durataMin != null)) {
+    aggiungi(wrap,
+      schedaGrafico({
+        selettore: fSonno2.selettore,
+        titolo: "Sonno",
+        valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
+        nota: mSonno
+          ? soloOggi
+            ? etichettaSonno
+            : `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${etichettaSonno}`
+          : soloOggi
+            ? etichettaSonno
+            : `nessun dato · ${etichettaSonno}`,
+        grafico: graficoLinea({
+          punti: nottiOrd.map((n) => ({
+            data: n.data,
+            valore: n.presente ? n.durataMin : null,
+            nota: n.presente
+              ? [
+                  n.profondoMin != null ? `profondo ${n.profondoMin}m` : null,
+                  n.remMin != null ? `REM ${n.remMin}m` : null,
+                  n.vegliaMin != null ? `veglia ${n.vegliaMin}m` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : null,
+          })),
+          formatta: (v) => durataUmana(v * 60),
+          invito: "Tocca una notte per vedere durata e fasi",
+        }),
+        piede:
+          "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali. " +
+          "Nel grafico ci sono solo le notti registrate: la linea non ha buchi, ma la distanza fra due punti non è il tempo passato.",
+      })
+    );
+    // L'orologio il sonno lo indovina, e a volte lo sbaglia di ore. Questa è
+    // l'unica strada per rimettere il numero giusto: senza, un errore
+    // dell'Apple Watch restava nello storico per sempre.
+    aggiungi(wrap, rigaCorrezioneNotte(notti, oggiIso, ridisegna));
+  }
+
+  // ---- sigarette ----
+  const cartaFumo = await schedaSigarette({ conPeriodo, oggiIso });
+  if (cartaFumo) aggiungi(wrap, cartaFumo);
+
   // ---- passo al chilometro, a piedi e di corsa ----
   /* Quanto ci metti a fare un chilometro. Non è un dato che l'orologio scrive:
      si ricava dagli allenamenti, sommando distanza e durata di quelli dello
@@ -571,82 +647,6 @@ export async function render({ ridisegna }) {
       )
     );
   }
-
-  // ---- sonno ----
-  const fSonno2 = conPeriodo();
-  // Una notte porta la data del RISVEGLIO: quella di stanotte è datata oggi.
-  // Con «1 gg» si mostra soltanto quella, e se non c'è si dice che non c'è.
-  // Mostrare al suo posto l'ultima notte disponibile faceva leggere come sonno
-  // di stanotte una notte di giorni prima.
-  const notteDiStanotte = notti.find((n) => n.presente && n.data === oggiIso) || null;
-  const ultimaNotte = [...notti]
-    .filter((n) => n.presente && n.data <= oggiIso)
-    .sort((a, b) => (a.data < b.data ? 1 : -1))[0];
-  // Come per il passo: una notte non registrata non diventa un buco nella
-  // linea. Nel grafico ci sono solo le notti che hanno una durata, in ordine
-  // di calendario, e la linea le collega.
-  const nottiOrd = (soloOggi ? (notteDiStanotte ? [notteDiStanotte] : []) : notti.filter(fSonno2.dentro))
-    .filter((n) => n.presente && n.durataMin != null)
-    .sort((a, b) => (a.data < b.data ? -1 : 1));
-  const etichettaSonno = soloOggi
-    ? notteDiStanotte
-      ? "stanotte"
-      : ultimaNotte
-        ? `stanotte nessun dato · ultima notte ${dataBreve(ultimaNotte.data)}`
-        : "nessuna notte registrata"
-    : fSonno2.etichetta;
-  // Con «1 gg» la notte mostrata è di ieri: la media non deve escluderla come
-  // fa con la giornata in corso.
-  const mSonno = soloOggi
-    ? (() => {
-        const v = nottiOrd.map((n) => n.durataMin).filter((x) => x != null);
-        return v.length ? { valore: Math.round(v.reduce((a, b) => a + b, 0) / v.length), quanti: v.length } : null;
-      })()
-    : media(nottiOrd, "durataMin", { includiOggi: true });
-  if (notti.some((n) => n.presente && n.durataMin != null)) {
-    aggiungi(wrap,
-      schedaGrafico({
-        selettore: fSonno2.selettore,
-        titolo: "Sonno",
-        valore: mSonno ? durataUmana(mSonno.valore * 60) : "—",
-        nota: mSonno
-          ? soloOggi
-            ? etichettaSonno
-            : `${mSonno.quanti} ${mSonno.quanti === 1 ? "notte" : "notti"} con dati · ${etichettaSonno}`
-          : soloOggi
-            ? etichettaSonno
-            : `nessun dato · ${etichettaSonno}`,
-        grafico: graficoLinea({
-          punti: nottiOrd.map((n) => ({
-            data: n.data,
-            valore: n.presente ? n.durataMin : null,
-            nota: n.presente
-              ? [
-                  n.profondoMin != null ? `profondo ${n.profondoMin}m` : null,
-                  n.remMin != null ? `REM ${n.remMin}m` : null,
-                  n.vegliaMin != null ? `veglia ${n.vegliaMin}m` : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")
-              : null,
-          })),
-          formatta: (v) => durataUmana(v * 60),
-          invito: "Tocca una notte per vedere durata e fasi",
-        }),
-        piede:
-          "Il punteggio del sonno non esiste in Salute: qui ci sono durata e fasi, che sono i dati reali. " +
-          "Nel grafico ci sono solo le notti registrate: la linea non ha buchi, ma la distanza fra due punti non è il tempo passato.",
-      })
-    );
-    // L'orologio il sonno lo indovina, e a volte lo sbaglia di ore. Questa è
-    // l'unica strada per rimettere il numero giusto: senza, un errore
-    // dell'Apple Watch restava nello storico per sempre.
-    aggiungi(wrap, rigaCorrezioneNotte(notti, oggiIso, ridisegna));
-  }
-
-  // ---- sigarette ----
-  const cartaFumo = await schedaSigarette({ conPeriodo, oggiIso });
-  if (cartaFumo) aggiungi(wrap, cartaFumo);
 
   // ---- il resto del movimento: in piedi, piani, distanza ----
   // Non hanno un grafico ciascuno: sarebbero quattro schede quasi uguali. Qui
