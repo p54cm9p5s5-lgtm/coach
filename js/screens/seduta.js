@@ -911,7 +911,7 @@ function testata() {
     "div",
     h(
       "div.session-head",
-      h("button", { onclick: unaVoltaSola(esci) }, "Esci"),
+      h("button", { onclick: unaVoltaSola(pausa) }, "Pausa"),
       h("span.step", `${S.sed.tipoNome} · ${passo}`),
       h("button", { onclick: unaVoltaSola(menuSeduta), "aria-label": "Altre azioni dell'allenamento" }, "•••")
     ),
@@ -919,7 +919,27 @@ function testata() {
   );
 }
 
-async function esci() {
+/**
+ * Mettere in pausa: si esce e basta.
+ *
+ * L'allenamento resta aperto esattamente dov'era — la fase, l'esercizio, la
+ * serie — e la Home lo tiene lì con scritto da dove riprende. Nel frattempo
+ * l'app si usa normalmente: guardare Salute o segnare una sigaretta mentre
+ * aspetti il tapis non deve costare l'allenamento.
+ *
+ * Il tasto si chiamava «Esci», che suonava come «abbandona»: la cosa che
+ * faceva era già questa, ma nessuno lo sapeva e si finiva per chiudere
+ * l'allenamento per non perderlo.
+ */
+async function pausa() {
+  fermaTimer();
+  rilasciaSchermo();
+  toast("Allenamento in pausa: lo riprendi dalla Home.");
+  S.vaiA("oggi");
+}
+
+/** Uscire senza il messaggio: quando lo dice già un'altra cosa. */
+function esci() {
   fermaTimer();
   rilasciaSchermo();
   S.vaiA("oggi");
@@ -987,11 +1007,15 @@ async function menuSeduta() {
       ...(fase !== "stretching" && passiStretching().length
         ? [{ etichetta: "Vai allo stretching", valore: "stretching" }]
         : []),
+      { etichetta: "Metti in pausa ed esci", valore: "pausa" },
       ...(fase !== "fine" ? [{ etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" }] : []),
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
     ],
   });
-  if (scelta === "cardio") {
+  if (scelta === "pausa") {
+    if (!(await cardioDaChiudere())) return;
+    await pausa();
+  } else if (scelta === "cardio") {
     await salvaProgresso({ fase: "cardio" });
     await disegna();
   } else if (scelta === "mobilita") {
@@ -3334,11 +3358,16 @@ async function vistaCardio(corpo, piede) {
       "Non eseguito"
     ),
     /* Il cardio si può rimandare senza dichiararlo saltato.
+
        Capita di finire i pesi e di dover aspettare: il tapis occupato, un
-       impegno in mezzo. Da quando il cardio è l'ultimo passaggio, stretching e
-       mobilità sono già stati fatti — rimandandolo si va dritti al riepilogo,
-       il cardio resta da fare e la Home lo tiene lì, con l'allenamento aperto,
-       finché non lo fai o non lo dichiari non eseguito. */
+       impegno in mezzo. Rimandandolo l'allenamento **si ferma qui**, sul
+       cardio, e si esce: la Home lo tiene lì e riprendendolo si riapre questa
+       schermata, pronta.
+
+       Prima si andava al riepilogo, e da lì l'unica strada indietro era «Torna
+       agli esercizi»: per fare una camminata bisognava ripassare dalla
+       valutazione dell'ultimo esercizio, dallo stretching e dalla mobilità già
+       fatti. */
     h(
       "button.btn.secondary",
       {
@@ -3346,13 +3375,8 @@ async function vistaCardio(corpo, piede) {
           S.sed = await store.aggiornaSeduta(S.sed.id, {
             cardio: { ...S.sed.cardio, rimandato: true, saltatoMotivo: null },
           });
-          toast("Cardio rimandato: lo trovi in Home finché non lo fai.");
-          // Rimandandolo una seconda volta lo stretching è già stato fatto:
-          // rimandarci sopra significherebbe rifare da capo passaggi già
-          // chiusi. In quel caso si va al riepilogo, che e il punto in cui si
-          // decide cosa fare dell'allenamento.
-          await salvaProgresso({ fase: dopoIlCardio() });
-          await disegna();
+          toast("Cardio rimandato: lo riprendi dalla Home quando vuoi.");
+          esci();
         }),
       },
       "Rimanda il cardio"
@@ -3497,13 +3521,9 @@ async function vistaCardioInCorso(corpo, piede, r) {
         S.sed = await store.aggiornaSeduta(S.sed.id, {
           cardio: { ...S.sed.cardio, rimandato: true, eseguito: false, durataMin: null, finitoIl: null, saltatoMotivo: null },
         });
-        toast("Cardio rimandato: lo trovi in Home finché non lo fai.");
-        await salvaProgresso({
-          fase: dopoIlCardio(),
-          cardioInizio: null,
-          cardioFine: null,
-        });
-        await disegna();
+        toast("Cardio rimandato: lo riprendi dalla Home quando vuoi.");
+        await salvaProgresso({ cardioInizio: null, cardioFine: null });
+        esci();
       }),
     },
     "Rimanda il cardio"

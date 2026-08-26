@@ -344,9 +344,25 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
     const cardioDaFare = Boolean(
       inCorso.cardio?.previsto && inCorso.cardio?.rimandato && !inCorso.cardio?.eseguito
     );
+
+    /* Da dove riprende.
+       Un allenamento in pausa riparte esattamente dove l'hai lasciato, e il
+       tasto lo dice prima di toccarlo: «Riprendi dal cardio» è una promessa
+       verificabile, «Riprendi allenamento» no. */
+    const DOVE = {
+      riscaldamento: "dal riscaldamento",
+      esercizio: "dagli esercizi",
+      recupero: "dal recupero",
+      questionario: "dalla valutazione",
+      stretching: "dallo stretching",
+      mobilita: "dalla mobilità",
+      cardio: "dal cardio",
+      fine: "dal riepilogo",
+    };
+    const dove = DOVE[inCorso.progresso?.fase] || "da dove eri";
     return h(
       "div.group",
-      h("h2", cardioDaFare ? "Cardio da fare" : vecchio ? "Allenamento rimasto aperto" : "Allenamento aperto"),
+      h("h2", cardioDaFare ? "Cardio da fare" : vecchio ? "Allenamento rimasto aperto" : "Allenamento in pausa"),
       h(
         "div.list",
         h(
@@ -361,7 +377,7 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
                 ? `pesi finiti alle ${ora === "Invalid Date" ? "—" : ora} · manca solo il cardio`
                 : vecchio
                   ? `iniziato ${dataLunga(inCorso.data).toLowerCase()} alle ${ora}`
-                  : `iniziato alle ${ora}`
+                  : `iniziato alle ${ora} · riprende ${dove}`
             )
           ),
           h("span.chevron", "›")
@@ -404,7 +420,11 @@ async function bloccoAllenamento(vaiA, ridisegna, oggi) {
         // posto: due tasti identici uno sotto l'altro fanno solo dubitare.
         cardioDaFare
           ? null
-          : h("button.btn", { onclick: () => vaiA("seduta") }, vecchio ? `Riprendi (resta del ${dataBreve(inCorso.data)})` : "Riprendi allenamento"),
+          : h(
+              "button.btn",
+              { onclick: () => vaiA("seduta") },
+              vecchio ? `Riprendi (resta del ${dataBreve(inCorso.data)})` : `Riprendi ${dove}`
+            ),
         vecchio && vuoto
           ? h(
               "p.footnote",

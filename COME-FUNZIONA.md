@@ -391,6 +391,25 @@ battito, sforzo). Erano facoltativi e finivano nel pacchetto. Stavano lì perch�
 in quel momento il riepilogo era ancora quello sul quadrante: chiesti dopo lo
 stretching, al polso c'è già dell'altro.
 
+### Mettere in pausa
+
+Un allenamento **non va chiuso per forza tutto d'un fiato**. In alto a sinistra
+c'è **«Pausa»** (nel menu «•••» c'è la stessa voce): l'allenamento resta aperto
+esattamente dov'era — la fase, l'esercizio, la serie — e si torna alla Home, dove
+l'app si usa normalmente. Guardare Salute o segnare una sigaretta mentre aspetti
+il tapis non costa l'allenamento.
+
+In Home compare **«Allenamento in pausa»** con scritto **da dove riprende** — «dal
+cardio», «dallo stretching», «dagli esercizi» — e il tasto dice la stessa cosa:
+**«Riprendi dal cardio»**. Toccandolo si riapre esattamente quella schermata.
+
+Il caso per cui è nato: **stretching e mobilità fatti, il cardio no.** Toccando
+«Rimanda il cardio» l'allenamento si ferma lì, sul cardio, e si esce; in Home
+resta «Cardio da fare» con «Fai il cardio», che riapre la schermata del cardio
+pronta. Prima si finiva sul riepilogo, e da lì l'unica strada indietro era
+«Torna agli esercizi»: per fare una camminata bisognava ripassare dalla
+valutazione dell'ultimo esercizio e da stretching e mobilità già fatti.
+
 **7. Riepilogo e chiusura.** Il cardio è l'ultimo passaggio, quindi da qui si chiude. Durata, densità, recuperi medi reali, punteggio
 scomposto, dati mancanti e nota generale. I numeri dell'orologio **non si
 scrivono più**: li porta l'importazione da Salute (vedi 4-bis). Quelli trascritti
