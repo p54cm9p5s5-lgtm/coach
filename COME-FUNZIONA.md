@@ -402,12 +402,21 @@ Il periodo è **lo stesso** scelto in cima a Salute: su «7 gg» ci sono i Pull 
 quei sette giorni, su «Sempre» tutti. Non è una scelta grafica: è l'unico modo
 perché la media di sopra e l'elenco di sotto raccontino la stessa cosa.
 
-### Due tocchi non ingrandiscono più
+### La pagina non si ingrandisce
 
-Su iPhone il doppio tocco ingrandisce la pagina, e con le mani sudate capita da
-solo: due tocchi vicini su un tasto e lo schermo resta piantato ingrandito su un
-angolo. Adesso il doppio tocco non fa niente. **L'ingrandimento con due dita
-resta**: è una funzione di accessibilità e non si tocca.
+**Né con due tocchi né con due dita.** I numeri di questa app sono già grandi, e
+l'ingrandimento qui faceva solo danni: due dita per sbaglio mentre appoggi il
+telefono, o due tocchi vicini, e lo schermo restava piantato ingrandito su un
+angolo da cui non si esce con un gesto ovvio.
+
+Il foglio di stile da solo non bastava: toglie il doppio tocco ma non
+l'avvicinamento con due dita, che su iPhone passa da eventi suoi e va fermato a
+mano. Il secondo tocco viene fermato **solo dove non c'è niente da toccare**:
+sui tasti no, perché due tocchi rapidi su «+» durante l'allenamento devono
+contare due volte.
+
+Resta l'ingrandimento di sistema dell'iPhone (Impostazioni → Accessibilità →
+Zoom), che vive fuori dall'app.
 
 ### Tornare indietro dove eri
 

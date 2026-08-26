@@ -220,6 +220,59 @@ function scorritore() {
 }
 
 /** Riporta la pagina in cima, con l'animazione dove il browser la fa. */
+/* Niente ingrandimento: né due dita, né due tocchi.
+
+   Su iPhone l'ingrandimento della pagina non è mai stato utile qui — i numeri
+   di questa app sono già grandi — e in palestra fa danni: due dita per sbaglio
+   mentre appoggi il telefono, oppure due tocchi vicini, e lo schermo resta
+   piantato ingrandito su un angolo da cui non si esce con un gesto ovvio.
+
+   Il foglio di stile da solo non basta. `touch-action: manipulation` toglie il
+   doppio tocco ma NON l'avvicinamento con due dita, e su WebKit quest'ultimo
+   passa da eventi suoi («gesture*») che vanno fermati a mano. Il meta della
+   pagina con «user-scalable=no» iOS lo ignora da anni.
+
+   Il secondo tocco si ferma solo dove non c'è niente da toccare: sui tasti no,
+   perché due tocchi rapidi su «+» durante l'allenamento devono contare due
+   volte — e lì il doppio tocco non ingrandiva comunque, per via del foglio di
+   stile.
+
+   Resta l'ingrandimento di sistema dell'iPhone (Impostazioni → Accessibilità →
+   Zoom), che vive fuori dall'app e non lo tocca nessuno. */
+function spegniIngrandimento() {
+  const ferma = (e) => e.preventDefault();
+
+  // due dita, alla maniera di WebKit
+  for (const evento of ["gesturestart", "gesturechange", "gestureend"]) {
+    document.addEventListener(evento, ferma, { passive: false });
+  }
+  // due dita, alla maniera di tutti gli altri
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    },
+    { passive: false }
+  );
+  document.addEventListener("dblclick", ferma, { passive: false });
+
+  const SOGLIA_MS = 340;
+  const TOCCABILE = "button, a, input, textarea, select, label, .row, .segmented, .scelte, .stepper, .scale, [role=button]";
+  let ultimo = 0;
+  document.addEventListener(
+    "touchend",
+    (e) => {
+      const ora = Date.now();
+      const vicini = ora - ultimo <= SOGLIA_MS;
+      ultimo = ora;
+      if (!vicini) return;
+      const bersaglio = e.target instanceof Element ? e.target.closest(TOCCABILE) : null;
+      if (!bersaglio) e.preventDefault();
+    },
+    { passive: false }
+  );
+}
+
 export function inCima() {
   const v = scorritore();
   try {
@@ -586,6 +639,8 @@ async function avvia() {
     e.preventDefault();
     inCima();
   });
+  spegniIngrandimento();
+
   // Niente sblocco audio qui: all'apertura l'app deve restare muta. Lo fa la
   // schermata dell'allenamento, al primo tocco dentro la seduta.
 
