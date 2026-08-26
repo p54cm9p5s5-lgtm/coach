@@ -93,15 +93,46 @@ function segnaPosizione(hash, y) {
 
 function rimettiPosizione(y, turno) {
   const v = scorritore();
+  v.scrollTop = y;
+  aggiornaOmbraTestata();
+  if (!y) return;
+
+  /* Rimettere la posizione una volta sola non basta.
+
+     Il contenuto continua a crescere dopo il primo disegno — i grafici in SVG
+     prendono le loro misure, le miniature arrivano, il calendario si riempie —
+     e finché la pagina è più corta della posizione da rimettere, il browser
+     tronca lo scorrimento a quanto c'è. Su un telefono lento questo può durare
+     quasi un secondo, cioè molto più dei due tentativi a tempo fisso che
+     c'erano prima.
+
+     Qui si guarda l'altezza vera: finché cambia, si rimette. Al primo dito che
+     tocca lo schermo si smette, perché da quel momento la posizione la decidi
+     tu e non l'app. */
+  let fermo = false;
   const metti = () => {
-    if (turno !== turnoCorrente) return;
-    v.scrollTop = y;
+    if (fermo || turno !== turnoCorrente) return;
+    if (Math.abs(v.scrollTop - y) > 2) v.scrollTop = y;
     aggiornaOmbraTestata();
   };
-  metti();
+  const basta = () => {
+    fermo = true;
+    osservatore?.disconnect();
+  };
+
+  let osservatore = null;
+  try {
+    osservatore = new ResizeObserver(metti);
+    osservatore.observe(v.firstElementChild || v);
+  } catch {
+    /* senza ResizeObserver restano i tentativi a tempo qui sotto */
+  }
   requestAnimationFrame(metti);
-  setTimeout(metti, 60);
-  setTimeout(metti, 260);
+  for (const quando of [60, 180, 400, 700, 1000]) setTimeout(metti, quando);
+  setTimeout(basta, 1300);
+  for (const evento of ["touchstart", "wheel", "pointerdown"]) {
+    v.addEventListener(evento, basta, { once: true, passive: true });
+  }
 }
 
 /* Il tasto «Indietro» torna DA DOVE SEI VENUTO, non a una schermata decisa in
