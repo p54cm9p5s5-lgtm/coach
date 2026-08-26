@@ -765,49 +765,27 @@ export async function render({ ridisegna }) {
 // ---------- import ----------
 
 async function aggiorna(ridisegna) {
-  // Il tasto del comando rapido era stato tolto perché su una versione di iOS
-  // le azioni di Salute dentro Comandi Rapidi restavano appese, e un tasto che
-  // apre una cosa che non risponde è peggio di nessun tasto. Dopo
-  // l'aggiornamento del telefono (25/08) «Coach Salute» funziona di nuovo, e il
-  // tasto torna — senza togliere niente: le altre due strade restano tutte e
-  // due, gli appunti e il file.
-  return apriImport(ridisegna, {
-    titolo: "Aggiorna dati salute",
-    testo:
-      "«Coach Salute» legge gli ultimi 30 giorni e li copia negli appunti: poi torna qui e incolla. " +
-      "Se preferisci, puoi anche incollare un pacchetto già copiato o scegliere un file — " +
-      "l'esportazione completa di Salute (profilo → «Esporta tutti i dati», zip estratto in File).",
-    shortcut: "Coach Salute",
-  });
+  return apriImport(ridisegna, { shortcut: "Coach Salute" });
 }
 
 /**
- * Stesso flusso per qualunque pacchetto: il formato è uno solo e il testo
- * incollato può contenere salute, calendario o tutti e due insieme.
- */
-/**
- * @param shortcut  nome del comando rapido da offrire, oppure `null`.
+ * Un tocco solo: si apre il riquadro dove il pacchetto va a finire, con
+ * accanto tutte le strade per riempirlo.
  *
- * Per i dati salute è `null`: le azioni di Salute dentro Comandi Rapidi non
- * funzionano, e offrire un tasto che apre un comando che resta appeso è peggio
- * che non offrirlo. Resta per il calendario, che invece funziona.
+ * Prima ce n'erano due, di tocchi: un foglio chiedeva «apro il comando rapido
+ * o hai già copiato?» e solo rispondendo si arrivava qui. Ma la domanda ha una
+ * risposta sola quando serve davvero — hai appena eseguito il comando e vuoi
+ * incollare — e negli altri casi era una porta da aprire per trovarne
+ * un'altra. Adesso la scelta non si fa prima: si fa qui dentro, con i tasti
+ * che stanno tutti sotto il riquadro.
+ *
+ * @param shortcut  nome del comando rapido da offrire, oppure `null`.
  */
-export async function apriImport(ridisegna, { titolo, testo, shortcut = null }) {
-  const opzioni = [];
-  if (shortcut) opzioni.push({ etichetta: `Apri «${shortcut}»`, valore: "apri" });
-  opzioni.push({ etichetta: shortcut ? "Ho già copiato: incolla adesso" : "Importa", valore: "incolla" });
-
-  const scelta = await chiedi({ titolo, testo, opzioni });
-  if (!scelta) return;
-
-  if (scelta === "apri") {
-    location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcut)}`;
-    return;
-  }
-  await incolla(ridisegna);
+export async function apriImport(ridisegna, { shortcut = null, titolo = null, testo = null } = {}) {
+  return incolla(ridisegna, { shortcut, titolo, testo });
 }
 
-async function incolla(ridisegna) {
+async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sottotitolo = null } = {}) {
   // Niente lettura automatica degli appunti: quando la pagina la chiede, iOS
   // mette il suo pulsante «Incolla» sopra a tutto e SMETTE DI DISEGNARE finché
   // non lo tocchi — il riquadro c'era ma non si vedeva, e sembrava che il tocco
@@ -914,21 +892,42 @@ async function incolla(ridisegna) {
       "Scegli un file"
     );
 
+    // Il comando rapido sta qui dentro, insieme alle altre strade, e non più
+    // in un foglio prima di questo: si apre, si esegue, si torna e si incolla
+    // senza aver mai lasciato questa schermata.
+    const daComando = shortcut
+      ? h(
+          "button.btn.secondary",
+          {
+            onclick: () => {
+              nota.textContent = `Eseguito «${shortcut}»? Torna qui e tocca «Leggi dagli appunti».`;
+              location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcut)}`;
+            },
+          },
+          `Apri «${shortcut}»`
+        )
+      : null;
+
     return h(
       "div",
-      h("h2", "Incolla i dati"),
+      h("h2", titolo || "Incolla i dati"),
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
-        "Il testo del comando rapido, oppure un file preparato sul Mac."
+        sottotitolo ||
+          (shortcut
+            ? `«${shortcut}» legge gli ultimi 30 giorni e li copia negli appunti. Oppure incolla un pacchetto già copiato, o scegli un file preparato sul Mac.`
+            : "Il testo del comando rapido, oppure un file preparato sul Mac.")
       ),
       area,
       nota,
       h(
         "div.btn-wrap",
-        daFile,
-        h("div", { style: "height:8px" }),
+        daComando,
+        daComando ? h("div", { style: "height:8px" }) : null,
         daAppunti,
+        h("div", { style: "height:8px" }),
+        daFile,
         h("div", { style: "height:8px" }),
         h("button.btn", { onclick: () => close(area.value) }, "Importa")
       )
