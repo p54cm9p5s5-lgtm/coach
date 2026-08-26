@@ -219,11 +219,27 @@ async function elenco({ ridisegna }) {
   /* Sette barrette, una per giorno da lunedì a oggi: quanto ti sei mosso, non
      quanto avresti dovuto. Un giorno vuoto resta una tacca bassa e spenta —
      sparire lo farebbe sembrare un giorno che non è esistito. */
+  /* Le sette barre sono i sette giorni DI QUESTA SETTIMANA, da lunedì.
+
+     Erano gli ultimi sette giorni all'indietro: sotto un titolo che dice
+     «questa settimana», di mercoledì, le prime quattro barre erano giovedì,
+     venerdì, sabato e domenica **della settimana prima** — giorni che nel
+     conteggio qui sopra non c'entravano. Due finestre diverse sotto lo stesso
+     titolo, che è il difetto peggiore: entrambi i numeri sono giusti e
+     raccontano cose diverse.
+
+     I giorni non ancora arrivati restano vuoti: è una settimana che si sta
+     riempiendo, e vederlo è il punto. */
   const perGiorno = [];
-  for (let i = 6; i >= 0; i--) {
-    const data = giorniIndietro(oggiIso, i);
+  for (let i = 0; i < 7; i++) {
+    const data = giorniIndietro(daLunedi, -i);
     const righe = tutti.filter((a) => a.data === data);
-    perGiorno.push({ data, minuti: Math.round(somma(righe, "durataSec") / 60), righe });
+    perGiorno.push({
+      data,
+      futuro: data > oggiIso,
+      minuti: Math.round(somma(righe, "durataSec") / 60),
+      righe,
+    });
   }
   const piu = Math.max(30, ...perGiorno.map((g) => g.minuti));
   const barre = h(
@@ -238,7 +254,7 @@ async function elenco({ ridisegna }) {
         h("span", {
           style:
             `display:block;height:${alt}px;border-radius:6px;background:${colore};` +
-            (g.data === oggiIso && !g.minuti ? "opacity:.55;" : g.minuti ? "" : "opacity:.5;"),
+            (g.futuro ? "opacity:.28;" : g.minuti ? "" : "opacity:.5;"),
           title: `${g.minuti} minuti`,
         }),
         h(
