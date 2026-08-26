@@ -154,6 +154,20 @@ export function valida(dati, libreria) {
       if (v.carico != null && !(Number.isFinite(v.carico) && v.carico >= 0)) {
         problemi.push(`Carico non valido per ${v.esercizioId}: dev'essere un numero di chili, zero o più.`);
       }
+      // E un tetto, che prima non c'era: «zero o più» lasciava passare 99999,
+      // e quel numero arrivava fino alla schermata dell'esercizio («da montare:
+      // 99999 kg») ed entrava nel punteggio come carico previsto.
+      //
+      // Cinquecento chili è oltre qualunque record di panca o stacco: ferma le
+      // cifre impossibili, non i carichi pesanti. Un refuso più piccolo — 350
+      // al posto di 35 — passa ancora, ed è voluto: 350 kg è assurdo per lui ma
+      // non per chiunque, e il confine del possibile è l'unica soglia che si
+      // può mettere qui senza sapere chi si sta allenando.
+      else if (v.carico != null && v.carico > 500) {
+        problemi.push(
+          `Carico fuori scala per ${v.esercizioId}: ${v.carico} kg. Se non è un refuso, toglilo dal brief e scrivilo a mano.`
+        );
+      }
       if (v.recuperoSec != null && !(v.recuperoSec > 0)) {
         problemi.push(`Recupero non valido per ${v.esercizioId}: dev'essere un numero di secondi.`);
       }

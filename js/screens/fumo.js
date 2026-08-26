@@ -1,16 +1,17 @@
 /* Contatore delle sigarette.
 
-   Il numero occupa tutto lo schermo e cambia colore da solo: giallo da 4,
-   arancione da 7, rosso da 10. Nessuna frase di rimprovero — il colore dice
-   già tutto, e un'app che ti sgrida a ogni tocco è un'app che si smette di
-   usare. Un conteggio smesso è peggio di nessun conteggio, perché fa sembrare
-   buone delle giornate che non lo sono state. */
+   Il numero occupa tutto lo schermo ed è inchiostro fino a nove, rosso da
+   dieci: due stati, non una scala, perché il tetto dichiarato è zero e davanti
+   a una regola netta un semaforo a quattro gradini racconta una storia sfumata
+   che non c'è. Nessuna frase di rimprovero — un'app che ti sgrida a ogni tocco
+   è un'app che si smette di usare, e un conteggio smesso è peggio di nessun
+   conteggio, perché fa sembrare buone delle giornate che non lo sono state. */
 
 import { h, aggiungi, chiedi, dataBreve, dataLunga, isoDate, toast, unaVoltaSola } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 
-/** Le soglie sono quelle chieste: 4-6 giallo, 7-9 arancione, 10 e oltre rosso. */
+/** Due stati soli: inchiostro fino a nove, rosso da dieci. Il perché è sotto. */
 function colore(n) {
   // Il tetto dichiarato è zero: qui non c'è una scala di grigi da percorrere,
   // c'è una riga superata o no. Zero è inchiostro come il resto — la parola
@@ -26,9 +27,9 @@ function colore(n) {
 /**
  * Il segnale «vietato fumare», a sole linee.
  *
- * Prende lo stesso identico colore del numero: sotto 4 il colore del testo,
- * poi giallo, arancione, rosso. Un colore solo per tutta la schermata, così
- * non c'è modo di leggere due segnali diversi.
+ * Prende lo stesso identico colore del numero: inchiostro fino a nove, rosso
+ * da dieci. Un colore solo per tutta la schermata, così non c'è modo di
+ * leggere due segnali diversi.
  */
 function sigarettaSvg(tinta) {
   const NS = "http://www.w3.org/2000/svg";

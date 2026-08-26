@@ -610,9 +610,11 @@ sera prima e finisce la mattina.
 
 ≥ 90 «ottimo» · ≥ 70 «sufficiente» · sotto «da rivedere».
 
-Il colore è su **scala continua**: rosso pieno da 20 in giù, arancione, giallo
-attorno a 70, lime pieno da 95 in su. Un numero che scende si vede scendere,
-senza aspettare una soglia.
+**Il punteggio non ha colore.** Il numero è inchiostro, sempre, qualunque sia:
+è il giudizio scritto accanto a dirlo, non una tinta. Prima c'era una scala
+continua — rosso in basso, giallo a metà, lime in alto — e faceva sembrare un
+allenamento normale un allarme. In questa app il rosso vuol dire una cosa sola,
+e non è «potevi fare meglio».
 
 ---
 
@@ -828,8 +830,11 @@ dell'orologio ma non tocca quello che hai scritto tu, ed entrano nei backup.
 ## 10. Il conteggio delle sigarette
 
 Un contatore: un tocco per sigaretta, con l'orario. Il «−» serve per i tocchi
-sbagliati. Il numero cambia colore: bianco fino a 3, giallo 4-6, arancione 7-9,
-**rosso da 10**.
+sbagliati. Il numero è inchiostro fino a nove e **rosso da dieci**: due stati,
+non una scala. Il tetto dichiarato è zero, e davanti a una regola netta un
+semaforo a quattro gradini racconterebbe una storia sfumata che non c'è. Sotto
+il numero la frase dice come stai messo — «il massimo è zero, e ci sei», oppure
+«1 di troppo».
 
 Il conteggio è **manuale**: vale quello che è stato segnato, non c'è modo di
 verificarlo, e nel pacchetto è scritto esplicitamente.
@@ -1049,8 +1054,9 @@ sabato con l'evento «Allenamento: Mobilità» sul calendario e nessuna seduta
 aperta produce esattamente quello che produce un Push saltato: nel punteggio
 Salute la voce Allenamento vale **zero** con lo stesso peso di sempre, nella
 tabella del pacchetto per il coach la riga dice «**Non fatto (era previsto
-Mobilità)**», e sul calendarietto il giorno è giallo con scritto «Mobilità —
-non registrato». Farla vale **100** e riporta la voce Allenamento a pieno.
+Mobilità)**», e sul calendarietto il giorno resta senza la sottolineatura piena
+dei giorni fatti, con scritto «Mobilità — non registrato». Farla vale **100** e
+riporta la voce Allenamento a pieno.
 
 ---
 

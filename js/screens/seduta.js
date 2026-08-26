@@ -1253,7 +1253,12 @@ async function vistaRiscaldamento(corpo, piede) {
                 h("h3", "Sul Watch"),
                 h(
                   "p",
-                  "Avvia una sola sessione «Rafforzamento funzionale» che comprenda riscaldamento e pesi. Non tracciare il riscaldamento come camminata separata."
+                  // Sabato e domenica non hanno pesi: dire «una sessione che
+                  // comprenda riscaldamento e pesi» in un giorno di sola
+                  // mobilità è un'istruzione che non si può eseguire.
+                  (S.sed.previstiElenco?.length ?? 0) > 0
+                    ? "Avvia una sola sessione «Rafforzamento funzionale» che comprenda riscaldamento e pesi. Non tracciare il riscaldamento come camminata separata."
+                    : "Avvia una sola sessione «Rafforzamento funzionale» per tutta la mobilità. Non tracciare il riscaldamento come camminata separata."
                 )
               ),
               prot?.nota ? h("section", h("h3", "Perché niente stretching adesso"), h("p", prot.nota)) : null

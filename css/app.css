@@ -1705,3 +1705,22 @@ th.num {
     scroll-behavior: auto !important;
   }
 }
+
+/* Il tondino «i» resta di 26 punti perché è un segno, non un pulsante:
+   ingrandirlo lo farebbe pesare quanto il numero che spiega. Ma 26 non si
+   prendono col pollice — misurati 28 di larghezza contro i 44 minimi.
+   Il disegno non si tocca: si allarga solo l'area che risponde al dito, con
+   un rettangolo invisibile che deborda di 9 punti per lato (26 + 18 = 44).
+   È la stessa cosa già fatta sui tasti piccoli di Corpo, lì con i margini
+   negativi; qui serve un pseudo-elemento perché il tondino ha un bordo suo,
+   e allargarlo col padding allargherebbe anche il cerchio. */
+.tondino-i {
+  position: relative;
+}
+
+.tondino-i::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 999px;
+}

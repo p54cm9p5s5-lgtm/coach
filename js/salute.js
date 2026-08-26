@@ -63,6 +63,35 @@ const NUMERO = (v, intero = false) => {
 };
 
 /**
+ * Il tetto oltre il quale un valore non è un dato ma un errore di lettura.
+ *
+ * Non sono obiettivi né soglie del programma: sono i confini del possibile in
+ * ventiquattro ore. Centomila passi è più di una maratona camminata; venti ore
+ * di sonno è la stessa soglia che `correggiNotte` usa già a mano, dicendo
+ * «probabilmente una delle due ore è sbagliata». Volutamente larghi: devono
+ * fermare i numeri impossibili, non le giornate eccezionali.
+ */
+const TETTI_PLAUSIBILI = {
+  passi: 100000,
+  kcal: 10000,
+  kcaltot: 15000,
+  esercizio: 1440, // minuti in un giorno
+  inpiedi: 1440,
+  inpiediore: 24,
+  piani: 500,
+  km: 200,
+  metri: 200000,
+  durata: 1200, // minuti: venti ore, come la correzione a mano
+  profondo: 1200,
+  rem: 1200,
+  veglia: 1200,
+  risvegli: 100,
+  fc: 250,
+  fcmedia: 250,
+  fcmax: 250,
+};
+
+/**
  * I campi che ogni tipo di riga sa leggere. Servono a dire quali sono stati
  * ignorati: senza questo elenco un campo scritto male spariva in silenzio.
  * AGENDA resta fuori: il suo titolo è testo libero e può contenere di tutto.
@@ -222,6 +251,30 @@ export function analizza(testo) {
     if (negativi.length) {
       risultato.avvisi.push(
         `${data}: ${negativi.join(", ")} ${negativi.length === 1 ? "ha un valore negativo e resta" : "hanno valori negativi e restano"} non registrat${negativi.length === 1 ? "o" : "i"}.`
+      );
+    }
+
+    // Stessa sorte per i valori fisicamente impossibili. Un numero negativo si
+    // riconosce dal segno; 900.000 passi in un giorno (settecento chilometri) o
+    // trenta ore di sonno in una notte no, e passavano in silenzio: entravano
+    // nelle medie e nei grafici e li falsavano per settimane.
+    //
+    // Il controllo esisteva già, ma solo sulla strada a mano — `correggiNotte`
+    // rifiuta più di venti ore dicendo «probabilmente una delle due ore è
+    // sbagliata». Qui è la stessa regola, applicata dove i dati arrivano da
+    // soli: il valore non entra e viene detto quale, come per i negativi.
+    const implausibili = Object.entries(c)
+      .filter(([k, v]) => {
+        const tetto = TETTI_PLAUSIBILI[k];
+        if (tetto == null) return false;
+        const n = NUMERO(v);
+        return n != null && n > tetto;
+      })
+      .map(([k]) => k);
+    for (const k of implausibili) delete c[k];
+    if (implausibili.length) {
+      risultato.avvisi.push(
+        `${data}: ${implausibili.map((k) => `${k} fuori scala`).join(", ")} — ${implausibili.length === 1 ? "resta non registrato" : "restano non registrati"}.`
       );
     }
 

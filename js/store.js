@@ -1296,7 +1296,17 @@ export async function completezzaSeduta(id, gia = null) {
   // bastava un cambio di programma per far cambiare da solo un punteggio di
   // luglio. Al primo sguardo vengono congelati anche loro, e da lì restano
   // fermi come tutti gli altri.
-  if (sed.stato === "completata") {
+  // Ma non a qualunque costo. Se la seduta non porta con sé l'elenco di quello
+  // che il programma chiedeva quel giorno (`previstiElenco`) E il suo tipo non
+  // esiste più nello split di oggi, il conto qui sopra è stato fatto contro un
+  // programma che non c'entra: gli esercizi risultano tutti mancanti e il
+  // punteggio crolla. Congelarlo vorrebbe dire incidere per sempre un numero
+  // sbagliato — misurato: le tre sedute di luglio passavano da 54/53/57 a
+  // 24/24/13, in silenzio, ripristinando un backup di inizio agosto.
+  // Meglio nessun punteggio congelato che uno falso: senza il congelamento il
+  // valore vero torna appena l'app ritrova un elenco a cui riferirsi.
+  const senzaRiferimento = !sed.previstiElenco?.length && !giornoSplit(sed.tipoId);
+  if (sed.stato === "completata" && !senzaRiferimento) {
     await db.put("sedute", {
       ...sed,
       completezza: {
@@ -3639,14 +3649,30 @@ export function indici({ peso, vitaOmbelico, fianchi, altezzaCm }) {
  * dell'app e da cancellazioni accidentali, NON dalla perdita del telefono:
  * per quello serve l'esportazione su file.
  */
-export async function snapshotAutomatico(motivo = "") {
+export async function snapshotAutomatico(motivo = "", { conFoto = false } = {}) {
   // Le foto non entrano nella copia interna: prima venivano lette tutte a
   // piena risoluzione per essere buttate via subito dopo, a ogni fine
   // allenamento e a ogni import.
-  const dump = await db.esportaTutto({ salta: ["foto", "copertine"] });
+  //
+  // Tranne quando questa copia è la rete di sicurezza di un RIPRISTINO. Lì il
+  // ragionamento si rovescia: non è una copia che scatta cento volte, è quella
+  // che scatta una volta sola prima di sovrascrivere tutto, e senza le foto
+  // «torna indietro» riportava sedute e misure lasciando le foto a zero. Le
+  // foto sono l'unico dato che non si ricostruisce da nessun'altra parte.
+  const salta = conFoto ? ["copertine"] : ["foto", "copertine"];
+  const dump = await db.esportaTutto({ salta });
   dump.motivo = motivo;
-  dump.parziale = ["foto"];
-  dump.dati.foto = [];
+  if (conFoto) {
+    // Elenco vuoto, non campo assente: `snapshotSalvato` rattoppa le copie
+    // vecchie che non dichiarano niente assumendo che manchino le foto, e
+    // senza questa riga una copia COMPLETA verrebbe scambiata per una di
+    // quelle — le foto resterebbero fuori dal ripristino proprio quando ci
+    // sono. Dichiarare «non manca niente» è diverso da non dichiarare nulla.
+    dump.parziale = [];
+  } else {
+    dump.parziale = ["foto"];
+    dump.dati.foto = [];
+  }
   // La copia precedente vive dentro le impostazioni: se la includessimo,
   // ogni salvataggio conterrebbe tutti quelli prima e il peso raddoppierebbe
   // ogni volta, fino a saturare l'archivio.

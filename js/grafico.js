@@ -641,7 +641,7 @@ export function schedaGrafico({ titolo, valore, unita, nota, grafico, piede, sel
 /** Il tondino «i»: apre la spiegazione che prima stava sotto al grafico. */
 export function tastoSpiegazione(titolo, testo) {
   const b = h(
-    "button",
+    "button.tondino-i",
     {
       type: "button",
       "aria-label": `Come si legge: ${titolo}`,

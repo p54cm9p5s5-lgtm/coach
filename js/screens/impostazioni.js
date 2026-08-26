@@ -635,7 +635,9 @@ async function ripristinaSnapshot() {
   // proprio la rete di sicurezza che si sta usando.
   let indietro = null;
   try {
-    indietro = await store.snapshotAutomatico("prima del ripristino");
+    // Con le foto: questa copia è l'unica via di ritorno da un ripristino, e
+    // le foto sono l'unico dato che non si ricostruisce da nessun'altra parte.
+    indietro = await store.snapshotAutomatico("prima del ripristino", { conFoto: true });
   } catch {
     /* se non riesce si prosegue: il ripristino resta l'operazione richiesta */
   }
@@ -849,7 +851,10 @@ async function importaBackup(ridisegna) {
   // interna di com'era. Un backup sbagliato non deve essere un vicolo cieco.
   let indietro = null;
   try {
-    indietro = await store.snapshotAutomatico("prima dell'import da file");
+    // Con le foto, per la stessa ragione del ripristino qui sopra: un backup
+    // con meno foto di quelle che hai, seguito da «torna indietro», le
+    // riportava a zero.
+    indietro = await store.snapshotAutomatico("prima dell'import da file", { conFoto: true });
   } catch {
     /* se non riesce si prosegue: l'import resta l'operazione richiesta */
   }
