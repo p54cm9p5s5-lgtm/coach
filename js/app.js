@@ -69,7 +69,7 @@ function stoScrivendo() {
 
 let hashDisegnato = null;
 
-/* Dove eri arrivato, schermata per schermata.
+/* Dove eri arrivato, schermata per schermata — e da dove sei venuto.
 
    Toccare una riga e tornare indietro riportava sempre in cima: dalla Home si
    apriva una camminata del Watch e, tornando, bisognava riscorrere mezza
@@ -78,17 +78,54 @@ let hashDisegnato = null;
    così l'elenco degli allenamenti e il dettaglio di uno hanno due posizioni
    diverse.
 
-   Il ripristino va rifatto un paio di volte dopo il primo disegno: grafici,
-   miniature e liste lunghe cambiano altezza subito dopo, e una posizione messa
-   troppo presto verrebbe tagliata dal contenuto che non c'è ancora. */
-const posizioni = new Map();
+   **Tutto questo vive in `sessionStorage`, non in memoria.** Sembra un
+   dettaglio e invece è il punto: quando arriva una versione nuova, l'app si
+   ricarica da sola alla prima navigazione. Con la memoria di prima la ricarica
+   cancellava sia le posizioni sia la strada percorsa — e siccome la ricarica
+   avviene proprio mentre stai aprendo qualcosa, il risultato era esattamente
+   il difetto che si vedeva: apri un allenamento dalla Home, torni indietro, e
+   ti ritrovi sull'elenco degli allenamenti con la Home dimenticata. Salvate
+   qui, ricarica e ripresa non si vedono nemmeno.
+
+   La pila serve anche a un'altra cosa: «Indietro» torna DA DOVE SEI VENUTO.
+   Prima si appoggiava alla storia del browser, che una ricarica azzera. */
+const CHIAVE_NAV = "coach-navigazione";
 const MAX_POSIZIONI = 60;
+const MAX_PILA = 20;
+
+const nav = (() => {
+  try {
+    const grezzo = JSON.parse(sessionStorage.getItem(CHIAVE_NAV) || "null");
+    if (grezzo && typeof grezzo === "object") {
+      return { pos: grezzo.pos || {}, pila: Array.isArray(grezzo.pila) ? grezzo.pila : [] };
+    }
+  } catch {
+    /* niente sessionStorage (navigazione privata): si resta in memoria */
+  }
+  return { pos: {}, pila: [] };
+})();
+
+function salvaNav() {
+  try {
+    sessionStorage.setItem(CHIAVE_NAV, JSON.stringify(nav));
+  } catch {
+    /* se non si può scrivere, la memoria di questa sessione basta lo stesso */
+  }
+}
 
 function segnaPosizione(hash, y) {
   if (!hash) return;
-  if (posizioni.size >= MAX_POSIZIONI) posizioni.delete(posizioni.keys().next().value);
-  posizioni.delete(hash);
-  posizioni.set(hash, y);
+  const chiavi = Object.keys(nav.pos);
+  if (chiavi.length >= MAX_POSIZIONI && !(hash in nav.pos)) delete nav.pos[chiavi[0]];
+  nav.pos[hash] = y;
+}
+
+/** La strada percorsa: serve a «Indietro», e non deve gonfiarsi all'infinito. */
+function segnaPassaggio(hash) {
+  if (!hash) return;
+  if (nav.pila[nav.pila.length - 1] === hash) return;
+  nav.pila.push(hash);
+  while (nav.pila.length > MAX_PILA) nav.pila.shift();
 }
 
 function rimettiPosizione(y, turno) {
@@ -136,26 +173,34 @@ function rimettiPosizione(y, turno) {
 }
 
 /* Il tasto «Indietro» torna DA DOVE SEI VENUTO, non a una schermata decisa in
-   partenza: aprendo una camminata dalla Home, «Indietro» riportava all'elenco
-   degli allenamenti, cioè in un posto in cui non eri mai stato. Si usa la
-   storia del browser; se non c'è (app aperta direttamente su quella pagina)
-   resta la rotta di ripiego. */
-let profondita = 0;
+   partenza: aprendo una camminata dalla Home riportava all'elenco degli
+   allenamenti, cioè in un posto in cui non eri mai stato.
+
+   Non usa `history.back()`: la storia del browser si azzera a ogni ricarica —
+   e l'app si ricarica da sola quando arriva una versione nuova — mentre la
+   pila qui sopra sopravvive. La rotta di ripiego serve solo se la pila è
+   vuota davvero, cioè se quella schermata è la prima che hai aperto. */
 let tornandoIndietro = false;
 
 export function indietro(rottaDiRipiego = "oggi") {
-  if (profondita > 0) {
-    tornandoIndietro = true;
-    history.back();
+  tornandoIndietro = true;
+  let meta = null;
+  while (nav.pila.length) {
+    const passo = nav.pila.pop();
+    if (passo && passo !== location.hash) {
+      meta = passo;
+      break;
+    }
+  }
+  salvaNav();
+  const destinazione = meta || `#/${rottaDiRipiego}`;
+  if (destinazione === location.hash) {
+    tornandoIndietro = false;
     return;
   }
-  location.hash = `#/${rottaDiRipiego}`;
+  location.hash = destinazione;
 }
 
-/**
- * Riporta la pagina in cima. Prova con l'animazione e poi si assicura del
- * risultato: dove lo scorrimento animato non è disponibile resterebbe a metà.
- */
 /**
  * L'ombra sotto la testata quando il contenuto scorre.
  *
@@ -174,6 +219,7 @@ function scorritore() {
   return qs("#view") || document.scrollingElement || document.documentElement;
 }
 
+/** Riporta la pagina in cima, con l'animazione dove il browser la fa. */
 export function inCima() {
   const v = scorritore();
   try {
@@ -209,7 +255,15 @@ export async function ridisegna() {
   // dalla seconda il file era già in memoria e il disegno arrivava in fondo.
   //
   // Qui il DOM è ancora quello vecchio e il suo scorrimento è quello vero.
-  if (cambioSchermata && hashPrecedente) segnaPosizione(hashPrecedente, scorritore().scrollTop);
+  if (cambioSchermata && hashPrecedente) {
+    segnaPosizione(hashPrecedente, scorritore().scrollTop);
+    // Tornando indietro non si segna il passaggio, se no si rimbalza fra due
+    // schermate: si esce da A verso B, e da B «Indietro» riporterebbe ad A che
+    // però è appena stata rimessa nella pila.
+    if (!tornandoIndietro) segnaPassaggio(hashPrecedente);
+    salvaNav();
+  }
+  tornandoIndietro = false;
   if (hashDisegnato !== null && cambioSchermata) chiudiFogli();
   hashDisegnato = location.hash;
   if (nome === "fumo" && store.regole().salute?.contaSigarette === false) {
@@ -232,7 +286,19 @@ export async function ridisegna() {
   // fallisce, si finisce sulla schermata «questa sezione non si è caricata» e
   // la riga qui sotto non viene mai raggiunta: l'aggiornamento non entra più e
   // «Riprova» rifà lo stesso errore, per sempre.
-  if (aggiornamentoInAttesa && nome !== "seduta" && !stoScrivendo()) {
+  //
+  // E non nel mezzo di un tocco su un dettaglio: l'aggiornamento arriva
+  // quando arriva, ma ricaricare proprio mentre apri una camminata del Watch
+  // vuol dire farti aspettare due secondi con lo schermo bianco al posto della
+  // schermata che hai chiesto. Un indirizzo con un «?» dentro è un dettaglio:
+  // si aspetta la prossima navigazione a una schermata intera, che arriva
+  // sempre poco dopo.
+  if (
+    aggiornamentoInAttesa &&
+    nome !== "seduta" &&
+    !location.hash.includes("?") &&
+    !stoScrivendo()
+  ) {
     aggiornamentoInAttesa = false;
     location.reload();
     return;
@@ -331,7 +397,7 @@ export async function ridisegna() {
   view.append(nodo);
   // Ridisegnare la stessa schermata (freccia del mese, selettore del periodo)
   // non è una navigazione: la pagina deve restare dov'era.
-  if (cambioSchermata) rimettiPosizione(posizioni.get(location.hash) || 0, mioTurno);
+  if (cambioSchermata) rimettiPosizione(nav.pos[location.hash] || 0, mioTurno);
   else scorritore().scrollTop = posizione;
   aggiornaOmbraTestata();
 
@@ -486,15 +552,7 @@ async function avvia() {
     toast(`Qualcosa non ha funzionato: ${messaggio}`, 5000);
   });
 
-  window.addEventListener("hashchange", () => {
-    if (tornandoIndietro) {
-      tornandoIndietro = false;
-      profondita = Math.max(0, profondita - 1);
-    } else {
-      profondita++;
-    }
-    ridisegna();
-  });
+  window.addEventListener("hashchange", ridisegna);
 
   // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta
   // ieri finché non si ricarica, e la Home propone l'allenamento sbagliato.
