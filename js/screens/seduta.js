@@ -1007,7 +1007,7 @@ async function menuSeduta() {
       ...(fase !== "stretching" && passiStretching().length
         ? [{ etichetta: "Vai allo stretching", valore: "stretching" }]
         : []),
-      { etichetta: "Metti in pausa ed esci", valore: "pausa" },
+      { etichetta: "Metti in pausa", valore: "pausa" },
       ...(fase !== "fine" ? [{ etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" }] : []),
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
     ],

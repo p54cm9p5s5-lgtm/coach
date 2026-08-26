@@ -394,7 +394,7 @@ stretching, al polso c'è già dell'altro.
 ### Mettere in pausa
 
 Un allenamento **non va chiuso per forza tutto d'un fiato**. In alto a sinistra
-c'è **«Pausa»** (nel menu «•••» c'è la stessa voce): l'allenamento resta aperto
+c'è **«Pausa»** (nel menu «•••» c'è la stessa voce, «Metti in pausa»): l'allenamento resta aperto
 esattamente dov'era — la fase, l'esercizio, la serie — e si torna alla Home, dove
 l'app si usa normalmente. Guardare Salute o segnare una sigaretta mentre aspetti
 il tapis non costa l'allenamento.
