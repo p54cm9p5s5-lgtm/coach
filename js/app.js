@@ -164,6 +164,21 @@ export async function ridisegna() {
   // che l'ha aperto.
   const cambioSchermata = hashDisegnato === null || hashDisegnato !== location.hash;
   const hashPrecedente = hashDisegnato;
+  // La posizione della schermata che sta per sparire si segna ADESSO, prima di
+  // qualunque attesa.
+  //
+  // Segnarla in fondo, appena prima di sostituire il contenuto, sembrava più
+  // naturale e invece perdeva un caso preciso: la primissima volta che si apre
+  // una schermata il suo file va caricato, e in quel mezzo secondo può partire
+  // un secondo disegno. Il primo — quello che avrebbe segnato la posizione —
+  // si ferma al controllo del sorpasso senza arrivare in fondo, e il secondo
+  // non vede più nessun cambio di schermata, quindi non segna niente. Risultato
+  // visto davvero: dalla Home si apriva un allenamento del Watch, si tornava
+  // indietro e la Home ripartiva da cima — ma **solo la prima volta**, perché
+  // dalla seconda il file era già in memoria e il disegno arrivava in fondo.
+  //
+  // Qui il DOM è ancora quello vecchio e il suo scorrimento è quello vero.
+  if (cambioSchermata && hashPrecedente) segnaPosizione(hashPrecedente, scorritore().scrollTop);
   if (hashDisegnato !== null && cambioSchermata) chiudiFogli();
   hashDisegnato = location.hash;
   if (nome === "fumo" && store.regole().salute?.contaSigarette === false) {
@@ -281,9 +296,6 @@ export async function ridisegna() {
   }
 
   const posizione = scorritore().scrollTop;
-  // Prima di sostituire il contenuto si segna dove si era arrivati su quello
-  // che sta per sparire.
-  if (cambioSchermata) segnaPosizione(hashPrecedente, posizione);
   clear(view);
   view.append(nodo);
   // Ridisegnare la stessa schermata (freccia del mese, selettore del periodo)
