@@ -11,7 +11,7 @@
    settimana, il dettaglio di un allenamento con la curva del battito. */
 
 import { h, aggiungi, dataBreve, durataUmana, num, toast, chiedi, sheet, unaVoltaSola } from "../ui.js";
-import { intestazione } from "../app.js";
+import { intestazione, indietro } from "../app.js";
 import * as store from "../store.js";
 import { graficoBattito } from "../grafico.js";
 
@@ -631,12 +631,12 @@ async function dettaglio(uuid, { ridisegna }) {
   const wrap = h("div.screen");
   const a = (await store.allenamentiWatch()).find((x) => x.uuid === uuid);
   if (!a) {
-    aggiungi(wrap, intestazione("Allenamento", { etichetta: "Indietro", onclick: () => (location.hash = "#/allenamenti") }));
+    aggiungi(wrap, intestazione("Allenamento", { etichetta: "Indietro", onclick: () => indietro("allenamenti") }));
     aggiungi(wrap, h("div.empty", h("h3", "Allenamento non trovato")));
     return wrap;
   }
   aggiungi(wrap,
-    intestazione(dataBreve(a.data), { etichetta: "Indietro", onclick: () => (location.hash = "#/allenamenti") })
+    intestazione(dataBreve(a.data), { etichetta: "Indietro", onclick: () => indietro("allenamenti") })
   );
 
   const nota = await store.notaAllenamento(uuid);

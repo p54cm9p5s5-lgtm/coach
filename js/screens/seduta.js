@@ -2,7 +2,7 @@ import {
   h, qs, clear, toast, mmss, num, chiedi, sheet,
   avviaAllarme, fermaAllarme, allarmeAttivo, sbloccaAudio, unaVoltaSola, tick,
   tieniSchermoAcceso, rilasciaSchermo, durataUmana, isoDate, dataLunga, dataBreve, aggiungi } from "../ui.js";
-import { intestazione, ridisegna } from "../app.js";
+import { intestazione, ridisegna, indietro } from "../app.js";
 import * as store from "../store.js";
 import { descriviDischi, carichoPiuVicino, descriviManubri, manubrioPiuVicino, aPaio, conosceManubri } from "../plates.js";
 import { punteggioEsercizio, anello, scomposizione, legenda as legendaPunteggio, commento, giudizio } from "../punteggio.js";
@@ -294,7 +294,7 @@ async function vistaRisultato(id, vaiA, da = null) {
   aggiungi(wrap, 
     intestazione("Risultato", 
       daStorico
-        ? { etichetta: "Indietro", onclick: () => (location.hash = "#/storico") }
+        ? { etichetta: "Indietro", onclick: () => indietro("storico") }
         : { etichetta: "Programma", onclick: () => vaiAlProgramma() }
     )
   );

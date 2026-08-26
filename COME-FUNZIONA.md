@@ -391,6 +391,21 @@ battito, sforzo). Erano facoltativi e finivano nel pacchetto. Stavano lì perch�
 in quel momento il riepilogo era ancora quello sul quadrante: chiesti dopo lo
 stretching, al polso c'è già dell'altro.
 
+### Tornare indietro dove eri
+
+Toccare una riga e tornare **rimette la pagina dov'era**, non in cima. Dalla Home
+si apre una camminata del Watch, si guarda, si torna: la Home riappare alla
+stessa altezza, con la camminata sotto il dito. Vale per tutte le schermate e
+anche fra una scheda e l'altra — Salute lasciata a metà si ritrova a metà.
+
+E **«Indietro» torna da dove sei venuto**, non a una schermata decisa in
+partenza: aprendo un allenamento dalla Home riportava all'elenco degli
+allenamenti, cioè in un posto in cui non eri mai stato.
+
+La posizione si rimette un paio di volte nei primi decimi di secondo: grafici e
+miniature cambiano altezza subito dopo il disegno, e una posizione messa troppo
+presto verrebbe tagliata dal contenuto che ancora non c'è.
+
 ### Mettere in pausa
 
 Un allenamento **non va chiuso per forza tutto d'un fiato**. In alto a sinistra

@@ -69,6 +69,58 @@ function stoScrivendo() {
 
 let hashDisegnato = null;
 
+/* Dove eri arrivato, schermata per schermata.
+
+   Toccare una riga e tornare indietro riportava sempre in cima: dalla Home si
+   apriva una camminata del Watch e, tornando, bisognava riscorrere mezza
+   pagina per ritrovare il punto. La posizione si segna quando si esce da una
+   schermata e si rimette quando ci si torna — la chiave è l'indirizzo intero,
+   così l'elenco degli allenamenti e il dettaglio di uno hanno due posizioni
+   diverse.
+
+   Il ripristino va rifatto un paio di volte dopo il primo disegno: grafici,
+   miniature e liste lunghe cambiano altezza subito dopo, e una posizione messa
+   troppo presto verrebbe tagliata dal contenuto che non c'è ancora. */
+const posizioni = new Map();
+const MAX_POSIZIONI = 60;
+
+function segnaPosizione(hash, y) {
+  if (!hash) return;
+  if (posizioni.size >= MAX_POSIZIONI) posizioni.delete(posizioni.keys().next().value);
+  posizioni.delete(hash);
+  posizioni.set(hash, y);
+}
+
+function rimettiPosizione(y, turno) {
+  const v = scorritore();
+  const metti = () => {
+    if (turno !== turnoCorrente) return;
+    v.scrollTop = y;
+    aggiornaOmbraTestata();
+  };
+  metti();
+  requestAnimationFrame(metti);
+  setTimeout(metti, 60);
+  setTimeout(metti, 260);
+}
+
+/* Il tasto «Indietro» torna DA DOVE SEI VENUTO, non a una schermata decisa in
+   partenza: aprendo una camminata dalla Home, «Indietro» riportava all'elenco
+   degli allenamenti, cioè in un posto in cui non eri mai stato. Si usa la
+   storia del browser; se non c'è (app aperta direttamente su quella pagina)
+   resta la rotta di ripiego. */
+let profondita = 0;
+let tornandoIndietro = false;
+
+export function indietro(rottaDiRipiego = "oggi") {
+  if (profondita > 0) {
+    tornandoIndietro = true;
+    history.back();
+    return;
+  }
+  location.hash = `#/${rottaDiRipiego}`;
+}
+
 /**
  * Riporta la pagina in cima. Prova con l'animazione e poi si assicura del
  * risultato: dove lo scorrimento animato non è disponibile resterebbe a metà.
@@ -111,6 +163,7 @@ export async function ridisegna() {
   // Cambio di schermata: un pannello aperto non deve sopravvivere alla pagina
   // che l'ha aperto.
   const cambioSchermata = hashDisegnato === null || hashDisegnato !== location.hash;
+  const hashPrecedente = hashDisegnato;
   if (hashDisegnato !== null && cambioSchermata) chiudiFogli();
   hashDisegnato = location.hash;
   if (nome === "fumo" && store.regole().salute?.contaSigarette === false) {
@@ -228,11 +281,14 @@ export async function ridisegna() {
   }
 
   const posizione = scorritore().scrollTop;
+  // Prima di sostituire il contenuto si segna dove si era arrivati su quello
+  // che sta per sparire.
+  if (cambioSchermata) segnaPosizione(hashPrecedente, posizione);
   clear(view);
   view.append(nodo);
   // Ridisegnare la stessa schermata (freccia del mese, selettore del periodo)
   // non è una navigazione: la pagina deve restare dov'era.
-  if (cambioSchermata) scorritore().scrollTop = 0;
+  if (cambioSchermata) rimettiPosizione(posizioni.get(location.hash) || 0, mioTurno);
   else scorritore().scrollTop = posizione;
   aggiornaOmbraTestata();
 
@@ -387,7 +443,15 @@ async function avvia() {
     toast(`Qualcosa non ha funzionato: ${messaggio}`, 5000);
   });
 
-  window.addEventListener("hashchange", ridisegna);
+  window.addEventListener("hashchange", () => {
+    if (tornandoIndietro) {
+      tornandoIndietro = false;
+      profondita = Math.max(0, profondita - 1);
+    } else {
+      profondita++;
+    }
+    ridisegna();
+  });
 
   // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta
   // ieri finché non si ricarica, e la Home propone l'allenamento sbagliato.

@@ -1,5 +1,5 @@
 import { h, dataBreve, dataLunga, durataUmana, mmss, num, oraDi, aggiungi, chiedi, toast } from "../ui.js";
-import { intestazione } from "../app.js";
+import { intestazione, indietro } from "../app.js";
 import * as store from "../store.js";
 
 function parametri() {
@@ -272,7 +272,7 @@ async function elenco(vaiA) {
 async function dettaglioEsercizio(id) {
   const wrap = h("div.screen");
   const def = store.esercizio(id);
-  aggiungi(wrap, intestazione(def?.nome || id, { etichetta: "Indietro", onclick: () => (location.hash = "#/storico") }));
+  aggiungi(wrap, intestazione(def?.nome || id, { etichetta: "Indietro", onclick: () => indietro("storico") }));
 
   const esp = await store.esposizioni(id);
   if (!esp.length) {

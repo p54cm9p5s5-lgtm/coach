@@ -1,5 +1,5 @@
 import { h, aggiungi, dataBreve, dataLunga, num, toast, chiedi, sheet , isoDate } from "../ui.js";
-import { intestazione } from "../app.js";
+import { intestazione, indietro as tornaIndietro } from "../app.js";
 import { nomeLivello } from "../segnali.js";
 import * as store from "../store.js";
 
@@ -8,7 +8,7 @@ function parametri() {
   return Object.fromEntries(new URLSearchParams(q));
 }
 
-const indietro = () => (location.hash = "#/proposte");
+const indietro = () => tornaIndietro("proposte");
 
 export async function render({ vaiA, ridisegna }) {
   const p = parametri();
