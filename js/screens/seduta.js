@@ -290,11 +290,14 @@ async function vistaProgramma(vaiA, ridisegna) {
 async function vistaRisultato(id, vaiA, da = null) {
   const wrap = h("div.screen");
   const sed = await store.seduta(id);
-  const daStorico = da === "storico";
+  // `da` dice da dove sei arrivato: dallo Storico o dall'archivio di un tipo di
+  // allenamento dentro Salute. In tutti e due i casi «Indietro» ci riporta;
+  // arrivandoci a fine seduta, invece, il tasto porta al programma di oggi.
+  const daAltrove = da === "storico" || da === "salute";
   aggiungi(wrap, 
     intestazione("Risultato", 
-      daStorico
-        ? { etichetta: "Indietro", onclick: () => indietro("storico") }
+      daAltrove
+        ? { etichetta: "Indietro", onclick: () => indietro(da) }
         : { etichetta: "Programma", onclick: () => vaiAlProgramma() }
     )
   );
@@ -628,8 +631,12 @@ async function vistaRisultato(id, vaiA, da = null) {
       "div.btn-wrap",
       h("button.btn", { onclick: () => vaiA("export") }, "Claude"),
       h("div", { style: "height:8px" }),
-      daStorico
-        ? h("button.btn.secondary", { onclick: () => (location.hash = "#/storico") }, "Torna allo storico")
+      daAltrove
+        ? h(
+            "button.btn.secondary",
+            { onclick: () => indietro(da) },
+            da === "salute" ? "Torna all'elenco" : "Torna allo storico"
+          )
         : h("button.btn.secondary", { onclick: () => vaiAlProgramma() }, "Programma del giorno"),
       h("div", { style: "height:8px" }),
       h("button.btn.secondary", { onclick: () => (location.hash = "#/oggi") }, "Torna alla Home")
@@ -639,7 +646,7 @@ async function vistaRisultato(id, vaiA, da = null) {
       { style: "margin-top:26px" },
       h(
         "button.btn.secondary",
-        { style: "color:var(--red)", onclick: () => eliminaAllenamento(sed, daStorico) },
+        { style: "color:var(--red)", onclick: () => eliminaAllenamento(sed, daAltrove) },
         "Elimina questo allenamento"
       ),
       h(
@@ -659,7 +666,7 @@ function vaiAlProgramma() {
 }
 
 /** Serve per le prove: toglie un allenamento finto senza lasciare tracce nei numeri. */
-async function eliminaAllenamento(sed, daStorico = false) {
+async function eliminaAllenamento(sed, daAltrove = false) {
   const conferma = await chiedi({
     titolo: "Eliminare l'allenamento?",
     testo: `${sed.tipoNome} del ${dataLunga(sed.data)}. Spariscono anche le serie e i questionari, e le proposte vengono ricalcolate senza di esso.`,
@@ -669,11 +676,11 @@ async function eliminaAllenamento(sed, daStorico = false) {
   await store.annullaSeduta(sed.id);
   await store.aggiornaMotore();
   toast("Allenamento eliminato.");
-  // Si torna dove si stava guardando. Chi arriva dallo Storico stava sfogliando
-  // l'elenco: buttarlo sul programma di oggi gli fa perdere il posto, e il
-  // tasto «Indietro» di questa stessa scheda rispetta già la provenienza.
-  if (daStorico) {
-    location.hash = "#/storico";
+  // Si torna dove si stava guardando. Chi arriva da un elenco — lo Storico, o
+  // l'archivio di un tipo di allenamento dentro Salute — stava sfogliando:
+  // buttarlo sul programma di oggi gli fa perdere il posto.
+  if (daAltrove) {
+    indietro("storico");
     return;
   }
   // L'hash può essere già «#/seduta»: in quel caso il router non riparte da

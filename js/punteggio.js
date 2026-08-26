@@ -808,8 +808,13 @@ export function scomposizione(risultato) {
     );
   };
 
-  const lista = h("div.list", ...risultato.voci.map((v) => riga(v.nome, v.quota, v.dettaglio)));
-  for (const p of risultato.penalita) {
+  // I punteggi in archivio sono congelati alla chiusura, e quelli vecchi
+  // possono non avere tutti i campi che il formato ha oggi. Aprendone uno
+  // dall'archivio di un tipo di allenamento, un campo mancante faceva morire
+  // la schermata intera con «penalita is not iterable». Qui si legge quello
+  // che c'è.
+  const lista = h("div.list", ...(risultato.voci || []).map((v) => riga(v.nome, v.quota, v.dettaglio)));
+  for (const p of risultato.penalita || []) {
     lista.append(
       h(
         "div.row",
@@ -844,13 +849,13 @@ export function commento(risultato, nomeEsercizio) {
   if (risultato.limite) {
     return `Il punteggio è fermo a ${risultato.totale}: ${risultato.limite.perche}. Finché resta così, il resto non lo alza.`;
   }
-  if (risultato.penalita.length) {
+  if ((risultato.penalita || []).length) {
     const dove = risultato.penalita
       .map((p) => String(p.nome).replace(/^Dolore:\s*/i, "").replace(/^Dolore al\s*/i, ""))
       .join(" e ");
     return `Il dolore (${dove}) pesa più di ogni altra cosa: finché c'è, ${nomeEsercizio.toLowerCase()} non va caricato.`;
   }
-  const validi = risultato.voci.filter((v) => v.quota != null);
+  const validi = (risultato.voci || []).filter((v) => v.quota != null);
   const peggiore = [...validi].sort((a, b) => a.quota - b.quota)[0];
   // «Nessun criterio resta indietro» va detto solo se è vero: con 92 di media
   // e il recupero al 40% c'era eccome un criterio indietro.

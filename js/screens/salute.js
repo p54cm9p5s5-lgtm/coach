@@ -1,5 +1,5 @@
 import { h, sheet, chiedi, num, dataBreve, dataLunga, isoDate, durataUmana, giorniTra, aggiungi, toast } from "../ui.js";
-import { intestazione } from "../app.js";
+import { intestazione, indietro } from "../app.js";
 import * as store from "../store.js";
 import { analizza } from "../salute.js";
 import { graficoLinea, schedaGrafico, tastoSpiegazione, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
@@ -96,7 +96,142 @@ async function schedaSigarette({ conPeriodo, oggiIso }) {
   );
 }
 
-export async function render({ ridisegna }) {
+function parametri() {
+  const q = location.hash.split("?")[1] || "";
+  return Object.fromEntries(new URLSearchParams(q));
+}
+
+export async function render(ctx) {
+  const p = parametri();
+  if (p.tipo) return elencoDelTipo(p.tipo);
+  return schermataSalute(ctx);
+}
+
+/**
+ * L'archivio di un tipo di allenamento.
+ *
+ * Dalla scheda «Completezza» si tocca «Pull · media di 2 allenamenti · 94» e si
+ * arriva qui: i due allenamenti che fanno quel 94, con la loro data e il loro
+ * punteggio congelato. Da ognuno si entra nel dettaglio vero.
+ *
+ * Il periodo è **lo stesso** scelto su Salute: se lì stai guardando «7 gg», qui
+ * ci sono i Pull di quei sette giorni. Non è una scelta grafica — è l'unico
+ * modo perché la media di sopra e l'elenco di sotto raccontino la stessa cosa.
+ */
+function oraLeggibile(quando) {
+  if (quando == null) return null;
+  const d = new Date(quando);
+  if (Number.isNaN(d.getTime())) return null;
+  return `finito alle ${d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+async function elencoDelTipo(chiave) {
+  const wrap = h("div.screen");
+  const oggiIso = isoDate();
+  const periodo = periodoSalvato();
+  const da = inizioPeriodo(periodo, oggiIso);
+  const dentro = (r) => !da || (r.data >= da && r.data <= oggiIso);
+
+  const tutte = (await store.allenamenti()).filter((x) => x.stato === "completata");
+  const suoi = tutte
+    .filter((x) => (x.tipoId || x.tipoNome) === chiave)
+    .filter(dentro)
+    .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : (b.oraFine || "").localeCompare(a.oraFine || "")));
+
+  const nome = suoi[0]?.tipoNome || tutte.find((x) => (x.tipoId || x.tipoNome) === chiave)?.tipoNome || chiave;
+  aggiungi(wrap, intestazione(nome, { etichetta: "Indietro", onclick: () => indietro("salute") }));
+
+  const voci = [];
+  for (const sed of suoi) {
+    const comp = await store.completezzaSeduta(sed.id);
+    voci.push({ sed, totale: comp?.totale ?? null });
+  }
+  const conPunteggio = voci.filter((v) => v.totale != null).map((v) => v.totale);
+  const media = conPunteggio.length
+    ? Math.round(conPunteggio.reduce((a, b) => a + b, 0) / conPunteggio.length)
+    : null;
+
+  if (!suoi.length) {
+    aggiungi(wrap,
+      h(
+        "div.empty",
+        h("h3", `Nessun ${nome} in questo periodo`),
+        h("p", `Il periodo scelto su Salute è «${etichettaPeriodo(periodo)}». Cambialo per vedere più indietro.`)
+      )
+    );
+    return wrap;
+  }
+
+  aggiungi(wrap,
+    h(
+      "div",
+      { style: "padding:6px var(--pad) 0" },
+      h(
+        "p",
+        {
+          style:
+            "margin:0;font-size:56px;font-weight:700;letter-spacing:-0.055em;line-height:.9;" +
+            "font-variant-numeric:tabular-nums lining-nums",
+        },
+        media != null ? String(media) : "—"
+      ),
+      h(
+        "p",
+        { style: "margin:8px 0 0;font-size:12.5px;line-height:1.35;color:var(--label-tertiary)" },
+        `${media != null ? `${giudizio(media).testo} · ` : ""}${suoi.length} ${suoi.length === 1 ? "allenamento" : "allenamenti"} · ${etichettaPeriodo(periodo)}`
+      )
+    ),
+    h(
+      "div.group",
+      h("h2", "Uno per uno"),
+      h(
+        "div.list",
+        ...voci.map((v) =>
+          h(
+            "a.row",
+            { href: `#/seduta?riepilogo=${encodeURIComponent(v.sed.id)}&da=salute` },
+            h(
+              "div.main",
+              h("span.title", dataLunga(v.sed.data)),
+              h(
+                "span.sub",
+                [
+                  // `oraFine` è un istante in millesimi. Sugli allenamenti
+                  // vecchi può mancare o essere scritto in un altro modo: se
+                  // non se ne ricava un orario vero non si scrive niente,
+                  // invece di stampare «Invalid Date».
+                  oraLeggibile(v.sed.oraFine),
+                  v.totale != null ? giudizio(v.totale).testo : "senza punteggio",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              )
+            ),
+            v.totale != null
+              ? h(
+                  "span.pill",
+                  {
+                    style:
+                      "font-variant-numeric:tabular-nums lining-nums;font-size:15px;font-weight:700;background:none;" +
+                      `color:${coloreDaPunteggio(v.totale)};border-color:${v.totale >= 90 ? "var(--label)" : "var(--separator)"}`,
+                  },
+                  String(v.totale)
+                )
+              : null,
+            h("span.chevron", "›")
+          )
+        )
+      ),
+      h(
+        "p.footnote",
+        "Il punteggio di ogni allenamento è quello congelato alla chiusura: non cambia più, nemmeno se il programma cambia. Toccane uno per vedere esercizi, serie, recuperi e cardio."
+      )
+    )
+  );
+  return wrap;
+}
+
+async function schermataSalute({ ridisegna }) {
   const wrap = h("div.screen");
   const oggiIso = isoDate();
   aggiungi(wrap, intestazione("Salute", { etichetta: "Aggiorna", onclick: () => aggiorna(ridisegna) }));
@@ -282,11 +417,12 @@ export async function render({ ridisegna }) {
         continue;
       }
       const chiave = v.sed.tipoId || v.sed.tipoNome;
-      if (!gruppi.has(chiave)) gruppi.set(chiave, { nome: v.sed.tipoNome, totali: [] });
+      if (!gruppi.has(chiave)) gruppi.set(chiave, { chiave, nome: v.sed.tipoNome, totali: [] });
       gruppi.get(chiave).totali.push(v.totale);
     }
     const perTipo = [...gruppi.values()]
       .map((g) => ({
+        chiave: g.chiave,
         nome: g.nome,
         quanti: g.totali.length,
         media: Math.round(g.totali.reduce((a, b) => a + b, 0) / g.totali.length),
@@ -355,15 +491,23 @@ export async function render({ ridisegna }) {
           h(
             "div.list",
             { style: "margin-top:16px;background:none" },
+            // Ogni riga si apre: dentro c'è l'elenco di quegli allenamenti,
+            // uno per uno, nello stesso periodo scelto qui sopra. La media da
+            // sola dice che Pull sta a 94; da lì si vuole sapere quali sono i
+            // 94, e quando.
             ...perTipo.map((t) =>
               h(
-                "div.row",
+                "button.row",
+                {
+                  onclick: () => (location.hash = `#/salute?tipo=${encodeURIComponent(t.chiave)}`),
+                },
                 h(
                   "div.main",
                   h("span.title", t.nome),
                   h("span.sub", `media di ${t.quanti} ${t.quanti === 1 ? "allenamento" : "allenamenti"}`)
                 ),
-                pillola(t.media)
+                pillola(t.media),
+                h("span.chevron", "›")
               )
             )
           )

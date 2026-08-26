@@ -391,6 +391,24 @@ battito, sforzo). Erano facoltativi e finivano nel pacchetto. Stavano lì perch�
 in quel momento il riepilogo era ancora quello sul quadrante: chiesti dopo lo
 stretching, al polso c'è già dell'altro.
 
+### L'archivio di un tipo di allenamento
+
+Nella scheda «Completezza degli allenamenti» ogni riga si apre. Toccando
+«Pull · media di 2 allenamenti · 94» compare l'elenco di **quei** due
+allenamenti, uno per uno, con la data e il punteggio congelato di ciascuno; da
+lì si entra nel dettaglio vero — esercizi, serie, recuperi, cardio.
+
+Il periodo è **lo stesso** scelto in cima a Salute: su «7 gg» ci sono i Pull di
+quei sette giorni, su «Sempre» tutti. Non è una scelta grafica: è l'unico modo
+perché la media di sopra e l'elenco di sotto raccontino la stessa cosa.
+
+### Due tocchi non ingrandiscono più
+
+Su iPhone il doppio tocco ingrandisce la pagina, e con le mani sudate capita da
+solo: due tocchi vicini su un tasto e lo schermo resta piantato ingrandito su un
+angolo. Adesso il doppio tocco non fa niente. **L'ingrandimento con due dita
+resta**: è una funzione di accessibilità e non si tocca.
+
 ### Tornare indietro dove eri
 
 Toccare una riga e tornare **rimette la pagina dov'era**, non in cima. Dalla Home

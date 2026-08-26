@@ -91,6 +91,24 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Due tocchi non ingrandiscono più niente.
+
+   Su iPhone il doppio tocco ingrandisce la pagina, e in un'app che si usa con
+   le mani sudate capita da solo: due tocchi vicini su un tasto, e lo schermo
+   si pianta ingrandito su un angolo. Uscirne non è ovvio, e nel frattempo
+   l'app è inservibile.
+
+   `manipulation` toglie SOLO il doppio tocco: scorrere resta, e resta anche
+   l'ingrandimento con due dita — quello è una funzione di accessibilità e non
+   si tocca. (Il vecchio `user-scalable=no` nel meta viewport fa la cosa
+   sbagliata, toglie anche quello, ed è comunque ignorato da iOS da anni.) */
+html,
+body,
+#app,
+#view {
+  touch-action: manipulation;
+}
+
 html {
   height: 100%;
 }
