@@ -20,6 +20,8 @@ import {
   combinazioneManubrio, carichiManubrio,
 } from "../js/plates.js";
 import { isoDate, parseIso, weekdayOf, dataLunga, dataBreve, giorniTra, durataUmana, mmss, num, oraDi } from "../js/ui.js";
+import { punteggioEsercizio, punteggioAllenamento } from "../js/punteggio.js";
+import * as store from "../js/store.js";
 
 const arrotonda = (n) => Math.round(n * 100) / 100;
 
@@ -255,7 +257,9 @@ export function verificaNumeri() {
 /* ------------------------------------------------------------------ tutto */
 
 export async function tutto() {
-  const prove = [verificaDischi(), verificaManubri(), verificaDate(), verificaDateImpossibili(), verificaDurate(), verificaNumeri()];
+  const regole = await store.regole();
+  const prove = [verificaDischi(), verificaManubri(), verificaDate(), verificaDateImpossibili(), verificaDurate(), verificaNumeri(),
+                 verificaInvariantiEsercizio(regole), verificaInvariantiAllenamento(regole)];
   const casiTotali = prove.reduce((a, p) => a + (parseInt(p.casi, 10) || 0), 0);
   const erroriTotali = prove.reduce((a, p) => a + p.errori, 0);
   return {
@@ -266,4 +270,98 @@ export async function tutto() {
     verdetto: erroriTotali === 0 ? "NESSUN DIFETTO su tutti i casi possibili" : `${erroriTotali} difetti`,
     nota: "Vale solo per il nucleo deterministico. iOS, il telefono, i dati che arrivano da fuori e il momento in cui gira restano fuori: quelli si provano, non si dimostrano.",
   };
+}
+
+/* --------------------------------------------------------------- punteggi */
+
+
+/**
+ * Gli invarianti del punteggio: le regole che devono valere SEMPRE, qualunque
+ * siano gli ingressi.
+ *
+ * Non si controlla che un caso dia il numero atteso — quello è già coperto
+ * dalla base di riferimento. Si controlla che certe cose non possano succedere
+ * mai: un totale fuori dalla scala, un valore non numerico, un dolore che alza
+ * il voto, un esercizio saltato che migliora la seduta. Sono gli errori che non
+ * rompono niente e non si vedono: producono solo un numero sbagliato che sembra
+ * giusto.
+ */
+export function verificaInvariantiEsercizio(regole) {
+  const errori = [];
+  let casi = 0;
+  const serieDa = (n, rip, carico) =>
+    Array.from({ length: n }, () => ({ ripFatte: rip, ripTarget: 10, carico, recuperoRealeSec: 90, recuperoTargetSec: 90 }));
+  const variante = { esercizioId: "panca-piana", serie: 3, ripMin: 8, ripMax: 10, carico: 30, recuperoSec: 90 };
+
+  const valuta = (o) => punteggioEsercizio({ variante, serie: serieDa(3, 10, 30), rpe: 7, tecnica: 8, dolori: [], dolorePolso: false, regole, ...o });
+
+  for (let rip = 0; rip <= 20; rip++) {
+    for (let carico = 0; carico <= 60; carico += 5) {
+      for (let rpe = 1; rpe <= 10; rpe++) {
+        for (let tec = 1; tec <= 10; tec++) {
+          casi++;
+          const base = { serie: serieDa(3, rip, carico), rpe, tecnica: tec };
+          const r = valuta(base);
+          // 1. il totale sta nella scala e non è mai un non-numero
+          if (!Number.isFinite(r.totale)) { errori.push(`rip ${rip} carico ${carico} rpe ${rpe} tec ${tec}: totale ${r.totale}`); continue; }
+          if (r.totale < 0 || r.totale > 100) errori.push(`rip ${rip} carico ${carico} rpe ${rpe} tec ${tec}: totale ${r.totale} fuori scala`);
+          // 2. ogni voce ha peso positivo e quota nulla o fra 0 e 1
+          for (const v of r.voci || []) {
+            if (!(v.peso > 0)) errori.push(`${v.nome}: peso ${v.peso}`);
+            if (v.quota !== null && !(v.quota >= 0 && v.quota <= 1)) errori.push(`${v.nome}: quota ${v.quota}`);
+          }
+          // 3. un dolore non può MAI alzare il voto
+          const conDolore = valuta({ ...base, dolori: [{ id: "polso", nome: "polso destro", quando: "durante", intensita: "medio" }] });
+          if (Number.isFinite(conDolore.totale) && conDolore.totale > r.totale)
+            errori.push(`rip ${rip} rpe ${rpe} tec ${tec}: col dolore ${conDolore.totale} > senza ${r.totale}`);
+          // 4. una tecnica migliore non può MAI abbassare il voto
+          if (tec < 10) {
+            const meglio = valuta({ ...base, tecnica: tec + 1 });
+            if (Number.isFinite(meglio.totale) && meglio.totale < r.totale)
+              errori.push(`rip ${rip} carico ${carico} rpe ${rpe}: tecnica ${tec + 1} dà ${meglio.totale} < tecnica ${tec} che dà ${r.totale}`);
+          }
+        }
+      }
+    }
+  }
+  return esito("invarianti del punteggio di un esercizio", `${casi} combinazioni`, errori);
+}
+
+export function verificaInvariantiAllenamento(regole) {
+  const errori = [];
+  let casi = 0;
+  const cardio = { previsto: true, eseguito: true, durataMin: 30, durataPrevistaMin: 30, kmh: 4.5 };
+  const chiama = (o) => punteggioAllenamento({
+    previsti: 5, punteggi: [90, 90, 90, 90, 90], saltati: 0, cardio,
+    riscaldamento: { fatto: true }, stretching: { fatto: true }, mobilita: { fatto: true }, regole, ...o,
+  });
+
+  for (let previsti = 0; previsti <= 8; previsti++) {
+    for (let fatti = 0; fatti <= previsti; fatti++) {
+      for (let saltati = 0; saltati <= previsti - fatti; saltati++) {
+        for (const voto of [0, 40, 70, 100]) {
+          casi++;
+          const punteggi = Array.from({ length: fatti }, () => voto);
+          const r = chiama({ previsti, punteggi, saltati });
+          if (!Number.isFinite(r.totale)) { errori.push(`previsti ${previsti} fatti ${fatti} saltati ${saltati} voto ${voto}: totale ${r.totale}`); continue; }
+          if (r.totale < 0 || r.totale > 100) errori.push(`previsti ${previsti} fatti ${fatti} saltati ${saltati} voto ${voto}: ${r.totale} fuori scala`);
+          for (const v of r.voci || []) {
+            if (!(v.peso > 0)) errori.push(`voce ${v.nome}: peso ${v.peso}`);
+            if (v.quota !== null && !(v.quota >= 0 && v.quota <= 1)) errori.push(`voce ${v.nome}: quota ${v.quota}`);
+          }
+          // un esercizio saltato in più non può MAI far salire il punteggio
+          if (saltati < previsti - fatti) {
+            const peggio = chiama({ previsti, punteggi, saltati: saltati + 1 });
+            if (Number.isFinite(peggio.totale) && peggio.totale > r.totale)
+              errori.push(`previsti ${previsti} fatti ${fatti} voto ${voto}: con ${saltati + 1} saltati ${peggio.totale} > con ${saltati} che dà ${r.totale}`);
+          }
+          // saltare il cardio non può MAI far salire il punteggio
+          const senzaCardio = chiama({ previsti, punteggi, saltati, cardio: { ...cardio, eseguito: false, durataMin: null } });
+          if (Number.isFinite(senzaCardio.totale) && senzaCardio.totale > r.totale)
+            errori.push(`previsti ${previsti} fatti ${fatti} saltati ${saltati} voto ${voto}: senza cardio ${senzaCardio.totale} > con cardio ${r.totale}`);
+        }
+      }
+    }
+  }
+  return esito("invarianti del punteggio di una seduta", `${casi} combinazioni`, errori);
 }

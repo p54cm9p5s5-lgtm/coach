@@ -1368,6 +1368,12 @@ async function seduteInMemoria() {
 export const esposizioniSvolte = (esp) => (esp || []).filter((e) => !e.saltato && e.serie?.length);
 
 export async function esposizioni(esercizioId, { soloCompletate = true } = {}) {
+  // Senza esercizio non c'è storia da raccontare. Sembra ovvio, ma la ricerca
+  // per indice con una chiave assente non restituisce NIENTE: restituisce
+  // TUTTO. Un id che si perde per strada avrebbe fatto dire alla storia di un
+  // esercizio che l'hai fatto in ogni allenamento che hai mai fatto — una
+  // risposta sbagliata, non un errore, quindi nessuno se ne sarebbe accorto.
+  if (!esercizioId) return [];
   const serie = await db.byIndex("serie", "esercizioId", esercizioId);
   const logs = await db.byIndex("esercizioLog", "esercizioId", esercizioId);
   const perId = await seduteInMemoria();

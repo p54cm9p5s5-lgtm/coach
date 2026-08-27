@@ -1229,3 +1229,47 @@ Tre cose, se si vuole interpretare bene il pacchetto:
 3. **Le voci mancanti non sono zeri.** Un giorno senza import da Salute ha un
    punteggio calcolato solo su ciò che l'app sapeva davvero, e il numero di voci
    usate è sempre dichiarato.
+
+---
+
+## 17. Cosa è dimostrato e cosa è solo provato
+
+Non tutte le parti dell'app si possono controllare allo stesso modo, e conviene
+sapere dove passa il confine.
+
+**Dimostrato.** Dove le possibilità sono in numero finito, `tools/verifica-esaustiva.js`
+le percorre tutte, una per una: le combinazioni di dischi montabili sul
+bilanciere e sui manubri, ogni giorno di calendario dal 2020 al 2035, ogni
+durata al secondo fino a venticinque ore, i numeri e gli orari. Per queste
+funzioni «non ha difetti» non è una speranza: è una frase verificata su ogni
+caso possibile, non su un campione scelto da qualcuno.
+
+Ai punteggi lo stesso trattamento non si può applicare — gli ingressi sono
+troppi — quindi si controlla un'altra cosa: le **regole che devono valere
+sempre**, su decine di migliaia di combinazioni. Un totale non può uscire dalla
+scala 0-100 né diventare un non-numero; una voce non può avere peso zero o una
+quota fuori da 0-1; un dolore dichiarato non può far **salire** il voto di un
+esercizio; una tecnica migliore non può farlo **scendere**; un esercizio
+saltato, o un cardio non fatto, non possono far salire il voto della seduta.
+Sono gli errori peggiori da scoprire, perché non rompono niente: producono solo
+un numero sbagliato che sembra giusto.
+
+Queste prove sono state a loro volta messe alla prova, guastando l'app di
+proposito per vedere se se ne accorgevano: con la tecnica invertita hanno
+segnalato 252 casi, col dolore trasformato in premio 16.707, con l'esercizio
+saltato che regalava punti 535. Un controllo che non sa fallire non sta
+controllando niente.
+
+**Provato, non dimostrato.** Tutto il resto: iOS, il telefono, i dati che
+arrivano da fuori (Salute, l'orologio, il file del brief) e quello che dipende
+dal momento in cui l'app gira. Lì si prova, si sbaglia e si corregge — ma non
+si può dire «ogni caso possibile», e questo documento non lo dirà mai.
+
+**Quanto regge negli anni.** L'archivio è stato riempito fino a 1400
+allenamenti e 21.000 serie — più di cinque anni al ritmo di cinque sedute a
+settimana. Tutto cresce in modo proporzionale, niente esplode: l'avvio resta
+sotto i venti millesimi di secondo, lo Storico sotto il terzo di secondo, il
+backup arriva a una quindicina di megabyte. Il **pacchetto per il coach resta
+lungo uguale** — circa centocinquanta righe — perché non è un riassunto di
+tutta la storia ma una finestra sugli ultimi giorni: fra cinque anni si leggerà
+come oggi.
