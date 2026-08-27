@@ -407,28 +407,6 @@ function rilasciaAudio() {
       /* niente: quello che conta è non tenerlo acceso */
     }
   }
-  // E la traccia va STACCATA, non solo messa in pausa.
-  //
-  // Un elemento audio con la sorgente ancora caricata tiene viva la rotta audio
-  // dell'app anche da fermo: iOS continua a considerarci qualcuno che sta
-  // usando l'audio, e chi è stato interrotto — la musica che stavi ascoltando —
-  // non riceve mai il via libera per ripartire. Metterlo in pausa non basta:
-  // serve togliere la sorgente e richiamare `load()`, che è il modo dichiarato
-  // perché un elemento rilasci le sue risorse.
-  //
-  // L'elemento NON si distrugge: iOS concede il permesso di suonare a
-  // *quell'oggetto* dopo il primo tocco, e ricrearlo vorrebbe dire ricominciare
-  // da capo — con l'allarme che potrebbe restare muto proprio quando serve.
-  // Si svuota e basta; `avviaAllarme` gli rimette l'indirizzo prima di suonare.
-  if (elementoAllarme) {
-    try {
-      elementoAllarme.pause();
-      elementoAllarme.removeAttribute("src");
-      elementoAllarme.load();
-    } catch {
-      /* se il browser non gradisce, il resto del rilascio vale lo stesso */
-    }
-  }
   sessioneAudio("ambient");
 }
 
@@ -479,15 +457,9 @@ function wavAllarme() {
   return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
 }
 
-// L'indirizzo della traccia si tiene da parte: viene staccato dall'elemento a
-// ogni fine allarme (vedi `rilasciaAudio`) e va rimesso al successivo, e
-// rigenerare il WAV ogni volta sarebbe lavoro sprecato.
-let urlAllarme = null;
-
 function elemento() {
-  if (!urlAllarme) urlAllarme = wavAllarme();
   if (!elementoAllarme) {
-    elementoAllarme = new Audio(urlAllarme);
+    elementoAllarme = new Audio(wavAllarme());
     elementoAllarme.loop = true;
     elementoAllarme.preload = "auto";
     elementoAllarme.volume = 1;
@@ -528,14 +500,6 @@ export function sbloccaAudio() {
   // dell'allenamento, ore prima che l'allarme suonasse davvero.
   sessioneAudio("ambient");
   const a = elemento();
-  // Come in `avviaAllarme`: se un rilascio precedente ha staccato la traccia,
-  // qui si rimette. Oggi non può capitare — i due rilasci scattano solo dopo un
-  // allarme, cioè dopo lo sblocco — ma un `play()` su un elemento vuoto
-  // fallirebbe, e il guasto sarebbe un allarme muto per tutto l'allenamento.
-  if (!a.getAttribute("src")) {
-    a.src = urlAllarme || (urlAllarme = wavAllarme());
-    a.load();
-  }
   // Muto, volume a zero e senza ripetizione: tre precauzioni perché lo sblocco
   // non si senta. Su iOS «muted» da solo non basta sempre, e il frammento che
   // scappa diventa un tic a ogni apertura.
@@ -617,35 +581,8 @@ let playInVolo = null;
  */
 export function avviaAllarme() {
   fermaAllarme();
-  // La categoria giusta è «transient-solo», e ci sono voluti tre giri.
-  //
-  // Su iOS l'interruttore del silenzioso non è un volume: è la sessione audio
-  // dichiarata a decidere se rispettarlo, e la stessa dichiarazione decide
-  // anche che fine fa la musica di chi stava ascoltando.
-  //
-  //   «ambient»          si mescola, ma col silenzioso resta MUTO
-  //   «playback»         si sente col silenzioso, ma interrompe e basta:
-  //                      la musica resta ferma anche dopo
-  //   «transient-solo»   interrompe, e quando hai finito l'altro RIPARTE
-  //
-  // È la categoria dei suoni che interrompono per un momento — una notifica,
-  // un avviso — e il «riparte dopo» sta nella sua definizione, non è una
-  // conseguenza sperata. Un allarme di fine recupero è esattamente questo:
-  // dura pochi secondi e poi deve restituire tutto com'era.
-  //
-  // Si dichiara SOLO qui, mentre suona: `fermaAllarme` torna ad «ambient» e
-  // stacca la traccia con `rilasciaAudio()`, che è la seconda metà del lavoro —
-  // un elemento con la sorgente ancora caricata tiene viva la rotta audio anche
-  // da fermo, e da solo il cambio di categoria non basterebbe.
-  sessioneAudio("transient-solo");
+  sessioneAudio("transient");
   const a = elemento();
-  // La traccia viene staccata a ogni fine allarme per restituire l'audio a chi
-  // lo stava usando: qui si rimette prima di suonare. Senza, dal secondo
-  // allarme in poi il `play()` non troverebbe niente da riprodurre.
-  if (!a.getAttribute("src")) {
-    a.src = urlAllarme || (urlAllarme = wavAllarme());
-    a.load();
-  }
   a.loop = true;
   a.currentTime = 0;
   const p = a.play();
