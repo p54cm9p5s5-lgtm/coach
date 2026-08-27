@@ -1273,6 +1273,26 @@ export async function reteDistruttiva({ forza = false } = {}) {
   if ((await db.get("allenamentiWatch", "RETE-W"))?.durataSec !== 4649) errori.push("un backup vecchio perde la durata di un allenamento del Watch");
   if ((await db.get("noteWatch", "RETE-W"))?.talkTest !== "faticoso") errori.push("un backup vecchio perde il talk-test");
 
+  // Il formato del backup non può cambiare di nascosto.
+  //
+  // Un backup scritto oggi finirà, prima o poi, in una app che non è quella di
+  // oggi: un telefono non aggiornato, un ripristino fatto mesi dopo. Finché la
+  // versione dichiarata resta la 1, le versioni vecchie lo accettano e ignorano
+  // i campi che non conoscono — provato davvero, dando un backup di oggi alla
+  // app del 26/08. Ma se qualcuno aggiunge un campo che CONTA, quel silenzio
+  // diventa una perdita: allora la versione va alzata, e questa riga lo ricorda.
+  casi.length; // (la prova vera è qui sotto)
+  const scritto = await db.esportaTutto({ salta: ["copertine"] });
+  if (scritto.versione !== 1) {
+    errori.push(`il backup si dichiara v${scritto.versione}: se il formato è cambiato davvero, le app vecchie vanno avvisate — se non è cambiato, la versione non si tocca`);
+  }
+  if (scritto.formato !== "coach-backup") errori.push(`il backup si dichiara «${scritto.formato}»`);
+  for (const s of scritto.dati.sedute || []) {
+    if (s.fusoMinuti != null && !(Number.isFinite(s.fusoMinuti) && Math.abs(s.fusoMinuti) <= 14 * 60)) {
+      errori.push(`una seduta scrive fusoMinuti=${s.fusoMinuti} nel backup`);
+    }
+  }
+
   // e un backup buono deve ancora entrare
   await db.importaTutto({ formato: "coach-backup", versione: 1, dati: { sedute: [{ id: "RETE2", data: "2026-01-03", stato: "completata", tipoId: "prova" }] } }, "sostituisci");
   const dopo = (await db.all("sedute")).map((s) => s.id);
