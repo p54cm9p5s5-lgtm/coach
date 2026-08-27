@@ -144,12 +144,21 @@ const nonMisurato = (v) => v === null || v === undefined || v === "" || !Number.
 
 export function mmss(sec) {
   if (nonMisurato(sec)) return "—";
+  // Come in `durataUmana`: un tempo negativo è un dato rotto, non un tempo
+  // corto. Il conto alla rovescia non ci arriva mai — è protetto da
+  // `if (restanti > 0)` — e gli altri usi sono medie e tempi già misurati.
+  if (Number(sec) < 0) return "—";
   const s = Math.max(0, Math.round(sec));
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export function durataUmana(sec) {
   if (nonMisurato(sec)) return "—";
+  // Una durata negativa non è una durata corta: è la fine prima dell'inizio,
+  // cioè un dato rotto. Schiacciarla a zero con `Math.max` la faceva leggere
+  // «0 min», che è un tempo misurato — e dichiarare di aver misurato zero è
+  // peggio che ammettere di non sapere.
+  if (Number(sec) < 0) return "—";
   // Prima si arrotondano i minuti, POI si separano le ore: arrotondando dopo,
   // 1h 59m 40s diventava «1h 60m».
   const minuti = Math.round(Math.max(0, sec) / 60);
@@ -161,7 +170,13 @@ export function durataUmana(sec) {
 export function num(v, dec = 1) {
   // Anche l'infinito è un «non numero»: una divisione per zero da qualche parte
   // stamperebbe la parola «Infinity» in mezzo a una frase italiana.
-  if (v === null || v === undefined || !Number.isFinite(Number(v))) return "—";
+  //
+  // E la stringa vuota è un valore assente, non uno zero: `Number("")` in
+  // JavaScript fa **0**, ed è finito, quindi passava il controllo e un campo
+  // lasciato in bianco finiva a schermo come «0». È la stessa bugia che
+  // `nonMisurato` qui sopra esiste per impedire — un peso, un carico o una
+  // differenza scritti «0» dicono una cosa che nessuno ha misurato.
+  if (v === null || v === undefined || v === "" || !Number.isFinite(Number(v))) return "—";
   const testo = Number(v)
     .toFixed(dec)
     .replace(/\.0+$/, "")
