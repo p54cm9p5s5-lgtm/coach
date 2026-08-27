@@ -205,7 +205,11 @@ export async function render({ ridisegna }) {
     const confrontabile = ultima?.condizioniStandard !== false && prec?.condizioniStandard !== false;
     aggiungi(lista,
       h(
-        "div.row",
+        // Toccabile solo se qualcosa da mostrare c'è: una riga «mai registrata»
+        // che si apre su un elenco vuoto è una porta che non porta da nessuna
+        // parte.
+        righe.length ? "button.row" : "div.row",
+        righe.length ? { onclick: () => storicoMisura(def, righe, ridisegna) } : {},
         h(
           "div.main",
           h("span.title", def.nome),
@@ -289,6 +293,82 @@ export async function render({ ridisegna }) {
 
   aggiungi(wrap, await bloccoFoto(ridisegna));
   return wrap;
+}
+
+// ---------- storico di una misura ----------
+
+/**
+ * Tutte le volte che hai misurato una cosa, e la strada per togliere quella
+ * sbagliata.
+ *
+ * Fino a ieri una misura si poteva solo sovrascrivere, salvandone un'altra con
+ * la stessa data: basta quando hai sbagliato il numero, non quando hai
+ * sbagliato il giorno. Quella misura restava per sempre, entrava negli indici,
+ * nei confronti e nel pacchetto per il coach.
+ */
+function storicoMisura(def, righe, ridisegna) {
+  sheet((close) =>
+    h(
+      "div",
+      h("h2", def.nome),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+        righe.length === 1
+          ? "Una misura registrata. Toccala per eliminarla."
+          : `${righe.length} misure registrate, dalla più recente. Toccane una per eliminarla.`
+      ),
+      h(
+        "div.list",
+        ...righe.map((m) =>
+          h(
+            "button.row",
+            {
+              onclick: unaVoltaSola(async () => {
+                // La conferma nomina data e valore: è quello che mi ha
+                // impedito di cancellare il set di foto sbagliato durante il
+                // controllo, e vale qui allo stesso modo.
+                const c = await chiedi({
+                  // Il nome sta nel corpo e non nel titolo: «Eliminare peso del
+                  // 25/08?» chiede un articolo che cambia con la misura, e
+                  // inventarsi un campo «genere» per sette voci sarebbe più
+                  // codice che lingua.
+                  titolo: `Eliminare la misura del ${dataBreve(m.data)}?`,
+                  testo: `${def.nome}: ${num(m.valore)} ${def.unita}, di ${dataLunga(m.data)}. Non si recupera, e gli indici si ricalcolano senza.`,
+                  opzioni: [{ etichetta: "Elimina la misura", valore: "si", stile: "destructive" }],
+                });
+                if (c !== "si") return;
+                const tolta = await store.cancellaMisura(m.id);
+                close();
+                // «Misura» regge il participio per tutte e sette: il nome della
+                // misura sta dopo i due punti, dove il genere non serve.
+                toast(
+                  tolta
+                    ? `Misura del ${dataBreve(m.data)} eliminata: ${def.nome}, ${num(m.valore)} ${def.unita}.`
+                    : "Questa misura non c'era più."
+                );
+                if (ridisegna) await ridisegna();
+              }),
+            },
+            h(
+              "div.main",
+              h("span.title", dataLunga(m.data)),
+              h(
+                "span.sub",
+                m.condizioniStandard === false ? "fuori protocollo" : m.fonte === "brief" ? "dal brief" : "segnata a mano"
+              )
+            ),
+            h("span.value", `${num(m.valore)} ${def.unita}`)
+          )
+        )
+      ),
+      h(
+        "p.footnote",
+        { style: "margin:14px 16px 0" },
+        "Se il numero è sbagliato ma il giorno è giusto, non serve eliminare: basta registrarla di nuovo con la stessa data e si sovrascrive."
+      )
+    )
+  );
 }
 
 // ---------- registrazione misure ----------

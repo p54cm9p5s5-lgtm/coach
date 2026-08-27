@@ -402,6 +402,23 @@ Il periodo è **lo stesso** scelto in cima a Salute: su «7 gg» ci sono i Pull 
 quei sette giorni, su «Sempre» tutti. Non è una scelta grafica: è l'unico modo
 perché la media di sopra e l'elenco di sotto raccontino la stessa cosa.
 
+### La storia di un esercizio
+
+Nel riepilogo di un allenamento **ogni esercizio si apre**. Toccando «Panca
+piana bilanciere · 36 kg · 3×10/10/10» compaiono tutte le volte che l'hai
+fatta, dalla più recente: data, serie e ripetizioni davvero eseguite, RPE,
+tecnica, e il carico usato — non quello previsto.
+
+Accanto a ogni riga ci sono **le proposte decise quel giorno su quell'esercizio**,
+con l'esito e la nota: «rifiutata: 30 → 31 kg — Già eseguito da coach». È il
+pezzo che spiega *perché* il carico è cambiato quando è cambiato, che dentro la
+singola seduta non si vede.
+
+La riga nel riepilogo dice come è andata **rispetto alla volta prima** («+6 kg
+dalla volta prima»); questa schermata dice da dove sei partito. E un carico che
+scende non è sempre un passo indietro: dopo un cedimento tecnico il programma fa
+scaricare apposta.
+
 ### La pagina non si ingrandisce
 
 **Né con due tocchi né con due dita.** I numeri di questa app sono già grandi, e
@@ -875,6 +892,17 @@ comunque ma **segnato come non confrontabile**.
 
 Un valore fuori scala (per esempio un peso di 999 kg, quasi sempre un tocco di
 troppo) **fa scattare una richiesta di conferma**: l'app non rifiuta, chiede.
+
+**Correggere e cancellare.** Toccando una misura nell'elenco si apre tutto il
+suo storico: ogni volta che l'hai presa, con data, valore e da dove viene (a
+mano, dal brief, fuori protocollo). Da lì una misura si può **eliminare**, con
+una conferma che nomina data e valore — «Eliminare la misura del 25/08? Peso:
+99,7 kg» — perché gli indici e i confronti si ricalcolano senza.
+
+Serve quando hai sbagliato **il giorno**, non il numero: se il giorno è giusto
+basta registrarla di nuovo con la stessa data e si sovrascrive. Prima la
+sovrascrittura era l'unica strada, e una misura finita sul giorno sbagliato
+restava per sempre negli indici, nei confronti e nel pacchetto per il coach.
 
 **Indici**: vita/altezza (soglia 0,50), vita/fianchi (soglia 0,95, che è quella
 maschile: sul profilo di un'atleta va letta sapendolo) e BMI, dichiarato per

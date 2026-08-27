@@ -287,6 +287,85 @@ async function vistaProgramma(vaiA, ridisegna) {
 
 // ---------- risultato dell'allenamento appena chiuso ----------
 
+/**
+ * Tutta la storia di un esercizio, aperta toccandolo nel riepilogo.
+ *
+ * Nel riepilogo ogni esercizio dice come è andato rispetto alla volta prima
+ * («+6 kg dalla volta prima»): risponde a «sto salendo?», non a «da dove sono
+ * partito?». Qui ci sono tutte le volte in fila, con accanto le proposte che
+ * il motore ha fatto su questo esercizio e come sono state decise — che è il
+ * pezzo che spiega perché il carico è cambiato quando è cambiato.
+ */
+async function storicoEsercizio(def, esercizioId) {
+  const storia = await store.esposizioni(esercizioId);
+  const proposte = (await store.proposte()).filter((p) => p.esercizioId === esercizioId);
+  const perData = new Map();
+  for (const p of proposte) {
+    if (!p.rispostoIl) continue;
+    const g = String(p.rispostoIl).slice(0, 10);
+    if (!perData.has(g)) perData.set(g, []);
+    perData.get(g).push(p);
+  }
+
+  sheet(() =>
+    h(
+      "div",
+      h("h2", def?.nome || esercizioId),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:14px" },
+        storia.length
+          ? `${storia.length} ${storia.length === 1 ? "volta registrata" : "volte registrate"}, dalla più recente. I carichi sono quelli davvero usati, non quelli previsti.`
+          : "Non l'hai ancora fatto nemmeno una volta."
+      ),
+      storia.length
+        ? h(
+            "div.list",
+            ...storia.map((e) => {
+              const rip = e.serie.map((s) => s.ripFatte ?? "—").join("/");
+              const decise = perData.get(e.data) || [];
+              return h(
+                "div.row",
+                h(
+                  "div.main",
+                  h("span.title", dataLunga(e.data)),
+                  h(
+                    "span.sub",
+                    e.saltato
+                      ? `saltato — ${e.saltato.motivo}${(e.saltato.nota || "").trim() ? ` · ${e.saltato.nota}` : ""}`
+                      : [
+                          e.serie.length ? `${e.serie.length}×${rip}` : null,
+                          e.rpe != null ? `RPE ${e.rpe}` : null,
+                          e.tecnica != null ? `tecnica ${e.tecnica}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                  ),
+                  // Le decisioni prese quel giorno su questo esercizio: sono la
+                  // ragione per cui il carico della volta dopo è quello che è.
+                  ...decise.map((p) =>
+                    h(
+                      "span.sub",
+                      { style: "color:var(--label-tertiary)" },
+                      `${p.stato === "accettata" ? "accettata" : "rifiutata"}: ${p.titolo}` +
+                        ((p.notaRisposta || "").trim() ? ` — ${p.notaRisposta}` : "")
+                    )
+                  )
+                ),
+                h("span.value", e.caricoLavoro != null ? `${num(e.caricoLavoro)} kg` : e.saltato ? "—" : "corpo libero")
+              );
+            })
+          )
+        : null,
+      h(
+        "p.footnote",
+        { style: "margin:14px 16px 0" },
+        "Un carico che scende non è sempre un passo indietro: dopo un cedimento tecnico il programma fa scaricare apposta."
+      )
+    )
+  );
+}
+
 async function vistaRisultato(id, vaiA, da = null) {
   const wrap = h("div.screen");
   const sed = await store.seduta(id);
@@ -499,7 +578,11 @@ async function vistaRisultato(id, vaiA, da = null) {
 
     aggiungi(righe,
       h(
-        "div.row",
+        // Toccabile: apre tutta la storia di questo esercizio. Lo scarto dalla
+        // volta prima qui accanto dice come è andata rispetto all'ultima volta,
+        // non come sta andando da luglio.
+        "button.row",
+        { onclick: () => storicoEsercizio(def, l.esercizioId) },
         h(
           "div.main",
           h("span.title", def?.nome || l.esercizioId),

@@ -2072,6 +2072,25 @@ export async function registraMisura({ data = isoDate(), tipo, valore, condizion
   return rec;
 }
 
+/**
+ * Cancella una misura sbagliata.
+ *
+ * Finora l'unico modo di correggere era sovrascrivere: salvarne un'altra con la
+ * stessa data. Basta quando hai sbagliato il numero, non quando hai sbagliato
+ * il giorno — quella misura resta lì per sempre, entra negli indici, nei
+ * confronti e nel pacchetto per il coach, e non c'è nessuna strada per toglierla.
+ * Le foto e gli allenamenti si cancellano da sempre; le misure no.
+ *
+ * Restituisce la misura tolta, così chi chiama può dire cosa ha eliminato
+ * invece di un generico «fatto».
+ */
+export async function cancellaMisura(id) {
+  const m = await db.get("misure", id);
+  if (!m) return null;
+  await db.del("misure", id);
+  return m;
+}
+
 export async function ultimaMisura(tipo) {
   const m = await misure(tipo);
   return m[0] || null;
