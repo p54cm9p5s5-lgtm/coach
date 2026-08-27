@@ -219,7 +219,18 @@ Notte            data (PK, notte del), presente: bool, durataMin,
                  profondoMin, remMin, vegliaMin, risvegli
 AllenamentoWatch  vedi §3.3: non viene collegato alle sedute (il campo
                   `sedutaId` resta a null e non lo scrive più nessuno)
+NotaWatch        uuid (PK, lo stesso dell'allenamento), talkTest, nota
 ```
+`NotaWatch` sta in un archivio **a parte** e non dentro l'allenamento, per una
+ragione precisa: quello è roba dell'orologio, si riscrive a ogni import e si può
+svuotare in blocco. Quello che scrivi tu non deve sparire con lui.
+
+Il **talk-test** è l'unica colonna scritta dall'atleta e non misurata: dice se
+durante l'allenamento riusciva a parlare. Si risponde solo su camminate, corse
+ed escursioni — altrove l'intensità la dicono carico e RPE del log. Una giornata
+con un'attività a cui il talk-test è stato risposto vale come giornata di
+allenamento nel punteggio Salute; senza risposta la giornata **resta fuori dal
+conto**, non vale zero.
 **Invariante critica:** `presente: false` ≠ valore 0. Un giorno senza dati è
 escluso dalle medie e dal conteggio delle finestre, e segnalato.
 

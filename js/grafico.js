@@ -700,6 +700,13 @@ export function graficoBattito({ caselle, inizioSec, durataSec, media = null, al
   const altoTesti = 12;
   const area = A - bassoTesti - altoTesti;
 
+  // Senza nemmeno una casella valida `Math.max()` di un elenco vuoto dà
+  // -Infinity: la scala andava a NaN e chi legge lo schermo ad alta voce
+  // sentiva «da Infinity a -Infinity battiti al minuto». Oggi non ci si arriva
+  // — chi disegna controlla di averne almeno tre — ma è una regola tenuta da
+  // chi chiama, e questa riga la mette dove non può perdersi.
+  if (!validi.length) return h("p.footnote", { style: "margin:0 16px" }, "Battito non registrato.");
+
   const massimo = Math.max(...validi.map((c) => c.max));
   const minimo = Math.min(...validi.map((c) => c.min));
   // Un po' d'aria sopra e sotto, come fa l'orologio: le barrette non toccano

@@ -9,10 +9,25 @@ const NOME_SHORTCUT_CALENDARIO = "Coach Calendario";
 function scegliFile(accept) {
   return new Promise((resolve) => {
     const input = h("input", { type: "file", accept, style: "display:none" });
-    input.addEventListener("change", () => {
-      resolve(input.files?.[0] || null);
+    // Chi annulla la scelta non fa scattare «change»: la promessa restava
+    // appesa per sempre e chi l'aspettava si fermava lì, in silenzio — e il
+    // campo nascosto restava attaccato alla pagina, uno per ogni ripensamento.
+    // «cancel» lo dicono i browser di oggi; dove non c'è, il ritorno alla
+    // pagina fa da rete: se il campo è ancora lì senza file, hai annullato.
+    let finito = false;
+    const chiudi = (file) => {
+      if (finito) return;
+      finito = true;
       input.remove();
-    });
+      resolve(file || null);
+    };
+    input.addEventListener("change", () => chiudi(input.files?.[0]));
+    input.addEventListener("cancel", () => chiudi(null));
+    window.addEventListener(
+      "focus",
+      () => setTimeout(() => { if (!input.files?.length) chiudi(null); }, 400),
+      { once: true }
+    );
     document.body.append(input);
     input.click();
   });
