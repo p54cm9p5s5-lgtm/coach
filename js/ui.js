@@ -617,20 +617,27 @@ let playInVolo = null;
  */
 export function avviaAllarme() {
   fermaAllarme();
-  // «playback» e non «transient», ed è la differenza fra sentire l'allarme e
-  // non sentirlo.
+  // La categoria giusta è «transient-solo», e ci sono voluti tre giri.
   //
   // Su iOS l'interruttore del silenzioso non è un volume: è la sessione audio
-  // a decidere se lo rispetta. «transient», «transient-solo» e «ambient» lo
-  // rispettano — cioè col silenzioso inserito restano muti — e «playback» no,
-  // perché è la categoria di chi sta riproducendo qualcosa che l'utente ha
-  // chiesto. Un allarme di fine recupero è esattamente quello: l'hai chiesto tu
-  // avviando il timer, e ti serve mentre il telefono è appoggiato sulla panca.
+  // dichiarata a decidere se rispettarlo, e la stessa dichiarazione decide
+  // anche che fine fa la musica di chi stava ascoltando.
   //
-  // Si dichiara SOLO qui, mentre suona: `fermaAllarme` torna subito ad
-  // «ambient» con `rilasciaAudio()`, così la musica di chi stava ascoltando
-  // riparte invece di restare ferma per tutto l'allenamento.
-  sessioneAudio("playback");
+  //   «ambient»          si mescola, ma col silenzioso resta MUTO
+  //   «playback»         si sente col silenzioso, ma interrompe e basta:
+  //                      la musica resta ferma anche dopo
+  //   «transient-solo»   interrompe, e quando hai finito l'altro RIPARTE
+  //
+  // È la categoria dei suoni che interrompono per un momento — una notifica,
+  // un avviso — e il «riparte dopo» sta nella sua definizione, non è una
+  // conseguenza sperata. Un allarme di fine recupero è esattamente questo:
+  // dura pochi secondi e poi deve restituire tutto com'era.
+  //
+  // Si dichiara SOLO qui, mentre suona: `fermaAllarme` torna ad «ambient» e
+  // stacca la traccia con `rilasciaAudio()`, che è la seconda metà del lavoro —
+  // un elemento con la sorgente ancora caricata tiene viva la rotta audio anche
+  // da fermo, e da solo il cambio di categoria non basterebbe.
+  sessioneAudio("transient-solo");
   const a = elemento();
   // La traccia viene staccata a ogni fine allarme per restituire l'audio a chi
   // lo stava usando: qui si rimette prima di suonare. Senza, dal secondo
