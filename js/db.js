@@ -162,11 +162,57 @@ export async function byIndex(store, index, value) {
   return wrap(db.transaction(store).objectStore(store).index(index).getAll(value));
 }
 
+/* Due copie dell'app aperte insieme.
+ *
+ * Capita: l'app installata sulla schermata Home e una scheda di Safari, o due
+ * schede. Ognuna tiene in memoria la sua idea dell'allenamento in corso, e
+ * `aggiornaSeduta` legge-modifica-scrive: chi salva per ultimo cancella quello
+ * che ha scritto l'altra, in silenzio.
+ *
+ * Fondere due verità non si può — non si sa quale delle due sia quella giusta,
+ * e indovinare sarebbe peggio. Quello che si può fare è non farlo in silenzio:
+ * ogni scrittura lo annuncia alle altre copie, che smettono di credere a quello
+ * che hanno in mano e lo dicono a chi sta guardando.
+ */
+const CANALE = (() => {
+  try {
+    return "BroadcastChannel" in self ? new BroadcastChannel("coach-archivio") : null;
+  } catch {
+    return null; // browser che non lo espone: si resta come prima
+  }
+})();
+
+const IO = Math.random().toString(36).slice(2);
+let ascoltatore = null;
+
+/** Chi vuole sapere che un'altra copia ha scritto. */
+export function seScriveUnAltraCopia(fn) {
+  ascoltatore = fn;
+  if (CANALE) {
+    CANALE.onmessage = (e) => {
+      if (e?.data?.da && e.data.da !== IO) ascoltatore?.(e.data.archivi || []);
+    };
+  }
+}
+
+function annuncia(archivi) {
+  // Le copertine dei video non sono un tuo dato: annunciarle farebbe lampeggiare
+  // l'avviso mentre l'app scarica miniature in sottofondo, per niente.
+  const utili = archivi.filter((a) => a !== "copertine");
+  if (!utili.length || !CANALE) return;
+  try {
+    CANALE.postMessage({ da: IO, archivi: utili });
+  } catch {
+    /* il canale può chiudersi con la pagina: non è un errore che riguardi chi scrive */
+  }
+}
+
 export async function put(store, value) {
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).put(value);
   await done;
+  annuncia([store]);
   return value;
 }
 
@@ -177,6 +223,7 @@ export async function putMany(store, values) {
   const os = t.objectStore(store);
   for (const v of values) os.put(v);
   await done;
+  annuncia([store]);
   return values;
 }
 
@@ -216,6 +263,7 @@ export async function delMulti(gruppi) {
     throw e;
   }
   await done;
+  annuncia(nomi);
   return quante;
 }
 
@@ -224,6 +272,7 @@ export async function del(store, key) {
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).delete(key);
   await done;
+  annuncia([store]);
 }
 
 export async function clearStore(store) {
@@ -407,6 +456,7 @@ export async function importaTutto(dump, modo = "sostituisci") {
     throw new Error(`Ripristino annullato, archivio invariato: ${e.message}`);
   }
   await done;
+  annuncia(coinvolti);
   // Quello che il file conteneva e questo telefono non sa dove mettere va
   // detto, non inghiottito in silenzio.
   const ignorati = Object.keys(dump.dati || {}).filter(

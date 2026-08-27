@@ -1051,6 +1051,12 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
     // Il tempo di lavoro netto, congelato: la densità nel pacchetto per il
     // coach deve raccontare l'allenamento, non le ore di pausa.
     durataLavoroSec: durataLavoroSec({ ...s, oraFine: fine }, serieFatte),
+    // In che fuso è stata fatta. L'app crede all'orologio del telefono e non
+    // ha modo di fare altrimenti: se ti alleni a New York, «18:00» è le 18:00
+    // di là. Segnarlo alla chiusura non cambia niente di quello che l'app
+    // calcola — è per chi guarderà l'archivio fra anni e vorrà sapere che ora
+    // era davvero. Minuti rispetto a Greenwich: +120 d'estate in Italia.
+    fusoMinuti: -new Date().getTimezoneOffset(),
     // `?? ` avrebbe tenuto la nota vecchia anche quando la cancelli davvero:
     // solo l'assenza del campo significa «non toccarla».
     notaGenerale: notaGenerale !== undefined ? testoScritto(notaGenerale) : s.notaGenerale,

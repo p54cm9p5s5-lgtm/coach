@@ -36,6 +36,7 @@ import * as ex from "../js/export.js";
 import { tutto as nucleoDimostrato } from "./verifica-esaustiva.js";
 import { valutaProgressione } from "../js/segnali.js";
 import { analizza } from "../js/salute.js";
+import { valida as validaBrief } from "../js/brief.js";
 import { carichiPossibili, carichiManubrio, aPaio } from "../js/plates.js";
 
 const esito = (nome, casi, errori) => ({
@@ -210,6 +211,7 @@ export async function verificaArchivio() {
 
   const sedute = await db.all("sedute");
   const idSedute = new Set(sedute.map((s) => s.id));
+  const inizio = await store.inizioStoria();
   const visti = new Set();
 
   for (const s of sedute) {
@@ -219,6 +221,13 @@ export async function verificaArchivio() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s.data || "")) { errori.push(`seduta ${s.id}: data «${s.data}»`); continue; }
     if (ui.isoDate(ui.parseIso(s.data)) !== s.data) errori.push(`seduta ${s.id}: la data ${s.data} non torna indietro uguale`);
     if (s.data > oggi) errori.push(`seduta ${s.id}: datata nel futuro (${s.data})`);
+    // Un orologio che va indietro — succede a un iPhone rimasto scarico — non
+    // si accorge di niente e scrive allenamenti in un passato che non c'è mai
+    // stato. Qui non si può impedire; qui si vede.
+    if (inizio && s.data < inizio) errori.push(`seduta ${s.id}: datata ${s.data}, prima che il programma cominciasse (${inizio})`);
+    if (s.fusoMinuti != null && !(Number.isFinite(s.fusoMinuti) && Math.abs(s.fusoMinuti) <= 14 * 60)) {
+      errori.push(`seduta ${s.data}: fuso orario ${s.fusoMinuti}`);
+    }
 
     const sec = store.durataSeduta(s);
     if (sec !== null && (!Number.isFinite(sec) || sec < 0)) errori.push(`seduta ${s.data}: durata ${sec}`);
@@ -647,6 +656,74 @@ export function verificaLettorePacchetto() {
   return esito("il lettore del pacchetto, preso a picconate", `${casi} pacchetti`, errori);
 }
 
+/* ---------------------------------------------- 8. il lettore del brief */
+
+/**
+ * I brief storti devono essere fermati PRIMA di entrare in vigore.
+ *
+ * Il brief è l'unica cosa che cambia il programma, e lo scrive il coach a mano
+ * in un documento: un giorno doppio, un recupero negativo, un esercizio che
+ * nella libreria non c'è. Accettarlo in silenzio significa scoprirlo in
+ * palestra, sotto il bilanciere.
+ *
+ * La validazione era già accurata — questa prova non l'ha scritta, la tiene.
+ */
+export function verificaLettoreBrief() {
+  const errori = [];
+  let casi = 0;
+  const libreria = store.libreria();
+  const primo = libreria[0]?.id;
+  const secondo = libreria.find((e) => !e.aTempo && e.id !== primo)?.id;
+  const aTempo = libreria.find((e) => e.aTempo)?.id;
+
+  const giorno = (extra = {}) => ({
+    id: "prova", nome: "Giorno di prova", giorno: 1,
+    esercizi: [{ esercizioId: secondo, serie: 3, ripMin: 8, ripMax: 10, carico: 20, recuperoSec: 90 }],
+    ...extra,
+  });
+  const brief = (split) => ({ versione: "prova", split });
+  const es = (extra = {}) => ({ esercizioId: secondo, serie: 3, ripMin: 8, ripMax: 10, carico: 20, recuperoSec: 90, ...extra });
+
+  const CASI = [
+    ["senza split", brief([]), /split/i],
+    ["due giorni con lo stesso id", brief([giorno(), giorno({ giorno: 2 })]), /stesso id/i],
+    ["due giorni sullo stesso giorno della settimana", brief([giorno(), giorno({ id: "altro" })]), /stesso giorno della settimana/i],
+    ["giorno senza nome", brief([giorno({ nome: undefined })]), /senza id o nome/i],
+    ["id del giorno con maiuscole", brief([giorno({ id: "Gambe Core" })]), /id del giorno non valido/i],
+    ["giorno della settimana impossibile", brief([giorno({ giorno: 9 })]), /giorno della settimana/i],
+    ["esercizio che non esiste", brief([giorno({ esercizi: [es({ esercizioId: "non-esiste-questo" })] })]), /sconosciuto/i],
+    ["serie a zero", brief([giorno({ esercizi: [es({ serie: 0 })] })]), /serie non valide/i],
+    ["carico negativo", brief([giorno({ esercizi: [es({ carico: -20 })] })]), /carico non valido/i],
+    ["carico fuori scala", brief([giorno({ esercizi: [es({ carico: 900 })] })]), /fuori scala/i],
+    ["recupero negativo", brief([giorno({ esercizi: [es({ recuperoSec: -30 })] })]), /recupero non valido/i],
+    ["stesso esercizio due volte nel giorno", brief([giorno({ esercizi: [es(), es()] })]), /due volte/i],
+    ["range di ripetizioni al contrario", brief([giorno({ esercizi: [es({ ripMin: 12, ripMax: 8 })] })]), /range ripetizioni/i],
+    ["blocco con un esercizio solo", brief([giorno({ esercizi: [es({ blocco: "A" })] })]), /blocco/i],
+  ];
+  if (aTempo) {
+    CASI.push(["esercizio a tempo scritto a ripetizioni",
+      brief([giorno({ esercizi: [es({ esercizioId: aTempo })] })]), /a tempo/i]);
+  }
+
+  for (const [nome, dati, atteso] of CASI) {
+    casi++;
+    let problemi;
+    try { problemi = validaBrief(dati, libreria); }
+    catch (e) { errori.push(`«${nome}»: la validazione esplode — ${String(e.message).slice(0, 50)}`); continue; }
+    if (!problemi.length) { errori.push(`«${nome}»: ACCETTATO, doveva essere fermato`); continue; }
+    if (!problemi.some((x) => atteso.test(x))) {
+      errori.push(`«${nome}»: fermato, ma per un altro motivo — «${problemi[0].slice(0, 60)}»`);
+    }
+  }
+
+  // e un brief pulito deve passare senza una parola
+  casi++;
+  const buono = validaBrief(brief([giorno(), giorno({ id: "secondo", nome: "Secondo", giorno: 3 })]), libreria);
+  if (buono.length) errori.push(`un brief pulito viene contestato: ${buono[0].slice(0, 70)}`);
+
+  return esito("i brief storti, fermati prima di entrare in vigore", `${casi} brief`, errori);
+}
+
 /* ------------------------------------------------------------- la rete */
 
 export async function rete() {
@@ -661,6 +738,7 @@ export async function rete() {
     await verificaStesseDomande(),
     await verificaMotoreProposte(),
     verificaLettorePacchetto(),
+    verificaLettoreBrief(),
   ];
   const errori = prove.reduce((a, p) => a + p.errori, 0);
   const casi = prove.reduce((a, p) => a + (parseInt(p.casi, 10) || 0), 0);

@@ -607,6 +607,26 @@ async function avvia() {
 
   window.addEventListener("hashchange", ridisegna);
 
+  // Un'altra copia dell'app ha scritto nell'archivio.
+  //
+  // Fuori da un allenamento la risposta è semplice: quello che è a schermo è
+  // vecchio, si ridisegna e amen. Dentro un allenamento no — ridisegnare
+  // farebbe sparire sotto le dita quello che stai scrivendo, e la seduta la
+  // tiene in memoria questa copia. Lì si avvisa e basta, una volta sola: due
+  // copie che scrivono sulla stessa seduta si cancellano a vicenda, e chi
+  // guarda deve poterlo sapere invece di scoprirlo dopo.
+  let giaAvvisato = false;
+  store.db.seScriveUnAltraCopia(() => {
+    if (rottaCorrente === "seduta") {
+      if (giaAvvisato) return;
+      giaAvvisato = true;
+      toast("Coach è aperto anche altrove e ha appena salvato. Chiudi l'altra copia: due copie sullo stesso allenamento si sovrascrivono.", 8000);
+      return;
+    }
+    if (foglioAperto()) return; // non si ridisegna sotto un foglio aperto
+    ridisegna();
+  });
+
   // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta
   // ieri finché non si ricarica, e la Home propone l'allenamento sbagliato.
   let giornoDisegnato = new Date().toDateString();
