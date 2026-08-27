@@ -449,9 +449,24 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
           ? "saltato"
           : "non registrato"
     ),
-    // Lo stretching pesa nel punteggio quanto il riscaldamento: ometterlo dal
+    // Lo stretching pesava nel punteggio quanto il riscaldamento: ometterlo dal
     // log lasciava il coach senza metà di quella voce.
-    riga("Stretching finale", seduta.stretching ? (seduta.stretching.fatto ? "fatto" : "saltato") : "non registrato"),
+    //
+    // Dal 27/08 sera non è più un passaggio a sé — le tenute statiche stanno
+    // dentro al blocco di mobilità — e su quelle sedute la riga sparisce del
+    // tutto. Scrivere «non registrato» direbbe al coach che un dato manca,
+    // mentre non manca niente: quel passaggio non esisteva. Le sedute vecchie
+    // continuano a portarsi dietro la loro riga, con il valore di allora.
+    riga(
+      "Stretching finale",
+      seduta.stretching
+        ? seduta.stretching.fatto
+          ? "fatto"
+          : "saltato"
+        : seduta.previstoStretching === false
+          ? null
+          : "non registrato"
+    ),
     riga("Mobilità", seduta.mobilita ? (seduta.mobilita.fatto ? "fatta" : "saltata") : null),
     // Letti sull'orologio a fine allenamento: i Comandi Rapidi non sanno
     // leggere gli allenamenti dell'Apple Watch, quindi questi numeri li scrive

@@ -704,6 +704,26 @@ L'app mostra anche **perché non c'è una proposta** per gli altri esercizi
 («RPE 8: zona corretta, nessuna modifica»), così il silenzio non si confonde con
 una dimenticanza.
 
+### Gli esercizi che non progrediscono da soli
+
+Due categorie restano fuori dalla doppia progressione, e l'app lo dice invece di
+inventarsi una proposta:
+
+- **Esercizi a tempo** (`aTempo`, come plank e suitcase hold): «la progressione
+  resta una valutazione a mano». Non c'è un range di ripetizioni da scalare.
+- **Esercizi a dose fissa**, cioè scritti nel brief con `ripMin` uguale a
+  `ripMax` (`2×15 per lato`, `2×20`): «dose fissa, non progredisce da solo, si
+  rivede in conversazione». Prima di questo controllo finivano nel gradino del
+  carico e a corpo libero l'app rispondeva *«sei al tetto del range, serve una
+  variante più difficile»* — falso due volte: non erano al tetto di niente, e
+  nessuno aveva chiesto loro di crescere.
+
+Restano invece dentro la progressione normale gli accessori scritti con un range
+vero. **Un avvertimento su quelli molto leggeri**: su un esercizio da 2 kg il più
+piccolo aumento componibile con i dischi di casa è **+1 kg, cioè +50%**. L'app lo
+proporrà e scriverà la percentuale, ma su un distretto piccolo — la cuffia dei
+rotatori — è un salto grosso, e la risposta giusta può benissimo essere «rimando».
+
 ---
 
 ## 8. I segnali
@@ -986,7 +1006,7 @@ Contiene:
   RPE / nota, più recuperi reali cronometrati (media, minimo, massimo **e per
   singolo esercizio**), velocità e durata del cardio, durata dell'allenamento,
   **densità sui pesi** (serie/min dalla prima all'ultima serie), riscaldamento
-  (con o senza tapis), stretching, nota generale, il
+  (con o senza tapis), mobilità, nota generale, il
   **punteggio che l'app si è data** con l'eventuale tetto che l'ha fermato, e
   gli **obiettivi chiesti dall'app diversi dal brief** (quando una proposta
   accettata ha cambiato il bersaglio)
@@ -1093,29 +1113,43 @@ tocca Salute e infatti funziona.
 
 ---
 
-### La mobilità dopo lo stretching
+### Il blocco di mobilità
 
-Dopo lo stretching e **prima del cardio**, i giorni del nuovo split hanno un
-blocco di mobilità a **dose fissa**: nessun carico, nessuna soglia tecnica, nessuna
-progressione. Copre le zone che il lavoro di quel giorno non tocca — contate
-sui dati veri, non a memoria:
+Dopo i pesi e **prima del cardio**, ogni giorno ha un blocco di mobilità a **dose
+fissa**: nessun carico, nessuna soglia tecnica, nessuna progressione. Dal
+27/08/2026 è **uno solo**, uguale tutti i giorni, sabato e domenica inclusi, e
+si fa di fila in **26 passaggi**:
 
-| Giorno | Passaggi |
-|---|---|
-| Push, Upper | cerchi con il bacino · mobilità di caviglia · cat-cow |
-| Pull | cerchi con il bacino · mobilità di caviglia |
-| Legs, Lower | cerchi con le braccia · rotazioni di spalla · cat-cow |
-| sabato e domenica | tutti e cinque i movimenti |
+| Parte | Passaggi | A cosa serve |
+|---|---|---|
+| Movimenti dinamici | mobilità di caviglia · cerchi con il bacino · cat-cow · cerchi con le braccia · rotazioni di spalla · tre movimenti di **polso** | **mantenere** l'escursione |
+| Posizioni tenute | 18 tenute da 45 secondi, dai polpacci al collo agli avambracci | **guadagnare** escursione |
 
-I movimenti sono quelli che già conosci dal riscaldamento, con la stessa
-spiegazione e lo stesso video.
+Prima le zone ruotavano per giorno, in modo da non ripetere quello che il
+riscaldamento aveva già toccato. Per un obiettivo di mantenimento quel
+ragionamento non regge — il riscaldamento prepara *quell'articolazione* per
+*quel carico*, la mobilità generale è un'altra cosa — e la rotazione costava più
+attrito («oggi quali zone tocca?») di quanto facesse risparmiare.
+
+L'ordine dentro il blocco è **di sicurezza**: prima il dinamico, poi le tenute.
+È lo stesso motivo per cui tutto il blocco sta dopo i pesi e non all'inizio.
+
+I movimenti dinamici sono quelli che già conosci dal riscaldamento, con la stessa
+spiegazione e lo stesso video. **Ogni passaggio ha il suo video**, tenute
+comprese.
+
+**Il polso** è entrato il 27/08 su storico pregresso, e i suoi tre movimenti
+portano scritta l'avvertenza: si arriva dove il movimento va da solo, **senza
+forzare il fine corsa**, e se tira o dà fastidio ci si ferma prima. Vale anche
+per le due tenute sugli avambracci. Il cat-cow, che carica il polso in appoggio
+disteso, dice come farlo sui pugni chiusi o sugli avambracci.
 
 Nel punteggio entra come il riscaldamento: per il fatto di essere stata fatta o
-saltata, non per quanto bene. **Sabato e domenica sono giorni di sola
-mobilità** — nello split ci sono, ma senza esercizi — e lì quella voce è tutto
-il punteggio: aprire il giorno e farla vale 100, aprirlo e saltarla vale 0. In
-quei due giorni riscaldamento e stretching non contano, perché non sono
-previsti.
+saltata, non per quanto bene. **È una voce sola** — non due — perché è un blocco
+solo. **Sabato e domenica sono giorni di sola mobilità** — nello split ci sono,
+ma senza esercizi — e lì quella voce è tutto il punteggio: aprire il giorno e
+farla vale 100, aprirlo e saltarla vale 0. In quei due giorni il riscaldamento
+non conta, perché non c'è niente da scaldare.
 
 **Non farsi vedere pesa come saltare un Push** (verificato il 25/08/2026). Un
 sabato con l'evento «Allenamento: Mobilità» sul calendario e nessuna seduta
