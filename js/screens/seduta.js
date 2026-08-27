@@ -196,7 +196,19 @@ async function vistaProgramma(vaiA, ridisegna) {
     const lista = h("div.list");
     for (const v of previsto.esercizi) {
       const def = store.esercizio(v.esercizioId);
-      const carico = v.carico != null ? v.carico : await store.ultimoCarico(v.esercizioId, null);
+      // Lo stesso carico che dirà la schermata dell'esercizio quando lo apri.
+      //
+      // Qui si leggeva solo il numero del brief: dopo una proposta accettata
+      // l'elenco del giorno diceva 30 kg — e sotto ti scriveva pure quali
+      // dischi montare per fare 30 — mentre aprendo l'esercizio ne chiedeva 35.
+      // Due risposte alla stessa domanda, e quella sbagliata era proprio quella
+      // che ti faceva caricare il bilanciere prima di cominciare.
+      const obiettivo = v.aTempo ? null : await store.obiettivoCorrente(v.esercizioId);
+      const carico =
+        obiettivo?.carico ??
+        (await store.caricoDaDecisione(v.esercizioId)) ??
+        (v.carico > 0 ? v.carico : null) ??
+        (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
       const dischi =
         carico != null && def?.attrezzo === "bilanciere" ? descriviDischi(carico, inv) : null;
       aggiungi(lista,
@@ -208,7 +220,17 @@ async function vistaProgramma(vaiA, ridisegna) {
             h(
               "span.sub",
               [
-                v.aTempo ? `${v.serie} × ${v.durataSec}s` : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`,
+                // Lo stesso bersaglio, scritto nello stesso modo, che troverai
+                // aprendo l'esercizio: con una proposta accettata comandano le
+                // ripetizioni dell'obiettivo, non il campo del brief, e una
+                // tenuta di tre minuti si scrive «3 min» come là, non «180s».
+                v.aTempo
+                  ? `${v.serie} × ${durataScritta(v.durataSec || 0)}`
+                  : obiettivo?.rip != null
+                    ? `${v.serie} × ${obiettivo.rip}`
+                    : senzaBersaglio(v)
+                      ? null
+                      : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`,
                 dischi,
               ]
                 .filter(Boolean)

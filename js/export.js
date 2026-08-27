@@ -253,11 +253,22 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
   const conRiposoPrevisto = serie.filter((s) => s.recuperoRealeSec != null && s.recuperoTargetSec);
   const recuperi = conRiposoPrevisto.map((s) => s.recuperoRealeSec);
   const senzaRiposoPrevisto = serie.filter((s) => s.recuperoRealeSec != null && !s.recuperoTargetSec).length;
-  // L'inizio del lavoro vero (una seduta ripresa il giorno dopo comincia
-  // quando riprendi, non quando l'avevi aperta).
-  const durata = seduta.oraFine
-    ? Math.round((seduta.oraFine - (seduta.oraInizioLavoro || seduta.oraInizio)) / 1000)
-    : null;
+  // Quanto è durato l'allenamento: il tempo di LAVORO congelato alla chiusura,
+  // come nel riepilogo e nello Storico. La distanza fra l'inizio e la chiusura
+  // resta solo come ripiego, per le sedute vecchie che quel numero non ce
+  // l'hanno.
+  //
+  // Qui si prendeva sempre la distanza, e la stessa seduta aveva due durate: il
+  // 10 agosto lo Storico diceva «49 min» e il pacchetto per il coach «6h 06m»,
+  // perché il cardio era stato fatto molte ore dopo i pesi. Il coach leggeva
+  // sei ore di allenamento che non c'erano state. È la stessa correzione già
+  // fatta per la densità qui sotto, che a questa riga non era arrivata.
+  const durata =
+    seduta.durataLavoroSec != null
+      ? seduta.durataLavoroSec
+      : seduta.oraFine
+        ? Math.round((seduta.oraFine - (seduta.oraInizioLavoro || seduta.oraInizio)) / 1000)
+        : null;
 
   // Il dettaglio completo, serie per serie. La tabella qui sopra è il riassunto
   // che si legge a colpo d'occhio; questa è la registrazione integrale, dove
