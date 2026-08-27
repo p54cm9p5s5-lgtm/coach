@@ -174,8 +174,8 @@ Seduta           id, data, tipoId, tipoNome, tipoProgrammatoId,
                  durataLavoroSec, riscaldamento { fatto, modalita, note },
                  cardio { previsto, eseguito, kmh, durataMin, durataPrevistaMin,
                           finitoIl, saltatoMotivo, note, soglie },
-                 stretching { fatto } (dal 27/08 sono le tenute del Blocco B: il campo
-                 conserva il nome vecchio perché è quello scritto in archivio),
+                 stretching { fatto } (solo sulle sedute chiuse prima del 27/08 sera:
+                 da lì lo stretching non è più un passaggio a sé),
                  mobilita { fatto },
                  previstiElenco[], progresso, completezza, notaGenerale,
                  orologio { … } (solo sulle sedute vecchie: non si scrive più)
@@ -277,12 +277,13 @@ Sequenza rigida, un passo per volta.
    un'unica sessione "Rafforzamento funzionale" che comprenda riscaldamento e pesi.
    **Le tenute statiche non stanno qui ma a fine seduta**: tenere a lungo un
    allungamento su un muscolo che poi deve spingere gli abbassa la forza per un
-   po'. Dal 27/08/2026 dopo i pesi vengono, in quest'ordine, il **Blocco A** —
-   otto movimenti di mobilità dinamica uguali tutti i giorni, caviglia, anca,
-   colonna, spalle e polso — e il **Blocco B**, diciotto tenute statiche da 45
-   secondi, una serie sola, che hanno preso il posto dei 3-5 allungamenti
-   mirati per giorno. Tutti e due si fanno anche sabato e domenica. Il cardio
-   resta in fondo ed è slegato: può essere fatto ore dopo.
+   po'. Dal 27/08/2026 dopo i pesi c'è **un unico blocco «Mobilità»** di 26
+   passaggi: prima otto movimenti dinamici uguali tutti i giorni (caviglia,
+   anca, colonna, spalle, polso), poi diciotto tenute statiche da 45 secondi,
+   una serie sola, che hanno preso il posto dei 3-5 allungamenti mirati per
+   giorno. Si fa anche sabato e domenica. Nel programma del coach le due metà si
+   chiamano Blocco A e Blocco B; nell'app no, è una cosa sola. Il cardio resta
+   in fondo ed è slegato: può essere fatto ore dopo.
 2. **Esercizio N** — una sola scheda, tutta visibile, senza niente da aprire:
    **video in testa**, poi esecuzione, setup, errori da evitare, cue, sicurezza.
    Video YouTube specifico per esercizio (inglese ammesso), verificato esistente

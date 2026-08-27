@@ -792,12 +792,15 @@ async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
     // il protocollo cambia domani, il punteggio di oggi non deve cambiare
     // con lui.
     //
-    // Un giorno di sola mobilità non ha niente da scaldare — non ci sono pesi
-    // davanti — ma le tenute le ha eccome: dal 27/08 il Blocco B si fa tutti i
-    // giorni, sabato e domenica inclusi. Prima le due cose erano legate insieme
-    // e sul fine settimana cadevano tutte e due.
+    // Un giorno di sola mobilità non ha niente da scaldare: non ci sono pesi
+    // davanti.
     previstoRiscaldamento: !giornoDiSolaMobilita(g.id),
-    previstoStretching: Boolean(riscaldamento(g.id)?.tenuteStatiche?.passi?.length),
+    // Lo stretching finale come passaggio a sé NON ESISTE PIÙ dal 27/08 sera:
+    // le tenute statiche sono finite dentro al blocco di mobilità, che è uno
+    // solo. Resta `false` scritto qui, e non tolto, perché è il valore congelato
+    // che il punteggio andrà a leggere: senza, ricadrebbe sul protocollo di
+    // oggi e una seduta di stasera verrebbe giudicata con le regole di domani.
+    previstoStretching: false,
     // Le soglie del cardio si congelano qui: se il coach cambia il brief, il
     // giudizio su un allenamento già fatto non deve cambiare da solo.
     cardio: {

@@ -567,25 +567,24 @@ export function punteggioAllenamento({
   // dello stretching finale hanno il blocco di mobilità. Contarli comunque
   // toglieva un quinto del punteggio per due cose che il programma non chiede,
   // o lo regalava a chi rispondeva «fatto» a una schermata vuota.
-  // Un giorno di sola mobilità. Serve solo più a scegliere le parole: fino al
-  // 27/08 azzerava tutta la voce, perché sabato e domenica non prevedevano né
-  // riscaldamento né stretching. Ora le tenute statiche si fanno anche loro,
-  // quindi metà voce è prevista eccome, e a decidere è l'elenco `quali` qui
-  // sotto — non più il tipo di giornata.
+  // Un giorno di sola mobilità. Serve a scegliere le parole quando non resta
+  // niente da dire: a decidere se la voce entra nel conto è l'elenco `quali`
+  // qui sotto, non il tipo di giornata.
   const soloMobilita = !quanti && Boolean(mobilita);
-  // Il campo si chiama ancora `stretching` perché è quello scritto in archivio
-  // dalla prima seduta in poi, e i dati vecchi non si riscrivono. Ma dal 27/08
-  // quel posto lo occupano le tenute statiche del Blocco B, e il nome che
-  // legge l'atleta è quello della cosa che fa davvero.
-  // «Fatto» e «saltato» non vanno bene per tutte e due: le tenute sono
-  // femminili plurali. Ogni voce si porta dietro il proprio participio, così
-  // la frase si costruisce senza dover indovinare l'accordo.
+  // Dal 27/08 sera lo stretching finale non è più un passaggio a sé: le tenute
+  // statiche stanno dentro al blocco di mobilità, che è uno solo. Sulle sedute
+  // nuove `previstoStretching` è congelato a false e qui resta il solo
+  // riscaldamento; su quelle vecchie la voce c'è ancora, con il suo valore di
+  // allora, e non deve cambiare.
+  //
+  // Ogni voce si porta dietro il proprio participio: «fatto» e «saltato» non
+  // vanno bene per tutte, e la frase si costruisce senza indovinare l'accordo.
   const quali = [
     previstoRiscaldamento
       ? { nome: "riscaldamento", fatto: Boolean(riscaldamento), fattoTesto: "fatto", saltatoTesto: "saltato" }
       : null,
     previstoStretching
-      ? { nome: "tenute finali", fatto: Boolean(stretching), fattoTesto: "fatte", saltatoTesto: "saltate" }
+      ? { nome: "stretching", fatto: Boolean(stretching), fattoTesto: "fatto", saltatoTesto: "saltato" }
       : null,
   ].filter(Boolean);
   const fatte = quali.filter((x) => x.fatto);

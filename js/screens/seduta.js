@@ -708,7 +708,7 @@ async function vistaRisultato(id, vaiA, da = null) {
           "div.list",
           h(
             "div.row",
-            h("div.main", h("span.title", "Tenute statiche di fine allenamento")),
+            h("div.main", h("span.title", "Stretching di fine allenamento")),
             sed.stretching.fatto ? h("span.pill.ok", "fatto") : h("span.pill.warn", "saltato")
           )
         )
@@ -932,12 +932,10 @@ async function disegna() {
     fase = S.sed.progresso.fase;
   }
 
-  // Un giorno senza tenute previste non deve fermarsi su una schermata vuota
-  // che chiede «fatto o saltato?» di niente — e rispondere «saltato» tirerebbe
-  // giù il punteggio per una cosa che il programma non chiede. Oggi il Blocco B
-  // c'è tutti i giorni, ma la protezione resta: se un domani il coach lo toglie
-  // da qualche giornata, l'app non chiede conto di una lista vuota.
-  if (fase === "stretching" && !passiStretching().length) {
+  // La fase «stretching» non esiste più: mobilità e tenute sono un blocco solo.
+  // Un allenamento aperto prima di questo cambiamento può però trovarcisi
+  // dentro, e non deve restare su una schermata che non c'è: passa oltre.
+  if (fase === "stretching") {
     await salvaProgresso({ fase: dopoLoStretching() });
     fase = S.sed.progresso.fase;
   }
@@ -963,7 +961,6 @@ async function disegna() {
   else if (fase === "recupero") await vistaRecupero(corpo, piede);
   else if (fase === "questionario") await vistaQuestionario(corpo, piede);
   else if (fase === "cardio") await vistaCardio(corpo, piede);
-  else if (fase === "stretching") await vistaStretching(corpo, piede);
   else if (fase === "mobilita") await vistaMobilita(corpo, piede);
   else await vistaFine(corpo, piede);
 }
@@ -987,14 +984,7 @@ function testata() {
     const q = passiMobilita().length;
     const k = Math.min((S.sed.progresso?.mobPasso ?? 0) + 1, Math.max(q, 1));
     passo = q ? `Mobilità ${k} di ${q}` : "Mobilità";
-    avanzamento = q ? 88 + ((k - 1) / q) * 3 : 88;
-  } else if (fase === "stretching") {
-    // Anche qui si va un passaggio per volta: la testata dice quale, come fa
-    // con gli esercizi.
-    const q = passiStretching().length;
-    const k = Math.min((S.sed.progresso?.strPasso ?? 0) + 1, Math.max(q, 1));
-    passo = q ? `Tenute ${k} di ${q}` : "Tenute statiche";
-    avanzamento = q ? 92 + ((k - 1) / q) * 3 : 92;
+    avanzamento = q ? 88 + ((k - 1) / q) * 7 : 88;
   } else if (fase === "fine") {
     passo = "Riepilogo";
     avanzamento = 100;
@@ -1105,9 +1095,6 @@ async function menuSeduta() {
       ...(fase !== "mobilita" && passiMobilita().length
         ? [{ etichetta: "Vai alla mobilità", valore: "mobilita" }]
         : []),
-      ...(fase !== "stretching" && passiStretching().length
-        ? [{ etichetta: "Vai alle tenute", valore: "stretching" }]
-        : []),
       { etichetta: "Metti in pausa", valore: "pausa" },
       ...(fase !== "fine" ? [{ etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" }] : []),
       { etichetta: "Annulla l'allenamento (elimina i dati)", valore: "annulla", stile: "destructive" },
@@ -1121,10 +1108,6 @@ async function menuSeduta() {
     await disegna();
   } else if (scelta === "mobilita") {
     await salvaProgresso({ fase: "mobilita" });
-    await disegna();
-  } else if (scelta === "stretching") {
-    if (!(await cardioDaChiudere())) return;
-    await salvaProgresso({ fase: "stretching" });
     await disegna();
   } else if (scelta === "chiudi") {
     if (!(await cardioDaChiudere())) return;
@@ -1283,26 +1266,25 @@ function avvicinamento(def, mobilita) {
   };
 }
 
+/* La mobilità di fine seduta: UN BLOCCO SOLO.
+ *
+ * Dentro ci sono due nature diverse — prima i movimenti dinamici, che servono a
+ * mantenere l'escursione, poi le tenute ferme, che servono a guadagnarla — e il
+ * coach le chiama Blocco A e Blocco B. Ma chi si allena non fa due cose: ne fa
+ * una, di fila, e questa è la lista in cui la fa. I nomi A e B restano nel file
+ * dei protocolli e nei documenti, dove servono a chi scrive il programma; qui
+ * dentro non compaiono.
+ *
+ * L'ordine conta ed è di sicurezza: prima il dinamico, poi le tenute. Tenere a
+ * lungo un allungamento prima di spingere abbassa la forza — per questo tutto il
+ * blocco sta dopo i pesi, e le tenute stanno in coda. */
 function passiMobilita() {
   const prot = store.riscaldamento(S.sed.tipoId);
-  return (prot?.mobilitaFinale || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video }));
+  const voce = (v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video });
+  return [...(prot?.mobilitaFinale || []), ...(prot?.tenuteStatiche?.passi || [])].map(voce);
 }
 
-// Il Blocco B: le tenute statiche. Dal 27/08 stanno dove prima c'era lo
-// stretching mirato del giorno — le stesse zone, tenute più a lungo e su tutto
-// il corpo — e la fase in cui vivono si chiama ancora «stretching» perché è il
-// nome scritto in archivio da ogni seduta esistente. I quattro allungamenti per
-// giorno restano nel file dei protocolli, non sono stati cancellati: se un
-// giorno si torna indietro, si torna indietro con una riga.
-function passiStretching() {
-  const prot = store.riscaldamento(S.sed.tipoId);
-  return (prot?.tenuteStatiche?.passi || []).map((v) => ({
-    nome: v.nome,
-    dose: v.dose,
-    come: v.come,
-    video: v.video,
-  }));
-}
+
 
 async function vistaRiscaldamento(corpo, piede) {
   const conTapis = S.sed.riscaldamento?.modalita !== "senzaTapis";
@@ -3658,57 +3640,6 @@ async function vistaCardioInCorso(corpo, piede, r) {
 }
 
 
-// ---------- Blocco B: le tenute statiche, come passo dell'allenamento ----------
-
-async function vistaStretching(corpo, piede) {
-  const passi = passiStretching();
-
-  await vistaGuidata(corpo, piede, {
-    chiave: "str",
-    tenuta: true,
-    kicker: "Tenute statiche",
-    titolo: "Tenute statiche",
-    passi,
-    vuoto: "Nessuna tenuta prevista per questo giorno",
-    etichettaFine: "Tenute fatte",
-    extra: (i) => [
-      i === 0
-        ? h(
-            "div.guida",
-            h(
-              "section",
-              h("h3", "Perché adesso"),
-              h(
-                "p",
-                "A muscolo caldo e a pesi finiti. Tenere a lungo un allungamento prima di spingere abbassa la forza per un po': per aprire la seduta c'è il riscaldamento, e subito dopo i pesi c'è la mobilità dinamica. Questo blocco serve a guadagnare escursione, quello serve a mantenerla — non si sostituiscono. Una sola serie da 45 secondi per posizione, e su tutti e due i lati dove è per lato."
-              )
-            )
-          )
-        : null,
-    ],
-    tastiExtra: () => [
-      h(
-        "button.btn.secondary",
-        {
-          onclick: azione(async () => {
-            S.sed = await store.aggiornaSeduta(S.sed.id, { stretching: { fatto: false } });
-            await salvaProgresso({ fase: dopoLoStretching() });
-            await disegna();
-          }),
-        },
-        "Salta"
-      ),
-    ],
-    onFine: async () => {
-      S.sed = await store.aggiornaSeduta(S.sed.id, {
-        stretching: { fatto: true, quando: Date.now() },
-      });
-      await salvaProgresso({ fase: dopoLoStretching() });
-      await disegna();
-    },
-  });
-}
-
 /* L'ordine della seduta, in un posto solo.
 
    **riscaldamento → pesi → mobilità (Blocco A) → tenute (Blocco B) → cardio**
@@ -3731,7 +3662,9 @@ async function vistaStretching(corpo, piede) {
    Ogni passaggio che quel giorno non esiste viene saltato invece di mostrare
    una schermata vuota che chiede «fatto o saltato?» di niente. */
 const dopoGliEsercizi = () => (passiMobilita().length ? "mobilita" : dopoLaMobilita());
-const dopoLaMobilita = () => (passiStretching().length ? "stretching" : dopoLoStretching());
+const dopoLaMobilita = () => dopoLoStretching();
+// Resta come porto d'arrivo per gli allenamenti aperti che si trovano ancora
+// nella vecchia fase «stretching», che non viene più generata da nessuno.
 const dopoLoStretching = () => (S.sed.cardio?.previsto ? "cardio" : "fine");
 const dopoIlCardio = () => "fine";
 
@@ -3763,7 +3696,7 @@ async function vistaMobilita(corpo, piede) {
                 h("h3", "Perché adesso"),
                 h(
                   "p",
-                  `${(S.sed.previstiElenco?.length ?? 0) > 0 ? "Subito dopo i pesi, prima delle tenute." : "Il blocco di oggi."} Full body tutti i giorni, sabato e domenica inclusi: caviglia, anca, colonna, spalle, polso. Serve a MANTENERE la mobilità — guadagnare escursione è compito delle tenute, dopo. Dose fissa, non si progredisce.`
+                  `${(S.sed.previstiElenco?.length ?? 0) > 0 ? "Subito dopo i pesi, a muscoli caldi: tenere a lungo un allungamento prima di spingere abbassa la forza, per questo il blocco sta qui e non all'inizio." : "Il blocco di oggi."} Full body tutti i giorni, sabato e domenica inclusi: caviglia, anca, colonna, spalle, polso. Prima i movimenti che sciolgono, poi le posizioni da tenere ferme 45 secondi. Dose fissa, non si progredisce.`
                 )
               )
             ),
