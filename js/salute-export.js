@@ -228,7 +228,11 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
           tipo: (ATTRIBUTO(r, "workoutActivityType") || "").replace("HKWorkoutActivityType", ""),
         };
         // Un <Workout .../> che si chiude sulla stessa riga non ha statistiche.
-        if (r.trimEnd().endsWith("/>")) {
+        // Vale anche per un blocco intero scritto su una riga sola: Salute va a
+        // capo, ma se un giorno non lo facesse il blocco resterebbe aperto per
+        // sempre e si mangerebbe in silenzio tutti gli allenamenti successivi —
+        // che è il modo peggiore di sbagliare, perché non si vede.
+        if (r.trimEnd().endsWith("/>") || r.indexOf("</Workout>") >= 0) {
           allenamenti.push(dentroWorkout);
           dentroWorkout = null;
         }

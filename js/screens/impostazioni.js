@@ -825,6 +825,17 @@ async function importaBackup(ridisegna) {
     return;
   }
 
+  // Riconoscere il file PRIMA di chiedere conferma. Il controllo c'è già in
+  // `importaTutto`, ma scatta dopo il foglio: significava chiedere «sostituisco
+  // tutti i tuoi dati?» per un file che l'app aveva già capito non essere un
+  // backup — e chi risponde di sì a quella domanda si è già spaventato per
+  // niente. Un file che contiene solo `null` faceva anche di peggio: la riga
+  // che legge la data esplodeva con un errore in inglese, a schermata aperta.
+  if (!dump || typeof dump !== "object" || Array.isArray(dump) || dump.formato !== "coach-backup") {
+    toast("Questo non è un backup di Coach.");
+    return;
+  }
+
   // Il ripristino da file è UNO: sostituisce tutto. Il codice sapeva fare anche
   // «unisci», scegliendo in base a un campo `modo` dentro il file — ma nessun
   // backup scritto da quest'app quel campo ce l'ha, quindi era una strada che
