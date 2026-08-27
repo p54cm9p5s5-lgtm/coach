@@ -39,6 +39,18 @@ import { analizza } from "../js/salute.js";
 import { valida as validaBrief, estraiBlocco } from "../js/brief.js";
 import { carichiPossibili, carichiManubrio, aPaio } from "../js/plates.js";
 
+/**
+ * La cartella dell'app, vista da questo file.
+ *
+ * Scritti come «/js/store.js» i percorsi funzionavano solo sul server di prova,
+ * dove l'app sta alla radice. Sul sito vero l'app vive sotto «/coach/» e la
+ * rete leggeva pagine di errore credendole codice: girava solo dove non serviva.
+ * Ricavarla da qui la fa funzionare ovunque l'app sia messa — anche dal
+ * telefono, che è dove l'app vive davvero.
+ */
+const RADICE = new URL("../", import.meta.url).href;
+const dentroApp = (percorso) => new URL(percorso, RADICE).href;
+
 const esito = (nome, casi, errori) => ({
   nome,
   casi,
@@ -83,7 +95,7 @@ export async function verificaSorgenteUnica() {
   const sorgenti = new Map();
   for (const f of FILE) {
     try {
-      const r = await fetch(`/${f}?rete=${Math.random()}`, { cache: "no-store" });
+      const r = await fetch(dentroApp(`${f}?rete=${Math.random()}`), { cache: "no-store" });
       sorgenti.set(f, r.ok ? await r.text() : "");
       if (!r.ok) errori.push(`${f}: non si legge (${r.status})`);
     } catch (e) {
@@ -121,7 +133,7 @@ export async function verificaSorgenteUnica() {
   // Le due cose sono già andate a divergere una volta — SPEC e README hanno
   // promesso per settimane che aprire un esercizio non contattava nessuno.
   try {
-    const html = await (await fetch(`/index.html?rete=${Math.random()}`, { cache: "no-store" })).text();
+    const html = await (await fetch(dentroApp(`index.html?rete=${Math.random()}`), { cache: "no-store" })).text();
     const m = html.match(/http-equiv="Content-Security-Policy"[\s\S]*?content="([^"]*)"/i);
     if (!m) errori.push("index.html non ha più una Content-Security-Policy");
     else {
@@ -157,7 +169,7 @@ export async function verificaDati() {
   const errori = [];
   let casi = 0;
 
-  const lib = await (await fetch("/data/esercizi.json", { cache: "no-store" })).json();
+  const lib = await (await fetch(dentroApp("data/esercizi.json"), { cache: "no-store" })).json();
   const esercizi = Array.isArray(lib) ? lib : lib.esercizi || [];
   const visti = new Set();
   const video = new Map();
