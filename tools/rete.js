@@ -944,6 +944,28 @@ export async function reteDistruttiva({ forza = false } = {}) {
     errori.push(`annullare un allenamento lascia dietro: ${JSON.stringify(resti)}`);
   }
 
+  // Un backup scritto da una versione VECCHIA dev'essere ancora leggibile.
+  //
+  // È lo scenario per cui il backup esiste: telefono perso, app reinstallata
+  // mesi dopo, file di allora. Il formato è cambiato per strada — `fusoMinuti`
+  // non c'era — e un ripristino che perde un pezzo lì non ha una seconda
+  // occasione.
+  const IMMAGINE = "data:image/png;ba" + "se64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  await db.importaTutto({ formato: "coach-backup", versione: 1, creatoIl: "2026-01-01T00:00:00.000Z", dati: {
+    sedute: [{ id: "RETE-VECCHIA", data: "2026-01-08", stato: "completata", tipoId: "prova",
+      oraInizio: 1, oraFine: 2, durataLavoroSec: 4200,
+      completezza: { totale: 84, voci: [{ nome: "Esercizi", quota: 0.74, peso: 60 }], previsti: 1, svolti: 1, saltati: 0, perEsercizio: { prova: { totale: 84 } } } }],
+    foto: [{ id: "RETE-F", data: "2026-01-08", posa: "fronte", immagine: IMMAGINE }],
+    allenamentiWatch: [{ uuid: "RETE-W", data: "2026-01-08", durataSec: 4649, sedutaId: null }],
+    noteWatch: [{ uuid: "RETE-W", talkTest: "faticoso", nota: "prova" }],
+  } }, "sostituisci");
+  const vecchia = await db.get("sedute", "RETE-VECCHIA");
+  if (vecchia?.completezza?.totale !== 84) errori.push(`un backup vecchio perde il punteggio congelato (${vecchia?.completezza?.totale})`);
+  if (store.durataSeduta(vecchia) !== 4200) errori.push(`un backup vecchio perde la durata (${store.durataSeduta(vecchia)})`);
+  if ((await db.get("foto", "RETE-F"))?.immagine !== IMMAGINE) errori.push("un backup vecchio rovina le foto");
+  if ((await db.get("allenamentiWatch", "RETE-W"))?.durataSec !== 4649) errori.push("un backup vecchio perde la durata di un allenamento del Watch");
+  if ((await db.get("noteWatch", "RETE-W"))?.talkTest !== "faticoso") errori.push("un backup vecchio perde il talk-test");
+
   // e un backup buono deve ancora entrare
   await db.importaTutto({ formato: "coach-backup", versione: 1, dati: { sedute: [{ id: "RETE2", data: "2026-01-03", stato: "completata", tipoId: "prova" }] } }, "sostituisci");
   const dopo = (await db.all("sedute")).map((s) => s.id);
