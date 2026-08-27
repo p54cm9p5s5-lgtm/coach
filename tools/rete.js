@@ -1432,6 +1432,103 @@ export async function provaLaRete() {
  * Scrive, quindi si rifiuta di partire su un archivio che contiene qualcosa.
  * Si lancia sull'ambiente di prova, non sul telefono.
  */
+/* Il confronto con la base di riferimento.
+ *
+ * La base e' una fotografia dell'archivio presa fuori dall'app (sta in una
+ * cartella privata, non qui dentro) e serve a rispondere a una domanda sola:
+ * dopo le modifiche di oggi, i numeri congelati sono ancora quelli?
+ *
+ * Il 27/08 la ricetta di questo confronto non era scritta da nessuna parte e ho
+ * dovuto ricavarla dal registro di una sessione vecchia. Un'ora buona per
+ * riscoprire quali campi guardare e come. Ora sta qui.
+ *
+ * Due trappole gia' pagate, tutte e due segnate nel codice:
+ *  - perEsercizio nella base sono NUMERI, non oggetti: confrontarli come oggetti
+ *    fa risultare diverse tutte le sedute;
+ *  - il confronto dev'essere INDIFFERENTE all'ordine delle chiavi, altrimenti
+ *    basta riscrivere il file della base con un altro strumento per far
+ *    sembrare cambiato un archivio identico.
+ *
+ * Non legge niente da sola: la base gliela passa chi la chiama.
+ */
+export async function confrontaConLaBase(base, { magazzino = store, archivio = db } = {}) {
+  const differenze = [];
+  const canonico = (v) =>
+    v === null || typeof v !== "object"
+      ? JSON.stringify(v)
+      : Array.isArray(v)
+        ? "[" + v.map(canonico).join(",") + "]"
+        : "{" + Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + canonico(v[k])).join(",") + "}";
+  const impronta = async (t) => {
+    const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+    return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("").slice(0, 16);
+  };
+
+  for (const nome of Object.keys(base.conta || {})) {
+    const quanti = await archivio.count(nome);
+    if (quanti !== base.conta[nome]) differenze.push(`conta.${nome}: ${base.conta[nome]} -> ${quanti}`);
+  }
+
+  const sedute = await archivio.all("sedute");
+  for (const attesa of base.sedute || []) {
+    const s = sedute.find((x) => x.id === attesa.id);
+    if (!s) { differenze.push(`seduta del ${attesa.data}: sparita`); continue; }
+    const c = s.completezza || null;
+    const adesso = {
+      data: s.data,
+      tipo: s.tipoId,
+      stato: s.stato,
+      totale: c ? c.totale : null,
+      congelatoIl: c ? c.congelatoIl || null : null,
+      previsti: c ? c.previsti : null,
+      svolti: c ? c.svolti : null,
+      saltati: c ? c.saltati : null,
+      voci: c ? (c.voci || []).map((v) => `${v.nome}:${v.peso}:${Math.round((v.quota ?? 0) * 10000)}`) : [],
+      perEsercizio: c
+        ? Object.fromEntries(Object.entries(c.perEsercizio || {}).map(([k, v]) => [k, v.totale]))
+        : {},
+      cardio: s.cardio
+        ? {
+            previsto: !!s.cardio.previsto,
+            eseguito: !!s.cardio.eseguito,
+            rimandato: !!s.cardio.rimandato,
+            soglie: s.cardio.soglie || null,
+          }
+        : null,
+      nPrevistiElenco: Array.isArray(s.previstiElenco) ? s.previstiElenco.length : null,
+      improntaCongelato: await impronta(JSON.stringify([c, s.previstiElenco, s.cardio?.soglie])),
+      improntaPacchetto: await impronta(
+        String(
+          pacchetto.logSeduta({
+            seduta: s,
+            serie: await magazzino.serieDi(s.id),
+            questionari: await magazzino.questionariDi(s.id),
+            esercizio: magazzino.esercizio,
+            giornoSplit: magazzino.giornoSplit,
+            previsti: s.previstiElenco?.length
+              ? s.previstiElenco
+              : magazzino.giornoSplit(s.tipoId)?.esercizi || [],
+            completezza: await magazzino.completezzaSeduta(s.id),
+          })
+        )
+      ),
+    };
+    for (const campo of Object.keys(adesso)) {
+      if (canonico(adesso[campo]) !== canonico(attesa[campo])) {
+        differenze.push(`seduta del ${attesa.data}: ${campo}`);
+      }
+    }
+  }
+
+  return {
+    nome: "l'archivio e' ancora quello della base",
+    casi: `${(base.sedute || []).length} sedute, ${Object.keys(base.conta || {}).length} archivi`,
+    errori: differenze.length,
+    primi: differenze.slice(0, 10),
+    passata: differenze.length === 0,
+  };
+}
+
 export async function reteDistruttiva({ forza = false } = {}) {
   const quante = (await db.all("sedute")).length + (await db.all("misure")).length + (await db.all("foto")).length;
   if (quante && !forza) {

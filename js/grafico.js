@@ -497,7 +497,14 @@ export function graficoLinea({
   // — in che giorni ti sei allenato — sta già nel grafico a barre qui sopra,
   // dove ha una legenda che la spiega. Qui il lavoro della linea è un altro:
   // far vedere l'andamento.
-  const raggio = punti.length > 40 ? 1.4 : 2.2;
+  // La misura è quella che prima avevano i giorni con allenamento — i «pezzi
+  // scuri» — non quella dei punti sbiaditi: uniformare verso il basso aveva
+  // reso la curva più magra di prima.
+  //
+  // E non è più una soglia secca a 40 punti: il raggio segue lo spazio che c'è
+  // davvero fra un giorno e l'altro, così i punti non si toccano mai. Con un
+  // anno di storico la vecchia soglia li faceva sovrapporre in una striscia.
+  const raggio = Math.max(1.2, Math.min(3.2, passo * 0.38));
   // L'ultimo punto con un dato è quello che stai guardando: resta un filo più
   // grande, ma dello stesso inchiostro. È un segno solo all'estremo destro, non
   // una macchia in mezzo alla curva.
@@ -509,11 +516,19 @@ export function graficoLinea({
   punti.forEach((p, i) => {
     if (p.valore != null) ultimoConDato = i;
   });
+  // Quando i giorni sono così tanti che fra un punto e l'altro non c'è spazio
+  // nemmeno per disegnarlo, i punti non si disegnano: si toccherebbero fra loro
+  // e diventerebbero una striscia continua, che non è un grafico a punti — è
+  // una linea più grassa che finge. Con un anno di storico succede. Resta
+  // l'ultimo, che è il segnaposto di dove sei arrivato.
+  const troppoFitti = passo < 3;
   punti.forEach((p, i) => {
     if (p.valore == null) return;
+    const finale = i === ultimoConDato;
+    if (troppoFitti && !finale) return;
     svg.append(
       el("circle", {
-        cx: x(i), cy: y(p.valore), r: i === ultimoConDato ? raggio + 0.8 : raggio,
+        cx: x(i), cy: y(p.valore), r: finale ? raggio + 0.8 : raggio,
         fill: "var(--label)",
       })
     );
