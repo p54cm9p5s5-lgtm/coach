@@ -36,7 +36,7 @@ import * as ex from "../js/export.js";
 import { tutto as nucleoDimostrato } from "./verifica-esaustiva.js";
 import { valutaProgressione } from "../js/segnali.js";
 import { analizza } from "../js/salute.js";
-import { valida as validaBrief } from "../js/brief.js";
+import { valida as validaBrief, estraiBlocco } from "../js/brief.js";
 import { carichiPossibili, carichiManubrio, aPaio } from "../js/plates.js";
 
 const esito = (nome, casi, errori) => ({
@@ -724,6 +724,94 @@ export function verificaLettoreBrief() {
   return esito("i brief storti, fermati prima di entrare in vigore", `${casi} brief`, errori);
 }
 
+/* --------------------------------------------- 9. le strade di guasto */
+
+/**
+ * I rifiuti dell'app, fatti scattare uno per uno.
+ *
+ * 37 `throw`, 87 `catch`, 63 avvisi a schermo: strade scritte con cura e mai
+ * percorse. Una strada di guasto che non funziona non si vede finché non
+ * serve, e quando serve è tardi.
+ *
+ * Tutte queste rifiutano PRIMA di scrivere: si possono provare sull'archivio
+ * vero senza toccarlo. E ognuna deve rifiutare **con una frase che spiega**:
+ * un errore in inglese sullo schermo di un'app italiana è un difetto suo.
+ */
+export async function verificaStradeDiGuasto() {
+  const errori = [];
+  let casi = 0;
+
+  const deve = async (nome, fn, atteso) => {
+    casi++;
+    let messaggio = null;
+    try { await fn(); } catch (e) { messaggio = String(e?.message ?? e); }
+    if (messaggio === null) { errori.push(`«${nome}»: non si è rifiutata, doveva`); return; }
+    if (!atteso.test(messaggio)) { errori.push(`«${nome}»: rifiutata, ma dice «${messaggio.slice(0, 60)}»`); return; }
+    // La frase dev'essere una frase, e in italiano: gli errori del browser
+    // arrivavano a schermo in inglese in mezzo a una schermata italiana.
+    if (messaggio.length < 15) errori.push(`«${nome}»: il messaggio non spiega niente («${messaggio}»)`);
+    if (/\b(undefined|null|NaN|TypeError|is not a function|Cannot read)\b/.test(messaggio)) {
+      errori.push(`«${nome}»: il messaggio è roba da programmatori — «${messaggio.slice(0, 60)}»`);
+    }
+  };
+
+  // Il tetto delle sigarette: la decisione dichiarata irreversibile.
+  // Sono i quattro rifiuti che contano più di tutti, e rifiutano prima di
+  // scrivere, quindi provarli qui non tocca niente.
+  await deve("il massimo non è un numero", () => store.dichiaraTettoFumo("tanto", "2026-09-01"), /numero da zero in su/i);
+  await deve("il massimo è negativo", () => store.dichiaraTettoFumo(-1, "2026-09-01"), /numero da zero in su/i);
+  await deve("manca il giorno da cui vale", () => store.dichiaraTettoFumo(0, "domani"), /serve il giorno/i);
+  const tetto = await store.tettoFumoDichiarato();
+  if (tetto) {
+    if (tetto.massimo <= 0) {
+      await deve("IL MASSIMO A ZERO NON SI PUÒ RIALZARE", () => store.dichiaraTettoFumo(5, "2026-09-01"), /già a zero|non si torna indietro/i);
+      await deve("nemmeno rimettendo lo stesso zero", () => store.dichiaraTettoFumo(0, "2026-09-01"), /già a zero|non si torna indietro/i);
+    } else {
+      await deve("il massimo non si può alzare", () => store.dichiaraTettoFumo(tetto.massimo + 1, tetto.dal), /solo scendere/i);
+    }
+  }
+
+  // La notte corretta a mano
+  await deve("notte senza giorno", () => store.correggiNotte("ieri", { aLetto: "23:00", sveglio: "07:00" }), /giorno della notte/i);
+  await deve("notte senza le due ore", () => store.correggiNotte("2026-08-20", {}), /ora in cui sei andato a letto/i);
+  // «Le due ore non tornano» NON si prova: è una strada morta, e lo dice il
+  // commento in store.js — quando «a letto» viene dopo «sveglio» l'inizio si
+  // sposta al giorno prima e la durata esce sempre positiva. Provate tutte e
+  // 2304 le coppie di ore: nessuna la fa scattare.
+  await deve("più di venti ore di sonno", () => store.correggiNotte("2026-08-20", { aLetto: "02:00", sveglio: "01:00" }), /venti ore/i);
+
+  // Le cose che non esistono più
+  await deve("una seduta che non c'è", () => store.aggiornaSeduta("mai-esistita", { notaGenerale: "x" }), /seduta non trovata/i);
+  await deve("chiudere una seduta che non c'è", () => store.chiudiSeduta("mai-esistita", {}), /non esiste più|eliminata/i);
+  await deve("rispondere a una proposta che non c'è", () => store.rispondiAProposta("mai-esistita", "accettata"), /proposta non esiste/i);
+  await deve("un giorno dello split che non c'è", () => store.iniziaSeduta({ data: "2026-08-27", giornoId: "non-esiste-questo" }), /giorno dello split/i);
+
+  // L'orologio e le foto
+  await deve("nota su un allenamento che non c'è", () => store.salvaNotaAllenamento(null, { talkTest: "si" }), /serve l'allenamento/i);
+  await deve("un talk-test inventato", () => store.salvaNotaAllenamento("uuid-qualunque", { talkTest: "boh" }), /talk-test non riconosciuto/i);
+  // Il modello dell'immagine si compone a pezzi: scritto per intero, questo file
+  // farebbe scattare la guardia della pubblicazione — è già successo, e ha fatto
+  // bene a fermarmi. Un'eccezione in più sarebbe un buco in più.
+  const FINTA_IMMAGINE = "data:image/png;ba" + "se64,AA";
+  await deve("una posa che il protocollo non prevede", () => store.registraFoto({ posa: "posa-inventata", immagine: FINTA_IMMAGINE }), /non è una posa/i);
+
+  // Il brief
+  await deve("un brief senza il blocco", () => estraiBlocco("un documento qualunque, senza niente dentro"), /blocco|COACH-DATA/i);
+  await deve("un blocco che non è JSON", () => estraiBlocco("```COACH-DATA\n{ questo non è json\n```"), /json|blocco/i);
+
+  // Il pacchetto dei dati
+  await deve("appunti vuoti", () => analizza(""), /niente da leggere|vuoti/i);
+  await deve("un testo che non è un pacchetto", () => analizza("ciao come stai"), /pacchetto dati di Coach/i);
+  await deve("un pacchetto di un'altra versione", () => analizza("COACH-DATI v9\nGIORNO 2026-08-20 passi=1"), /versione/i);
+
+  // Il ripristino
+  await deve("un backup che non è un backup", () => db.importaTutto({ formato: "altro" }, "sostituisci"), /non riconosciuto|intestazione/i);
+  await deve("un backup di una versione più nuova", () => db.importaTutto({ formato: "coach-backup", versione: 99, dati: { sedute: [] } }, "sostituisci"), /formato v99|aggiorna l'app/i);
+  await deve("un backup con una sezione illeggibile", () => db.importaTutto({ formato: "coach-backup", versione: 1, dati: { sedute: "rotto" } }, "sostituisci"), /danneggiato/i);
+
+  return esito("le strade di guasto, percorse una per una", `${casi} rifiuti`, errori);
+}
+
 /* ------------------------------------------------------------- la rete */
 
 export async function rete() {
@@ -739,6 +827,7 @@ export async function rete() {
     await verificaMotoreProposte(),
     verificaLettorePacchetto(),
     verificaLettoreBrief(),
+    await verificaStradeDiGuasto(),
   ];
   const errori = prove.reduce((a, p) => a + p.errori, 0);
   const casi = prove.reduce((a, p) => a + (parseInt(p.casi, 10) || 0), 0);
@@ -802,10 +891,61 @@ export async function reteDistruttiva({ forza = false } = {}) {
     }
     if ((await impronta()) !== prima) errori.push(`«${nome}»: l'archivio è cambiato`);
   }
+  // La copia interna: la rete che ti prende se il ripristino da file va male.
+  // Non era mai stata provata, ed è l'ultima cosa che resta quando tutto il
+  // resto è andato storto.
+  await db.importaTutto({ formato: "coach-backup", versione: 1, dati: {
+    sedute: [{ id: "RETE-PRIMA", data: "2026-01-05", stato: "completata", tipoId: "prova" }],
+    misure: [{ id: "RETE-M", data: "2026-01-05", tipo: "peso", valore: 80 }],
+  } }, "sostituisci");
+  await store.snapshotAutomatico("prova della rete");
+  await db.importaTutto({ formato: "coach-backup", versione: 1, dati: {
+    sedute: [{ id: "RETE-DISASTRO", data: "2026-01-06", stato: "completata", tipoId: "prova" }],
+  } }, "sostituisci");
+  const salvata = await store.snapshotSalvato();
+  if (!salvata) errori.push("la copia interna non si rilegge: la rete di sicurezza non c'è");
+  else {
+    if (!Array.isArray(salvata.parziale) || !salvata.parziale.includes("foto")) {
+      errori.push("la copia interna non dichiara di non avere le foto: ripristinarla le cancellerebbe");
+    }
+    await db.importaTutto(salvata, "sostituisci");
+    const tornate = (await db.all("sedute")).map((x) => x.id);
+    const misure = (await db.all("misure")).map((x) => x.id);
+    if (JSON.stringify(tornate) !== JSON.stringify(["RETE-PRIMA"])) errori.push(`la copia interna riporta ${tornate.join(",") || "niente"} invece di RETE-PRIMA`);
+    if (JSON.stringify(misure) !== JSON.stringify(["RETE-M"])) errori.push(`la copia interna perde le misure: ${misure.join(",") || "niente"}`);
+  }
+
+  // Annullare un allenamento deve portare via TUTTO quello che gli apparteneva:
+  // serie e questionari orfani restano in archivio e falsano i conti.
+  await db.importaTutto({ formato: "coach-backup", versione: 1, dati: {
+    sedute: [{ id: "RETE-ANN", data: "2026-01-07", stato: "inCorso", tipoId: "prova" }],
+    serie: [{ id: "RETE-SER", sedutaId: "RETE-ANN", esercizioId: "squat", carico: 20 }],
+    esercizioLog: [{ id: "RETE-LOG", sedutaId: "RETE-ANN", esercizioId: "squat", rpe: 7 }],
+  } }, "sostituisci");
+  await store.annullaSeduta("RETE-ANN");
+  const resti = {
+    sedute: (await db.all("sedute")).length,
+    serie: (await db.all("serie")).length,
+    questionari: (await db.all("esercizioLog")).length,
+  };
+  if (resti.sedute || resti.serie || resti.questionari) {
+    errori.push(`annullare un allenamento lascia dietro: ${JSON.stringify(resti)}`);
+  }
+
   // e un backup buono deve ancora entrare
   await db.importaTutto({ formato: "coach-backup", versione: 1, dati: { sedute: [{ id: "RETE2", data: "2026-01-03", stato: "completata", tipoId: "prova" }] } }, "sostituisci");
   const dopo = (await db.all("sedute")).map((s) => s.id);
   if (JSON.stringify(dopo) !== JSON.stringify(["RETE2"])) errori.push(`un backup buono non è entrato: ${dopo.join(",")}`);
+
+  // Si pulisce dietro: le sedute finte lasciate qui farebbero suonare la rete
+  // al giro dopo, e un collaudo che sporca è un collaudo che si impara a
+  // ignorare.
+  for (const nome of Object.keys(db.SCHEMA)) {
+    for (const riga of await db.all(nome)) {
+      const chiave = riga[db.SCHEMA[nome].keyPath];
+      if (String(chiave).startsWith("RETE")) await db.del(nome, chiave);
+    }
+  }
 
   const r = esito("ripristino da file rovinati", `${casi.length} file storti`, errori);
   return { verdetto: r.passata ? "PASSATA" : `${r.errori} problemi`, ...r };

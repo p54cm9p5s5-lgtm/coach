@@ -3519,6 +3519,12 @@ export async function correggiNotte(data, { aLetto, sveglio, nota = null } = {})
   const inizio = new Date(`${data}T${aLetto}:00`);
   if (hL * 60 + mL >= hS * 60 + mS) inizio.setDate(inizio.getDate() - 1);
   const minuti = Math.round((risveglio - inizio) / 60000);
+  // Questo rifiuto non può scattare, e va detto invece di lasciarlo credere una
+  // difesa: quando «a letto» è più tardi di «sveglio» la riga sopra sposta
+  // l'inizio al giorno prima, quindi la durata esce sempre positiva. Provate
+  // tutte e 2304 le coppie di ore possibili, zero danno una durata negativa.
+  // Resta come cintura: costa una riga e copre il giorno in cui quella logica
+  // venisse cambiata da qualcun altro.
   if (!(minuti > 0)) throw new Error("Le due ore non tornano: controlla quale viene prima.");
   if (minuti > 20 * 60) throw new Error("Più di venti ore di sonno: probabilmente una delle due ore è sbagliata.");
   const p = (n) => String(n).padStart(2, "0");

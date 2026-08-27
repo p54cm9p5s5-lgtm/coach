@@ -435,10 +435,33 @@ export async function importaTutto(dump, modo = "sostituisci") {
       : [];
   const coinvolti = [...new Set([...daScrivere, ...daSvuotare])];
 
+  // La copia interna sopravvive a un ripristino, sempre.
+  //
+  // Vive in `impostazioni`, che «sostituisci» svuota: un ripristino cancellava
+  // proprio la rete di sicurezza che serve se quel ripristino era sbagliato.
+  // Le due schermate che ripristinano lo sapevano e la riscrivevano dopo — ma
+  // era una regola tenuta da CHI CHIAMA, non dal meccanismo: bastava una
+  // strada nuova che chiamasse `importaTutto` e la copia spariva in silenzio.
+  // Se il file ne porta una sua, comanda quella: è un archivio completo e la
+  // sua storia viene con lui.
+  let copiaInterna = null;
+  if (daSvuotare.includes("impostazioni")) {
+    const portaLaSua = (dump.dati?.impostazioni || []).some((r) => r?.chiave === "snapshotAutomatico");
+    if (!portaLaSua) {
+      copiaInterna = (await all("impostazioni")).filter(
+        (r) => r?.chiave === "snapshotAutomatico" || r?.chiave === "ultimoSnapshot"
+      );
+    }
+  }
+
   const db = await open();
   const { t, done } = tx(db, coinvolti, "readwrite");
   try {
     for (const store of daSvuotare) t.objectStore(store).clear();
+    if (copiaInterna?.length) {
+      const os = t.objectStore("impostazioni");
+      for (const r of copiaInterna) os.put(r);
+    }
     for (const store of daScrivere) {
       const os = t.objectStore(store);
       if (modo === "sostituisci" && !daSvuotare.includes(store)) os.clear();
