@@ -581,7 +581,20 @@ let playInVolo = null;
  */
 export function avviaAllarme() {
   fermaAllarme();
-  sessioneAudio("transient");
+  // «playback» e non «transient», ed è la differenza fra sentire l'allarme e
+  // non sentirlo.
+  //
+  // Su iOS l'interruttore del silenzioso non è un volume: è la sessione audio
+  // a decidere se lo rispetta. «transient», «transient-solo» e «ambient» lo
+  // rispettano — cioè col silenzioso inserito restano muti — e «playback» no,
+  // perché è la categoria di chi sta riproducendo qualcosa che l'utente ha
+  // chiesto. Un allarme di fine recupero è esattamente quello: l'hai chiesto tu
+  // avviando il timer, e ti serve mentre il telefono è appoggiato sulla panca.
+  //
+  // Si dichiara SOLO qui, mentre suona: `fermaAllarme` torna subito ad
+  // «ambient» con `rilasciaAudio()`, così la musica di chi stava ascoltando
+  // riparte invece di restare ferma per tutto l'allenamento.
+  sessioneAudio("playback");
   const a = elemento();
   a.loop = true;
   a.currentTime = 0;
