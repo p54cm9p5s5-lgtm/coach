@@ -252,6 +252,21 @@ state riempite il **14/08/2026**, con i movimenti e le dosi del master:
 | Upper | 5 | 5 | 3 |
 | Lower | 5 | 4 | 3 |
 
+**Il 27 agosto 2026 le ultime due colonne sono cambiate tutte e due**, su
+richiesta del coach:
+
+| | Prima del 27/08 | Dal 27/08 |
+|---|---|---|
+| Blocco A — mobilità di fine seduta | 2-3 passaggi, zone diverse per giorno | **8 passaggi uguali per tutti**: caviglia, anca, colonna, spalle (due movimenti) e **polso** (tre) |
+| Blocco B — dopo di lei | lo stretching mirato del giorno, 4-5 allungamenti | **18 tenute statiche full body**, 45 secondi ciascuna, una serie sola |
+| Quando | anche sabato e domenica per A, mai per lo stretching | **tutti e sette i giorni per tutte e due** |
+
+Lo stretching mirato per giorno **non è stato cancellato**: le scalette restano
+scritte in `data/riscaldamento.json`, e se un domani si torna indietro basta una
+riga. Semplicemente non è più quello che l'app fa fare, perché le 18 tenute
+coprono le stesse zone e più a lungo, e farli tutti e due voleva dire mezz'ora
+abbondante di allungamento dopo ogni seduta.
+
 La serie di avvicinamento **dice quale esercizio è e con quanto**: «Serie di
 avvicinamento: Squat con bilanciere — 1 × 8-10 · bilanciere scarico (10 kg)»,
 col video di quell'esercizio. Il carico lo calcola l'app dall'inventario e dal
@@ -336,26 +351,35 @@ esercizio** già in vista (nome, carico, dischi da montare). Prima le due cose
 stavano insieme: il tasto che mandava le risposte chiudeva anche il riposo, e
 rispondendo si finiva per saltare il recupero — che è la parte che conta.
 
-**4. Stretching** — come il riscaldamento: **un allungamento per volta**, con il
-cronometro sulla durata che dice il protocollo (di solito 30 secondi per lato)
-che parte con «Avvia» e si chiude con «Fatto · altro lato». Chi vuole saltarlo
-può ancora farlo con un tocco.
+**4. Mobilità (Blocco A)** — dose fissa, un passaggio per volta, come il
+riscaldamento: otto movimenti uguali tutti i giorni, caviglia, anca, colonna,
+spalle e polso. Serve a **mantenere** la mobilità.
 
-**5. Mobilità** — dose fissa, un passaggio per volta, come il riscaldamento:
-vedi «La mobilità dopo lo stretching» più sotto.
+**5. Tenute statiche (Blocco B)** — **una tenuta per volta**, con il cronometro
+sui 45 secondi che dice il protocollo, che parte con «Avvia» e si chiude con
+«Fatto · altro lato». Diciotto posizioni, quindici delle quali per lato: circa
+mezz'ora. Serve a **guadagnare** escursione, che è un'altra cosa dal mantenerla.
+Chi vuole saltarlo può ancora farlo con un tocco.
 
-**Dal 26 agosto 2026 l'ordine è questo**: riscaldamento → pesi → stretching →
-mobilità → **cardio in fondo**. Prima il cardio veniva subito dopo i pesi e
-stretching e mobilità lo seguivano. Un passaggio che quel giorno non è previsto
-non compare affatto: si passa oltre, invece di fermarsi su una schermata vuota
-che chiede «fatto o saltato?» di niente.
+**Dal 27 agosto 2026 l'ordine è questo**: riscaldamento → pesi → mobilità →
+tenute → **cardio in fondo**. Prima era pesi → stretching → mobilità → cardio,
+e prima ancora il cardio veniva subito dopo i pesi.
+
+Il vincolo vero è uno solo, ed è di sicurezza: **le tenute vanno dopo i pesi, a
+muscoli caldi**, perché tenere a lungo un allungamento prima di spingere abbassa
+la forza per un po'. Col cardio non c'entra niente — camminare a 4,5-5 km/h non
+è lavoro massimale — e infatti il cardio può anche essere fatto ore dopo.
+
+Un passaggio che quel giorno non è previsto non compare affatto: si passa oltre,
+invece di fermarsi su una schermata vuota che chiede «fatto o saltato?» di
+niente.
 
 **6. Cardio**, se previsto: si può eseguire, **rimandare**, o dichiarare non
 eseguito con motivo obbligatorio.
 
 **Rimandare** serve a un caso preciso: l'allenamento è finito ma il cardio non si
 può fare subito — il tapis occupato, un impegno in mezzo. Da quando il cardio è
-l'ultimo passaggio, stretching e mobilità sono già stati fatti: con «Rimanda il
+l'ultimo passaggio, mobilità e tenute sono già state fatte: con «Rimanda il
 cardio» si va dritti al riepilogo; l'allenamento resta aperto e in **Home compare «Cardio da fare»**
 con un tasto che porta lì. Rimandato non vuol dire saltato: nel punteggio non
 conta niente finché non lo fai o non lo dichiari non eseguito. Se si chiude
@@ -459,15 +483,15 @@ l'app si usa normalmente. Guardare Salute o segnare una sigaretta mentre aspetti
 il tapis non costa l'allenamento.
 
 In Home compare **«Allenamento in pausa»** con scritto **da dove riprende** — «dal
-cardio», «dallo stretching», «dagli esercizi» — e il tasto dice la stessa cosa:
+cardio», «dalle tenute», «dagli esercizi» — e il tasto dice la stessa cosa:
 **«Riprendi dal cardio»**. Toccandolo si riapre esattamente quella schermata.
 
-Il caso per cui è nato: **stretching e mobilità fatti, il cardio no.** Toccando
+Il caso per cui è nato: **mobilità e tenute fatte, il cardio no.** Toccando
 «Rimanda il cardio» l'allenamento si ferma lì, sul cardio, e si esce; in Home
 resta «Cardio da fare» con «Fai il cardio», che riapre la schermata del cardio
 pronta. Prima si finiva sul riepilogo, e da lì l'unica strada indietro era
 «Torna agli esercizi»: per fare una camminata bisognava ripassare dalla
-valutazione dell'ultimo esercizio e da stretching e mobilità già fatti.
+valutazione dell'ultimo esercizio e da mobilità e tenute già fatte.
 
 **7. Riepilogo e chiusura.** Il cardio è l'ultimo passaggio, quindi da qui si chiude. Durata, densità, recuperi medi reali, punteggio
 scomposto, dati mancanti e nota generale. I numeri dell'orologio **non si
@@ -537,22 +561,26 @@ quello.
 |---|---|
 | Esercizi (media dei loro punteggi, sul numero previsto) | 60 |
 | Cardio | 20 |
-| Riscaldamento e stretching | 20 |
+| Riscaldamento e tenute finali | 20 |
 | Mobilità di fine seduta | 20 |
 
 **Nel conto entra solo quello che quel giorno prevede davvero.** Una voce che
 non c'entra viene esclusa e il suo peso si ridistribuisce sulle altre, invece di
 contare zero:
 
-- I giorni del nuovo split (push, pull, legs, upper, lower) **non hanno lo
-  stretching finale**: al suo posto c'è il blocco di mobilità. Su quei giorni la
-  voce si chiama solo «Riscaldamento», e la schermata dello stretching non viene
-  nemmeno mostrata — prima ci si fermava su una pagina vuota che chiedeva «fatto
+- Una schermata che quel giorno non ha contenuto non viene nemmeno mostrata, e
+  non toglie punti: prima ci si fermava su una pagina vuota che chiedeva «fatto
   o saltato?» di niente, e rispondere «saltato» toglieva un quinto del punteggio
   per una cosa che il programma non chiede.
 - I giorni di **sola mobilità** (sabato e domenica, che di esercizi non ne hanno)
-  escludono sia gli esercizi sia riscaldamento e stretching: lì la mobilità è
-  tutto il punteggio.
+  escludono gli esercizi e il riscaldamento — non c'è niente da scaldare — ma
+  **dal 27/08 le tenute le prevedono eccome**: lì il punteggio è metà mobilità e
+  metà tenute. Prima cadevano tutte e due insieme e la mobilità era tutto il
+  punteggio.
+- **Le sedute già chiuse non cambiano.** Quello che il programma prevedeva viene
+  congelato quando l'allenamento nasce: un sabato di prima di stasera vale
+  ancora 100 se la mobilità è stata fatta e 0 se è stata saltata, esattamente
+  come allora.
 
 **Tetti**: un esercizio saltato → max 75; cardio sotto metà → max 60; cardio più
 corto del previsto → max 85. Cardio oltre la velocità di protocollo → quota

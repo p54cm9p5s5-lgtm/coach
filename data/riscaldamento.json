@@ -1,6 +1,6 @@
 {
   "versione": 1,
-  "nota": "Prima della seduta si fa mobilità dinamica, non stretching statico: allungare a freddo un muscolo che poi deve spingere riduce la forza espressa. Lo stretching statico sta a fine seduta, dove serve davvero.",
+  "nota": "Prima della seduta si fa mobilità dinamica, non tenute statiche: allungare a lungo un muscolo che poi deve spingere gli abbassa la forza per un po'. Le tenute statiche stanno a fine seduta, a muscoli caldi, dove servono davvero — è il Blocco B.",
   "cardio": {
     "conTapis": {
       "titolo": "Camminata 5 minuti",
@@ -859,16 +859,6 @@
     "push": {
       "mobilitaFinale": [
         {
-          "nome": "Cerchi con il bacino",
-          "dose": "10 per lato",
-          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
-          "video": {
-            "id": "qkrJXGVj_OQ",
-            "titolo": "Warm-up Exercise — Hip Circles",
-            "canale": "Live to Move Physical Therapy"
-          }
-        },
-        {
           "nome": "Mobilità di caviglia",
           "dose": "10 per lato",
           "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
@@ -879,13 +869,73 @@
           }
         },
         {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente. Se il polso destro dà fastidio in questa posizione, fallo sui pugni chiusi o sugli avambracci: stesso movimento, stesse ripetizioni.",
           "video": {
             "id": "LIVJZZyZ2qM",
             "titolo": "Cat-Cow Stretch",
             "canale": "Dr. Dawn"
+          }
+        },
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
+        },
+        {
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
+        },
+        {
+          "nome": "Cerchi con il polso",
+          "dose": "10 per direzione, per lato",
+          "come": "Braccio avanti, gomito fermo, mano rilassata. Disegna cerchi lenti con la mano, prima in una direzione poi nell'altra. Un lato alla volta. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "7xY-JrvtnC0",
+            "titolo": "Wrist Mobility Follow Along Routine: 6 Simple Wrist Exercises for Pain Relief",
+            "canale": "Virtual Hand Care"
+          }
+        },
+        {
+          "nome": "Flessione ed estensione del polso",
+          "dose": "10 per lato",
+          "come": "Braccio teso davanti a te, palmo in giù. Porta la mano verso l'alto e poi verso il basso muovendo solo il polso, lentamente. L'altra mano non accompagna: qui non si tira niente. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "kLa1en7QIEU",
+            "titolo": "Wrist ROM | Supination Pronation, Radial Ulnar Deviation, Flexion Extension",
+            "canale": "UCSF Orthopaedic Surgery"
+          }
+        },
+        {
+          "nome": "Prono-supinazione dell'avambraccio",
+          "dose": "10 per lato",
+          "come": "Gomito al fianco piegato a 90°, avambraccio avanti. Ruota il palmo verso l'alto e poi verso il basso, tenendo il gomito fermo contro il fianco. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "gHxGA4ZDOMo",
+            "titolo": "Wrist Supination & Pronation - Ask Doctor Jo",
+            "canale": "AskDoctorJo"
           }
         }
       ],
@@ -1002,6 +1052,16 @@
     "pull": {
       "mobilitaFinale": [
         {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        },
+        {
           "nome": "Cerchi con il bacino",
           "dose": "10 per lato",
           "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
@@ -1012,13 +1072,63 @@
           }
         },
         {
-          "nome": "Mobilità di caviglia",
-          "dose": "10 per lato",
-          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente. Se il polso destro dà fastidio in questa posizione, fallo sui pugni chiusi o sugli avambracci: stesso movimento, stesse ripetizioni.",
           "video": {
-            "id": "ElrpduJn92Y",
-            "titolo": "Knee To Wall Exercise for Ankle Mobility",
-            "canale": "Dr. Jess Harvey, Osteopath"
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        },
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
+        },
+        {
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
+        },
+        {
+          "nome": "Cerchi con il polso",
+          "dose": "10 per direzione, per lato",
+          "come": "Braccio avanti, gomito fermo, mano rilassata. Disegna cerchi lenti con la mano, prima in una direzione poi nell'altra. Un lato alla volta. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "7xY-JrvtnC0",
+            "titolo": "Wrist Mobility Follow Along Routine: 6 Simple Wrist Exercises for Pain Relief",
+            "canale": "Virtual Hand Care"
+          }
+        },
+        {
+          "nome": "Flessione ed estensione del polso",
+          "dose": "10 per lato",
+          "come": "Braccio teso davanti a te, palmo in giù. Porta la mano verso l'alto e poi verso il basso muovendo solo il polso, lentamente. L'altra mano non accompagna: qui non si tira niente. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "kLa1en7QIEU",
+            "titolo": "Wrist ROM | Supination Pronation, Radial Ulnar Deviation, Flexion Extension",
+            "canale": "UCSF Orthopaedic Surgery"
+          }
+        },
+        {
+          "nome": "Prono-supinazione dell'avambraccio",
+          "dose": "10 per lato",
+          "come": "Gomito al fianco piegato a 90°, avambraccio avanti. Ruota il palmo verso l'alto e poi verso il basso, tenendo il gomito fermo contro il fianco. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "gHxGA4ZDOMo",
+            "titolo": "Wrist Supination & Pronation - Ask Doctor Jo",
+            "canale": "AskDoctorJo"
           }
         }
       ],
@@ -1124,6 +1234,36 @@
     "legs": {
       "mobilitaFinale": [
         {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        },
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente. Se il polso destro dà fastidio in questa posizione, fallo sui pugni chiusi o sugli avambracci: stesso movimento, stesse ripetizioni.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        },
+        {
           "nome": "Cerchi con le braccia",
           "dose": "20s per direzione",
           "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
@@ -1144,13 +1284,33 @@
           }
         },
         {
-          "nome": "Cat-cow",
-          "dose": "10 ripetizioni",
-          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "nome": "Cerchi con il polso",
+          "dose": "10 per direzione, per lato",
+          "come": "Braccio avanti, gomito fermo, mano rilassata. Disegna cerchi lenti con la mano, prima in una direzione poi nell'altra. Un lato alla volta. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
           "video": {
-            "id": "LIVJZZyZ2qM",
-            "titolo": "Cat-Cow Stretch",
-            "canale": "Dr. Dawn"
+            "id": "7xY-JrvtnC0",
+            "titolo": "Wrist Mobility Follow Along Routine: 6 Simple Wrist Exercises for Pain Relief",
+            "canale": "Virtual Hand Care"
+          }
+        },
+        {
+          "nome": "Flessione ed estensione del polso",
+          "dose": "10 per lato",
+          "come": "Braccio teso davanti a te, palmo in giù. Porta la mano verso l'alto e poi verso il basso muovendo solo il polso, lentamente. L'altra mano non accompagna: qui non si tira niente. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "kLa1en7QIEU",
+            "titolo": "Wrist ROM | Supination Pronation, Radial Ulnar Deviation, Flexion Extension",
+            "canale": "UCSF Orthopaedic Surgery"
+          }
+        },
+        {
+          "nome": "Prono-supinazione dell'avambraccio",
+          "dose": "10 per lato",
+          "come": "Gomito al fianco piegato a 90°, avambraccio avanti. Ruota il palmo verso l'alto e poi verso il basso, tenendo il gomito fermo contro il fianco. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "gHxGA4ZDOMo",
+            "titolo": "Wrist Supination & Pronation - Ask Doctor Jo",
+            "canale": "AskDoctorJo"
           }
         }
       ],
@@ -1267,16 +1427,6 @@
     "upper": {
       "mobilitaFinale": [
         {
-          "nome": "Cerchi con il bacino",
-          "dose": "10 per lato",
-          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
-          "video": {
-            "id": "qkrJXGVj_OQ",
-            "titolo": "Warm-up Exercise — Hip Circles",
-            "canale": "Live to Move Physical Therapy"
-          }
-        },
-        {
           "nome": "Mobilità di caviglia",
           "dose": "10 per lato",
           "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
@@ -1287,13 +1437,73 @@
           }
         },
         {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente. Se il polso destro dà fastidio in questa posizione, fallo sui pugni chiusi o sugli avambracci: stesso movimento, stesse ripetizioni.",
           "video": {
             "id": "LIVJZZyZ2qM",
             "titolo": "Cat-Cow Stretch",
             "canale": "Dr. Dawn"
+          }
+        },
+        {
+          "nome": "Cerchi con le braccia",
+          "dose": "20s per direzione",
+          "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
+          "video": {
+            "id": "ndmSvkEdNQQ",
+            "titolo": "Arm Circles — Shoulder Warm Up",
+            "canale": "Dr. Christy Lee"
+          }
+        },
+        {
+          "nome": "Rotazioni interne ed esterne di spalla",
+          "dose": "10 per lato",
+          "come": "Braccia laterali all'altezza delle spalle, gomiti piegati a 90° con gli avambracci verso l'alto, come i pali di una porta. Ruota gli avambracci verso il basso senza muovere i gomiti, poi torna su.",
+          "video": {
+            "id": "zPXPWpFJXKg",
+            "titolo": "Goalpost Rotation",
+            "canale": "Faith & Fitness"
+          }
+        },
+        {
+          "nome": "Cerchi con il polso",
+          "dose": "10 per direzione, per lato",
+          "come": "Braccio avanti, gomito fermo, mano rilassata. Disegna cerchi lenti con la mano, prima in una direzione poi nell'altra. Un lato alla volta. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "7xY-JrvtnC0",
+            "titolo": "Wrist Mobility Follow Along Routine: 6 Simple Wrist Exercises for Pain Relief",
+            "canale": "Virtual Hand Care"
+          }
+        },
+        {
+          "nome": "Flessione ed estensione del polso",
+          "dose": "10 per lato",
+          "come": "Braccio teso davanti a te, palmo in giù. Porta la mano verso l'alto e poi verso il basso muovendo solo il polso, lentamente. L'altra mano non accompagna: qui non si tira niente. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "kLa1en7QIEU",
+            "titolo": "Wrist ROM | Supination Pronation, Radial Ulnar Deviation, Flexion Extension",
+            "canale": "UCSF Orthopaedic Surgery"
+          }
+        },
+        {
+          "nome": "Prono-supinazione dell'avambraccio",
+          "dose": "10 per lato",
+          "come": "Gomito al fianco piegato a 90°, avambraccio avanti. Ruota il palmo verso l'alto e poi verso il basso, tenendo il gomito fermo contro il fianco. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "gHxGA4ZDOMo",
+            "titolo": "Wrist Supination & Pronation - Ask Doctor Jo",
+            "canale": "AskDoctorJo"
           }
         }
       ],
@@ -1410,6 +1620,36 @@
     "lower": {
       "mobilitaFinale": [
         {
+          "nome": "Mobilità di caviglia",
+          "dose": "10 per lato",
+          "come": "In piedi davanti a un muro, un piede a 10-15 cm. Porta il ginocchio in avanti verso il muro senza staccare il tallone da terra. Se il tallone si alza sei troppo vicino: allontanati.",
+          "video": {
+            "id": "ElrpduJn92Y",
+            "titolo": "Knee To Wall Exercise for Ankle Mobility",
+            "canale": "Dr. Jess Harvey, Osteopath"
+          }
+        },
+        {
+          "nome": "Cerchi con il bacino",
+          "dose": "10 per lato",
+          "come": "In piedi, mani sui fianchi. Disegna cerchi ampi col bacino, come un hula-hoop immaginario, in entrambe le direzioni.",
+          "video": {
+            "id": "qkrJXGVj_OQ",
+            "titolo": "Warm-up Exercise — Hip Circles",
+            "canale": "Live to Move Physical Therapy"
+          }
+        },
+        {
+          "nome": "Cat-cow",
+          "dose": "10 ripetizioni",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente. Se il polso destro dà fastidio in questa posizione, fallo sui pugni chiusi o sugli avambracci: stesso movimento, stesse ripetizioni.",
+          "video": {
+            "id": "LIVJZZyZ2qM",
+            "titolo": "Cat-Cow Stretch",
+            "canale": "Dr. Dawn"
+          }
+        },
+        {
           "nome": "Cerchi con le braccia",
           "dose": "20s per direzione",
           "come": "In piedi, braccia tese lateralmente all'altezza delle spalle. Disegna cerchi piccoli con le punte delle dita, prima in una direzione poi nell'altra, allargandoli man mano.",
@@ -1430,13 +1670,33 @@
           }
         },
         {
-          "nome": "Cat-cow",
-          "dose": "10 ripetizioni",
-          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "nome": "Cerchi con il polso",
+          "dose": "10 per direzione, per lato",
+          "come": "Braccio avanti, gomito fermo, mano rilassata. Disegna cerchi lenti con la mano, prima in una direzione poi nell'altra. Un lato alla volta. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
           "video": {
-            "id": "LIVJZZyZ2qM",
-            "titolo": "Cat-Cow Stretch",
-            "canale": "Dr. Dawn"
+            "id": "7xY-JrvtnC0",
+            "titolo": "Wrist Mobility Follow Along Routine: 6 Simple Wrist Exercises for Pain Relief",
+            "canale": "Virtual Hand Care"
+          }
+        },
+        {
+          "nome": "Flessione ed estensione del polso",
+          "dose": "10 per lato",
+          "come": "Braccio teso davanti a te, palmo in giù. Porta la mano verso l'alto e poi verso il basso muovendo solo il polso, lentamente. L'altra mano non accompagna: qui non si tira niente. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "kLa1en7QIEU",
+            "titolo": "Wrist ROM | Supination Pronation, Radial Ulnar Deviation, Flexion Extension",
+            "canale": "UCSF Orthopaedic Surgery"
+          }
+        },
+        {
+          "nome": "Prono-supinazione dell'avambraccio",
+          "dose": "10 per lato",
+          "come": "Gomito al fianco piegato a 90°, avambraccio avanti. Ruota il palmo verso l'alto e poi verso il basso, tenendo il gomito fermo contro il fianco. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "gHxGA4ZDOMo",
+            "titolo": "Wrist Supination & Pronation - Ask Doctor Jo",
+            "canale": "AskDoctorJo"
           }
         }
       ],
@@ -1564,7 +1824,7 @@
         {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente. Se il polso destro dà fastidio in questa posizione, fallo sui pugni chiusi o sugli avambracci: stesso movimento, stesse ripetizioni.",
           "video": {
             "id": "LIVJZZyZ2qM",
             "titolo": "Cat-Cow Stretch",
@@ -1589,6 +1849,36 @@
             "id": "zPXPWpFJXKg",
             "titolo": "Goalpost Rotation",
             "canale": "Faith & Fitness"
+          }
+        },
+        {
+          "nome": "Cerchi con il polso",
+          "dose": "10 per direzione, per lato",
+          "come": "Braccio avanti, gomito fermo, mano rilassata. Disegna cerchi lenti con la mano, prima in una direzione poi nell'altra. Un lato alla volta. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "7xY-JrvtnC0",
+            "titolo": "Wrist Mobility Follow Along Routine: 6 Simple Wrist Exercises for Pain Relief",
+            "canale": "Virtual Hand Care"
+          }
+        },
+        {
+          "nome": "Flessione ed estensione del polso",
+          "dose": "10 per lato",
+          "come": "Braccio teso davanti a te, palmo in giù. Porta la mano verso l'alto e poi verso il basso muovendo solo il polso, lentamente. L'altra mano non accompagna: qui non si tira niente. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "kLa1en7QIEU",
+            "titolo": "Wrist ROM | Supination Pronation, Radial Ulnar Deviation, Flexion Extension",
+            "canale": "UCSF Orthopaedic Surgery"
+          }
+        },
+        {
+          "nome": "Prono-supinazione dell'avambraccio",
+          "dose": "10 per lato",
+          "come": "Gomito al fianco piegato a 90°, avambraccio avanti. Ruota il palmo verso l'alto e poi verso il basso, tenendo il gomito fermo contro il fianco. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "gHxGA4ZDOMo",
+            "titolo": "Wrist Supination & Pronation - Ask Doctor Jo",
+            "canale": "AskDoctorJo"
           }
         }
       ]
@@ -1618,7 +1908,7 @@
         {
           "nome": "Cat-cow",
           "dose": "10 ripetizioni",
-          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente.",
+          "come": "A quattro zampe, mani sotto le spalle e ginocchia sotto i fianchi. Inspirando inarca la schiena e alza la testa; espirando arrotonda la schiena e porta il mento al petto. Alterna lentamente. Se il polso destro dà fastidio in questa posizione, fallo sui pugni chiusi o sugli avambracci: stesso movimento, stesse ripetizioni.",
           "video": {
             "id": "LIVJZZyZ2qM",
             "titolo": "Cat-Cow Stretch",
@@ -1644,9 +1934,234 @@
             "titolo": "Goalpost Rotation",
             "canale": "Faith & Fitness"
           }
+        },
+        {
+          "nome": "Cerchi con il polso",
+          "dose": "10 per direzione, per lato",
+          "come": "Braccio avanti, gomito fermo, mano rilassata. Disegna cerchi lenti con la mano, prima in una direzione poi nell'altra. Un lato alla volta. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "7xY-JrvtnC0",
+            "titolo": "Wrist Mobility Follow Along Routine: 6 Simple Wrist Exercises for Pain Relief",
+            "canale": "Virtual Hand Care"
+          }
+        },
+        {
+          "nome": "Flessione ed estensione del polso",
+          "dose": "10 per lato",
+          "come": "Braccio teso davanti a te, palmo in giù. Porta la mano verso l'alto e poi verso il basso muovendo solo il polso, lentamente. L'altra mano non accompagna: qui non si tira niente. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "kLa1en7QIEU",
+            "titolo": "Wrist ROM | Supination Pronation, Radial Ulnar Deviation, Flexion Extension",
+            "canale": "UCSF Orthopaedic Surgery"
+          }
+        },
+        {
+          "nome": "Prono-supinazione dell'avambraccio",
+          "dose": "10 per lato",
+          "come": "Gomito al fianco piegato a 90°, avambraccio avanti. Ruota il palmo verso l'alto e poi verso il basso, tenendo il gomito fermo contro il fianco. Senza forzare il fine corsa: si arriva dove il movimento va da solo. Se tira o dà fastidio ci si ferma prima e non si insiste.",
+          "video": {
+            "id": "gHxGA4ZDOMo",
+            "titolo": "Wrist Supination & Pronation - Ask Doctor Jo",
+            "canale": "AskDoctorJo"
+          }
         }
       ]
     }
   },
-  "notaMobilitaFinale": "Blocco di mobilità dopo lo stretching finale (master brief §17-bis, dal 24/08/2026). Dose fissa: nessun carico, nessuna soglia tecnica, nessuna progressione. Ogni giorno copre le zone che il suo riscaldamento non tocca già; sabato e domenica tutte e quattro."
+  "notaMobilitaFinale": "Blocco A — mobilità dinamica quotidiana (master brief §17-bis, aggiornato il 27/08/2026). Va dopo i pesi e prima del cardio. Dose fissa: nessun carico, nessuna soglia tecnica, nessuna progressione. Dal 27/08 è FULL BODY tutti i giorni, sabato e domenica inclusi, nessuna rotazione: cinque zone (caviglia, anca, colonna, spalle, polso). Prima ruotava in base a cosa il riscaldamento del giorno copriva già — il ragionamento non regge per un obiettivo di mantenimento, e la rotazione costava più attrito di quanto facesse risparmiare. Serve a MANTENERE la mobilità: per guadagnare escursione c'è il Blocco B, che è un'altra cosa e sta dopo il cardio.",
+  "tenuteStatiche": {
+    "nota": "Blocco B — tenute statiche full body (master brief, dal 27/08/2026; stime e ordine corretti la sera del 27/08). Serve a GUADAGNARE escursione, mentre il Blocco A mantiene: sono due cose diverse e non si sostituiscono a vicenda. Dal 27/08 prende il posto dello stretching finale del giorno, tutti i giorni, sabato e domenica inclusi. 45 secondi per posizione e UNA SOLA SERIE, definitiva: quello che conta è il volume settimanale, non le serie per sessione — 45s per sette giorni fanno più di due serie tre volte a settimana, e la seconda serie costerebbe mezz'ora al giorno per un rendimento che cala. Nessuna progressione automatica a 2 serie: se un giorno cambierà sarà una decisione esplicita, non un incremento previsto dall'app. Allungamento percepito chiaro, mai dolore acuto. VINCOLO DI SICUREZZA, non una preferenza: va SEMPRE dopo i pesi, a muscoli caldi, mai prima e mai come riscaldamento — lo stretching statico prolungato deprime temporaneamente la forza, quindi non deve precedere il lavoro pesante. Col cardio non c'entra niente: camminare a 4,5-5 km/h non è lavoro massimale, e infatti il cardio può anche essere fatto ore dopo, in un altro momento della giornata. Tutto quello che è per lato si fa su tutti e due i lati.",
+    "durataSecPerPosizione": 45,
+    "passi": [
+      {
+        "nome": "Polpaccio a gamba tesa",
+        "dose": "45s per lato",
+        "come": "Mani al muro, una gamba indietro tesa con il tallone a terra e la punta dritta avanti. Sposta il peso verso il muro finché senti tirare sul polpaccio. Il ginocchio dietro resta teso: è il gastrocnemio.",
+        "video": {
+          "id": "cc0k8cQxeEU",
+          "titolo": "Calf Stretch at Wall",
+          "canale": "P4S Golf"
+        }
+      },
+      {
+        "nome": "Polpaccio a ginocchio flesso",
+        "dose": "45s per lato",
+        "come": "Stessa posizione di prima, ma piega il ginocchio della gamba dietro tenendo il tallone a terra. Si sente più in basso, vicino al tendine. È un muscolo diverso dal precedente (il soleo), non è una ripetizione.",
+        "video": {
+          "id": "cc0k8cQxeEU",
+          "titolo": "Calf Stretch at Wall",
+          "canale": "P4S Golf"
+        }
+      },
+      {
+        "nome": "Pettorale allo stipite",
+        "dose": "45s per lato",
+        "come": "Avambraccio appoggiato allo stipite di una porta, gomito all'altezza della spalla e piegato a 90°. Ruota lentamente il busto dalla parte opposta finché senti aprirsi il petto.",
+        "video": {
+          "id": "T6ZozOBoyo8",
+          "titolo": "Doorway Chest Stretch",
+          "canale": "Dr. Femi Betiku"
+        }
+      },
+      {
+        "nome": "Tricipite sopra la testa",
+        "dose": "45s per lato",
+        "come": "Alza un braccio, piega il gomito e porta la mano dietro la schiena fra le scapole. Con l'altra mano spingi il gomito indietro e verso il basso, dolcemente.",
+        "video": {
+          "id": "-7UYYTHcL94",
+          "titolo": "Overhead Triceps Stretch",
+          "canale": "Daily Workout Builder",
+          "verticale": true
+        }
+      },
+      {
+        "nome": "Deltoide posteriore incrociato",
+        "dose": "45s per lato",
+        "come": "Braccio teso davanti al petto, parallelo a terra. Con l'altro braccio afferralo da sotto (gomito o avambraccio) e tiralo verso il petto. Si sente dietro la spalla.",
+        "video": {
+          "id": "gJ5qmKJK0dY",
+          "titolo": "Posterior Deltoid Stretch",
+          "canale": "Orchard Health Clinic",
+          "verticale": true
+        }
+      },
+      {
+        "nome": "Bicipite e flessori del braccio",
+        "dose": "45s per lato",
+        "come": "Braccio teso indietro con il palmo appoggiato al muro all'altezza del fianco. Ruota lentamente il busto dal lato opposto. Si sente davanti al braccio.",
+        "video": {
+          "id": "8p9wcvIGEsE",
+          "titolo": "How To Biceps Stretch",
+          "canale": "COACH ALI",
+          "verticale": true
+        }
+      },
+      {
+        "nome": "Collo laterale",
+        "dose": "45s per lato",
+        "come": "Inclina la testa portando l'orecchio verso la spalla. Con la mano dello stesso lato appoggiata sulla testa, accompagna il movimento senza tirare. La spalla opposta resta bassa.",
+        "video": {
+          "id": "qa2cYqdmHUg",
+          "titolo": "Upper Trapezius Stretch",
+          "canale": "Dr. Jon Saunders",
+          "verticale": true
+        }
+      },
+      {
+        "nome": "Collo obliquo",
+        "dose": "45s per lato",
+        "come": "Ruota e abbassa lo sguardo verso l'ascella opposta, come se annusassi sotto il braccio. Accompagna con la mano dello stesso lato, senza forzare. Allunga l'elevatore della scapola, che è un muscolo diverso da quello di prima.",
+        "video": {
+          "id": "U9tijfMcfP8",
+          "titolo": "How to do a Levator Scapulae Stretch | Proper Form & Technique | NASM",
+          "canale": "National Academy of Sports Medicine (NASM)"
+        }
+      },
+      {
+        "nome": "Sfinge o cobra",
+        "dose": "45s, tenuta unica",
+        "come": "A pancia in giù, avambracci a terra sotto le spalle (sfinge) oppure braccia più tese se non dà fastidio alla schiena (cobra). Solleva il petto tenendo il bacino a terra e le spalle lontane dalle orecchie. Se la lombare tira, resta sugli avambracci.",
+        "video": {
+          "id": "GDEJKBKfk70",
+          "titolo": "Breathe: Relax & Stretch Back with Sphinx & Cobra",
+          "canale": "Whole Soul Life"
+        }
+      },
+      {
+        "nome": "Figura 4 supina",
+        "dose": "45s per lato",
+        "come": "Sdraiato sulla schiena, caviglia appoggiata sopra il ginocchio opposto a formare un 4. Afferra la coscia di sotto con le mani e tirala verso di te. Si sente nel gluteo della gamba incrociata.",
+        "video": {
+          "id": "4y4e-bJolHs",
+          "titolo": "Figure 4 Stretch for Glutes",
+          "canale": "Your House Fitness",
+          "verticale": true
+        }
+      },
+      {
+        "nome": "Torsione supina",
+        "dose": "45s per lato",
+        "come": "Sdraiato sulla schiena, piega un ginocchio e falla scendere dal lato opposto, accompagnandola con la mano. Tieni tutte e due le spalle a terra: se una si stacca, scendi meno. Copre rotazione toracica e lombare insieme.",
+        "video": {
+          "id": "1CorCS9-izg",
+          "titolo": "How To Do Supine Spinal Twist Stretch",
+          "canale": "Your House Fitness"
+        }
+      },
+      {
+        "nome": "Femorali con asciugamano",
+        "dose": "45s per lato",
+        "come": "Sdraiato sulla schiena, un asciugamano o una cintura sotto la pianta del piede. Alza la gamba tesa e tira l'asciugamano verso di te. L'altra gamba resta distesa a terra. Meglio del piegamento in avanti: allunga il femorale senza caricare la lombare.",
+        "video": {
+          "id": "Il1L75v6gq0",
+          "titolo": "Hamstring Stretch with a Strap, Supine - Ask Doctor Jo",
+          "canale": "AskDoctorJo"
+        }
+      },
+      {
+        "nome": "Affondo basso",
+        "dose": "45s per lato",
+        "come": "In ginocchio, un piede avanti e il ginocchio dell'altra gamba a terra. Contrai i glutei e porta il bacino in avanti tenendo il busto dritto. Si sente davanti all'anca della gamba dietro. È il più importante della lista per chi passa ore seduto.",
+        "video": {
+          "id": "EVcnudMqQCE",
+          "titolo": "Lunge & Hip Flexor Stretch",
+          "canale": "Performance Therapies"
+        }
+      },
+      {
+        "nome": "Affondo basso con quadricipite",
+        "dose": "45s per lato",
+        "come": "Dalla posizione di prima, afferra con la mano la caviglia della gamba dietro e portala verso il gluteo. Se l'equilibrio non regge, fallo sdraiato su un fianco. Si aggiunge il quadricipite all'allungamento dell'anca.",
+        "video": {
+          "id": "vp2oIc890eU",
+          "titolo": "Half Kneeling Hip Flexor and Quad Stretch",
+          "canale": "Mobility Doc"
+        }
+      },
+      {
+        "nome": "Child's pose con braccia estese",
+        "dose": "45s",
+        "come": "In ginocchio, siediti sui talloni e porta il busto avanti fino ad appoggiare la fronte a terra, braccia lunghe davanti. Allunga dorsali e lombari insieme.",
+        "video": {
+          "id": "CHk_NNL5cQU",
+          "titolo": "Childs Pose Stretch",
+          "canale": "PostureFlow",
+          "verticale": true
+        }
+      },
+      {
+        "nome": "Farfalla",
+        "dose": "45s",
+        "come": "Seduto, piante dei piedi unite davanti a te, talloni verso l'inguine. Lascia scendere le ginocchia verso il basso con il peso delle gambe, senza spingerle a scatti. Allunga gli adduttori.",
+        "video": {
+          "id": "MHwUChXNy-Y",
+          "titolo": "How to Do a Butterfly Stretch: A Guide from Physical Therapists",
+          "canale": "Hinge Health"
+        }
+      },
+      {
+        "nome": "Flessori dell'avambraccio",
+        "dose": "45s per lato",
+        "come": "Braccio teso avanti con il palmo rivolto in alto. Con l'altra mano tira le dita verso il basso, dolcemente. Senza forzare il fine corsa: se il polso tira o dà fastidio, ci si ferma prima.",
+        "video": {
+          "id": "i-JV2PsFzWA",
+          "titolo": "Wrist Flexor Stretches with Elbow Extension - Ask Doctor Jo",
+          "canale": "AskDoctorJo"
+        }
+      },
+      {
+        "nome": "Estensori dell'avambraccio",
+        "dose": "45s per lato",
+        "come": "Braccio teso avanti con il palmo rivolto in basso. Con l'altra mano tira il dorso della mano verso il basso, dolcemente. Senza forzare il fine corsa: se il polso tira o dà fastidio, ci si ferma prima.",
+        "video": {
+          "id": "_uINTR_7X-g",
+          "titolo": "Wrist Extensor Stretch",
+          "canale": "Baptist Health"
+        }
+      }
+    ],
+    "serie": 1,
+    "durataStimataMin": 30,
+    "notaDurata": "~30 minuti reali: 15 posizioni su 18 sono per lato e valgono 90 secondi, non 45 — uniche solo sfinge o cobra, child's pose con braccia estese, farfalla. La stima di ~20 minuti girata la prima volta era sbagliata per difetto."
+  }
 }

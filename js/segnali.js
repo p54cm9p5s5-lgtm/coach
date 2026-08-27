@@ -243,6 +243,21 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
     return niente(`Tecnica ${tecnicaPeggiore}: sopra la soglia di allarme ma sotto ${R.tecnicaMinima}, prima si consolida.`);
   }
 
+  // Dose fissa: nessun range, quindi nessuna scala da salire.
+  //
+  // Gli accessori entrati il 27/08 per chiudere i piani frontale e trasverso
+  // sono prescritti a ripetizioni fisse (2x15 per lato, 2x20), non a range.
+  // Senza questo ramo finivano dritti nel gradino del carico — `rip < ripMax`
+  // è falso da subito — e a corpo libero l'app rispondeva «sei al tetto del
+  // range, serve una variante più difficile». Che è falso due volte: non è al
+  // tetto di niente, e nessuno gli ha chiesto di progredire. Sono lì per
+  // coprire un piano di movimento a dose bassa, non per crescere.
+  if (variante.ripMin != null && variante.ripMin === variante.ripMax) {
+    return niente(
+      `Dose fissa (${variante.serie}\u00d7${variante.ripMin}): questo esercizio non progredisce da solo, si rivede in conversazione.`
+    );
+  }
+
   // Sotto il tetto del range: si sale di ripetizioni (livello 3).
   if (rip < variante.ripMax) {
     const nuovaRip = Math.min(rip + 1, variante.ripMax);

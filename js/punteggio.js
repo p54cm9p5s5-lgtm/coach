@@ -567,10 +567,26 @@ export function punteggioAllenamento({
   // dello stretching finale hanno il blocco di mobilità. Contarli comunque
   // toglieva un quinto del punteggio per due cose che il programma non chiede,
   // o lo regalava a chi rispondeva «fatto» a una schermata vuota.
+  // Un giorno di sola mobilità. Serve solo più a scegliere le parole: fino al
+  // 27/08 azzerava tutta la voce, perché sabato e domenica non prevedevano né
+  // riscaldamento né stretching. Ora le tenute statiche si fanno anche loro,
+  // quindi metà voce è prevista eccome, e a decidere è l'elenco `quali` qui
+  // sotto — non più il tipo di giornata.
   const soloMobilita = !quanti && Boolean(mobilita);
+  // Il campo si chiama ancora `stretching` perché è quello scritto in archivio
+  // dalla prima seduta in poi, e i dati vecchi non si riscrivono. Ma dal 27/08
+  // quel posto lo occupano le tenute statiche del Blocco B, e il nome che
+  // legge l'atleta è quello della cosa che fa davvero.
+  // «Fatto» e «saltato» non vanno bene per tutte e due: le tenute sono
+  // femminili plurali. Ogni voce si porta dietro il proprio participio, così
+  // la frase si costruisce senza dover indovinare l'accordo.
   const quali = [
-    previstoRiscaldamento ? { nome: "riscaldamento", fatto: Boolean(riscaldamento) } : null,
-    previstoStretching ? { nome: "stretching", fatto: Boolean(stretching) } : null,
+    previstoRiscaldamento
+      ? { nome: "riscaldamento", fatto: Boolean(riscaldamento), fattoTesto: "fatto", saltatoTesto: "saltato" }
+      : null,
+    previstoStretching
+      ? { nome: "tenute finali", fatto: Boolean(stretching), fattoTesto: "fatte", saltatoTesto: "saltate" }
+      : null,
   ].filter(Boolean);
   const fatte = quali.filter((x) => x.fatto);
   const saltate = quali.filter((x) => !x.fatto);
@@ -581,21 +597,21 @@ export function punteggioAllenamento({
   const nonPrevisti = quali.length === 1 ? "non previsto" : "non previsti";
   voci.push({
     nome: quali.length ? maiuscola(quali.map((x) => x.nome).join(" e ")) : "Riscaldamento e stretching",
-    quota: soloMobilita || !quali.length ? null : fatte.length / quali.length,
+    quota: !quali.length ? null : fatte.length / quali.length,
     peso: 20,
-    dettaglio: soloMobilita
+    dettaglio: !quali.length && soloMobilita
       ? `${nonPrevisti} in un giorno di sola mobilità`
       : !quali.length
         ? "non previsti in questo giorno"
         : !saltate.length
           ? quali.length > 1
             ? "tutti e due fatti"
-            : "fatto"
+            : quali[0].fattoTesto
           : !fatte.length
             ? quali.length > 1
               ? "saltati tutti e due"
-              : "saltato"
-            : `${saltate[0].nome} saltato`,
+              : quali[0].saltatoTesto
+            : `${saltate[0].nome} ${saltate[0].saltatoTesto}`,
   });
 
   // Il blocco di mobilità, dove il giorno ne ha uno.

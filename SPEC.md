@@ -174,7 +174,9 @@ Seduta           id, data, tipoId, tipoNome, tipoProgrammatoId,
                  durataLavoroSec, riscaldamento { fatto, modalita, note },
                  cardio { previsto, eseguito, kmh, durataMin, durataPrevistaMin,
                           finitoIl, saltatoMotivo, note, soglie },
-                 stretching { fatto }, mobilita { fatto },
+                 stretching { fatto } (dal 27/08 sono le tenute del Blocco B: il campo
+                 conserva il nome vecchio perché è quello scritto in archivio),
+                 mobilita { fatto },
                  previstiElenco[], progresso, completezza, notaGenerale,
                  orologio { … } (solo sulle sedute vecchie: non si scrive più)
 SerieLog         id, sedutaId, esercizioId, numero, carico, caricoTarget,
@@ -273,10 +275,14 @@ Sequenza rigida, un passo per volta.
    giorno, circa dieci minuti in tutto. Chiude con la serie di avvicinamento sul
    primo esercizio. Avviso: avviare sul Watch
    un'unica sessione "Rafforzamento funzionale" che comprenda riscaldamento e pesi.
-   **Lo stretching statico non sta qui ma a fine seduta**: allungare a freddo un
-   muscolo che poi deve spingere riduce la forza espressa. Il riepilogo mostra
-   **3-5 allungamenti** specifici per il giorno appena fatto, e sui giorni del
-   nuovo split, dopo lo stretching, il blocco di mobilità di fine seduta.
+   **Le tenute statiche non stanno qui ma a fine seduta**: tenere a lungo un
+   allungamento su un muscolo che poi deve spingere gli abbassa la forza per un
+   po'. Dal 27/08/2026 dopo i pesi vengono, in quest'ordine, il **Blocco A** —
+   otto movimenti di mobilità dinamica uguali tutti i giorni, caviglia, anca,
+   colonna, spalle e polso — e il **Blocco B**, diciotto tenute statiche da 45
+   secondi, una serie sola, che hanno preso il posto dei 3-5 allungamenti
+   mirati per giorno. Tutti e due si fanno anche sabato e domenica. Il cardio
+   resta in fondo ed è slegato: può essere fatto ore dopo.
 2. **Esercizio N** — una sola scheda, tutta visibile, senza niente da aprire:
    **video in testa**, poi esecuzione, setup, errori da evitare, cue, sicurezza.
    Video YouTube specifico per esercizio (inglese ammesso), verificato esistente

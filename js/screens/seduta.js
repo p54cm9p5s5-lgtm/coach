@@ -708,7 +708,7 @@ async function vistaRisultato(id, vaiA, da = null) {
           "div.list",
           h(
             "div.row",
-            h("div.main", h("span.title", "Stretching di fine allenamento")),
+            h("div.main", h("span.title", "Tenute statiche di fine allenamento")),
             sed.stretching.fatto ? h("span.pill.ok", "fatto") : h("span.pill.warn", "saltato")
           )
         )
@@ -932,16 +932,17 @@ async function disegna() {
     fase = S.sed.progresso.fase;
   }
 
-  // Sui giorni del nuovo split lo stretching finale non c'è: al suo posto c'è
-  // il blocco di mobilità. Ci si fermava lo stesso su una schermata vuota che
-  // chiedeva «fatto o saltato?» di niente — e rispondere «saltato» tirava giù
-  // il punteggio per una cosa che il programma non chiede.
+  // Un giorno senza tenute previste non deve fermarsi su una schermata vuota
+  // che chiede «fatto o saltato?» di niente — e rispondere «saltato» tirerebbe
+  // giù il punteggio per una cosa che il programma non chiede. Oggi il Blocco B
+  // c'è tutti i giorni, ma la protezione resta: se un domani il coach lo toglie
+  // da qualche giornata, l'app non chiede conto di una lista vuota.
   if (fase === "stretching" && !passiStretching().length) {
     await salvaProgresso({ fase: dopoLoStretching() });
     fase = S.sed.progresso.fase;
   }
 
-  // Stessa cosa per la mobilità, che adesso sta in mezzo: un giorno che non ne
+  // Stessa cosa per la mobilità, che adesso viene per prima: un giorno che non ne
   // ha una non deve fermarsi su una schermata che chiede «fatta o saltata?» di
   // niente — e rispondere «saltata» toglierebbe punti per una cosa che il
   // programma non chiede.
@@ -977,19 +978,22 @@ function testata() {
   if (fase === "cardio") {
     passo = "Cardio";
     avanzamento = 96;
+  } else if (fase === "mobilita") {
+    // Mobilità, tenute e cardio in quest'ordine: i numeri qui sotto devono
+    // seguire l'ordine vero della seduta, se no la barra torna indietro a metà
+    // allenamento. Il 27/08 l'ordine si è invertito — la mobilità è passata
+    // davanti alle tenute — e questi due blocchi si sono scambiati di posto
+    // insieme a lui.
+    const q = passiMobilita().length;
+    const k = Math.min((S.sed.progresso?.mobPasso ?? 0) + 1, Math.max(q, 1));
+    passo = q ? `Mobilità ${k} di ${q}` : "Mobilità";
+    avanzamento = q ? 88 + ((k - 1) / q) * 3 : 88;
   } else if (fase === "stretching") {
     // Anche qui si va un passaggio per volta: la testata dice quale, come fa
     // con gli esercizi.
     const q = passiStretching().length;
     const k = Math.min((S.sed.progresso?.strPasso ?? 0) + 1, Math.max(q, 1));
-    passo = q ? `Stretching ${k} di ${q}` : "Stretching";
-    avanzamento = q ? 88 + ((k - 1) / q) * 3 : 88;
-  } else if (fase === "mobilita") {
-    // Stretching, mobilità e cardio in quest'ordine: la barra deve salire come
-    // sale la seduta, se no torna indietro a metà allenamento.
-    const q = passiMobilita().length;
-    const k = Math.min((S.sed.progresso?.mobPasso ?? 0) + 1, Math.max(q, 1));
-    passo = q ? `Mobilità ${k} di ${q}` : "Mobilità";
+    passo = q ? `Tenute ${k} di ${q}` : "Tenute statiche";
     avanzamento = q ? 92 + ((k - 1) / q) * 3 : 92;
   } else if (fase === "fine") {
     passo = "Riepilogo";
@@ -1102,7 +1106,7 @@ async function menuSeduta() {
         ? [{ etichetta: "Vai alla mobilità", valore: "mobilita" }]
         : []),
       ...(fase !== "stretching" && passiStretching().length
-        ? [{ etichetta: "Vai allo stretching", valore: "stretching" }]
+        ? [{ etichetta: "Vai alle tenute", valore: "stretching" }]
         : []),
       { etichetta: "Metti in pausa", valore: "pausa" },
       ...(fase !== "fine" ? [{ etichetta: "Chiudi l'allenamento adesso", valore: "chiudi" }] : []),
@@ -1284,9 +1288,20 @@ function passiMobilita() {
   return (prot?.mobilitaFinale || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video }));
 }
 
+// Il Blocco B: le tenute statiche. Dal 27/08 stanno dove prima c'era lo
+// stretching mirato del giorno — le stesse zone, tenute più a lungo e su tutto
+// il corpo — e la fase in cui vivono si chiama ancora «stretching» perché è il
+// nome scritto in archivio da ogni seduta esistente. I quattro allungamenti per
+// giorno restano nel file dei protocolli, non sono stati cancellati: se un
+// giorno si torna indietro, si torna indietro con una riga.
 function passiStretching() {
   const prot = store.riscaldamento(S.sed.tipoId);
-  return (prot?.stretchingFinale || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video }));
+  return (prot?.tenuteStatiche?.passi || []).map((v) => ({
+    nome: v.nome,
+    dose: v.dose,
+    come: v.come,
+    video: v.video,
+  }));
 }
 
 async function vistaRiscaldamento(corpo, piede) {
@@ -1351,7 +1366,7 @@ async function vistaRiscaldamento(corpo, piede) {
                     : "Avvia una sola sessione «Rafforzamento funzionale» per tutta la mobilità. Non tracciare il riscaldamento come camminata separata."
                 )
               ),
-              prot?.nota ? h("section", h("h3", "Perché niente stretching adesso"), h("p", prot.nota)) : null
+              prot?.nota ? h("section", h("h3", "Perché niente tenute adesso"), h("p", prot.nota)) : null
             ),
           ]
         : [],
@@ -2572,7 +2587,7 @@ async function bloccoProssimo(inv) {
     // Un cardio già rimandato non è «il prossimo passo»: dirlo lo stesso
     // manderebbe a cercare una schermata che quella strada non apre più.
     const cardioDaFare = S.sed.cardio?.previsto && !S.sed.cardio?.rimandato && !S.sed.cardio?.eseguito;
-    const dopo = cardioDaFare ? "il cardio" : "lo stretching";
+    const dopo = cardioDaFare ? "il cardio" : "le tenute";
     return h(
       "div.group",
       h("h2", "Dopo questo"),
@@ -3442,8 +3457,8 @@ async function vistaCardio(corpo, piede) {
 
        Prima si andava al riepilogo, e da lì l'unica strada indietro era «Torna
        agli esercizi»: per fare una camminata bisognava ripassare dalla
-       valutazione dell'ultimo esercizio, dallo stretching e dalla mobilità già
-       fatti. */
+       valutazione dell'ultimo esercizio, dalla mobilità e dalle tenute già
+       fatte. */
     h(
       "button.btn.secondary",
       {
@@ -3552,9 +3567,8 @@ async function vistaCardioInCorso(corpo, piede, r) {
     });
     // Una volta qui si chiedevano i numeri dell'orologio, finché l'unico modo di
     // averli era ricopiarli dal quadrante. Adesso li porta l'importazione da
-    // Salute — tutti, compreso lo sforzo — e si va dritti allo stretching.
-    // Se il cardio era stato rimandato, lo stretching è già stato fatto prima:
-    // rimandarci sopra vorrebbe dire rifare da capo passaggi già chiusi.
+    // Salute — tutti, compreso lo sforzo — e si va dritti al riepilogo: dal
+    // 27/08 il cardio è l'ultimo passaggio, mobilità e tenute vengono prima.
     await salvaProgresso({
       fase: dopoIlCardio(),
       cardioInizio: null,
@@ -3644,7 +3658,7 @@ async function vistaCardioInCorso(corpo, piede, r) {
 }
 
 
-// ---------- stretching, come passo dell'allenamento ----------
+// ---------- Blocco B: le tenute statiche, come passo dell'allenamento ----------
 
 async function vistaStretching(corpo, piede) {
   const passi = passiStretching();
@@ -3652,11 +3666,11 @@ async function vistaStretching(corpo, piede) {
   await vistaGuidata(corpo, piede, {
     chiave: "str",
     tenuta: true,
-    kicker: "Stretching",
-    titolo: "Stretching",
+    kicker: "Tenute statiche",
+    titolo: "Tenute statiche",
     passi,
-    vuoto: "Nessun allungamento previsto per questo giorno",
-    etichettaFine: "Stretching fatto",
+    vuoto: "Nessuna tenuta prevista per questo giorno",
+    etichettaFine: "Tenute fatte",
     extra: (i) => [
       i === 0
         ? h(
@@ -3666,7 +3680,7 @@ async function vistaStretching(corpo, piede) {
               h("h3", "Perché adesso"),
               h(
                 "p",
-                "A muscolo caldo e a lavoro finito. Prima dell'allenamento allungare a freddo un muscolo che deve spingere riduce la forza espressa: per quello all'inizio c'è la mobilità, non questo."
+                "A muscolo caldo e a pesi finiti. Tenere a lungo un allungamento prima di spingere abbassa la forza per un po': per aprire la seduta c'è il riscaldamento, e subito dopo i pesi c'è la mobilità dinamica. Questo blocco serve a guadagnare escursione, quello serve a mantenerla — non si sostituiscono. Una sola serie da 45 secondi per posizione, e su tutti e due i lati dove è per lato."
               )
             )
           )
@@ -3697,11 +3711,18 @@ async function vistaStretching(corpo, piede) {
 
 /* L'ordine della seduta, in un posto solo.
 
-   **riscaldamento → pesi → stretching → mobilità → cardio**
+   **riscaldamento → pesi → mobilità (Blocco A) → tenute (Blocco B) → cardio**
 
-   Cambiato il 26/08 su richiesta dell'atleta: il cardio è andato in fondo, e
-   stretching e mobilità sono risaliti subito dopo i pesi. Prima era
-   pesi → cardio → stretching → mobilità.
+   Aggiornato il 27/08 sera. Prima era pesi → stretching → mobilità → cardio, e
+   prima ancora pesi → cardio → stretching → mobilità.
+
+   Il vincolo vero è uno solo, ed è di sicurezza: le tenute statiche vanno DOPO
+   i pesi, a muscoli caldi — allungare a lungo prima di un carico pesante
+   abbassa temporaneamente la forza. Col cardio non c'entrano niente: camminare
+   a 4,5-5 km/h non è lavoro massimale. Per questo il cardio sta in fondo e
+   nessuna delle catene qui sotto lo pretende prima di chiudere — capita che i
+   pesi siano la mattina e la camminata il pomeriggio, e in quel caso A e B si
+   fanno subito dopo i pesi, senza aspettare niente.
 
    L'ordine non sta nel blocco tecnico del master — lì ci sono lo split, gli
    esercizi e le soglie — quindi ricaricare il brief non lo cambia: sta qui. Se
@@ -3709,9 +3730,9 @@ async function vistaStretching(corpo, piede) {
 
    Ogni passaggio che quel giorno non esiste viene saltato invece di mostrare
    una schermata vuota che chiede «fatto o saltato?» di niente. */
-const dopoGliEsercizi = () => (passiStretching().length ? "stretching" : dopoLoStretching());
-const dopoLoStretching = () => (passiMobilita().length ? "mobilita" : dopoLaMobilita());
-const dopoLaMobilita = () => (S.sed.cardio?.previsto ? "cardio" : "fine");
+const dopoGliEsercizi = () => (passiMobilita().length ? "mobilita" : dopoLaMobilita());
+const dopoLaMobilita = () => (passiStretching().length ? "stretching" : dopoLoStretching());
+const dopoLoStretching = () => (S.sed.cardio?.previsto ? "cardio" : "fine");
 const dopoIlCardio = () => "fine";
 
 /**
@@ -3742,7 +3763,7 @@ async function vistaMobilita(corpo, piede) {
                 h("h3", "Perché adesso"),
                 h(
                   "p",
-                  `${S.sed.cardio?.previsto ? "Dopo lo stretching, prima del cardio." : "Dopo lo stretching, a lavoro finito."} Copre le zone che il riscaldamento di oggi non ha toccato: caviglia, anca, colonna, spalle. Dose fissa, non si progredisce.`
+                  `${(S.sed.previstiElenco?.length ?? 0) > 0 ? "Subito dopo i pesi, prima delle tenute." : "Il blocco di oggi."} Full body tutti i giorni, sabato e domenica inclusi: caviglia, anca, colonna, spalle, polso. Serve a MANTENERE la mobilità — guadagnare escursione è compito delle tenute, dopo. Dose fissa, non si progredisce.`
                 )
               )
             ),

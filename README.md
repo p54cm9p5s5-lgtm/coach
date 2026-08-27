@@ -33,7 +33,7 @@ js/grafico.js         grafici in SVG, senza librerie
 js/calendario.js      calendario mensile e cose attese
 js/screens/*.js       una schermata per file
 data/esercizi.json    libreria esercizi (contenuto generico)
-data/riscaldamento.json  protocolli di riscaldamento e stretching per giorno
+data/riscaldamento.json  riscaldamento per giorno, mobilità (Blocco A) e tenute statiche (Blocco B)
 tools/icona.py        ritaglia e riquadra l'icona sorgente
 tools/icona-da-immagine.sh  genera le tre misure delle icone
 tools/serve.py        server di sviluppo senza cache

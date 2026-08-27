@@ -192,10 +192,24 @@ export function riscaldamento(giornoId) {
     ...giorno,
     mobilita: (giorno.mobilita || []).map(conVideoScelto),
     stretchingFinale: (giorno.stretchingFinale || []).map(conVideoScelto),
-    // Il blocco di mobilità di fine seduta: dose fissa, nessun carico, nessuna
-    // progressione. Copre le zone che il riscaldamento di quel giorno non
-    // tocca già, così non si ripete due volte la stessa cosa.
+    // Blocco A — la mobilità dinamica dopo i pesi: dose fissa, nessun carico,
+    // nessuna progressione. Dal 27/08 è full body tutti i giorni, sabato e
+    // domenica inclusi: prima ruotava in base a cosa il riscaldamento del
+    // giorno copriva già, ma per un obiettivo di mantenimento quel risparmio
+    // non valeva l'attrito di doversi ricordare quali zone tocca oggi.
     mobilitaFinale: (giorno.mobilitaFinale || []).map(conVideoScelto),
+    // Blocco B — le tenute statiche. Uguali tutti i giorni, quindi stanno una
+    // volta sola nella radice del file e non ricopiate su ogni giorno: sono la
+    // stessa lista, e due copie della stessa lista prima o poi divergono.
+    // Dal 27/08 prendono il posto dello stretching finale del giorno.
+    tenuteStatiche: RISCALDAMENTO.tenuteStatiche
+      ? {
+          ...RISCALDAMENTO.tenuteStatiche,
+          // Anche qui vale la regola di sempre: un video sostituito a mano
+          // resta quello scelto, e un aggiornamento del file non lo riscrive.
+          passi: (RISCALDAMENTO.tenuteStatiche.passi || []).map(conVideoScelto),
+        }
+      : null,
   };
 }
 
@@ -773,11 +787,17 @@ async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
     oraInizio: Date.now(),
     oraFine: null,
     riscaldamento: { fatto: false, modalita: null, note: null },
-    // Quel giorno prevedeva lo stretching finale? Congelato adesso, come le
-    // soglie del cardio qui sotto e come `previstiElenco`: sui giorni del nuovo
-    // split lo stretching non c'è, e se il protocollo cambia domani il
-    // punteggio di oggi non deve cambiare con lui.
-    previstoStretching: Boolean(riscaldamento(g.id)?.stretchingFinale?.length),
+    // Quel giorno prevedeva il riscaldamento e le tenute finali? Congelati
+    // adesso, come le soglie del cardio qui sotto e come `previstiElenco`: se
+    // il protocollo cambia domani, il punteggio di oggi non deve cambiare
+    // con lui.
+    //
+    // Un giorno di sola mobilità non ha niente da scaldare — non ci sono pesi
+    // davanti — ma le tenute le ha eccome: dal 27/08 il Blocco B si fa tutti i
+    // giorni, sabato e domenica inclusi. Prima le due cose erano legate insieme
+    // e sul fine settimana cadevano tutte e due.
+    previstoRiscaldamento: !giornoDiSolaMobilita(g.id),
+    previstoStretching: Boolean(riscaldamento(g.id)?.tenuteStatiche?.passi?.length),
     // Le soglie del cardio si congelano qui: se il coach cambia il brief, il
     // giudizio su un allenamento già fatto non deve cambiare da solo.
     cardio: {
@@ -1382,6 +1402,14 @@ export async function completezzaSeduta(id, gia = null) {
       sed.previstoStretching != null
         ? Boolean(sed.previstoStretching)
         : Boolean(riscaldamento(sed.tipoId)?.stretchingFinale?.length),
+    // Stessa regola per il riscaldamento. Il valore scritto alla partenza
+    // comanda; per le sedute più vecchie, che non ce l'hanno, resta il
+    // comportamento di prima — il riscaldamento c'è sempre tranne nei giorni
+    // di sola mobilità, dove non c'è niente da scaldare.
+    previstoRiscaldamento:
+      sed.previstoRiscaldamento != null
+        ? Boolean(sed.previstoRiscaldamento)
+        : !giornoDiSolaMobilita(sed.tipoId),
     // La voce entra solo se quel giorno aveva un blocco di mobilità: sulle
     // sedute di prima, e sui giorni che non ne hanno, non deve comparire una
     // riga a zero per una cosa che non era prevista.
@@ -1578,6 +1606,12 @@ export const ETICHETTE_PATTERN = {
   trapezi: "Trapezi",
   bicipiti: "Bicipiti isolati",
   tricipiti: "Tricipiti isolati",
+  // I due piani che il programma non toccava fino al 27/08: il frontale e il
+  // trasverso. Stanno a parte perché non sono deltoide né core generico — se
+  // finissero lì dentro, il volume di quelle voci sembrerebbe cresciuto senza
+  // che sia cresciuto niente.
+  rotatoriSpalla: "Rotatori della spalla",
+  tibiale: "Tibiale anteriore",
   dorsaliAltro: "Dorsali (altro)",
   // Non è uno schema di forza: sono le attività dei giorni di recupero attivo
   // (Pilates, camminata). Sta a parte per non gonfiare il volume del core con

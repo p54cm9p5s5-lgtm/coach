@@ -1137,6 +1137,103 @@
         "titolo": "Dumbbell Standing Calf Raises",
         "canale": "J2FIT Strength"
       }
+    },
+    {
+      "id": "rotazioni-esterne-spalla",
+      "nome": "Rotazioni esterne di spalla con manubrio",
+      "pattern": "rotatoriSpalla",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "In piedi o seduto, braccio lungo il fianco, gomito piegato a 90°.",
+        "Gomito appoggiato al fianco e tenuto lì per tutta la serie: se serve, stringi un asciugamano arrotolato fra gomito e costole.",
+        "Manubrio leggero, avambraccio davanti alla pancia, palmo verso l'interno."
+      ],
+      "esecuzione": [
+        "Ruota l'avambraccio verso l'esterno, come se aprissi una porta, tenendo il gomito incollato al fianco.",
+        "Fermati dove il movimento finisce da solo: non serve arrivare lontano, servono i gradi che controlli.",
+        "Torna indietro in 2-3 secondi, lentamente. La discesa vale quanto la salita.",
+        "20 ripetizioni non sono l'obiettivo: 12-15 per lato fatte pulite lo sono."
+      ],
+      "erroriComuni": [
+        "Gomito che si stacca dal fianco: il movimento diventa un'alzata e la cuffia smette di lavorare.",
+        "Ruotare il busto invece della spalla.",
+        "Carico troppo alto: qui 2 kg sono un carico serio, non un peso da riscaldamento.",
+        "Alzare la spalla verso l'orecchio."
+      ],
+      "cue": "Il gomito resta incollato al fianco: si muove solo l'avambraccio.",
+      "sicurezza": "È lavoro sulla cuffia dei rotatori, muscoli piccoli e lenti da adattare: si cresce di carico molto più piano che sugli altri esercizi, e mai a scapito del controllo. Se compare dolore dentro la spalla (non fatica muscolare), si smette e non si insiste.",
+      "video": {
+        "id": "mJC_HOQOVPs",
+        "titolo": "Dumbbell Shoulder Internal and External Rotation Exercises | A Tutorial",
+        "canale": "Signum Fitness & Nutrition"
+      }
+    },
+    {
+      "id": "suitcase-hold",
+      "nome": "Suitcase hold (tenuta con la valigia)",
+      "pattern": "core",
+      "patternDettaglio": "core anti-rotazione",
+      "attrezzo": "manubrio",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "aTempo": true,
+      "setup": [
+        "In piedi, piedi a larghezza anche, un solo manubrio tenuto lungo il fianco come una valigia.",
+        "Spalle basse e alla stessa altezza, sguardo avanti.",
+        "Addome attivo e glutei contratti prima di sollevare il peso."
+      ],
+      "esecuzione": [
+        "Tieni la posizione ferma per il tempo previsto: il peso da un lato solo cerca di piegarti e di ruotarti, il tuo compito è non lasciarglielo fare.",
+        "Respira normalmente per tutta la tenuta, non trattenere il fiato.",
+        "Finito il tempo, appoggia il peso e ripeti dall'altro lato: la tenuta va fatta su tutti e due i lati, sempre.",
+        "Se il busto comincia a inclinarsi, la serie è finita anche se il tempo no."
+      ],
+      "erroriComuni": [
+        "Inclinarsi dal lato del peso, o compensare inclinandosi dal lato opposto.",
+        "Spalla del lato carico che scende o che si alza verso l'orecchio.",
+        "Trattenere il fiato per tutta la tenuta.",
+        "Farlo da un lato solo."
+      ],
+      "cue": "Spalle in bolla e fianchi fermi: il peso tira, tu non ti pieghi.",
+      "sicurezza": "È una tenuta isometrica, non un sollevamento: il rischio non è il movimento ma restare storti sotto carico. Al primo cedimento della postura si appoggia il peso. È l'esercizio che copre davvero l'anti-rotazione con l'attrezzatura di casa — il Pallof press con manubrio resta anti-estensione, un'altra cosa.",
+      "video": {
+        "id": "psMQmwlhiSs",
+        "titolo": "How to do Suitcase Holds",
+        "canale": "Seriously Strong Training"
+      }
+    },
+    {
+      "id": "toe-raise",
+      "nome": "Toe raise al muro (tibiale anteriore)",
+      "pattern": "tibiale",
+      "attrezzo": "corpo libero",
+      "sollecitaPolso": false,
+      "recuperoDefaultSec": 60,
+      "setup": [
+        "Schiena appoggiata al muro, talloni una ventina di centimetri staccati dal muro.",
+        "Piedi a larghezza anche, peso sui talloni.",
+        "Ginocchia morbide, non bloccate."
+      ],
+      "esecuzione": [
+        "Solleva le punte dei piedi verso le tibie il più in alto possibile, tenendo i talloni a terra.",
+        "Pausa breve in alto, un secondo.",
+        "Scendi lentamente senza far cadere l'avampiede di colpo."
+      ],
+      "erroriComuni": [
+        "Staccare i talloni da terra.",
+        "Piegare le ginocchia per aiutarsi.",
+        "Rimbalzare: qui il tempo sotto tensione è tutto, il movimento è cortissimo.",
+        "Fermarsi appena brucia: il bruciore è il punto dell'esercizio, si continua finché il movimento resta pieno."
+      ],
+      "cue": "Talloni piantati, punte più su che puoi.",
+      "sicurezza": "Muscolo piccolo e poco allenato: le prime volte brucia molto e può indolenzirsi per un paio di giorni. È normale e passa. Se invece compare dolore sulla cresta della tibia (non sul muscolo di fianco), si sospende.",
+      "video": {
+        "id": "YnvASa9Oi90",
+        "titolo": "Anterior Tibialis Toe Raise Against the Wall",
+        "canale": "Functional Fitness VA"
+      }
     }
   ]
 }
