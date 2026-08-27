@@ -358,6 +358,19 @@ export async function verificaStesseDomande() {
     if (b !== null && !/\d/.test(b)) errori.push(`${id}: bersaglio «${b}» senza numeri`);
   }
 
+  // e-bis) una cosa scritta da te non può essere lunga a piacere
+  for (const [scritto, atteso] of [
+    ["", null], ["   ", null], [null, null], ["  è andata bene  ", "è andata bene"],
+  ]) {
+    casi++;
+    if (store.testoScritto(scritto) !== atteso) errori.push(`testoScritto(${JSON.stringify(scritto)}) = ${store.testoScritto(scritto)}`);
+  }
+  casi++;
+  const lunghissima = store.testoScritto("a".repeat(50000));
+  if (lunghissima?.length !== store.MAX_TESTO_SCRITTO) {
+    errori.push(`una nota da 50.000 caratteri resta lunga ${lunghissima?.length} invece di ${store.MAX_TESTO_SCRITTO}`);
+  }
+
   // f) un numero scritto a mano si legge allo stesso modo ovunque
   for (const [scritto, atteso] of [
     ["82,5", 82.5], ["82.5", 82.5], [" 82 ", 82], ["", null], ["0", 0],

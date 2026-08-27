@@ -2097,6 +2097,7 @@ async function cambiaVideo(def) {
     : Boolean(store.videoPassoPersonalizzato?.(def.nome));
   await sheet((close) => {
     const campo = h("textarea.note", {
+      maxlength: 2000,
       placeholder: "Incolla qui il link YouTube del video che preferisci",
       style: "min-height:60px",
     });
@@ -2488,7 +2489,7 @@ async function saltaEsercizio(v, def) {
   // dice niente, e un esercizio saltato senza motivo è indistinguibile da un
   // dato perso.
   const nota = await sheet((close) => {
-    const ta = h("textarea.note", { placeholder: SUGGERIMENTI[motivo], style: "min-height:96px" });
+    const ta = h("textarea.note", { maxlength: 2000, placeholder: SUGGERIMENTI[motivo], style: "min-height:96px" });
     const conferma = h(
       "button.btn",
       { disabled: true, onclick: () => close(ta.value.trim()) },
@@ -3191,6 +3192,7 @@ async function vistaQuestionario(corpo, piede) {
 
     h("p.footnote", { style: "margin:22px 16px 0" }, "Nota (facoltativa — vuota significa nessun segnale)"),
     h("textarea.note", {
+      maxlength: 2000,
       id: "nota-es",
       placeholder: "Solo se c'è qualcosa da segnalare",
       value: gia?.nota || "",
@@ -3343,7 +3345,7 @@ async function vistaCardio(corpo, piede) {
       ),
       avviso
     ),
-    h("textarea.note", { id: "nota-cardio", placeholder: "Nota sul cardio (facoltativa)", value: notaPrec })
+    h("textarea.note", { maxlength: 2000, id: "nota-cardio", placeholder: "Nota sul cardio (facoltativa)", value: notaPrec })
   );
   controlla();
 
@@ -3921,6 +3923,7 @@ async function vistaFine(corpo, piede) {
     // VoiceOver sentirebbe «campo di testo» e basta. È l'unico campo dell'app
     // rimasto senza nome — tutti gli altri ce l'hanno nel segnaposto.
     h("textarea.note", {
+      maxlength: 2000,
       id: "nota-seduta",
       "aria-label": "Nota generale sull'allenamento",
       placeholder: "Dolori, sensazioni — solo se c'è qualcosa da segnalare",

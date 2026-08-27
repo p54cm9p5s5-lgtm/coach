@@ -914,6 +914,7 @@ function bloccoTalkTest(a, nota, ridisegna) {
    questo. Torna il testo scritto, oppure null se hai annullato. */
 async function chiediTesto({ titolo, valore = "" }) {
   const area = h("textarea", {
+      maxlength: 2000,
     rows: 4,
     style:
       "display:block;box-sizing:border-box;width:100%;border:0;background:var(--fill-tertiary);border-radius:10px;" +

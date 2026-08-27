@@ -304,6 +304,21 @@ a.row:active {
   min-width: 0;
 }
 
+/* Una parola lunghissima senza spazi — un indirizzo incollato, quaranta «a» di
+   fila per un dito rimasto premuto — spingeva la riga oltre il bordo e portava
+   con sé tutta la pagina, che diventava scorrevole di lato. Il testo che scrivi
+   tu si spezza dove capita: meglio una parola tagliata a metà che una schermata
+   storta con le mani occupate. */
+.row .title,
+.row .sub,
+.row .value,
+.guida p,
+p.footnote,
+.hero h2,
+textarea.note {
+  overflow-wrap: anywhere;
+}
+
 .row .title {
   display: block;
 }

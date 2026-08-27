@@ -288,7 +288,7 @@ function chiediNota(stato) {
     rimandata: "Rimando la proposta",
   };
   return sheet((close) => {
-    const area = h("textarea.note", { placeholder: "Nota facoltativa", rows: 3 });
+    const area = h("textarea.note", { maxlength: 2000, placeholder: "Nota facoltativa", rows: 3 });
     return h(
       "div",
       h("h2", titoli[stato]),

@@ -964,6 +964,25 @@ export function bersaglioProposto(v, obiettivo = null, durataScritta = null) {
  * tastiera del telefono non si scrivono, e accettarli in una schermata e non
  * nell'altra faceva leggere «1e3» come mille di qua e come errore di là.
  */
+/**
+ * Quanto può essere lunga una cosa che scrivi tu.
+ *
+ * Duemila caratteri sono tre pagine fitte: nessuna nota su un allenamento ci
+ * arriva. Il limite non serve a te, serve a quello che c'è a valle — l'archivio,
+ * il backup, e soprattutto il pacchetto che leggerà il coach, che non deve
+ * poter diventare illeggibile per una dita rimasta premuta.
+ *
+ * NON vale per il riquadro dove incolli il pacchetto dei dati: quello è un
+ * ventimila caratteri per natura, e non è una cosa che scrivi tu.
+ */
+export const MAX_TESTO_SCRITTO = 2000;
+
+export function testoScritto(v, { max = MAX_TESTO_SCRITTO } = {}) {
+  const t = String(v ?? "").trim();
+  if (!t) return null;
+  return t.length > max ? t.slice(0, max) : t;
+}
+
 export function numeroScritto(testo, { minimo = 0, decimali = 1 } = {}) {
   const t = String(testo ?? "").trim().replace(",", ".");
   if (t === "") return null;
@@ -1034,7 +1053,7 @@ export async function chiudiSeduta(id, { notaGenerale } = {}) {
     durataLavoroSec: durataLavoroSec({ ...s, oraFine: fine }, serieFatte),
     // `?? ` avrebbe tenuto la nota vecchia anche quando la cancelli davvero:
     // solo l'assenza del campo significa «non toccarla».
-    notaGenerale: notaGenerale !== undefined ? notaGenerale : s.notaGenerale,
+    notaGenerale: notaGenerale !== undefined ? testoScritto(notaGenerale) : s.notaGenerale,
     progresso: { fase: "fine", indice: 0 },
   };
   await db.put("sedute", agg);
@@ -1212,7 +1231,7 @@ async function registraQuestionarioVero({
     dolorePolso: Boolean(polso),
     dolorePolsoQuando: polso?.quando || null,
     dolorePolsoIntensita: polso?.intensita || null,
-    nota: (nota || "").trim() || null,
+    nota: testoScritto(nota),
     saltato: null,
     creatoIl: new Date().toISOString(),
     fonte: "app",
@@ -1255,7 +1274,7 @@ async function registraSaltoVero({ sedutaId, esercizioId, ordine, motivo, nota }
     // La nota del salto non cancella quella dell'esercizio: sono due cose
     // diverse e finiscono in due posti diversi del pacchetto.
     nota: prec?.nota || (nota || "").trim() || null,
-    saltato: { motivo, nota: (nota || "").trim() || null },
+    saltato: { motivo, nota: testoScritto(nota) },
     creatoIl: prec?.creatoIl || new Date().toISOString(),
     fonte: "app",
   };
@@ -1846,7 +1865,7 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
     rispostoIl: new Date().toISOString(),
     esposizioniAllaRisposta: espOra.length,
     dataVerifica: stato === "accettata" ? piuGiorni(isoDate(), giorniVerifica) : p.dataVerifica,
-    notaRisposta: nota,
+    notaRisposta: testoScritto(nota),
   };
   await db.put("proposte", agg);
 
@@ -3299,7 +3318,7 @@ export async function salvaNotaAllenamento(uuid, { talkTest = null, nota = null 
   const rec = {
     uuid: id,
     talkTest: talkTest || null,
-    nota: testo || null,
+    nota: testoScritto(testo),
     aggiornatoIl: new Date().toISOString(),
   };
   await db.put("noteWatch", rec);

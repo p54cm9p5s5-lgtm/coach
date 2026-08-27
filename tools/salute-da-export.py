@@ -44,6 +44,27 @@ QUANTITA = {
 FC_RIPOSO = "HKQuantityTypeIdentifierRestingHeartRate"
 SONNO = "HKCategoryTypeIdentifierSleepAnalysis"
 
+# Quello che sta DENTRO un <Workout>, e la curva del battito. Fino al 27/08/2026
+# questo strumento scriveva solo inizio, durata, kcal e tipo: nove campi e tutta
+# la curva restavano indietro rispetto al lettore dentro l'app, che legge lo
+# stesso file. Due strade per la stessa cosa che davano risultati diversi, e chi
+# usava il Mac perdeva il battito senza saperlo.
+FC_ISTANTE = "HKQuantityTypeIdentifierHeartRate"
+DENTRO_WORKOUT = {
+    "HKQuantityTypeIdentifierActiveEnergyBurned": "kcal",
+    "HKQuantityTypeIdentifierBasalEnergyBurned": "kcalBasale",
+    "HKQuantityTypeIdentifierDistanceWalkingRunning": "km",
+    "HKQuantityTypeIdentifierDistanceCycling": "km",
+    "HKQuantityTypeIdentifierDistanceSwimming": "km",
+}
+SFORZO = {
+    "HKQuantityTypeIdentifierWorkoutEffortScore",
+    "HKQuantityTypeIdentifierEstimatedWorkoutEffortScore",
+}
+CASELLA_SEC = 30
+CASELLE_AL_GIORNO = 86400 // CASELLA_SEC
+PUNTI_MAX = 120
+
 # I nomi delle fasi come li scrive Apple, tradotti in quelli che l'app riconosce.
 FASI = {
     "HKCategoryValueSleepAnalysisAsleepDeep": "Profondo",
@@ -104,6 +125,13 @@ def apri(percorso):
     return open(p, "rb")
 
 
+def piuGiorni(iso, n):
+    """Il giorno dopo, in date locali. Serve alla curva del battito quando un
+    allenamento scavalca la mezzanotte."""
+    d = dt.date.fromisoformat(iso) + dt.timedelta(days=n)
+    return d.isoformat()
+
+
 def leggi(percorso, dal, al):
     """Un giro solo sul file, buttando via ogni elemento appena letto.
 
@@ -118,6 +146,10 @@ def leggi(percorso, dal, al):
     fc = {}
     fasi = []
     allenamenti = []
+    # Le caselle da mezzo minuto del battito, come le fa il lettore dentro
+    # l'app: tenere ogni campione sarebbe decine di migliaia di oggetti.
+    battiti = {}
+    sforzi = []
 
     for _, el in ElementTree.iterparse(apri(percorso), events=("end",)):
         tag = el.tag
@@ -141,6 +173,26 @@ def leggi(percorso, dal, al):
                     v = numero(el.get("value"))
                     if v is not None:
                         fc[giorno] = v
+                elif tipo == FC_ISTANTE:
+                    v = numero(el.get("value"))
+                    if v is not None:
+                        sec = inizio.hour * 3600 + inizio.minute * 60 + inizio.second
+                        chiave = (giorno, sec // CASELLA_SEC)
+                        c = battiti.get(chiave)
+                        if c:
+                            c[0] = min(c[0], v)
+                            c[1] = max(c[1], v)
+                        else:
+                            battiti[chiave] = [v, v]
+                elif tipo in SFORZO:
+                    v = numero(el.get("value"))
+                    if v is not None:
+                        sforzi.append({
+                            "giorno": giorno,
+                            "sec": inizio.hour * 3600 + inizio.minute * 60 + inizio.second,
+                            "valore": v,
+                            "stimato": "Estimated" in tipo,
+                        })
                 elif tipo in QUANTITA:
                     v = numero(el.get("value"))
                     if v is not None:
@@ -150,25 +202,59 @@ def leggi(percorso, dal, al):
             inizio = istante(el.get("startDate"))
             if inizio and dal <= inizio.date().isoformat() <= al:
                 durata = numero(el.get("duration")) or 0  # minuti
-                kcal = None
-                for s in el.findall("WorkoutStatistics"):
-                    if s.get("type") == "HKQuantityTypeIdentifierActiveEnergyBurned":
-                        kcal = numero(s.get("sum"))
+                fine = istante(el.get("endDate"))
+                campi = {}
+                fcmedia = fcmin = fcmax = sforzo = None
+                for st in el.findall("WorkoutStatistics"):
+                    t = st.get("type")
+                    campo = DENTRO_WORKOUT.get(t)
+                    if campo:
+                        v = numero(st.get("sum"))
+                        if v is not None:
+                            campi[campo] = (campi.get(campo) or 0) + v
+                    elif t == FC_ISTANTE:
+                        # Media, minimo e massimo li ha già calcolati Salute
+                        # sull'allenamento intero: valgono più di quelli
+                        # ricavati dalle caselle, che arrotondano.
+                        fcmedia = numero(st.get("average"))
+                        fcmin = numero(st.get("minimum"))
+                        fcmax = numero(st.get("maximum"))
+                    elif t in SFORZO:
+                        v = numero(st.get("average")) or numero(st.get("maximum")) or numero(st.get("sum"))
+                        # Lo sforzo corretto a mano vince su quello stimato.
+                        if v is not None and (sforzo is None or "Estimated" not in t):
+                            sforzo = v
+                indoor = None
+                for m in el.findall("MetadataEntry"):
+                    if m.get("key") in ("HKIndoorWorkout", "HKMetadataKeyIndoorWorkout"):
+                        v = str(m.get("value") or "").strip().lower()
+                        if v in ("1", "true", "yes"):
+                            indoor = True
+                        elif v in ("0", "false", "no"):
+                            indoor = False
                 allenamenti.append(
                     {
                         "inizio": inizio,
+                        "fine": fine,
                         "durataSec": int(round(durata * 60)),
-                        "kcal": kcal,
+                        "kcal": campi.get("kcal"),
+                        "kcalBasale": campi.get("kcalBasale"),
+                        "km": campi.get("km"),
+                        "fcMedia": fcmedia,
+                        "fcMin": fcmin,
+                        "fcMax": fcmax,
+                        "sforzo": sforzo,
+                        "indoor": indoor,
                         "tipo": (el.get("workoutActivityType") or "").replace("HKWorkoutActivityType", ""),
                     }
                 )
         if tag in ("Record", "Workout"):
             el.clear()
 
-    return giorni, giorni_watch, fc, fasi, allenamenti
+    return giorni, giorni_watch, fc, fasi, allenamenti, battiti, sforzi
 
 
-def righe(dal, al, giorni, giorni_watch, fc, fasi, allenamenti):
+def righe(dal, al, giorni, giorni_watch, fc, fasi, allenamenti, battiti=None, sforzi=None):
     out = ["COACH-DATI v1", f"FINESTRA {dal} {al}"]
 
     tutte = sorted(set(giorni) | set(giorni_watch))
@@ -199,13 +285,103 @@ def righe(dal, al, giorni, giorni_watch, fc, fasi, allenamenti):
             f"FASE {inizio:%Y-%m-%d %H:%M} {fine:%Y-%m-%d %H:%M} {fase}"
         )
 
+    battiti = battiti or {}
+    sforzi = sforzi or []
+
+    def secondi(t):
+        return t.hour * 3600 + t.minute * 60 + t.second
+
+    def scrivi(v):
+        if v is None:
+            return ""
+        lo, hi = v
+        return str(round(lo)) if round(lo) == round(hi) else f"{round(lo)}-{round(hi)}"
+
+    def curva_di(a):
+        """Le caselle di battito dentro l'allenamento, ridotte a pochi punti.
+
+        Stessa logica del lettore dentro l'app: si cammina avanti di casella in
+        casella e si cambia giorno quando serve, perché un allenamento può
+        scavalcare la mezzanotte. Il tetto sui passi evita che un `endDate`
+        sballato faccia girare a vuoto.
+        """
+        if not a.get("fine"):
+            return None
+        giorno = a["inizio"].date().isoformat()
+        casella = secondi(a["inizio"]) // CASELLA_SEC
+        fine_giorno = a["fine"].date().isoformat()
+        fine_casella = secondi(a["fine"]) // CASELLA_SEC
+        valori = []
+        for _ in range(CASELLE_AL_GIORNO * 2 + 1):
+            c = battiti.get((giorno, casella))
+            valori.append(tuple(c) if c else None)
+            if giorno == fine_giorno and casella >= fine_casella:
+                break
+            if giorno > fine_giorno:
+                break
+            casella += 1
+            if casella >= CASELLE_AL_GIORNO:
+                casella = 0
+                giorno = piuGiorni(giorno, 1)
+        if not any(v is not None for v in valori):
+            return None
+        if len(valori) <= PUNTI_MAX:
+            return [scrivi(v) for v in valori]
+        per = -(-len(valori) // PUNTI_MAX)
+        fuori = []
+        for i in range(0, len(valori), per):
+            gruppo = [v for v in valori[i : i + per] if v is not None]
+            fuori.append(scrivi((min(g[0] for g in gruppo), max(g[1] for g in gruppo))) if gruppo else "")
+        return fuori
+
+    def sforzo_di(a):
+        """Lo sforzo scritto come riga a sé va all'allenamento che lo contiene.
+        Se ce ne sono due — uno stimato e uno corretto a mano — vince quello a mano."""
+        if a.get("sforzo") is not None:
+            return a["sforzo"]
+        if not a.get("fine"):
+            return None
+        g0, s0 = a["inizio"].date().isoformat(), secondi(a["inizio"])
+        g1, s1 = a["fine"].date().isoformat(), secondi(a["fine"])
+        dentro = [
+            x for x in sforzi
+            if (x["giorno"] == g0 and x["sec"] >= s0 and (g1 != g0 or x["sec"] <= s1))
+            or (x["giorno"] == g1 and g1 != g0 and x["sec"] <= s1)
+        ]
+        if not dentro:
+            return None
+        a_mano = next((x for x in dentro if not x["stimato"]), None)
+        return (a_mano or dentro[0])["valore"]
+
     for a in sorted(allenamenti, key=lambda x: x["inizio"]):
         pezzi = [f"ALLENAMENTO {a['inizio']:%Y-%m-%d} inizio={a['inizio']:%H:%M} durata={a['durataSec']}"]
+        if a.get("fine"):
+            pezzi.append(f"fine={a['fine']:%H:%M}")
         if a["kcal"] is not None:
             pezzi.append(f"kcal={round(a['kcal'])}")
+        # «Totali» come le conta Salute: attive più quelle che bruceresti comunque.
+        if a["kcal"] is not None and a.get("kcalBasale") is not None:
+            pezzi.append(f"kcaltot={round(a['kcal'] + a['kcalBasale'])}")
+        if a.get("km") is not None:
+            pezzi.append(f"km={a['km']:.2f}".replace(".", ","))
+        if a.get("fcMedia") is not None:
+            pezzi.append(f"fcmedia={round(a['fcMedia'])}")
+        if a.get("fcMin") is not None:
+            pezzi.append(f"fcmin={round(a['fcMin'])}")
+        if a.get("fcMax") is not None:
+            pezzi.append(f"fcmax={round(a['fcMax'])}")
+        sf = sforzo_di(a)
+        if sf is not None:
+            pezzi.append(f"sforzo={round(sf)}")
+        if a.get("indoor") is not None:
+            pezzi.append(f"indoor={1 if a['indoor'] else 0}")
         if a["tipo"]:
             pezzi.append(f'tipo="{a["tipo"]}"')
         out.append(" ".join(pezzi))
+        curva = curva_di(a)
+        # Due punti sono un segmento, non un andamento.
+        if curva and len([v for v in curva if v != ""]) >= 3:
+            out.append(f"BATTITO {a['inizio']:%Y-%m-%d} {a['inizio']:%H:%M} " + ",".join(curva))
 
     return out
 
