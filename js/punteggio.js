@@ -699,6 +699,12 @@ export const ANELLO = 224;
  * nessuna differenza.
  */
 export function anello(totale, { etichetta = "Completezza", dimensione = ANELLO, sottotitolo = null, mostra = null, colore: coloreForzato = null } = {}) {
+  // Un punteggio che non è un numero è un punteggio che non c'è: `null` era già
+  // trattato così, `NaN` no, e finiva scritto dentro l'SVG («stroke-dashoffset:
+  // NaN») dove nessuno l'avrebbe letto. `coloreDaPunteggio`, dieci righe più su,
+  // lo guarda già: qui manca e basta.
+  if (Number.isNaN(totale)) totale = null;
+
   const R = 76;
   const CIRC = 2 * Math.PI * R;
   // Un filo, non una fascia. L'anello qui non è il protagonista: è la nota a

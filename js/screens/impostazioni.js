@@ -9,11 +9,18 @@ const NOME_SHORTCUT_CALENDARIO = "Coach Calendario";
 function scegliFile(accept) {
   return new Promise((resolve) => {
     const input = h("input", { type: "file", accept, style: "display:none" });
-    // Chi annulla la scelta non fa scattare «change»: la promessa restava
-    // appesa per sempre e chi l'aspettava si fermava lì, in silenzio — e il
-    // campo nascosto restava attaccato alla pagina, uno per ogni ripensamento.
-    // «cancel» lo dicono i browser di oggi; dove non c'è, il ritorno alla
-    // pagina fa da rete: se il campo è ancora lì senza file, hai annullato.
+    // Chi annulla la scelta non fa scattare «change»: la promessa resta appesa e
+    // chi l'aspettava si ferma lì. «cancel» lo dicono i browser di oggi ed è la
+    // risposta giusta.
+    //
+    // NIENTE rete sul ritorno del fuoco alla pagina. Il 27/08 ne avevo aggiunta
+    // una — «se torni qui e non c'è un file, hai annullato» — e su iPhone ha
+    // rotto il caricamento del master brief: scegliendo il file da File, la
+    // pagina riprende il fuoco PRIMA che iOS consegni il file, la rete scattava
+    // per prima e il caricamento moriva in silenzio. Risolveva una perdita di
+    // qualche nodo al prezzo di rompere la cosa più importante della schermata.
+    // Un campo nascosto che resta attaccato dopo un ripensamento non fa male a
+    // nessuno; questo sì.
     let finito = false;
     const chiudi = (file) => {
       if (finito) return;
@@ -23,11 +30,6 @@ function scegliFile(accept) {
     };
     input.addEventListener("change", () => chiudi(input.files?.[0]));
     input.addEventListener("cancel", () => chiudi(null));
-    window.addEventListener(
-      "focus",
-      () => setTimeout(() => { if (!input.files?.length) chiudi(null); }, 400),
-      { once: true }
-    );
     document.body.append(input);
     input.click();
   });

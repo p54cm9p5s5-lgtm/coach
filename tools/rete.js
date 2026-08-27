@@ -38,6 +38,10 @@ import { valutaProgressione } from "../js/segnali.js";
 import { analizza } from "../js/salute.js";
 import { valida as validaBrief, estraiBlocco } from "../js/brief.js";
 import { carichiPossibili, carichiManubrio, aPaio } from "../js/plates.js";
+import * as grafico from "../js/grafico.js";
+import * as pacchetto from "../js/export.js";
+import { punteggioSalute, giudizio, coloreDaPunteggio, scomposizione, anello } from "../js/punteggio.js";
+import { piuGiorni, ripetizioniEffettive, datiCompleti, firmaProposta, nomeLivello } from "../js/segnali.js";
 
 /**
  * La cartella dell'app, vista da questo file.
@@ -82,6 +86,11 @@ export async function verificaSorgenteUnica() {
     { cosa: "come si legge un numero scritto a mano", segno: String.raw`^-?\d*\.?\d+$`, solo: ["js/store.js"] },
     { cosa: "quanti giorni dall'ultimo backup", segno: "/ 86400000", solo: ["js/ui.js"] },
     { cosa: "ogni quanto si verifica una proposta", segno: "= 14", solo: ["js/segnali.js"] },
+    // Il 27/08 una «rete» sul ritorno del fuoco alla pagina ha rotto il
+    // caricamento del master brief su iPhone: la pagina riprende il fuoco PRIMA
+    // che iOS consegni il file, e il campo veniva chiuso per primo. Non deve
+    // ricomparire: il posto dove si scelgono i file non ascolta la finestra.
+    { cosa: "la scelta di un file non ascolta la finestra", segno: "window.addEventListener", solo: ["js/app.js"] },
   ];
   const FILE = [
     "js/store.js", "js/ui.js", "js/db.js", "js/export.js", "js/punteggio.js", "js/segnali.js",
@@ -165,11 +174,11 @@ export async function verificaSorgenteUnica() {
 
 /* ------------------------------------------------ 3. i dati che l'app porta */
 
-export async function verificaDati() {
+export async function verificaDati({ libreriaFinta = null } = {}) {
   const errori = [];
   let casi = 0;
 
-  const lib = await (await fetch(dentroApp("data/esercizi.json"), { cache: "no-store" })).json();
+  const lib = libreriaFinta || (await (await fetch(dentroApp("data/esercizi.json"), { cache: "no-store" })).json());
   const esercizi = Array.isArray(lib) ? lib : lib.esercizi || [];
   const visti = new Set();
   const video = new Map();
@@ -417,7 +426,7 @@ export async function verificaStesseDomande() {
  * un carico che non riesci a montare, una riduzione che aumenta, una salita
  * mentre hai male, un bersaglio oltre il tetto del range.
  */
-export async function verificaMotoreProposte() {
+export async function verificaMotoreProposte({ motore = valutaProgressione } = {}) {
   const errori = [];
   let casi = 0;
   const regole = store.regole();
@@ -459,7 +468,7 @@ export async function verificaMotoreProposte() {
                   );
                   let r;
                   try {
-                    r = valutaProgressione({ variante, def, esposizioni, regole, inventario, oggi: "2026-08-27" });
+                    r = motore({ variante, def, esposizioni, regole, inventario, oggi: "2026-08-27" });
                   } catch (e) {
                     errori.push(`${attrezzo} carico ${carico} rip ${rip}/${ripMin}-${ripMax} rpe ${rpe} tec ${tecnica}${dolore ? " dolore" : ""}: ESPLODE — ${String(e.message).slice(0, 60)}`);
                     continue;
@@ -510,7 +519,7 @@ export async function verificaMotoreProposte() {
                   //    A campione, uno ogni cento: rifarlo su tutti raddoppiava
                   //    il tempo della rete, e una rete lenta si lancia meno.
                   if (casi % 101 === 0) {
-                    const r2 = valutaProgressione({ variante, def, esposizioni, regole, inventario, oggi: "2026-08-27" });
+                    const r2 = motore({ variante, def, esposizioni, regole, inventario, oggi: "2026-08-27" });
                     if (JSON.stringify(r2) !== JSON.stringify(r)) errori.push(`${dove}: due chiamate identiche danno risposte diverse`);
                   }
                 }
@@ -537,7 +546,7 @@ export async function verificaMotoreProposte() {
  * L'invariante forte è il secondo: OGNI riga o viene capita, o finisce fra gli
  * avvisi. Il conto deve tornare, riga per riga.
  */
-export function verificaLettorePacchetto() {
+export function verificaLettorePacchetto({ lettore = analizza } = {}) {
   const errori = [];
   let casi = 0;
 
@@ -584,7 +593,7 @@ export function verificaLettorePacchetto() {
     casi++;
     let r;
     try {
-      r = analizza(testo);
+      r = lettore(testo);
     } catch (e) {
       // Un rifiuto solo è legittimo, ed è una scelta giusta: se NESSUNA riga è
       // stata capita, il lettore si rifiuta di importare il nulla invece di
@@ -629,14 +638,14 @@ export function verificaLettorePacchetto() {
     casi++;
     let respinto = false;
     let messaggio = "";
-    try { analizza(testo); } catch (e) { respinto = true; messaggio = String(e.message); }
+    try { lettore(testo); } catch (e) { respinto = true; messaggio = String(e.message); }
     if (!respinto) errori.push(`«${nome}»: accettato, doveva essere respinto`);
     else if (!/[a-zà-ù]/i.test(messaggio) || messaggio.length < 15) errori.push(`«${nome}»: respinto con un messaggio che non spiega niente`);
   }
 
   // 5. andata e ritorno: un pacchetto pulito si legge per quello che dice
   casi++;
-  const pulito = analizza(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27", ...BUONE].join("\n"));
+  const pulito = lettore(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27", ...BUONE].join("\n"));
   if (pulito.giorni.length !== 1) errori.push(`un pacchetto pulito dà ${pulito.giorni.length} giorni invece di 1`);
   if (pulito.giorni[0]?.passi !== 9120) errori.push(`i passi si leggono ${pulito.giorni[0]?.passi} invece di 9120`);
   if (pulito.giorni[0]?.distanzaKm !== 7.2) errori.push(`i km si leggono ${pulito.giorni[0]?.distanzaKm} invece di 7,20`);
@@ -652,7 +661,7 @@ export function verificaLettorePacchetto() {
   //    corto al più lungo davvero registrati.
   for (const sec of [234, 900, 1201, 3600, 4649, 15895, 86400]) {
     casi++;
-    const r = analizza(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27",
+    const r = lettore(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27",
       `ALLENAMENTO 2026-08-20 inizio=18:05 durata=${sec} kcal=300 tipo="Walking"`].join("\n"));
     if (r.allenamenti[0]?.durataSec !== sec) {
       errori.push(`un allenamento di ${Math.round(sec / 60)} minuti perde la durata (letta: ${r.allenamenti[0]?.durataSec})`);
@@ -661,7 +670,7 @@ export function verificaLettorePacchetto() {
   //    ...ma una notte di più di venti ore resta impossibile, come prima.
   for (const [min, atteso] of [[451, 451], [1200, 1200], [1201, null]]) {
     casi++;
-    const r = analizza(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27", `NOTTE 2026-08-20 durata=${min}`].join("\n"));
+    const r = lettore(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27", `NOTTE 2026-08-20 durata=${min}`].join("\n"));
     if ((r.notti[0]?.durataMin ?? null) !== atteso) errori.push(`una notte di ${min} minuti si legge ${r.notti[0]?.durataMin}, atteso ${atteso}`);
   }
 
@@ -680,7 +689,7 @@ export function verificaLettorePacchetto() {
  *
  * La validazione era già accurata — questa prova non l'ha scritta, la tiene.
  */
-export function verificaLettoreBrief() {
+export function verificaLettoreBrief({ validatore = validaBrief } = {}) {
   const errori = [];
   let casi = 0;
   const libreria = store.libreria();
@@ -720,7 +729,7 @@ export function verificaLettoreBrief() {
   for (const [nome, dati, atteso] of CASI) {
     casi++;
     let problemi;
-    try { problemi = validaBrief(dati, libreria); }
+    try { problemi = validatore(dati, libreria); }
     catch (e) { errori.push(`«${nome}»: la validazione esplode — ${String(e.message).slice(0, 50)}`); continue; }
     if (!problemi.length) { errori.push(`«${nome}»: ACCETTATO, doveva essere fermato`); continue; }
     if (!problemi.some((x) => atteso.test(x))) {
@@ -730,7 +739,7 @@ export function verificaLettoreBrief() {
 
   // e un brief pulito deve passare senza una parola
   casi++;
-  const buono = validaBrief(brief([giorno(), giorno({ id: "secondo", nome: "Secondo", giorno: 3 })]), libreria);
+  const buono = validatore(brief([giorno(), giorno({ id: "secondo", nome: "Secondo", giorno: 3 })]), libreria);
   if (buono.length) errori.push(`un brief pulito viene contestato: ${buono[0].slice(0, 70)}`);
 
   return esito("i brief storti, fermati prima di entrare in vigore", `${casi} brief`, errori);
@@ -824,6 +833,78 @@ export async function verificaStradeDiGuasto() {
   return esito("le strade di guasto, percorse una per una", `${casi} rifiuti`, errori);
 }
 
+/* --------------------------------------------- 10. le schermate, disegnate */
+
+/**
+ * Ogni schermata deve DISEGNARSI, non solo esistere.
+ *
+ * Fino a stasera la rete controllava la logica e mai il disegno: undici
+ * `render` mai chiamate. Una schermata che esplode aprendosi passava il
+ * collaudo senza un fiato, e io le provavo a mano a ogni pubblicazione — cioè
+ * di nuovo a mano, cioè di nuovo una cosa che scade.
+ *
+ * Non si controlla che siano BELLE: si controlla che si disegnino, che non
+ * mostrino un «undefined» o un «NaN» a schermo, e che non spariscano in un
+ * riquadro vuoto.
+ */
+export async function verificaSchermate({ schermate = null } = {}) {
+  const errori = [];
+  let casi = 0;
+  const SCHERMATE = schermate || [
+    ["Home", "../js/screens/oggi.js"],
+    ["Allenamento", "../js/screens/seduta.js"],
+    ["Storico", "../js/screens/storico.js"],
+    ["Salute", "../js/screens/salute.js"],
+    ["Corpo", "../js/screens/corpo.js"],
+    ["Fumo", "../js/screens/fumo.js"],
+    ["Acqua", "../js/screens/acqua.js"],
+    ["Allenamenti del Watch", "../js/screens/allenamenti.js"],
+    ["Proposte", "../js/screens/proposte.js"],
+    ["Pacchetto", "../js/screens/export.js"],
+    ["Impostazioni", "../js/screens/impostazioni.js"],
+  ];
+  const finto = () => {};
+  for (const [nome, modulo] of SCHERMATE) {
+    casi++;
+    let el = null;
+    try {
+      const m = await import(new URL(modulo, import.meta.url).href);
+      el = await m.render({ vaiA: finto, indietro: finto, ridisegna: finto });
+    } catch (e) {
+      errori.push(`${nome}: non si disegna — ${String(e?.message ?? e).slice(0, 70)}`);
+      continue;
+    }
+    if (!el || !el.querySelectorAll) { errori.push(`${nome}: non restituisce un elemento`); continue; }
+    const nodi = el.querySelectorAll("*").length;
+    if (nodi < 3) errori.push(`${nome}: esce quasi vuota (${nodi} nodi)`);
+    // Un «undefined» a schermo è un dato che non c'è raccontato come se ci
+    // fosse: la regola di tutta l'app è che un dato assente si dice «—».
+    const testo = el.textContent || "";
+    // PAROLE INTERE, non pezzi di parola. Cercando il pezzo, «null» si trovava
+    // dentro «annullata» — che è italiano corretto e compare quattro volte nel
+    // pacchetto per il coach — e la prova accusava una schermata sana. È il
+    // terzo falso allarme di questo tipo in una sera: una prova che grida al
+    // lupo sui casi buoni si impara a ignorare, ed è peggio di non averla.
+    for (const brutto of ["undefined", "NaN", "Infinity", "null"]) {
+      if (new RegExp(`\\b${brutto}\\b`).test(testo)) errori.push(`${nome}: a schermo compare «${brutto}»`);
+    }
+    if (testo.includes("[object Object]")) errori.push(`${nome}: a schermo compare «[object Object]»`);
+    // Nessun attributo costruito male: src="undefined", href="null"…
+    for (const n of el.querySelectorAll("[src], [href]")) {
+      const v = n.getAttribute("src") || n.getAttribute("href") || "";
+      // Una foto è un `data:` lungo migliaia di caratteri, e prima o poi ci
+      // capitano dentro le lettere «null» o «NaN» per puro caso: cercarle lì
+      // dentro dava sei falsi allarmi sulle sue foto vere. Un indirizzo
+      // costruito male si riconosce da come COMINCIA, non da cosa contiene.
+      if (v.startsWith("data:") || v.startsWith("blob:")) continue;
+      if (/^(undefined|null|NaN)|[/=]\s*(undefined|null|NaN)\b/.test(v)) {
+        errori.push(`${nome}: un ${n.tagName.toLowerCase()} punta a «${v.slice(0, 40)}»`);
+      }
+    }
+  }
+  return esito("le schermate, disegnate una per una", `${casi} schermate`, errori);
+}
+
 /* ------------------------------------------------------------- la rete */
 
 export async function rete() {
@@ -840,6 +921,9 @@ export async function rete() {
     verificaLettorePacchetto(),
     verificaLettoreBrief(),
     await verificaStradeDiGuasto(),
+    await verificaSchermate(),
+    verificaDisegniEBlocchi(),
+    await provaLaRete(),
   ];
   const errori = prove.reduce((a, p) => a + p.errori, 0);
   const casi = prove.reduce((a, p) => a + (parseInt(p.casi, 10) || 0), 0);
@@ -854,6 +938,229 @@ export async function rete() {
       "iOS, il service worker, la memoria piena, i Comandi Rapidi, il Watch e " +
       "l'app in mano a te durante un allenamento: quella parte si prova, non si dimostra.",
   };
+}
+
+/* ------------------------------------- 11. quello che disegna e quello che scrive */
+
+/**
+ * I disegni e i blocchi del pacchetto, con dentro il vuoto e l'assurdo.
+ *
+ * Sono duemila righe che nessuna prova toccava: tredici funzioni di disegno e
+ * undici blocchi del pacchetto per il coach. Non si controlla che siano belle
+ * — quello non si misura — ma che reggano il caso limite senza produrre un NaN
+ * a schermo o una riga che non vuol dire niente. Un grafico che disegna una
+ * barra sbagliata è una risposta sbagliata che sembra giusta.
+ */
+export function verificaDisegniEBlocchi() {
+  const errori = [];
+  let casi = 0;
+  const malato = (x) => /NaN|Infinity|undefined|\[object Object\]/.test(String(x ?? ""));
+  const guarda = (nome, el) => {
+    casi++;
+    if (el == null) return;
+    const html = el.outerHTML ?? String(el);
+    if (malato(html)) errori.push(`${nome}: produce ${(/NaN|Infinity|undefined|\[object Object\]/.exec(html) || [])[0]}`);
+  };
+
+  // --- i grafici, con dentro il peggio che possono ricevere
+  const VUOTI = [[], [null], [{ valore: null }], [{ valore: 0 }]];
+  for (const punti of VUOTI) {
+    guarda("graficoLinea", grafico.graficoLinea({ punti }));
+    guarda("graficoLinea con obiettivo", grafico.graficoLinea({ punti, obiettivo: 100 }));
+  }
+  for (const dati of [[], [{}], [{ kcal: null, presente: false }], [{ kcal: NaN }], [{ kcal: 0, presente: true }]]) {
+    guarda("graficoAttivita", grafico.graficoAttivita(dati));
+  }
+  for (const caselle of [[], [null, null], [{ min: 60, max: 60 }], [{ min: 0, max: 0 }]]) {
+    guarda("graficoBattito", grafico.graficoBattito({ caselle, inizioSec: 0, durataSec: 0 }));
+  }
+  guarda("fascia vuota", grafico.fascia([]));
+  guarda("legenda", grafico.legenda());
+  guarda("schedaGrafico senza niente", grafico.schedaGrafico({ titolo: "x", valore: null, unita: null, nota: null, grafico: null }));
+  // un valore enorme non deve schiacciare la scala fino a NaN
+  guarda("graficoLinea con un valore assurdo", grafico.graficoLinea({ punti: [{ valore: 1e12 }, { valore: 1 }] }));
+
+  // --- gli anelli e i colori del punteggio
+  for (const v of [null, 0, 50, 100, -1, 101, NaN]) {
+    casi++;
+    const c = coloreDaPunteggio(v);
+    if (malato(c)) errori.push(`coloreDaPunteggio(${v}) = ${c}`);
+    // `giudizio` restituisce { testo, livello }, non una stringa: passarlo a
+    // String() dava «[object Object]» e la prova accusava una funzione sana.
+    // Quarto falso allarme della serata dello stesso tipo — la firma si legge,
+    // non si indovina.
+    const g = giudizio(v);
+    if (!g || typeof g.testo !== "string" || !g.testo || malato(g.testo)) errori.push(`giudizio(${v}).testo = ${g?.testo}`);
+    if (!(g?.livello >= 1 && g.livello <= 3)) errori.push(`giudizio(${v}).livello = ${g?.livello}`);
+    guarda(`anello(${v})`, anello(v));
+  }
+
+  // --- i blocchi del pacchetto per il coach, con archivi vuoti
+  // `tipoGiorno` è una FUNZIONE, non un valore: passandogli null la prova
+  // sembrava passare solo perché con l'elenco vuoto non ci si arriva mai. Un
+  // caso limite provato con la forma sbagliata non prova niente.
+  const finestraVuota = store.statoFinestra([], { campo: "kcalAttive", settimane: 3, minimoSettimana: 5 });
+  const vuoto = { giorni: [], notti: [], finestraMovimento: finestraVuota, finestraSonno: finestraVuota,
+    obiettivo: null, tipoGiorno: () => null, quantiGiorni: 21 };
+  const blocchi = [
+    ["bloccoSalute vuoto", () => pacchetto.bloccoSalute(vuoto)],
+    ["bloccoSalute con dati e finestre assenti", () => pacchetto.bloccoSalute({
+      ...vuoto, finestraMovimento: null, finestraSonno: null,
+      giorni: [{ data: "2026-08-20", presente: true, kcalAttive: 520, passi: 9120 }],
+      notti: [{ data: "2026-08-20", presente: true, durataMin: 451 }] })],
+    ["bloccoExtra", () => pacchetto.bloccoExtra([])],
+    ["bloccoWatch", () => pacchetto.bloccoWatch([])],
+    ["bloccoAccettate", () => pacchetto.bloccoAccettate([], () => null)],
+    ["bloccoProposte", () => pacchetto.bloccoProposte([], nomeLivello)],
+    ["bloccoAcqua", () => pacchetto.bloccoAcqua({ perGiorno: [], litri: null })],
+    ["bloccoFumo", () => pacchetto.bloccoFumo({ perGiorno: [], tollerate: null, primoGiorno: null })],
+    ["bloccoSegnali", () => pacchetto.bloccoSegnali([])],
+    ["bloccoCorpo", () => pacchetto.bloccoCorpo({ misure: [], indici: [], etichette: {}, dateIndici: {} })],
+    ["intestazionePacchetto", () => pacchetto.intestazionePacchetto([])],
+  ];
+  for (const [nome, fn] of blocchi) {
+    casi++;
+    let t;
+    try { t = fn(); }
+    catch (e) { errori.push(`${nome} con l'archivio vuoto esplode — ${String(e?.message ?? e).slice(0, 60)}`); continue; }
+    if (malato(t)) errori.push(`${nome} scrive «${(/NaN|Infinity|undefined|\[object Object\]/.exec(String(t)) || [])[0]}» nel pacchetto del coach`);
+  }
+
+  // --- i pezzi del motore delle proposte che nessuno provava
+  casi++;
+  if (piuGiorni("2026-10-25", 1) !== "2026-10-26") errori.push("piuGiorni sbaglia il giorno dopo il cambio d'ora");
+  if (piuGiorni("2026-02-28", 1) !== "2026-03-01") errori.push("piuGiorni sbaglia la fine di febbraio");
+  for (const [esp, atteso] of [
+    [{ serie: [] }, null],
+    [{ serie: [{ ripFatte: 10 }, { ripFatte: 8 }] }, 8],
+    [{ serie: [{ ripFatte: 10 }, { ripFatte: null }] }, null],
+  ]) {
+    casi++;
+    if (ripetizioniEffettive(esp) !== atteso) errori.push(`ripetizioniEffettive: ${ripetizioniEffettive(esp)} invece di ${atteso}`);
+  }
+  for (const [esp, atteso] of [
+    [null, false],
+    [{ saltato: { motivo: "x" } }, false],
+    [{ rpe: null, tecnica: 8, serie: [{ ripFatte: 8 }] }, false],
+    [{ rpe: 7, tecnica: 8, serie: [{ ripFatte: 8 }] }, true],
+  ]) {
+    casi++;
+    if (datiCompleti(esp) !== atteso) errori.push(`datiCompleti: ${datiCompleti(esp)} invece di ${atteso}`);
+  }
+  // due proposte identiche devono avere la stessa impronta, due diverse no
+  casi++;
+  const pA = { esercizioId: "x", tipo: "carico", a: { carico: 30 }, da: { carico: 25 } };
+  const pB = { esercizioId: "x", tipo: "carico", a: { carico: 35 }, da: { carico: 25 } };
+  if (firmaProposta(pA) !== firmaProposta({ ...pA })) errori.push("firmaProposta: due proposte identiche hanno impronte diverse");
+  if (firmaProposta(pA) === firmaProposta(pB)) errori.push("firmaProposta: due proposte diverse hanno la stessa impronta");
+
+  return esito("quello che disegna e quello che scrive", `${casi} casi limite`, errori);
+}
+
+/* ------------------------------------------- la rete sa ancora fallire? */
+
+/**
+ * Il banco che guasta la rete apposta.
+ *
+ * Il 27/08 ho rotto l'app nove volte a mano per dimostrare che il collaudo se
+ * ne accorgeva. Le ha prese tutte — ma quelle nove prove non si rilanciavano:
+ * la mattina in cui una modifica azzoppasse un controllo, la rete avrebbe
+ * continuato a dire «PASSATA» e nessuno l'avrebbe saputo. È lo stesso difetto
+ * che avevo trovato nel registro del controllo, un piano più su: una verifica
+ * fatta una volta è un verbale, non una rete.
+ *
+ * Qui ogni prova riceve un soggetto GUASTO al posto di quello vero, e deve
+ * accorgersene. Se una passa lo stesso, quella prova ha smesso di controllare
+ * e lo dice — che è l'unica cosa che un collaudo non può permettersi di tacere.
+ *
+ * Non tocca niente: i guasti sono funzioni finte passate come argomento, non
+ * modifiche ai file.
+ */
+export async function provaLaRete() {
+  const errori = [];
+  let casi = 0;
+
+  const deveSuonare = async (nome, fn) => {
+    casi++;
+    let r;
+    try { r = await fn(); }
+    catch (e) { errori.push(`«${nome}»: la prova esplode invece di segnalare — ${String(e?.message ?? e).slice(0, 60)}`); return; }
+    if (r?.passata) errori.push(`«${nome}»: PASSATA con un soggetto guasto — questa prova non sta più controllando niente`);
+  };
+
+  // 1. il motore che propone un carico che non si monta
+  await deveSuonare("carico non montabile", () =>
+    verificaMotoreProposte({
+      motore: (a) => {
+        const vero = valutaProgressione(a);
+        if (vero.proposta?.a?.carico != null) vero.proposta.a.carico += 0.3;
+        return vero;
+      },
+    })
+  );
+
+  // 2. il motore che propone di salire mentre c'è dolore
+  await deveSuonare("salire col dolore", () =>
+    verificaMotoreProposte({
+      motore: (a) => {
+        const senzaDolore = { ...a, esposizioni: a.esposizioni.map((e) => ({ ...e, log: { ...e.log, dolori: [] } })) };
+        return valutaProgressione(senzaDolore);
+      },
+    })
+  );
+
+  // 3. il lettore del pacchetto che butta via le righe in silenzio
+  await deveSuonare("righe che spariscono senza una parola", () =>
+    verificaLettorePacchetto({
+      lettore: (t) => {
+        const r = analizza(t);
+        return { ...r, avvisi: [] };
+      },
+    })
+  );
+
+  // 4. il lettore del pacchetto che perde la durata degli allenamenti
+  await deveSuonare("durata dell'allenamento persa", () =>
+    verificaLettorePacchetto({
+      lettore: (t) => {
+        const r = analizza(t);
+        return { ...r, allenamenti: r.allenamenti.map((a) => ({ ...a, durataSec: null })) };
+      },
+    })
+  );
+
+  // 5. la validazione del brief che accetta tutto
+  await deveSuonare("brief storti accettati", () => verificaLettoreBrief({ validatore: () => [] }));
+
+  // 6. la validazione del brief che rifiuta anche quelli buoni
+  await deveSuonare("brief buoni rifiutati", () => verificaLettoreBrief({ validatore: () => ["qualcosa non va"] }));
+
+  // 7. una schermata che non si disegna
+  await deveSuonare("schermata che esplode", () =>
+    verificaSchermate({ schermate: [["Finta", "../tools/schermata-che-esplode.js"]] })
+  );
+
+  // 8. la libreria con uno schema che il conto del volume non conosce
+  await deveSuonare("schema sconosciuto nella libreria", () =>
+    verificaDati({
+      libreriaFinta: {
+        esercizi: [{ id: "finto", nome: "Finto", pattern: "schema-inventato", attrezzo: "bilanciere",
+          setup: "x", esecuzione: "x", cue: "x", erroriComuni: ["x"] }],
+      },
+    })
+  );
+
+  // 9. la libreria con due esercizi sullo stesso video
+  await deveSuonare("stesso video su due esercizi", () =>
+    verificaDati({
+      libreriaFinta: {
+        esercizi: ["a", "b"].map((id) => ({ id, nome: id, pattern: "spinta", attrezzo: "bilanciere",
+          setup: "x", esecuzione: "x", cue: "x", erroriComuni: ["x"], video: { id: "aaaaaaaaaaa" } })),
+      },
+    })
+  );
+
+  return esito("la rete sa ancora fallire", `${casi} guasti`, errori);
 }
 
 /* ------------------------------------------- le prove che scrivono davvero */

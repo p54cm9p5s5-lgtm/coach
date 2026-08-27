@@ -549,7 +549,13 @@ export function bloccoSalute({ giorni, notti, finestraMovimento, finestraSonno, 
   // minimo» faceva pensare alla prima settimana del ciclo invece che a questa.
   // Le settimane finite prima che l'app esistesse non sono ammanchi.
   const stato = (f, unita) =>
-    `${f.registratiTotali}/${f.richiesti} ${unita}${f.completa ? " — completa" : " — incompleta"}` +
+    // Una finestra che non c'è non è una finestra a zero: senza questa riga il
+    // pacchetto per il coach esplodeva invece di dire «non calcolata». Oggi chi
+    // chiama passa sempre un oggetto, ma il pacchetto è la cosa che gli mandi:
+    // è l'ultimo posto dove è accettabile che qualcosa si rompa.
+    !f
+      ? "non calcolata"
+      : `${f.registratiTotali}/${f.richiesti} ${unita}${f.completa ? " — completa" : " — incompleta"}` +
     ` (${f.perSettimana
       .map(
         (s) =>
