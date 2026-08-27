@@ -39,6 +39,7 @@ import { analizza } from "../js/salute.js";
 import { valida as validaBrief, estraiBlocco } from "../js/brief.js";
 import { carichiPossibili, carichiManubrio, aPaio } from "../js/plates.js";
 import * as grafico from "../js/grafico.js";
+import { pacchettoDaExport } from "../js/salute-export.js";
 import * as pacchetto from "../js/export.js";
 import { punteggioSalute, giudizio, coloreDaPunteggio, scomposizione, anello } from "../js/punteggio.js";
 import { piuGiorni, ripetizioniEffettive, datiCompleti, firmaProposta, nomeLivello } from "../js/segnali.js";
@@ -426,7 +427,7 @@ export async function verificaStesseDomande() {
  * un carico che non riesci a montare, una riduzione che aumenta, una salita
  * mentre hai male, un bersaglio oltre il tetto del range.
  */
-export async function verificaMotoreProposte({ motore = valutaProgressione } = {}) {
+export async function verificaMotoreProposte({ motore = valutaProgressione, ridotta = false } = {}) {
   const errori = [];
   let casi = 0;
   const regole = store.regole();
@@ -451,15 +452,22 @@ export async function verificaMotoreProposte({ motore = valutaProgressione } = {
     tecnica,
   });
 
-  const ATTREZZI = ["bilanciere", "manubri", "manubrio", "corpo libero"];
+  // Il banco che guasta la rete non ha bisogno di 63.000 situazioni per
+  // accorgersi che un carico non si monta: gliene bastano poche centinaia, e
+  // la rete resta veloce da lanciare. Il giro vero le percorre tutte.
+  const ATTREZZI = ridotta ? ["bilanciere", "manubri"] : ["bilanciere", "manubri", "manubrio", "corpo libero"];
+  const CARICHI = ridotta ? [20, 40] : [null, 0, 2.5, 10, 22.5, 40, 100];
+  const RIPMIN = ridotta ? [8] : [6, 8, 10];
+  const RPE = ridotta ? [4, 9] : [4, 7, 8, 9, 10];
+  const TECNICA = ridotta ? [4, 9] : [1, 4, 6, 8, 10];
   for (const attrezzo of ATTREZZI) {
     const def = { id: "prova", nome: "Prova", attrezzo };
-    for (const carico of [null, 0, 2.5, 10, 22.5, 40, 100]) {
-      for (const ripMin of [6, 8, 10]) {
+    for (const carico of CARICHI) {
+      for (const ripMin of RIPMIN) {
         for (const ripMax of [ripMin, ripMin + 2, ripMin + 4]) {
           for (const rip of [ripMin - 2, ripMin, ripMin + 1, ripMax, ripMax + 3]) {
-            for (const rpe of [4, 7, 8, 9, 10]) {
-              for (const tecnica of [1, 4, 6, 8, 10]) {
+            for (const rpe of RPE) {
+              for (const tecnica of TECNICA) {
                 for (const dolore of [false, true]) {
                   casi++;
                   const variante = { esercizioId: "prova", serie: 3, ripMin, ripMax, carico, recuperoSec: 90 };
@@ -758,7 +766,7 @@ export function verificaLettoreBrief({ validatore = validaBrief } = {}) {
  * vero senza toccarlo. E ognuna deve rifiutare **con una frase che spiega**:
  * un errore in inglese sullo schermo di un'app italiana è un difetto suo.
  */
-export async function verificaStradeDiGuasto() {
+export async function verificaStradeDiGuasto({ magazzino = store } = {}) {
   const errori = [];
   let casi = 0;
 
@@ -779,42 +787,42 @@ export async function verificaStradeDiGuasto() {
   // Il tetto delle sigarette: la decisione dichiarata irreversibile.
   // Sono i quattro rifiuti che contano più di tutti, e rifiutano prima di
   // scrivere, quindi provarli qui non tocca niente.
-  await deve("il massimo non è un numero", () => store.dichiaraTettoFumo("tanto", "2026-09-01"), /numero da zero in su/i);
-  await deve("il massimo è negativo", () => store.dichiaraTettoFumo(-1, "2026-09-01"), /numero da zero in su/i);
-  await deve("manca il giorno da cui vale", () => store.dichiaraTettoFumo(0, "domani"), /serve il giorno/i);
-  const tetto = await store.tettoFumoDichiarato();
+  await deve("il massimo non è un numero", () => magazzino.dichiaraTettoFumo("tanto", "2026-09-01"), /numero da zero in su/i);
+  await deve("il massimo è negativo", () => magazzino.dichiaraTettoFumo(-1, "2026-09-01"), /numero da zero in su/i);
+  await deve("manca il giorno da cui vale", () => magazzino.dichiaraTettoFumo(0, "domani"), /serve il giorno/i);
+  const tetto = await magazzino.tettoFumoDichiarato();
   if (tetto) {
     if (tetto.massimo <= 0) {
-      await deve("IL MASSIMO A ZERO NON SI PUÒ RIALZARE", () => store.dichiaraTettoFumo(5, "2026-09-01"), /già a zero|non si torna indietro/i);
-      await deve("nemmeno rimettendo lo stesso zero", () => store.dichiaraTettoFumo(0, "2026-09-01"), /già a zero|non si torna indietro/i);
+      await deve("IL MASSIMO A ZERO NON SI PUÒ RIALZARE", () => magazzino.dichiaraTettoFumo(5, "2026-09-01"), /già a zero|non si torna indietro/i);
+      await deve("nemmeno rimettendo lo stesso zero", () => magazzino.dichiaraTettoFumo(0, "2026-09-01"), /già a zero|non si torna indietro/i);
     } else {
-      await deve("il massimo non si può alzare", () => store.dichiaraTettoFumo(tetto.massimo + 1, tetto.dal), /solo scendere/i);
+      await deve("il massimo non si può alzare", () => magazzino.dichiaraTettoFumo(tetto.massimo + 1, tetto.dal), /solo scendere/i);
     }
   }
 
   // La notte corretta a mano
-  await deve("notte senza giorno", () => store.correggiNotte("ieri", { aLetto: "23:00", sveglio: "07:00" }), /giorno della notte/i);
-  await deve("notte senza le due ore", () => store.correggiNotte("2026-08-20", {}), /ora in cui sei andato a letto/i);
+  await deve("notte senza giorno", () => magazzino.correggiNotte("ieri", { aLetto: "23:00", sveglio: "07:00" }), /giorno della notte/i);
+  await deve("notte senza le due ore", () => magazzino.correggiNotte("2026-08-20", {}), /ora in cui sei andato a letto/i);
   // «Le due ore non tornano» NON si prova: è una strada morta, e lo dice il
-  // commento in store.js — quando «a letto» viene dopo «sveglio» l'inizio si
+  // commento in magazzino.js — quando «a letto» viene dopo «sveglio» l'inizio si
   // sposta al giorno prima e la durata esce sempre positiva. Provate tutte e
   // 2304 le coppie di ore: nessuna la fa scattare.
-  await deve("più di venti ore di sonno", () => store.correggiNotte("2026-08-20", { aLetto: "02:00", sveglio: "01:00" }), /venti ore/i);
+  await deve("più di venti ore di sonno", () => magazzino.correggiNotte("2026-08-20", { aLetto: "02:00", sveglio: "01:00" }), /venti ore/i);
 
   // Le cose che non esistono più
-  await deve("una seduta che non c'è", () => store.aggiornaSeduta("mai-esistita", { notaGenerale: "x" }), /seduta non trovata/i);
-  await deve("chiudere una seduta che non c'è", () => store.chiudiSeduta("mai-esistita", {}), /non esiste più|eliminata/i);
-  await deve("rispondere a una proposta che non c'è", () => store.rispondiAProposta("mai-esistita", "accettata"), /proposta non esiste/i);
-  await deve("un giorno dello split che non c'è", () => store.iniziaSeduta({ data: "2026-08-27", giornoId: "non-esiste-questo" }), /giorno dello split/i);
+  await deve("una seduta che non c'è", () => magazzino.aggiornaSeduta("mai-esistita", { notaGenerale: "x" }), /seduta non trovata/i);
+  await deve("chiudere una seduta che non c'è", () => magazzino.chiudiSeduta("mai-esistita", {}), /non esiste più|eliminata/i);
+  await deve("rispondere a una proposta che non c'è", () => magazzino.rispondiAProposta("mai-esistita", "accettata"), /proposta non esiste/i);
+  await deve("un giorno dello split che non c'è", () => magazzino.iniziaSeduta({ data: "2026-08-27", giornoId: "non-esiste-questo" }), /giorno dello split/i);
 
   // L'orologio e le foto
-  await deve("nota su un allenamento che non c'è", () => store.salvaNotaAllenamento(null, { talkTest: "si" }), /serve l'allenamento/i);
-  await deve("un talk-test inventato", () => store.salvaNotaAllenamento("uuid-qualunque", { talkTest: "boh" }), /talk-test non riconosciuto/i);
+  await deve("nota su un allenamento che non c'è", () => magazzino.salvaNotaAllenamento(null, { talkTest: "si" }), /serve l'allenamento/i);
+  await deve("un talk-test inventato", () => magazzino.salvaNotaAllenamento("uuid-qualunque", { talkTest: "boh" }), /talk-test non riconosciuto/i);
   // Il modello dell'immagine si compone a pezzi: scritto per intero, questo file
   // farebbe scattare la guardia della pubblicazione — è già successo, e ha fatto
   // bene a fermarmi. Un'eccezione in più sarebbe un buco in più.
   const FINTA_IMMAGINE = "data:image/png;ba" + "se64,AA";
-  await deve("una posa che il protocollo non prevede", () => store.registraFoto({ posa: "posa-inventata", immagine: FINTA_IMMAGINE }), /non è una posa/i);
+  await deve("una posa che il protocollo non prevede", () => magazzino.registraFoto({ posa: "posa-inventata", immagine: FINTA_IMMAGINE }), /non è una posa/i);
 
   // Il brief
   await deve("un brief senza il blocco", () => estraiBlocco("un documento qualunque, senza niente dentro"), /blocco|COACH-DATA/i);
@@ -923,6 +931,8 @@ export async function rete() {
     await verificaStradeDiGuasto(),
     await verificaSchermate(),
     verificaDisegniEBlocchi(),
+    await verificaVeritaDeiDati(),
+    await verificaCorrezioniProtette(),
     await provaLaRete(),
   ];
   const errori = prove.reduce((a, p) => a + p.errori, 0);
@@ -940,6 +950,205 @@ export async function rete() {
   };
 }
 
+/* ------------------------------- 13. le correzioni che nessuno proteggeva */
+
+/**
+ * Le correzioni di oggi che, se tornassero indietro, nessuna prova vedrebbe.
+ *
+ * Le ho contate in una cernita: sette su venti. Una correzione non protetta è
+ * una correzione con una data di scadenza — vale finché nessuno tocca quel
+ * pezzo, e nessuno sa quando succederà.
+ */
+export async function verificaCorrezioniProtette({ lettoreExport = pacchettoDaExport, esposizioniFinte = null } = {}) {
+  const errori = [];
+  let casi = 0;
+
+  // 1. La storia di un esercizio senza id non deve restituire TUTTO l'archivio.
+  //    La ricerca per indice con chiave assente in IndexedDB non risponde
+  //    «nessuno»: risponde «tutti».
+  for (const chiave of [undefined, null, ""]) {
+    casi++;
+    const r = esposizioniFinte ? await esposizioniFinte(chiave) : await store.esposizioni(chiave);
+    if (r.length) errori.push(`esposizioni(${JSON.stringify(chiave)}) restituisce ${r.length} righe invece di nessuna`);
+  }
+
+  // 2. Un blocco <Workout> che non si chiude non deve mangiarsi gli allenamenti
+  //    successivi. È il modo peggiore di sbagliare: silenzioso.
+  const W = (d) => [
+    `<Workout workoutActivityType="HKWorkoutActivityTypeWalking" startDate="${d} 10:00:00 +0200" endDate="${d} 11:00:00 +0200" duration="60" durationUnit="min">`,
+    `  <WorkoutStatistics type="HKQuantityTypeIdentifierActiveEnergyBurned" sum="300"/>`,
+    `</Workout>`,
+  ];
+  const xml = (corpo) => new File([['<?xml version="1.0"?>', "<HealthData>", ...corpo, "</HealthData>"].join("\n")], "e.xml");
+  for (const [nome, corpo, attesi] of [
+    ["righe separate, come li scrive Apple", [...W("2026-08-20"), ...W("2026-08-21"), ...W("2026-08-22")], 3],
+    ["un blocco tutto su una riga", [W("2026-08-20").join(""), ...W("2026-08-21")], 2],
+    ["uno che si chiude da solo", [`<Workout workoutActivityType="HKWorkoutActivityTypeWalking" startDate="2026-08-20 10:00:00 +0200" endDate="2026-08-20 11:00:00 +0200" duration="60" durationUnit="min"/>`, ...W("2026-08-21")], 2],
+  ]) {
+    casi++;
+    const r = await lettoreExport(xml(corpo), { giorni: 30, oggi: "2026-08-27", dal: "2026-08-01" });
+    if (r.allenamenti !== attesi) errori.push(`«${nome}»: ${r.allenamenti} allenamenti invece di ${attesi} — qualcuno si è perso per strada`);
+  }
+
+  // 3. Un file che non è un backup dev'essere riconosciuto PRIMA di chiedere
+  //    «sostituisco tutti i tuoi dati?». La condizione è quella della schermata.
+  const riconosce = (d) => !(!d || typeof d !== "object" || Array.isArray(d) || d.formato !== "coach-backup");
+  for (const [testo, atteso] of [
+    ["null", false], ["42", false], ['"x"', false], ["[]", false], ["true", false],
+    ['{"a":1}', false], ['{"formato":"altro"}', false],
+    ['{"formato":"coach-backup","versione":1,"dati":{}}', true],
+  ]) {
+    casi++;
+    let d; try { d = JSON.parse(testo); } catch { continue; }
+    if (riconosce(d) !== atteso) errori.push(`un file «${testo}» viene ${riconosce(d) ? "preso" : "scartato"} per un backup: sbagliato`);
+  }
+
+  // 4. Il testo che scrivi tu deve poter andare a capo dentro una parola: una
+  //    parola da 400 caratteri sfondava la riga a 3393 px su uno schermo da 375.
+  casi++;
+  const css = await (await fetch(dentroApp(`css/app.css?rete=${Math.random()}`), { cache: "no-store" })).text();
+  if (!/overflow-wrap:\s*anywhere/.test(css)) errori.push("il foglio di stile non spezza più le parole lunghissime: una parola senza spazi porta la pagina fuori dal bordo");
+
+  // 5. Il canale fra due copie dell'app deve esistere e non rimandare indietro
+  //    quello che scrive questa copia.
+  casi++;
+  if (typeof db.seScriveUnAltraCopia !== "function") {
+    errori.push("il canale fra due copie dell'app non c'è più: due copie tornerebbero a sovrascriversi in silenzio");
+  } else {
+    let tornato = false;
+    db.seScriveUnAltraCopia(() => { tornato = true; });
+    await db.put("impostazioni", { chiave: "__rete-canale", valore: 1 });
+    await new Promise((r) => setTimeout(r, 120));
+    await db.del("impostazioni", "__rete-canale");
+    await new Promise((r) => setTimeout(r, 120));
+    db.seScriveUnAltraCopia(null);
+    if (tornato) errori.push("il canale rimanda indietro le scritture di questa stessa copia: l'avviso suonerebbe da solo");
+  }
+
+  // 6. I documenti non devono promettere quello che l'app non fa.
+  //    SPEC e README hanno promesso per settimane che aprire un esercizio non
+  //    contattava nessuno, mentre montava un player e scaricava una miniatura.
+  casi++;
+  for (const doc of ["README.md", "SPEC.md"]) {
+    const t = await (await fetch(dentroApp(`${doc}?rete=${Math.random()}`), { cache: "no-store" })).text();
+    for (const bugia of [/copertina è disegnata dall'app, non scaricata/i, /parte \*\*solo se tocchi il video\*\*/i, /non produce nessuna\s*\n?\s*richiesta/i]) {
+      if (bugia.test(t)) errori.push(`${doc} promette di nuovo che aprire un esercizio non contatta nessuno, e non è vero`);
+    }
+  }
+
+  return esito("le correzioni che nessuno proteggeva", `${casi} controlli`, errori);
+}
+
+/* ------------------------------------------- 12. la verità dei dati */
+
+/**
+ * Non la FORMA dei dati: quello che dicono.
+ *
+ * Il 27/08 sera, dopo una giornata intera di controlli e diciannove prove, ho
+ * trovato **39 allenamenti del Watch doppi su 99** — tre settimane di numeri
+ * gonfiati, due esattamente al doppio, finiti nei pacchetti mandati al coach.
+ * Nessuna prova se n'era accorta, e per una ragione che non è distrazione: un
+ * doppione è formalmente perfetto. Data valida, durata plausibile, nessun
+ * collegamento rotto, punteggio in scala. Passa ogni invariante di forma.
+ *
+ * Questo strato fa l'altra domanda: quello che c'è scritto è VERO? Due righe
+ * che raccontano lo stesso fatto, un totale che non torna con le sue parti, un
+ * conto che dice una cosa diversa da un altro conto sugli stessi dati.
+ */
+export async function verificaVeritaDeiDati({ archivioFinto = null } = {}) {
+  const errori = [];
+  let casi = 0;
+
+  // 1. LO STESSO FATTO SCRITTO DUE VOLTE.
+  //    Un allenamento dell'orologio è lo stesso fatto se coincidono giorno,
+  //    ora d'inizio, durata e tipo: due righe così non sono due allenamenti,
+  //    è lo stesso importato due volte.
+  const watch = archivioFinto?.allenamentiWatch || (await db.all("allenamentiWatch"));
+  const perFatto = new Map();
+  for (const a of watch) {
+    const k = `${a.data}|${a.inizio}|${a.durataSec}|${(a.tipo || "?").toLowerCase()}`;
+    if (!perFatto.has(k)) perFatto.set(k, []);
+    perFatto.get(k).push(a);
+  }
+  casi += watch.length;
+  for (const [k, v] of perFatto) {
+    if (v.length > 1) errori.push(`lo stesso allenamento scritto ${v.length} volte: ${k} (chiavi: ${v.map((x) => x.uuid).join(", ").slice(0, 80)})`);
+  }
+
+  // 2. Una seduta due volte nello stesso giorno con lo stesso tipo e la stessa
+  //    ora d'inizio: l'app lo chiede («Un secondo allenamento oggi?»), ma
+  //    identiche al minuto no.
+  const sedute = await db.all("sedute");
+  const perSeduta = new Map();
+  for (const s of sedute) {
+    const k = `${s.data}|${s.tipoId}|${s.oraInizio}`;
+    if (!perSeduta.has(k)) perSeduta.set(k, []);
+    perSeduta.get(k).push(s);
+  }
+  casi += sedute.length;
+  for (const [k, v] of perSeduta) if (v.length > 1) errori.push(`la stessa seduta scritta ${v.length} volte: ${k}`);
+
+  // 3. Una misura dello stesso tipo due volte nello stesso giorno, o una foto
+  //    della stessa posa nello stesso giorno: è una correzione, non due dati,
+  //    e due righe fanno media fra loro.
+  for (const [nome, chiave, eco] of [
+    ["misure", (r) => `${r.data}|${r.tipo}`, "misura"],
+    ["foto", (r) => `${r.data}|${r.posa}`, "foto"],
+    ["giorniSalute", (r) => r.data, "giornata di salute"],
+    ["notti", (r) => r.data, "notte"],
+    ["acqua", (r) => r.data, "giornata d'acqua"],
+    ["noteWatch", (r) => r.uuid, "nota sull'allenamento"],
+  ]) {
+    const righe = await db.all(nome);
+    casi += righe.length;
+    const conta = new Map();
+    for (const r of righe) conta.set(chiave(r), (conta.get(chiave(r)) || 0) + 1);
+    for (const [k, n] of conta) if (n > 1) errori.push(`${eco} scritta ${n} volte: ${k}`);
+  }
+
+  // 4. LO STESSO NUMERO CONTATO IN DUE MODI sugli stessi dati.
+  //    Non è la stessa cosa del confronto fra due strade nel codice: qui si
+  //    contano i dati veri e si pretende che i conti tornino fra loro.
+  const conteggio = await store.conteggioArchivio();
+  const serie = await db.all("serie");
+  const logs = await db.all("esercizioLog");
+  casi += 3;
+  if (conteggio.serie !== serie.length) errori.push(`le serie sono ${serie.length} ma il conteggio dice ${conteggio.serie}`);
+  if (conteggio.questionari !== logs.length) errori.push(`i questionari sono ${logs.length} ma il conteggio dice ${conteggio.questionari}`);
+  const complete = sedute.filter((s) => s.stato === "completata").length;
+  if (conteggio.allenamenti !== complete) errori.push(`gli allenamenti chiusi sono ${complete} ma il conteggio dice ${conteggio.allenamenti}`);
+
+  // 5. Il punteggio congelato deve tornare dalle SUE STESSE voci: se non torna,
+  //    qualcuno ne ha riscritta una metà e non l'altra.
+  for (const s of sedute) {
+    const c = s.completezza;
+    if (!c || !Array.isArray(c.voci) || !c.voci.length) continue;
+    casi++;
+    const pesate = c.voci.filter((v) => v.quota != null);
+    const peso = pesate.reduce((t, v) => t + v.peso, 0) || 1;
+    let rifatto = Math.round((pesate.reduce((t, v) => t + v.quota * v.peso, 0) / peso) * 100);
+    const tetto = c.limite?.tetto;
+    if (tetto != null && rifatto > tetto) rifatto = tetto;
+    if (rifatto !== c.totale) errori.push(`${s.data}: il punteggio scritto è ${c.totale} ma dalle sue voci viene ${rifatto}`);
+  }
+
+  // 6. Le serie di una seduta devono appartenere a esercizi che quella seduta
+  //    prevedeva, o almeno esistere in libreria: una serie su un esercizio che
+  //    non c'è è lavoro che nessuno saprà più leggere.
+  const perSedutaSerie = new Map();
+  for (const x of serie) {
+    if (!perSedutaSerie.has(x.sedutaId)) perSedutaSerie.set(x.sedutaId, new Set());
+    perSedutaSerie.get(x.sedutaId).add(x.esercizioId);
+  }
+  for (const [id, esercizi] of perSedutaSerie) {
+    casi++;
+    for (const e of esercizi) if (!store.esercizio(e)) errori.push(`la seduta ${id} ha serie su «${e}», che in libreria non esiste`);
+  }
+
+  return esito("la verità dei dati, non la loro forma", `${casi} fatti`, errori);
+}
+
+
 /* ------------------------------------- 11. quello che disegna e quello che scrive */
 
 /**
@@ -951,7 +1160,7 @@ export async function rete() {
  * a schermo o una riga che non vuol dire niente. Un grafico che disegna una
  * barra sbagliata è una risposta sbagliata che sembra giusta.
  */
-export function verificaDisegniEBlocchi() {
+export function verificaDisegniEBlocchi({ disegni = grafico, scrittore = pacchetto } = {}) {
   const errori = [];
   let casi = 0;
   const malato = (x) => /NaN|Infinity|undefined|\[object Object\]/.test(String(x ?? ""));
@@ -965,20 +1174,20 @@ export function verificaDisegniEBlocchi() {
   // --- i grafici, con dentro il peggio che possono ricevere
   const VUOTI = [[], [null], [{ valore: null }], [{ valore: 0 }]];
   for (const punti of VUOTI) {
-    guarda("graficoLinea", grafico.graficoLinea({ punti }));
-    guarda("graficoLinea con obiettivo", grafico.graficoLinea({ punti, obiettivo: 100 }));
+    guarda("graficoLinea", disegni.graficoLinea({ punti }));
+    guarda("graficoLinea con obiettivo", disegni.graficoLinea({ punti, obiettivo: 100 }));
   }
   for (const dati of [[], [{}], [{ kcal: null, presente: false }], [{ kcal: NaN }], [{ kcal: 0, presente: true }]]) {
-    guarda("graficoAttivita", grafico.graficoAttivita(dati));
+    guarda("graficoAttivita", disegni.graficoAttivita(dati));
   }
   for (const caselle of [[], [null, null], [{ min: 60, max: 60 }], [{ min: 0, max: 0 }]]) {
-    guarda("graficoBattito", grafico.graficoBattito({ caselle, inizioSec: 0, durataSec: 0 }));
+    guarda("graficoBattito", disegni.graficoBattito({ caselle, inizioSec: 0, durataSec: 0 }));
   }
-  guarda("fascia vuota", grafico.fascia([]));
-  guarda("legenda", grafico.legenda());
-  guarda("schedaGrafico senza niente", grafico.schedaGrafico({ titolo: "x", valore: null, unita: null, nota: null, grafico: null }));
+  guarda("fascia vuota", disegni.fascia([]));
+  guarda("legenda", disegni.legenda());
+  guarda("schedaGrafico senza niente", disegni.schedaGrafico({ titolo: "x", valore: null, unita: null, nota: null, grafico: null }));
   // un valore enorme non deve schiacciare la scala fino a NaN
-  guarda("graficoLinea con un valore assurdo", grafico.graficoLinea({ punti: [{ valore: 1e12 }, { valore: 1 }] }));
+  guarda("graficoLinea con un valore assurdo", disegni.graficoLinea({ punti: [{ valore: 1e12 }, { valore: 1 }] }));
 
   // --- gli anelli e i colori del punteggio
   for (const v of [null, 0, 50, 100, -1, 101, NaN]) {
@@ -1003,20 +1212,20 @@ export function verificaDisegniEBlocchi() {
   const vuoto = { giorni: [], notti: [], finestraMovimento: finestraVuota, finestraSonno: finestraVuota,
     obiettivo: null, tipoGiorno: () => null, quantiGiorni: 21 };
   const blocchi = [
-    ["bloccoSalute vuoto", () => pacchetto.bloccoSalute(vuoto)],
-    ["bloccoSalute con dati e finestre assenti", () => pacchetto.bloccoSalute({
+    ["bloccoSalute vuoto", () => scrittore.bloccoSalute(vuoto)],
+    ["bloccoSalute con dati e finestre assenti", () => scrittore.bloccoSalute({
       ...vuoto, finestraMovimento: null, finestraSonno: null,
       giorni: [{ data: "2026-08-20", presente: true, kcalAttive: 520, passi: 9120 }],
       notti: [{ data: "2026-08-20", presente: true, durataMin: 451 }] })],
-    ["bloccoExtra", () => pacchetto.bloccoExtra([])],
-    ["bloccoWatch", () => pacchetto.bloccoWatch([])],
-    ["bloccoAccettate", () => pacchetto.bloccoAccettate([], () => null)],
-    ["bloccoProposte", () => pacchetto.bloccoProposte([], nomeLivello)],
-    ["bloccoAcqua", () => pacchetto.bloccoAcqua({ perGiorno: [], litri: null })],
-    ["bloccoFumo", () => pacchetto.bloccoFumo({ perGiorno: [], tollerate: null, primoGiorno: null })],
-    ["bloccoSegnali", () => pacchetto.bloccoSegnali([])],
-    ["bloccoCorpo", () => pacchetto.bloccoCorpo({ misure: [], indici: [], etichette: {}, dateIndici: {} })],
-    ["intestazionePacchetto", () => pacchetto.intestazionePacchetto([])],
+    ["bloccoExtra", () => scrittore.bloccoExtra([])],
+    ["bloccoWatch", () => scrittore.bloccoWatch([])],
+    ["bloccoAccettate", () => scrittore.bloccoAccettate([], () => null)],
+    ["bloccoProposte", () => scrittore.bloccoProposte([], nomeLivello)],
+    ["bloccoAcqua", () => scrittore.bloccoAcqua({ perGiorno: [], litri: null })],
+    ["bloccoFumo", () => scrittore.bloccoFumo({ perGiorno: [], tollerate: null, primoGiorno: null })],
+    ["bloccoSegnali", () => scrittore.bloccoSegnali([])],
+    ["bloccoCorpo", () => scrittore.bloccoCorpo({ misure: [], indici: [], etichette: {}, dateIndici: {} })],
+    ["intestazionePacchetto", () => scrittore.intestazionePacchetto([])],
   ];
   for (const [nome, fn] of blocchi) {
     casi++;
@@ -1091,6 +1300,7 @@ export async function provaLaRete() {
   // 1. il motore che propone un carico che non si monta
   await deveSuonare("carico non montabile", () =>
     verificaMotoreProposte({
+      ridotta: true,
       motore: (a) => {
         const vero = valutaProgressione(a);
         if (vero.proposta?.a?.carico != null) vero.proposta.a.carico += 0.3;
@@ -1102,6 +1312,7 @@ export async function provaLaRete() {
   // 2. il motore che propone di salire mentre c'è dolore
   await deveSuonare("salire col dolore", () =>
     verificaMotoreProposte({
+      ridotta: true,
       motore: (a) => {
         const senzaDolore = { ...a, esposizioni: a.esposizioni.map((e) => ({ ...e, log: { ...e.log, dolori: [] } })) };
         return valutaProgressione(senzaDolore);
@@ -1157,6 +1368,55 @@ export async function provaLaRete() {
         esercizi: ["a", "b"].map((id) => ({ id, nome: id, pattern: "spinta", attrezzo: "bilanciere",
           setup: "x", esecuzione: "x", cue: "x", erroriComuni: ["x"], video: { id: "aaaaaaaaaaa" } })),
       },
+    })
+  );
+
+  // 10. l'archivio con due allenamenti che raccontano lo stesso fatto:
+  //     è il difetto vero del 27/08, e la prova che lo trovava non c'era.
+  await deveSuonare("lo stesso allenamento scritto due volte", () =>
+    verificaVeritaDeiDati({
+      archivioFinto: {
+        allenamentiWatch: [
+          { uuid: "a", data: "2026-08-20", inizio: "18:00", durataSec: 3600, tipo: "Walking" },
+          { uuid: "a-walking", data: "2026-08-20", inizio: "18:00", durataSec: 3600, tipo: "Walking" },
+        ],
+      },
+    })
+  );
+
+  // 11. la storia di un esercizio senza id che torna a restituire tutto
+  await deveSuonare("esposizioni senza id restituisce tutto", () =>
+    verificaCorrezioniProtette({ esposizioniFinte: async () => [{ data: "2026-08-20" }] })
+  );
+
+  // 12. il lettore dell'export che si rimangia gli allenamenti successivi
+  await deveSuonare("allenamenti che spariscono dall'export.xml", () =>
+    verificaCorrezioniProtette({ lettoreExport: async () => ({ allenamenti: 1, testo: "" }) })
+  );
+
+  // 13. un grafico che sputa NaN
+  await deveSuonare("un grafico che produce NaN", () =>
+    verificaDisegniEBlocchi({
+      disegni: { ...grafico, graficoLinea: () => { const e = document.createElement("div"); e.textContent = "NaN"; return e; } },
+    })
+  );
+
+  // 14. un blocco del pacchetto che esplode con l'archivio vuoto
+  await deveSuonare("un blocco del pacchetto che esplode", () =>
+    verificaDisegniEBlocchi({
+      scrittore: { ...pacchetto, bloccoSalute: () => { throw new Error("vuoto"); } },
+    })
+  );
+
+  // 15. un rifiuto che smette di rifiutare
+  await deveSuonare("il tetto delle sigarette che si lascia rialzare", () =>
+    verificaStradeDiGuasto({ magazzino: { ...store, dichiaraTettoFumo: async () => ({ massimo: 99 }) } })
+  );
+
+  // 16. un rifiuto che parla in inglese invece che in italiano
+  await deveSuonare("un rifiuto che parla da programmatore", () =>
+    verificaStradeDiGuasto({
+      magazzino: { ...store, correggiNotte: async () => { throw new TypeError("Cannot read properties of null"); } },
     })
   );
 

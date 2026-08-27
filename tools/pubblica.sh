@@ -172,6 +172,19 @@ echo "Copia locale: tutti i file dell'app sono elencati in sw.js."
 
 echo "Controlli superati: nessun dato personale fra i file da pubblicare."
 
+# --- la rete testuale (blocca) ------------------------------------------------
+# Il collaudo vero gira dentro l'app e questo script non ha un browser: il
+# 27/08 ho pubblicato ventitré volte dicendo ogni volta «la rete passa», e non
+# ne restava traccia da nessuna parte. Era la mia parola contro niente.
+#
+# Questa è la parte che il testo dimostra da solo — le regole scritte una volta
+# sola, i domini ammessi, la CSP, i documenti che non devono tornare a mentire,
+# la copia locale, la libreria — e da qui in avanti la fa lo script, non chi lo
+# lancia. Non sostituisce tools/rete.js: è il pezzo che non chiede il permesso.
+if ! python3 tools/rete-testuale.py; then
+  errore "La rete testuale non passa (elenco sopra)."
+fi
+
 # --- documentazione rimasta indietro (avviso, non blocco) ---------------------
 # COME-FUNZIONA.md è quello che si legge per sapere cosa fa l'app: quando cambia
 # il punteggio, il pacchetto o il flusso della seduta e la documentazione resta
