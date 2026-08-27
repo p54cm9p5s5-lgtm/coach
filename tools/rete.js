@@ -34,6 +34,9 @@ import * as db from "../js/db.js";
 import * as ui from "../js/ui.js";
 import * as ex from "../js/export.js";
 import { tutto as nucleoDimostrato } from "./verifica-esaustiva.js";
+import { valutaProgressione } from "../js/segnali.js";
+import { analizza } from "../js/salute.js";
+import { carichiPossibili, carichiManubrio, aPaio } from "../js/plates.js";
 
 const esito = (nome, casi, errori) => ({
   nome,
@@ -341,6 +344,268 @@ export async function verificaStesseDomande() {
   return esito("lo stesso numero per strade diverse", `${casi} confronti`, errori);
 }
 
+/* ------------------------------------------------- 6. il motore che decide */
+
+/**
+ * Le regole che il motore delle proposte non può violare, mai.
+ *
+ * È l'unica parte dell'app che ti dice di cambiare quello che fai: se sbaglia,
+ * sbagli anche tu, e in palestra. Non si controlla che proponga la cosa giusta
+ * — quello lo decide il brief — ma che non possa proporre una cosa impossibile:
+ * un carico che non riesci a montare, una riduzione che aumenta, una salita
+ * mentre hai male, un bersaglio oltre il tetto del range.
+ */
+export async function verificaMotoreProposte() {
+  const errori = [];
+  let casi = 0;
+  const regole = store.regole();
+  const inventario = await store.inventario();
+  const R = regole.progressione;
+
+  const montabili = {
+    bilanciere: new Set((carichiPossibili(inventario) || []).map((x) => Math.round(x * 100) / 100)),
+    manubri: new Set((carichiManubrio(inventario, true) || []).map((x) => Math.round(x * 100) / 100)),
+    manubrio: new Set((carichiManubrio(inventario, false) || []).map((x) => Math.round(x * 100) / 100)),
+  };
+
+  const esposizione = ({ data, rip, carico, rpe, tecnica, dolore = false, saltato = false, serie = 3 }) => ({
+    sedutaId: `s-${data}`,
+    data,
+    serie: Array.from({ length: serie }, () => ({ ripFatte: rip, carico, tsFineSerie: 1 })),
+    log: { rpe, tecnica, dolori: dolore ? [{ id: "polso", nome: "polso" }] : [] },
+    saltato: saltato ? { motivo: "dolore" } : null,
+    caricoMax: carico,
+    caricoLavoro: carico,
+    rpe,
+    tecnica,
+  });
+
+  const ATTREZZI = ["bilanciere", "manubri", "manubrio", "corpo libero"];
+  for (const attrezzo of ATTREZZI) {
+    const def = { id: "prova", nome: "Prova", attrezzo };
+    for (const carico of [null, 0, 2.5, 10, 22.5, 40, 100]) {
+      for (const ripMin of [6, 8, 10]) {
+        for (const ripMax of [ripMin, ripMin + 2, ripMin + 4]) {
+          for (const rip of [ripMin - 2, ripMin, ripMin + 1, ripMax, ripMax + 3]) {
+            for (const rpe of [4, 7, 8, 9, 10]) {
+              for (const tecnica of [1, 4, 6, 8, 10]) {
+                for (const dolore of [false, true]) {
+                  casi++;
+                  const variante = { esercizioId: "prova", serie: 3, ripMin, ripMax, carico, recuperoSec: 90 };
+                  const esposizioni = ["2026-08-20", "2026-08-13", "2026-08-06", "2026-07-30"].map((data) =>
+                    esposizione({ data, rip, carico, rpe, tecnica, dolore })
+                  );
+                  let r;
+                  try {
+                    r = valutaProgressione({ variante, def, esposizioni, regole, inventario, oggi: "2026-08-27" });
+                  } catch (e) {
+                    errori.push(`${attrezzo} carico ${carico} rip ${rip}/${ripMin}-${ripMax} rpe ${rpe} tec ${tecnica}${dolore ? " dolore" : ""}: ESPLODE — ${String(e.message).slice(0, 60)}`);
+                    continue;
+                  }
+                  const dove = `${attrezzo} ${carico}kg ${rip}rip[${ripMin}-${ripMax}] rpe${rpe} tec${tecnica}${dolore ? " dolore" : ""}`;
+
+                  // 1. o una proposta o un motivo, mai né l'uno né l'altro
+                  if (!r || (!r.proposta && !r.motivo)) { errori.push(`${dove}: né proposta né motivo`); continue; }
+                  if (r.proposta && r.motivo) errori.push(`${dove}: proposta E motivo insieme`);
+                  if (!r.proposta) continue;
+                  const p = r.proposta;
+
+                  // 2. la proposta deve essere completa e sensata
+                  if (!(p.livelloGerarchia >= 1 && p.livelloGerarchia <= 7)) errori.push(`${dove}: livello ${p.livelloGerarchia}`);
+                  for (const d of ["perche", "quali", "alternative", "atteso"]) {
+                    if (!p.quattroDomande?.[d]) errori.push(`${dove}: manca la domanda «${d}»`);
+                  }
+                  for (const capo of ["da", "a"]) {
+                    for (const campo of ["carico", "rip"]) {
+                      const v = p[capo]?.[campo];
+                      if (v != null && !Number.isFinite(v)) errori.push(`${dove}: ${capo}.${campo} = ${v}`);
+                    }
+                  }
+                  if (p.a?.carico != null && p.a.carico < 0) errori.push(`${dove}: propone un carico negativo (${p.a.carico})`);
+
+                  // 3. il carico proposto deve essere MONTABILE con i tuoi dischi
+                  if (p.a?.carico != null && p.a.carico !== p.da?.carico) {
+                    const set = montabili[attrezzo];
+                    if (set && set.size && !set.has(Math.round(p.a.carico * 100) / 100)) {
+                      errori.push(`${dove}: propone ${p.a.carico} kg, che con i tuoi dischi non si monta`);
+                    }
+                  }
+
+                  // 4. una riduzione riduce, un aumento aumenta
+                  if (p.tipo === "riduzioneCarico" && !(p.a.carico < p.da.carico)) errori.push(`${dove}: «riduzione» da ${p.da.carico} a ${p.a.carico}`);
+                  if (p.tipo === "carico" && !(p.a.carico > p.da.carico)) errori.push(`${dove}: «aumento» da ${p.da.carico} a ${p.a.carico}`);
+                  if (p.tipo === "rientroInProgramma" && p.a.carico !== variante.carico) errori.push(`${dove}: il rientro non torna al carico del brief`);
+
+                  // 5. col dolore non si sale MAI
+                  if (dolore && (p.tipo === "carico" || p.tipo === "ripetizioni")) errori.push(`${dove}: propone di salire con il dolore in corso`);
+                  // 6. a RPE 9 o 10 non si sale MAI
+                  if (rpe >= 9 && (p.tipo === "carico" || p.tipo === "ripetizioni")) errori.push(`${dove}: propone di salire con RPE ${rpe}`);
+                  // 7. non si propone mai un bersaglio oltre il tetto del range
+                  if (p.tipo === "ripetizioni" && p.a.rip > ripMax) errori.push(`${dove}: propone ${p.a.rip} ripetizioni, oltre il tetto ${ripMax}`);
+                  // 8. salendo di carico si torna al fondo del range
+                  if (p.tipo === "carico" && p.a.rip !== ripMin) errori.push(`${dove}: sale di carico ma non torna a ${ripMin} ripetizioni`);
+                  // 9. deterministico: due volte lo stesso risultato.
+                  //    A campione, uno ogni cento: rifarlo su tutti raddoppiava
+                  //    il tempo della rete, e una rete lenta si lancia meno.
+                  if (casi % 101 === 0) {
+                    const r2 = valutaProgressione({ variante, def, esposizioni, regole, inventario, oggi: "2026-08-27" });
+                    if (JSON.stringify(r2) !== JSON.stringify(r)) errori.push(`${dove}: due chiamate identiche danno risposte diverse`);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return esito("il motore che decide di cambiarti il carico", `${casi} situazioni`, errori);
+}
+
+/* ------------------------------------------- 7. il lettore del pacchetto */
+
+/**
+ * Il lettore del pacchetto dati, preso a picconate.
+ *
+ * È la porta da cui entrano davvero i tuoi dati: il telefono incolla qui quello
+ * che gli dà il comando rapido. Un lettore che si pianta ti blocca l'import; un
+ * lettore che butta via una riga in silenzio ti fa sparire una giornata senza
+ * dirtelo, ed è la cosa peggiore delle due.
+ *
+ * L'invariante forte è il secondo: OGNI riga o viene capita, o finisce fra gli
+ * avvisi. Il conto deve tornare, riga per riga.
+ */
+export function verificaLettorePacchetto() {
+  const errori = [];
+  let casi = 0;
+
+  // Un generatore ripetibile: niente caso a caso, altrimenti un difetto trovato
+  // stanotte non si sa più come rifarlo domani.
+  let seme = 20260827;
+  const prossimo = () => ((seme = (seme * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const scegli = (a) => a[Math.floor(prossimo() * a.length) % a.length];
+
+  const BUONE = [
+    "GIORNO 2026-08-20 kcal=520 passi=9120 esercizio=44 inpiedi=11 piani=6 km=7,20 fc=58",
+    "NOTTE 2026-08-20 durata=451 profondo=61 rem=88 veglia=22 risvegli=3",
+    "ALLENAMENTO 2026-08-20 inizio=18:05 durata=3600 fine=19:05 kcal=300 fcmedia=112 tipo=\"Walking\"",
+    "FASE 2026-08-19 23:40 2026-08-20 07:11 profondo",
+    "BATTITO 2026-08-20 18:05 68,72,,75,79,81,77",
+    'AGENDA 2026-08-21 titolo="Push A" nota="alle 18"',
+  ];
+  const STORTURE = [
+    (r) => r.slice(0, Math.max(1, Math.floor(r.length * prossimo()))),      // troncata
+    (r) => r.replace(/=/g, ""),                                            // senza uguali
+    (r) => r.replace(/\d/g, "x"),                                          // numeri diventati lettere
+    (r) => r + " " + "z".repeat(500),                                      // coda lunghissima
+    (r) => r.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1-99-99"),               // data impossibile
+    (r) => r.replace(/=(\d+)/g, "=-$1"),                                   // numeri negativi
+    (r) => r.replace(/=(\d+)/g, "=999999999"),                             // numeri assurdi
+    (r) => r.toLowerCase(),                                                // tutto minuscolo
+    (r) => r.replace(/ /g, "\t"),                                          // tabulazioni
+    (r) => `${r} ${r}`,                                                    // riga doppia
+    (r) => r.replace(/^(\w+) /, "$1"),                                     // spazio perso dopo la parola
+    (r) => "🏋️ " + r,                                                      // roba fuori alfabeto
+    (r) => r.replace(/=(\d+)/g, "=$1,5"),                                  // virgole dove non vanno
+    () => "PAROLACHENONESISTE 2026-08-20 boh=1",                           // riga di tipo ignoto
+    () => "".padEnd(Math.floor(prossimo() * 200), "?"),                    // spazzatura pura
+  ];
+
+  for (let giro = 0; giro < 1200; giro++) {
+    const quante = 1 + Math.floor(prossimo() * 6);
+    const corpo = [];
+    for (let i = 0; i < quante; i++) {
+      const base = scegli(BUONE);
+      corpo.push(prossimo() < 0.35 ? base : scegli(STORTURE)(base));
+    }
+    const testo = ["COACH-DATI v1", "FINESTRA 2026-07-30 2026-08-27", ...corpo].join("\n");
+    casi++;
+    let r;
+    try {
+      r = analizza(testo);
+    } catch (e) {
+      // Un rifiuto solo è legittimo, ed è una scelta giusta: se NESSUNA riga è
+      // stata capita, il lettore si rifiuta di importare il nulla invece di
+      // dire «fatto» su un archivio che non è cambiato. Gli avvisi viaggiano
+      // con l'errore, così chi incolla capisce perché.
+      const vuoto = /riconosciuto ma vuoto/i.test(String(e.message));
+      if (!vuoto) errori.push(`si pianta su un pacchetto con intestazione buona: ${String(e.message).slice(0, 70)}`);
+      else if (!e.avvisi?.length) errori.push("rifiuta un pacchetto come vuoto senza dire quali righe ha scartato");
+      continue;
+    }
+    // 1. la forma della risposta è sempre la stessa
+    for (const k of ["giorni", "notti", "allenamenti", "agenda", "fasi", "battiti", "avvisi"]) {
+      if (!Array.isArray(r[k])) { errori.push(`${k} non è un elenco`); continue; }
+    }
+    // 2. NESSUNA RIGA SPARISCE: o è capita, o è un avviso
+    const capite = r.giorni.length + r.notti.length + r.allenamenti.length + r.agenda.length + r.fasi.length + r.battiti.length;
+    const rendicontate = capite + r.avvisi.length;
+    // la FINESTRA è la riga in più, sempre valida in questi pacchetti
+    if (rendicontate < corpo.length) {
+      errori.push(`${corpo.length} righe date, ${capite} capite + ${r.avvisi.length} avvisi: ne mancano ${corpo.length - rendicontate} senza una parola`);
+    }
+    // 3. niente numeri malati e niente date storte in quello che esce
+    const guarda = (o, dove) => {
+      if (o == null) return;
+      if (typeof o === "number" && !Number.isFinite(o)) errori.push(`${dove}: numero ${o}`);
+      else if (typeof o === "string") { if (/^\d{4}-\d{2}-\d{2}$/.test(o) && ui.isoDate(ui.parseIso(o)) !== o) errori.push(`${dove}: data ${o}`); }
+      else if (Array.isArray(o)) o.forEach((x, i) => guarda(x, `${dove}[${i}]`));
+      else if (typeof o === "object") for (const [k, v] of Object.entries(o)) guarda(v, `${dove}.${k}`);
+    };
+    for (const k of ["giorni", "notti", "allenamenti", "agenda", "fasi", "battiti"]) guarda(r[k], k);
+  }
+
+  // 4. i pacchetti che NON sono pacchetti devono essere respinti, con una frase
+  for (const [nome, testo] of [
+    ["vuoto", ""],
+    ["solo spazi", "   \n  \n "],
+    ["solo commenti", "# niente\n# davvero"],
+    ["senza intestazione", "GIORNO 2026-08-20 passi=100"],
+    ["intestazione sbagliata", "COACH-QUALCOSA v1\nGIORNO 2026-08-20 passi=100"],
+    ["versione futura", "COACH-DATI v9\nGIORNO 2026-08-20 passi=100"],
+  ]) {
+    casi++;
+    let respinto = false;
+    let messaggio = "";
+    try { analizza(testo); } catch (e) { respinto = true; messaggio = String(e.message); }
+    if (!respinto) errori.push(`«${nome}»: accettato, doveva essere respinto`);
+    else if (!/[a-zà-ù]/i.test(messaggio) || messaggio.length < 15) errori.push(`«${nome}»: respinto con un messaggio che non spiega niente`);
+  }
+
+  // 5. andata e ritorno: un pacchetto pulito si legge per quello che dice
+  casi++;
+  const pulito = analizza(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27", ...BUONE].join("\n"));
+  if (pulito.giorni.length !== 1) errori.push(`un pacchetto pulito dà ${pulito.giorni.length} giorni invece di 1`);
+  if (pulito.giorni[0]?.passi !== 9120) errori.push(`i passi si leggono ${pulito.giorni[0]?.passi} invece di 9120`);
+  if (pulito.giorni[0]?.distanzaKm !== 7.2) errori.push(`i km si leggono ${pulito.giorni[0]?.distanzaKm} invece di 7,20`);
+  if (pulito.notti[0]?.durataMin !== 451) errori.push(`la notte dura ${pulito.notti[0]?.durataMin} invece di 451`);
+  if (pulito.allenamenti.length !== 1) errori.push(`gli allenamenti sono ${pulito.allenamenti.length} invece di 1`);
+  if (pulito.agenda.length !== 1) errori.push(`gli eventi sono ${pulito.agenda.length} invece di 1`);
+  if (pulito.avvisi.length) errori.push(`un pacchetto pulito produce ${pulito.avvisi.length} avvisi: ${pulito.avvisi.join(" · ")}`);
+
+  // 6. LA DURATA DI UN ALLENAMENTO DELL'OROLOGIO DEVE SOPRAVVIVERE.
+  //    Su una riga NOTTE «durata» sono minuti, su una ALLENAMENTO sono secondi:
+  //    con un tetto solo, ogni allenamento oltre i venti minuti perdeva la
+  //    durata e lasciava un avviso. Questi sono i suoi tempi veri, dal più
+  //    corto al più lungo davvero registrati.
+  for (const sec of [234, 900, 1201, 3600, 4649, 15895, 86400]) {
+    casi++;
+    const r = analizza(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27",
+      `ALLENAMENTO 2026-08-20 inizio=18:05 durata=${sec} kcal=300 tipo="Walking"`].join("\n"));
+    if (r.allenamenti[0]?.durataSec !== sec) {
+      errori.push(`un allenamento di ${Math.round(sec / 60)} minuti perde la durata (letta: ${r.allenamenti[0]?.durataSec})`);
+    }
+  }
+  //    ...ma una notte di più di venti ore resta impossibile, come prima.
+  for (const [min, atteso] of [[451, 451], [1200, 1200], [1201, null]]) {
+    casi++;
+    const r = analizza(["COACH-DATI v1", "FINESTRA 2026-08-01 2026-08-27", `NOTTE 2026-08-20 durata=${min}`].join("\n"));
+    if ((r.notti[0]?.durataMin ?? null) !== atteso) errori.push(`una notte di ${min} minuti si legge ${r.notti[0]?.durataMin}, atteso ${atteso}`);
+  }
+
+  return esito("il lettore del pacchetto, preso a picconate", `${casi} pacchetti`, errori);
+}
+
 /* ------------------------------------------------------------- la rete */
 
 export async function rete() {
@@ -353,6 +618,8 @@ export async function rete() {
     await verificaDati(),
     await verificaArchivio(),
     await verificaStesseDomande(),
+    await verificaMotoreProposte(),
+    verificaLettorePacchetto(),
   ];
   const errori = prove.reduce((a, p) => a + p.errori, 0);
   const casi = prove.reduce((a, p) => a + (parseInt(p.casi, 10) || 0), 0);

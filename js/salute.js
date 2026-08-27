@@ -71,6 +71,20 @@ const NUMERO = (v, intero = false) => {
  * «probabilmente una delle due ore è sbagliata». Volutamente larghi: devono
  * fermare i numeri impossibili, non le giornate eccezionali.
  */
+/**
+ * Alcuni tetti dipendono da CHE RIGA è, non solo da come si chiama il campo.
+ *
+ * «durata» su una riga NOTTE sono minuti; su una riga ALLENAMENTO sono secondi.
+ * Con un tetto solo, quello del sonno (1200 minuti = venti ore), ogni
+ * allenamento dell'orologio più lungo di **venti minuti** perdeva la durata e
+ * lasciava solo un avviso: 79 dei suoi 99 allenamenti stanno sopra quella
+ * soglia. Il tetto c'era per fermare le trenta ore di sonno, e ha finito per
+ * tagliare le camminate.
+ */
+const TETTI_PER_TIPO = {
+  ALLENAMENTO: { durata: 24 * 3600 }, // secondi: un giorno intero
+};
+
 const TETTI_PLAUSIBILI = {
   passi: 100000,
   kcal: 10000,
@@ -265,7 +279,7 @@ export function analizza(testo) {
     // soli: il valore non entra e viene detto quale, come per i negativi.
     const implausibili = Object.entries(c)
       .filter(([k, v]) => {
-        const tetto = TETTI_PLAUSIBILI[k];
+        const tetto = TETTI_PER_TIPO[tipo]?.[k] ?? TETTI_PLAUSIBILI[k];
         if (tetto == null) return false;
         const n = NUMERO(v);
         return n != null && n > tetto;
