@@ -3738,11 +3738,23 @@ export async function esportaCompleto() {
   return dump;
 }
 
-/** Giorni dall'ultima esportazione su file, null se non è mai stata fatta. */
+/** Giorni dall'ultima esportazione su file, null se non è mai stata fatta.
+ *
+ * Giorni di calendario, non periodi di ventiquattr'ore — e la differenza non è
+ * accademica: il promemoria del backup scatta a sette giorni sia qui sia in
+ * Home (js/calendario.js), ma qui si contavano i giri di lancetta a partire da
+ * un istante scritto in UTC, arrotondati per difetto. Un backup fatto sette
+ * giorni fa di sera, guardato di mattina, faceva dire alla Home «7 giorni fa,
+ * da fare» e a questa schermata «6», cioè nessun avviso: la stessa domanda con
+ * due risposte diverse nello stesso momento. E l'errore andava sempre nel verso
+ * sbagliato, facendo sembrare il backup più fresco di quanto fosse.
+ */
 export async function giorniDaUltimoExport() {
   const iso = await impostazione("ultimoExport");
   if (!iso) return null;
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  const quando = new Date(iso);
+  if (Number.isNaN(quando.getTime())) return null;
+  return giorniTra(isoDate(quando), isoDate());
 }
 
 export { db };
