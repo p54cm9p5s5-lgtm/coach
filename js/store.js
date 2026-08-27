@@ -901,6 +901,79 @@ export function inizioStimato(sed, serie = []) {
  * seduta ripresa il giorno dopo, contare tutto il tempo dall'inizio darebbe
  * «0,01 serie al minuto» anche a un allenamento fatto bene.
  */
+/**
+ * Quanto è durato un allenamento, per chiunque lo chieda.
+ *
+ * Il tempo di LAVORO congelato alla chiusura; la distanza fra l'inizio e la
+ * chiusura solo come ripiego, per le sedute vecchie che quel numero non ce
+ * l'hanno. La differenza non è accademica: col cardio fatto ore dopo i pesi,
+ * il 10 agosto lo Storico diceva «49 min» e il pacchetto per il coach «6h 06m».
+ *
+ * Esiste come funzione sola per un motivo preciso: la stessa regola era scritta
+ * in tre posti — riepilogo, Storico e pacchetto — e uno dei tre era rimasto
+ * indietro. Una regola scritta una volta non può divergere da sé stessa.
+ */
+export function durataSeduta(sed) {
+  if (!sed) return null;
+  if (sed.durataLavoroSec != null) return sed.durataLavoroSec;
+  if (!sed.oraFine) return null;
+  return Math.round((sed.oraFine - (sed.oraInizioLavoro || sed.oraInizio)) / 1000);
+}
+
+/**
+ * Quanto caricare su un esercizio previsto, per chiunque lo chieda.
+ *
+ * L'ordine è: l'obiettivo di una proposta accettata, poi una decisione già
+ * presa, poi il numero del brief, poi l'ultimo carico usato. `fatte` sono le
+ * serie già chiuse oggi su quell'esercizio: dentro l'allenamento comanda quello
+ * che stai davvero usando.
+ *
+ * Anche questa era scritta in tre posti, e quello dell'elenco del giorno si era
+ * fermato al brief: dopo una proposta accettata l'elenco diceva 30 kg e ti
+ * faceva montare i dischi per 30, poi l'esercizio ne chiedeva 35.
+ */
+export async function caricoProposto(v, { obiettivo = undefined, fatte = [] } = {}) {
+  if (!v) return null;
+  if (v.carico === 0) return null; // il brief l'ha messo a corpo libero: non si deduce dallo storico
+  const ob = obiettivo !== undefined ? obiettivo : v.aTempo ? null : await obiettivoCorrente(v.esercizioId);
+  return (
+    fatte.at(-1)?.carico ??
+    ob?.carico ??
+    (await caricoDaDecisione(v.esercizioId)) ??
+    (v.carico > 0 ? v.carico : null) ??
+    (await ultimoCarico(v.esercizioId, v.carico ?? null))
+  );
+}
+
+/** Come si scrive il bersaglio di un esercizio: «3 × 8-10», «3 × 12», «3 × 3 min». */
+export function bersaglioProposto(v, obiettivo = null, durataScritta = null) {
+  if (!v) return null;
+  const tempo = durataScritta || ((sec) => (sec >= 60 && sec % 60 === 0 ? `${sec / 60} min` : `${sec}s`));
+  if (v.aTempo) return `${v.serie} × ${tempo(v.durataSec || 0)}`;
+  if (obiettivo?.rip != null) return `${v.serie} × ${obiettivo.rip}`;
+  // Una serie da una ripetizione sola non è un bersaglio: è un gesto singolo.
+  if (v.serie === 1 && v.ripMin === 1 && v.ripMax === 1) return null;
+  return `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
+}
+
+/**
+ * Un numero scritto a mano da te, letto allo stesso modo ovunque.
+ *
+ * Virgola o punto, spazi intorno, campo vuoto che vale «non lo so» e non zero.
+ * Niente notazione scientifica, niente esadecimale, niente segno più: sulla
+ * tastiera del telefono non si scrivono, e accettarli in una schermata e non
+ * nell'altra faceva leggere «1e3» come mille di qua e come errore di là.
+ */
+export function numeroScritto(testo, { minimo = 0, decimali = 1 } = {}) {
+  const t = String(testo ?? "").trim().replace(",", ".");
+  if (t === "") return null;
+  if (!/^-?\d*\.?\d+$/.test(t)) return null;
+  const n = Number(t);
+  if (!Number.isFinite(n) || n < minimo) return null;
+  const f = 10 ** decimali;
+  return Math.round(n * f) / f;
+}
+
 export function durataLavoroSec(sed, serie = []) {
   const BUCO = 3 * 3600000;
   const gesti = serie

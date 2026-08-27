@@ -204,11 +204,7 @@ async function vistaProgramma(vaiA, ridisegna) {
       // Due risposte alla stessa domanda, e quella sbagliata era proprio quella
       // che ti faceva caricare il bilanciere prima di cominciare.
       const obiettivo = v.aTempo ? null : await store.obiettivoCorrente(v.esercizioId);
-      const carico =
-        obiettivo?.carico ??
-        (await store.caricoDaDecisione(v.esercizioId)) ??
-        (v.carico > 0 ? v.carico : null) ??
-        (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
+      const carico = await store.caricoProposto(v, { obiettivo });
       const dischi =
         carico != null && def?.attrezzo === "bilanciere" ? descriviDischi(carico, inv) : null;
       aggiungi(lista,
@@ -224,13 +220,7 @@ async function vistaProgramma(vaiA, ridisegna) {
                 // aprendo l'esercizio: con una proposta accettata comandano le
                 // ripetizioni dell'obiettivo, non il campo del brief, e una
                 // tenuta di tre minuti si scrive «3 min» come là, non «180s».
-                v.aTempo
-                  ? `${v.serie} × ${durataScritta(v.durataSec || 0)}`
-                  : obiettivo?.rip != null
-                    ? `${v.serie} × ${obiettivo.rip}`
-                    : senzaBersaglio(v)
-                      ? null
-                      : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`,
+                store.bersaglioProposto(v, obiettivo, durataScritta),
                 dischi,
               ]
                 .filter(Boolean)
@@ -417,12 +407,7 @@ async function vistaRisultato(id, vaiA, da = null) {
   // «4h 30m» di allenamento, e quel numero finisce nel pacchetto del coach.
   // `durataLavoroSec` è calcolata alla chiusura proprio per questo: somma i
   // tratti fra un gesto e l'altro e scarta le pause oltre le tre ore.
-  const durataSec =
-    sed.durataLavoroSec != null
-      ? sed.durataLavoroSec
-      : sed.oraFine
-        ? Math.round((sed.oraFine - (sed.oraInizioLavoro || sed.oraInizio)) / 1000)
-        : null;
+  const durataSec = store.durataSeduta(sed);
   // Le due medie si calcolano sulle STESSE serie: prima il reale veniva da
   // quelle cronometrate e il previsto da tutte, e il confronto «100s su 120»
   // metteva a paragone due insiemi diversi.
@@ -1423,27 +1408,12 @@ async function vistaEsercizio(corpo, piede) {
   // corpo libero. Prima non fermava la catena, e l'app tirava fuori dallo
   // storico il carico dell'ultima volta — proponendo un bilanciere su un
   // esercizio che il coach aveva appena tolto dal ferro.
-  const senzaCarico = v.carico === 0;
-  const caricoPrec = senzaCarico
-    ? null
-    : fatte.at(-1)?.carico ??
-      obiettivo?.carico ??
-      // Una decisione già presa su questo carico viene prima del numero del
-      // brief: l'obiettivo si consuma dopo una esposizione, la decisione no.
-      (await store.caricoDaDecisione(v.esercizioId)) ??
-      (v.carico > 0 ? v.carico : null) ??
-      (await store.ultimoCarico(v.esercizioId, v.carico ?? null));
+  const caricoPrec = await store.caricoProposto(v, { obiettivo, fatte });
   // L'ordine conta: prima quello che c'è in memoria, poi quello salvato nella
   // seduta (l'app è ripartita), infine il carico dedotto dallo storico.
   S.caricoCorrente = S.caricoCorrente ?? S.sed.progresso?.caricoCorrente ?? caricoPrec;
 
-  const bersaglio = v.aTempo
-    ? `${v.serie} × ${durataScritta(v.durataSec || 0)}`
-    : obiettivo?.rip != null
-      ? `${v.serie} × ${obiettivo.rip}`
-      : senzaBersaglio(v)
-        ? null
-        : `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
+  const bersaglio = store.bersaglioProposto(v, obiettivo, durataScritta);
 
   // Col cronometro in corso il numero grande è il tempo che scorre, non il
   // carico: è l'unica cosa che serve guardare mentre tieni la posizione.
@@ -2229,10 +2199,7 @@ async function modificaCarico(def, inv) {
     const leggi = () => {
       // Campo vuoto NON è zero: `Number("")` fa 0, e un campo lasciato in
       // bianco sarebbe passato per «zero chili» senza che nessuno lo dicesse.
-      const t = String(campo.value).replace(",", ".").trim();
-      if (t === "") return null;
-      const v = Number(t);
-      return Number.isFinite(v) && v >= 0 ? Math.round(v * 10) / 10 : null;
+      return store.numeroScritto(campo.value);
     };
 
     const aggiorna = () => {
@@ -2615,18 +2582,8 @@ async function bloccoProssimo(inv) {
 
   const def = store.esercizio(prossima.esercizioId);
   const obiettivo = prossima.aTempo ? null : await store.obiettivoCorrente(prossima.esercizioId);
-  const carico =
-    obiettivo?.carico ??
-    (await store.caricoDaDecisione(prossima.esercizioId)) ??
-    (prossima.carico > 0 ? prossima.carico : null) ??
-    (await store.ultimoCarico(prossima.esercizioId, prossima.carico ?? null));
-  const bersaglio = prossima.aTempo
-    ? `${prossima.serie} × ${durataScritta(prossima.durataSec || 0)}`
-    : obiettivo?.rip != null
-      ? `${prossima.serie} × ${obiettivo.rip}`
-      : senzaBersaglio(prossima)
-        ? null
-        : `${prossima.serie} × ${prossima.ripMin === prossima.ripMax ? prossima.ripMin : `${prossima.ripMin}-${prossima.ripMax}`}`;
+  const carico = await store.caricoProposto(prossima, { obiettivo });
+  const bersaglio = store.bersaglioProposto(prossima, obiettivo, durataScritta);
 
   const gruppo = h(
     "div.group",

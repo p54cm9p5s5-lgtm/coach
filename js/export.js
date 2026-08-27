@@ -4,6 +4,9 @@
 
 import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate, oraDi } from "./ui.js";
 import { doloriDi } from "./punteggio.js";
+// Quanto è durato un allenamento lo decide una funzione sola, per tutta l'app:
+// qui la regola era scritta a parte e diceva un altro numero al coach.
+import { durataSeduta } from "./store.js";
 
 // Il pacchetto si legge per righe: una nota scritta con l'invio ne produceva
 // una senza etichetta, e il coach leggeva una frase sospesa senza sapere di chi
@@ -263,12 +266,7 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
   // perché il cardio era stato fatto molte ore dopo i pesi. Il coach leggeva
   // sei ore di allenamento che non c'erano state. È la stessa correzione già
   // fatta per la densità qui sotto, che a questa riga non era arrivata.
-  const durata =
-    seduta.durataLavoroSec != null
-      ? seduta.durataLavoroSec
-      : seduta.oraFine
-        ? Math.round((seduta.oraFine - (seduta.oraInizioLavoro || seduta.oraInizio)) / 1000)
-        : null;
+  const durata = durataSeduta(seduta);
 
   // Il dettaglio completo, serie per serie. La tabella qui sopra è il riassunto
   // che si legge a colpo d'occhio; questa è la registrazione integrale, dove

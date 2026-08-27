@@ -34,11 +34,17 @@ resta nella conversazione con Claude.
   dei dati avviene sul telefono, importando i file.
 - **Persistenza:** IndexedDB sul dispositivo. Nessun server, nessun account,
   nessun dato in rete.
-- **Nessuna richiesta esterna a schermo.** Aprire una qualunque schermata non
-  produce richieste fuori dal telefono: verificato girando tutte le rotte. L'unica
-  eccezione è il **player di YouTube**, che parte solo se lo tocchi — la copertina
-  è disegnata dall'app, non scaricata, e porta scritto dove sta andando. Prima era
-  l'anteprima di YouTube e partiva da sola: bastava aprire un esercizio.
+- **Due sole richieste esterne, tutt'e due verso YouTube.** Nessuna schermata
+  contatta niente, tranne la scheda di un esercizio: quando compare a schermo
+  monta il player (`youtube-nocookie.com`) e scarica la miniatura (`i.ytimg.com`),
+  che poi resta salvata e serve quando la rete non c'è.
+  Questo vincolo è stato **rivisto il 27/08/2026**, ed è giusto che si veda: prima
+  diceva «parte solo se lo tocchi, la copertina è disegnata dall'app». Il player
+  è stato montato insieme alla scheda perché al tocco parta subito, e il prezzo
+  dichiarato è che YouTube vede l'indirizzo e quale esercizio stai guardando.
+  Il documento è rimasto indietro di settimane mentre l'app faceva un'altra cosa:
+  adesso l'elenco dei domini ammessi è controllato a ogni collaudo da
+  `tools/rete.js`, così a restare indietro non può più essere in silenzio.
 - **iOS può cancellare l'archivio** quando lo spazio scarseggia. L'app chiede la
   persistenza all'avvio; la risposta è mostrata in Impostazioni («Archivio
   protetto dal telefono», sì/no), perché cambia quanto conta il backup su file.
@@ -473,7 +479,9 @@ appartiene al repository pubblico.
   Il modello dati lascia lo spazio per aggiungerli in seguito senza rifare niente.
 - Non interpreta alcun dato clinico: mostra numeri, nessuna diagnosi.
 - Non calcola fabbisogni calorici né dà indicazioni alimentari.
-- Non manda dati fuori dal telefono. L'unica richiesta in uscita è il player di
-  YouTube, e parte **solo su tocco**: la copertina è disegnata dall'app, non
-  scaricata (vedi §1). Aprire la scheda di un esercizio non produce nessuna
-  richiesta. Senza rete il player non parte e l'app funziona lo stesso.
+- Non manda **dati** fuori dal telefono: niente account, niente server, nessun
+  numero che esce. Le uniche richieste in uscita sono le due verso YouTube — il
+  player e la miniatura — e partono quando la scheda di un esercizio compare a
+  schermo (vedi §1). Non portano con sé nessun tuo dato, ma YouTube vede
+  l'indirizzo e quale esercizio stai guardando. Senza rete il player non parte,
+  resta la miniatura salvata e l'app funziona lo stesso.

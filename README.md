@@ -2,10 +2,13 @@
 
 App personale di allenamento. PWA, nessun build step, nessun server, nessuna dipendenza.
 I dati restano sul dispositivo (IndexedDB): nessun account, nessun server, niente
-che venga inviato. L'unica richiesta che può uscire è il player di YouTube, e parte
-**solo se tocchi il video**: la copertina è disegnata dall'app, non scaricata, e
-porta scritto dove sta per andare. Aprire una scheda esercizio non produce nessuna
-richiesta fuori dal telefono.
+che venga inviato. Le uniche richieste che escono sono verso YouTube, e sono due:
+il player (`youtube-nocookie.com`) e la miniatura del video (`i.ytimg.com`).
+Partono **quando la scheda dell'esercizio compare a schermo**, non al tocco: il
+player è già montato, così parte subito quando lo tocchi, e la miniatura serve il
+giorno in cui la rete non c'è. Il prezzo, detto chiaro: YouTube vede il tuo
+indirizzo e quale esercizio stai guardando. Nient'altro esce dal telefono, e
+`tools/rete.js` controlla a ogni collaudo che i domini contattati restino questi.
 
 Specifica funzionale: [SPEC.md](SPEC.md).
 

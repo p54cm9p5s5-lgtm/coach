@@ -74,12 +74,8 @@ async function elenco(vaiA) {
       ).length;
       // Stessa ragione del riepilogo: con il cardio rimandato la distanza fra
       // inizio e chiusura comprende ore in cui non ti stavi allenando.
-      const durata =
-        s.durataLavoroSec != null
-          ? durataUmana(s.durataLavoroSec)
-          : s.oraFine
-            ? durataUmana(Math.round((s.oraFine - (s.oraInizioLavoro || s.oraInizio)) / 1000))
-            : "—";
+      const sec = store.durataSeduta(s);
+      const durata = sec != null ? durataUmana(sec) : "—";
       return h(
         "a.row",
         { href: `#/seduta?riepilogo=${s.id}&da=storico` },

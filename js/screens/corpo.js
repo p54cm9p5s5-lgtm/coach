@@ -431,7 +431,6 @@ async function registra(ridisegna) {
         mostra();
       };
       val.addEventListener("input", () => {
-        const n = parseFloat(val.value.replace(",", "."));
         if (val.value.trim() === "") {
           valori[def.id] = null;
           scelte.delete(def.id);
@@ -439,20 +438,18 @@ async function registra(ridisegna) {
           val.style.color = "";
           return;
         }
-        // `parseFloat` legge il PREFISSO e butta via il resto senza dire niente:
-        // «8a4» diventa 8, il campo resta del colore normale e in archivio
-        // finiscono 8 kg come se li avessi scritti tu. Un errore di battitura
-        // non deve poter entrare travestito da misura. Qui si controlla che
-        // quello che resta scritto sia davvero tutto un numero.
-        const scritto = val.value.trim().replace(",", ".");
-        const tuttoNumero = /^-?\d*\.?\d+$/.test(scritto);
-        if (!Number.isFinite(n) || n < 0 || !tuttoNumero) {
+        // Un numero scritto a mano si legge come lo legge tutta l'app: «8a4»
+        // non è otto, e un errore di battitura non deve entrare travestito da
+        // misura. La regola sta in un posto solo — prima era scritta qui e in
+        // Seduta, e le due accettavano cose diverse.
+        const n = store.numeroScritto(val.value);
+        if (n === null) {
           nonValidi.set(def.id, def.nome);
           val.style.color = "var(--orange)";
           return;
         }
         nonValidi.delete(def.id);
-        valori[def.id] = Math.round(n * 10) / 10;
+        valori[def.id] = n;
         scelte.add(def.id);
         val.style.color = "var(--accent)";
       });

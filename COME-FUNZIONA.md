@@ -1265,6 +1265,36 @@ arrivano da fuori (Salute, l'orologio, il file del brief) e quello che dipende
 dal momento in cui l'app gira. Lì si prova, si sbaglia e si corregge — ma non
 si può dire «ogni caso possibile», e questo documento non lo dirà mai.
 
+**La rete.** Dal 27/08 esiste un collaudo che si rilancia con una riga sola:
+`tools/rete.js`. Prima il lavoro di controllo produceva un registro — voci
+chiuse, nessuna ri-eseguibile — cioè un verbale, non una rete: ogni modifica
+successiva faceva scadere la garanzia senza dirlo. Adesso dodici prove, oltre
+centocinquantacinquemila casi, meno di un terzo di secondo, e si lancia
+sull'archivio vero perché è di sola lettura.
+
+Dentro ci sono cinque strati: il nucleo dimostrato su ogni caso possibile; **le
+regole che devono restare scritte una volta sola** (la rete legge il codice e
+protesta se una di quelle regole ricompare altrove); i dati che l'app porta con
+sé; gli invarianti veri per qualunque archivio; e **lo stesso numero chiesto per
+strade diverse**, che è la categoria che il 27/08 ha prodotto quattro difetti su
+sei. Le prove che scrivono stanno a parte e si rifiutano di partire se
+l'archivio non è vuoto.
+
+Anche la rete è stata guastata apposta, quattro volte, per vedere se sapeva
+fallire: ricopiando una regola in una schermata, facendo ricalcolare al
+pacchetto la durata per conto suo, mettendo nella libreria uno schema che il
+conto del volume non conosce, e facendo restituire una durata negativa. Le ha
+prese tutte. Sulla seconda ha ritrovato da sola il difetto peggiore della
+giornata, con gli stessi numeri: «il 10 agosto lo schermo dice 49 min, il
+pacchetto 6h 06m».
+
+**Le guardie della pubblicazione** hanno il loro collaudo a parte,
+`tools/prova-guardie.sh`: costruisce una alla volta le cinque violazioni che
+dovrebbero fermare la pubblicazione e controlla che la fermino davvero. Sono
+l'ultima barriera fra i dati personali e un repository pubblico, e fino a quel
+giorno nessuno le aveva mai messe alla prova — passavano sempre, e «passa
+sempre» è indistinguibile da «non controlla niente».
+
 **Quanto regge negli anni.** L'archivio è stato riempito fino a 1400
 allenamenti e 21.000 serie — più di cinque anni al ritmo di cinque sedute a
 settimana. Tutto cresce in modo proporzionale, niente esplode: l'avvio resta
