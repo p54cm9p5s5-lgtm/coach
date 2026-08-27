@@ -621,6 +621,14 @@ async function registra(ridisegna) {
 
 async function bloccoFoto(ridisegna) {
   const set = await store.setFoto();
+  // Il set più vecchio è il metro di paragone: è quello su cui sono modellate
+  // le pose, e tutti gli altri si leggono rispetto a lui.
+  //
+  // Si calcola la data minima invece di prendere l'ultimo dell'elenco: `setFoto`
+  // non promette un ordine, e un segno che dipende dall'ordine di lettura è un
+  // segno che prima o poi finisce sul set sbagliato. Le date sono in forma
+  // anno-mese-giorno, quindi il confronto fra stringhe è già cronologico.
+  const dataRiferimento = set.length ? set.map((s) => s.data).sort()[0] : null;
   const gruppo = h("div.group", h("h2", "Foto"));
 
   if (!set.length) {
@@ -661,10 +669,15 @@ async function bloccoFoto(ridisegna) {
             { style: "margin:0;font-size:13px;color:var(--label-secondary)" },
             // «Set di riferimento» compariva su OGNI set caricato dalla
             // libreria: caricandone due, a schermo ce n'erano due e non si
-            // capiva quale fosse il metro di paragone. L'etichetta dice il
-            // fatto — queste foto le hai prese dalla libreria invece di
-            // scattarle con la guida — e basta.
-            `${dataLunga(s.data)}${daLibreria ? " · caricate a mano" : ""}`
+            // capiva quale fosse il metro di paragone.
+            //
+            // Adesso torna, ma assegnato al set **più vecchio**: uno solo,
+            // sempre, e l'ambiguità di prima non può ripresentarsi. «Caricate a
+            // mano» resta perché dice un'altra cosa — come sono entrate quelle
+            // foto — e le due informazioni non si escludono.
+            `${dataLunga(s.data)}` +
+              (s.data === dataRiferimento ? " · riferimento" : "") +
+              (daLibreria ? " · caricate a mano" : "")
           ),
           h(
             "button",

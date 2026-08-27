@@ -915,6 +915,15 @@ poter iniziare. Le pose sono **quelle che l'atleta fa già**, sul modello del se
 di riferimento esistente. Le foto restano sul telefono e **non entrano mai nel
 pacchetto**.
 
+Il **set più vecchio** porta la parola «riferimento» accanto alla data: è il
+metro di paragone, quello su cui sono modellate le pose. È assegnato dalla data,
+non scelto a mano, quindi ce n'è sempre **uno solo** — se un giorno entrassero
+foto più vecchie, il segno si sposterebbe lì. Un'etichetta simile era già
+esistita e fu tolta proprio perché finiva su ogni set caricato dalla libreria, e
+con due «set di riferimento» a schermo non si capiva più quale fosse il metro.
+Accanto può comparire anche «caricate a mano», che dice un'altra cosa — come
+quelle foto sono entrate nell'app — e le due informazioni non si escludono.
+
 **Portarle nella galleria del telefono.** Le foto scattate dall'app vivono nel
 suo archivio, non in Foto: un'app web su iPhone **non può scrivere nella
 galleria**, quel permesso iOS non lo concede a nessun sito. Quello che si può
