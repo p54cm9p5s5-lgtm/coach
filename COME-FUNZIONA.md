@@ -1265,6 +1265,15 @@ arrivano da fuori (Salute, l'orologio, il file del brief) e quello che dipende
 dal momento in cui l'app gira. Lì si prova, si sbaglia e si corregge — ma non
 si può dire «ogni caso possibile», e questo documento non lo dirà mai.
 
+**I grafici a linee.** Un punto per ogni giorno con dato, tutti dello stesso
+inchiostro e della stessa misura — solo l'ultimo, quello che stai guardando, è
+un filo più grande. Prima i giorni con allenamento erano più scuri e più grandi
+degli altri: sulla linea dei passi e su quella del sonno diventavano macchie a
+tratti, e la curva sembrava fatta di due stili diversi. Era anche una differenza
+di tinta, che è quello che la direzione «Referto» non vuole. In che giorni ti
+sei allenato lo dice già il grafico a barre della Home, dove c'è la legenda che
+lo spiega: lì la differenza è dichiarata, qui non lo era.
+
 **La rete.** Dal 27/08 esiste un collaudo che si rilancia con una riga sola:
 `tools/rete.js`. Prima il lavoro di controllo produceva un registro — voci
 chiuse, nessuna ri-eseguibile — cioè un verbale, non una rete: ogni modifica

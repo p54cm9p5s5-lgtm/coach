@@ -367,10 +367,6 @@ async function schermataSalute({ ridisegna }) {
       ? " · oggi escluso, non è finito"
       : "";
 
-  const allenati = new Set(
-    (await store.allenamenti()).filter((x) => x.stato === "completata").map((x) => x.data)
-  );
-
   // ---- completezza degli allenamenti ----
   const fComp = conPeriodo();
   const tutteChiuse = (await store.allenamenti()).filter((x) => x.stato === "completata");
@@ -537,7 +533,6 @@ async function schermataSalute({ ridisegna }) {
           punti: giorniMov.map((g) => ({
             data: g.data,
             valore: g.presente ? g.kcalAttive : null,
-            evidenza: allenati.has(g.data),
             nota: g.presente && g.kcalAttive != null && obiettivo
               ? `${num((g.kcalAttive / obiettivo) * 100)}% dell'obiettivo`
               : null,
@@ -578,7 +573,6 @@ async function schermataSalute({ ridisegna }) {
           punti: giorniPassi.map((g) => ({
             data: g.data,
             valore: g.presente ? g.passi : null,
-            evidenza: allenati.has(g.data),
           })),
           formatta: (v) => `${Math.round(v).toLocaleString("it-IT")} passi`,
         }),

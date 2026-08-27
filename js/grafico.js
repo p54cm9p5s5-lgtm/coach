@@ -485,25 +485,36 @@ export function graficoLinea({
   });
   chiudiTratto();
 
-  // Un punto per ogni giorno con dato. I giorni con allenamento hanno il punto
-  // più grande: la linea è tutta dello stesso colore, e senza questo si
-  // perderebbe l'informazione che nel grafico a barre stava nel lime.
+  // Un punto per ogni giorno con dato, tutti uguali.
+  //
+  // Prima i giorni con allenamento erano più grandi e più scuri (opacità 1
+  // contro 0,55) e gli altri sbiaditi: sulla linea dei passi e su quella del
+  // sonno diventavano macchie scure a tratti, e il grafico sembrava fatto di
+  // due stili diversi invece che di una curva sola.
+  //
+  // Era anche una differenza di TINTA, che è proprio quello che la direzione
+  // «Referto» non vuole: gli stati si dicono con la forma. E quell'informazione
+  // — in che giorni ti sei allenato — sta già nel grafico a barre qui sopra,
+  // dove ha una legenda che la spiega. Qui il lavoro della linea è un altro:
+  // far vedere l'andamento.
   const raggio = punti.length > 40 ? 1.4 : 2.2;
-  // L'ultimo punto con un dato è quello che stai guardando: si vede di più.
-  // Che abbia passato il bersaglio o no lo dice la sua posizione rispetto alla
-  // riga tratteggiata — che è lì apposta — non una tinta diversa.
+  // L'ultimo punto con un dato è quello che stai guardando: resta un filo più
+  // grande, ma dello stesso inchiostro. È un segno solo all'estremo destro, non
+  // una macchia in mezzo alla curva.
+  //
+  // Un filo: a +1,4 il raggio cresceva del 64% e l'area quasi al triplo, e sul
+  // grafico del sonno sembrava un elemento di un'altra specie invece che lo
+  // stesso punto un po' più marcato.
   let ultimoConDato = -1;
   punti.forEach((p, i) => {
     if (p.valore != null) ultimoConDato = i;
   });
   punti.forEach((p, i) => {
     if (p.valore == null) return;
-    const finale = i === ultimoConDato;
     svg.append(
       el("circle", {
-        cx: x(i), cy: y(p.valore), r: finale ? raggio + 1.6 : p.evidenza ? raggio + 1 : raggio,
+        cx: x(i), cy: y(p.valore), r: i === ultimoConDato ? raggio + 0.8 : raggio,
         fill: "var(--label)",
-        opacity: finale || p.evidenza ? 1 : 0.55,
       })
     );
   });
