@@ -36,6 +36,17 @@ export const GERARCHIA = [
 
 export const nomeLivello = (n) => GERARCHIA[n - 1] || `Livello ${n}`;
 
+/**
+ * Ogni quanto si verifica una proposta accettata.
+ *
+ * Una decisione senza verifica è un'opinione: due settimane sono il tempo in
+ * cui il carico nuovo si vede almeno due volte. Il numero stava scritto in
+ * SETTE posti — quattro qui, uno in store.js, due in italiano dentro le
+ * schermate e il pacchetto — e sette copie dello stesso numero sono sei
+ * occasioni di divergere.
+ */
+export const GIORNI_VERIFICA = 14;
+
 const arrotonda = (n) => Math.round(n * 100) / 100;
 
 export function piuGiorni(iso, giorni) {
@@ -162,7 +173,7 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
             alternative: `Non è una modifica al programma: è tornare a eseguirlo. Ridurre di una percentuale arbitraria inventerebbe un carico che nessuno ha deciso; il valore previsto esiste già.`,
             atteso: `A ${num(variante.carico)} kg la tecnica torna sopra ${R.tecnicaMinima}. Da lì la progressione riparte secondo la gerarchia, un gradino alla volta.`,
           },
-          dataVerifica: piuGiorni(oggi, 14),
+          dataVerifica: piuGiorni(oggi, GIORNI_VERIFICA),
         },
         motivo: null,
       };
@@ -186,7 +197,7 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
           alternative: `La gerarchia mette la tecnica al livello 1, prima di ripetizioni e carico. Aggiungere serie o ripetizioni su un gesto sbagliato peggiora il problema; fermare del tutto l'esercizio toglie l'occasione di correggerlo.`,
           atteso: `Con ${num(nuovo)} kg la tecnica torna sopra 8 entro due esposizioni. Se ci riesce, si risale di carico; se non ci riesce, l'esercizio va sostituito (livello 7).`,
         },
-        dataVerifica: piuGiorni(oggi, 14),
+        dataVerifica: piuGiorni(oggi, GIORNI_VERIFICA),
       },
       motivo: null,
     };
@@ -249,7 +260,7 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
           alternative: `Il range arriva a ${variante.ripMax} e siamo a ${rip}: la gerarchia impone di esaurire le ripetizioni (livello 3) prima di toccare il carico (livello 4). Salire subito di carico salterebbe un livello senza motivo tecnico.`,
           atteso: `${nuovaRip} ripetizioni su tutte e ${variante.serie} le serie a ${carico != null ? num(carico) + " kg" : "carico invariato"}, con RPE che risale verso ${regole.rpeTarget.min}-${regole.rpeTarget.max}.`,
         },
-        dataVerifica: piuGiorni(oggi, 14),
+        dataVerifica: piuGiorni(oggi, GIORNI_VERIFICA),
       },
       motivo: null,
     };
@@ -283,7 +294,7 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
         alternative: `Le ripetizioni sono esaurite (livello 3 chiuso), quindi tocca al carico (livello 4). Aggiungere serie sarebbe livello 5, cioè saltare un livello. L'incremento è +${num(passo)} kg (+${perCento}%), il più piccolo componibile con i dischi: non il salto da 4 kg che si otterrebbe aggiungendo dischi senza ricomporre.`,
         atteso: `Ritorno a ${variante.ripMin} ripetizioni a ${num(nuovoCarico)} kg con RPE ${regole.rpeTarget.min}-${regole.rpeTarget.max}, poi di nuovo su fino a ${variante.ripMax}.`,
       },
-      dataVerifica: piuGiorni(oggi, 14),
+      dataVerifica: piuGiorni(oggi, GIORNI_VERIFICA),
     },
     motivo: null,
   };

@@ -3,7 +3,7 @@
 import * as db from "./db.js";
 import { isoDate, weekdayOf, giorniTra, dataBreve, num, durataUmana, parseIso } from "./ui.js";
 import { INVENTARIO_DEFAULT } from "./plates.js";
-import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni } from "./segnali.js";
+import { valutaProgressione, firmaProposta, calcolaSegnali, nomeLivello, piuGiorni, GIORNI_VERIFICA } from "./segnali.js";
 import { punteggioEsercizio, punteggioAllenamento, doloriDi, PESI_SALUTE_BASE } from "./punteggio.js";
 
 let LIBRERIA = null;
@@ -1839,7 +1839,7 @@ export async function rispondiAProposta(id, stato, { nota = null } = {}) {
   // La verifica si conta da quando accetti, non da quando la proposta è nata:
   // una proposta accettata dopo tre settimane risultava «da verificare» il
   // giorno stesso, e la verifica non voleva più dire niente.
-  const giorniVerifica = 14;
+  const giorniVerifica = GIORNI_VERIFICA;
   const agg = {
     ...p,
     stato,

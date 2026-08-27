@@ -1,6 +1,6 @@
 import { h, aggiungi, dataBreve, dataLunga, num, toast, chiedi, sheet , isoDate } from "../ui.js";
 import { intestazione, indietro as tornaIndietro } from "../app.js";
-import { nomeLivello } from "../segnali.js";
+import { nomeLivello, GIORNI_VERIFICA } from "../segnali.js";
 import * as store from "../store.js";
 
 function parametri() {
@@ -178,7 +178,7 @@ async function dettaglio(id) {
         h(
           "div.row",
           h("div.main", h("span.title", "Verifica")),
-          h("span.value", p.stato === "accettata" ? dataBreve(p.dataVerifica) : "14 giorni dopo l'accettazione")
+          h("span.value", p.stato === "accettata" ? dataBreve(p.dataVerifica) : `${GIORNI_VERIFICA} giorni dopo l'accettazione`)
         )
       )
     )

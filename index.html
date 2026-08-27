@@ -2,12 +2,43 @@
 <html lang="it">
   <head>
     <meta charset="utf-8" />
-    <!-- Niente «maximum-scale=1»: in Safari iOS lo ignora, ma nell'app aggiunta
-         alla schermata Home lo rispetta, e lì toglieva il pizzico per
-         ingrandire. Serviva a evitare lo zoom automatico quando iOS mette a
-         fuoco un campo scritto sotto i 16px: nessun campo dell'app lo è
-         (il più piccolo è a 17px), quindi non serviva a niente e toglieva
-         l'unico modo di ingrandire un numero. -->
+    <!-- Quello che questa pagina può contattare, scritto una volta e imposto dal
+         browser invece che promesso in un documento. Le uniche uscite sono le
+         due di YouTube; tutto il resto è chiuso.
+           style 'unsafe-inline'  → l'app scrive 306 attributi `style` a mano
+           img data: blob:        → le foto del corpo e le copertine dei video
+                                    stanno in archivio come data URL
+           media blob:            → il bip del cronometro è un WAV costruito al volo
+           connect i.ytimg.com    → la miniatura del video, scaricata una volta
+           frame youtube-nocookie → il player
+         Se un domani serve un dominio in più, va scritto qui: e tools/rete.js
+         controlla che l'elenco resti questo. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self';
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data: blob: https://i.ytimg.com;
+               media-src 'self' blob:;
+               font-src 'self';
+               connect-src 'self' https://i.ytimg.com;
+               frame-src https://www.youtube-nocookie.com;
+               worker-src 'self';
+               manifest-src 'self';
+               object-src 'none';
+               base-uri 'self';
+               form-action 'none'"
+    />
+    <!-- Ingrandimento fermo, e la storia va detta perché è stata decisa due
+         volte in verso opposto. Il 9 agosto «maximum-scale» era stato TOLTO:
+         nell'app aggiunta alla schermata Home iOS lo rispetta, e toglieva il
+         pizzico per ingrandire un numero. Il 26 agosto è stato rimesso, con i
+         gesti a due dita e il secondo tocco fermati anche in js/app.js: dentro
+         un allenamento la pagina si ingrandiva da sola per uno sfioramento, e
+         restava storta con le mani occupate.
+         Questo commento è rimasto per settimane a descrivere la scelta vecchia
+         mentre la riga sotto faceva l'opposto: un commento che mente è peggio
+         di nessun commento, perché lo si crede. -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"

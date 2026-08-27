@@ -4,6 +4,7 @@
 
 import { dataBreve, dataLunga, durataUmana, mmss, num, isoDate, oraDi } from "./ui.js";
 import { doloriDi } from "./punteggio.js";
+import { GIORNI_VERIFICA } from "./segnali.js";
 // Quanto è durato un allenamento lo decide una funzione sola, per tutta l'app:
 // qui la regola era scritta a parte e diceva un altro numero al coach.
 import { durataSeduta } from "./store.js";
@@ -807,7 +808,7 @@ export function bloccoProposte(proposte, nomeLivello) {
         `   Atteso: ${p.quattroDomande.atteso}`,
         // In sospeso vuol dire non ancora accettata: la verifica parte da
         // quando l'atleta risponde, non da quando la proposta è nata.
-        `   Verifica: 14 giorni dopo l'accettazione`,
+        `   Verifica: ${GIORNI_VERIFICA} giorni dopo l'accettazione`,
       ].join("\n")
     ),
     "",

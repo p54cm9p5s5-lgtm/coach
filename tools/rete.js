@@ -68,6 +68,7 @@ export async function verificaSorgenteUnica() {
     { cosa: "come si scrive il bersaglio", segno: "ripMin === v.ripMax", solo: ["js/store.js"] },
     { cosa: "come si legge un numero scritto a mano", segno: String.raw`^-?\d*\.?\d+$`, solo: ["js/store.js"] },
     { cosa: "quanti giorni dall'ultimo backup", segno: "/ 86400000", solo: ["js/ui.js"] },
+    { cosa: "ogni quanto si verifica una proposta", segno: "= 14", solo: ["js/segnali.js"] },
   ];
   const FILE = [
     "js/store.js", "js/ui.js", "js/db.js", "js/export.js", "js/punteggio.js", "js/segnali.js",
@@ -115,6 +116,33 @@ export async function verificaSorgenteUnica() {
       domini.add(m[1]);
     }
   }
+  // La CSP: quello che il browser IMPONE, non quello che i documenti promettono.
+  // Le due cose sono già andate a divergere una volta — SPEC e README hanno
+  // promesso per settimane che aprire un esercizio non contattava nessuno.
+  try {
+    const html = await (await fetch(`/index.html?rete=${Math.random()}`, { cache: "no-store" })).text();
+    const m = html.match(/http-equiv="Content-Security-Policy"[\s\S]*?content="([^"]*)"/i);
+    if (!m) errori.push("index.html non ha più una Content-Security-Policy");
+    else {
+      const csp = m[1].replace(/\s+/g, " ");
+      const ATTESE = [
+        ["default-src 'self'", "il fondo dev'essere chiuso"],
+        ["script-src 'self'", "nessuno script da fuori"],
+        ["object-src 'none'", "niente oggetti incorporati"],
+        ["form-action 'none'", "nessun modulo che spedisce"],
+        ["frame-src https://www.youtube-nocookie.com", "il player"],
+        ["connect-src 'self' https://i.ytimg.com", "la miniatura"],
+      ];
+      for (const [pezzo, perche] of ATTESE) if (!csp.includes(pezzo)) errori.push(`la CSP non dice più «${pezzo}» (${perche})`);
+      // e non deve essersi allargata a domini nuovi
+      for (const d of (csp.match(/https?:\/\/[A-Za-z0-9.-]+/g) || [])) {
+        if (!AMMESSI.has(d.replace(/^https?:\/\//, ""))) errori.push(`la CSP ha aperto un dominio nuovo: ${d}`);
+      }
+    }
+  } catch (e) {
+    errori.push(`non riesco a leggere index.html: ${String(e.message).slice(0, 50)}`);
+  }
+
   return esito(
     "le regole scritte una volta sola, e dove va la rete",
     `${REGOLE.length} regole su ${FILE.length} file · ${domini.size} domini esterni`,
