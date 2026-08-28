@@ -214,6 +214,32 @@ export function riscaldamento(giornoId) {
 }
 
 /**
+ * Lo stretching dopo una camminata lunga — il «Blocco C» del coach.
+ *
+ * FACOLTATIVO, e questa non è una sfumatura: non entra in nessun punteggio, non
+ * genera mai un «previsto, non fatto», saltarlo non è un errore. Si segna quando
+ * lo si fa, e basta. È l'unica cosa nell'app che si traccia senza essere
+ * valutata.
+ *
+ * Le quattro posizioni sono le stesse del blocco di mobilità: nel file ci sono
+ * solo i loro nomi e qui vengono risolte, perché due copie della stessa lista
+ * prima o poi divergono e una delle due resta indietro. Un nome che non si
+ * risolve sparisce dall'elenco invece di produrre una riga vuota, e la rete se
+ * ne accorge.
+ */
+export function stretchingPostCardio() {
+  const blocco = RISCALDAMENTO?.stretchingPostCardio;
+  if (!blocco) return null;
+  const tutte = RISCALDAMENTO?.tenuteStatiche?.passi || [];
+  const passi = (blocco.passi || [])
+    .map((nome) => tutte.find((x) => x.nome === nome))
+    .filter(Boolean)
+    .map(conVideoScelto);
+  if (!passi.length) return null;
+  return { nota: blocco.nota || null, facoltativo: true, passi };
+}
+
+/**
  * Un giorno di sola mobilità: nello split c'è, ma senza esercizi.
  *
  * Sabato e domenica sono voci vere del programma — compaiono sul calendario e
@@ -3352,9 +3378,14 @@ export async function salvaNotaAllenamento(uuid, { talkTest = null, nota = null 
     throw new Error("Talk-test non riconosciuto.");
   }
   const testo = nota ? String(nota).trim() : "";
-  // Niente talk-test e niente nota vuol dire che non c'è più niente da tenere:
-  // una riga vuota in archivio si comporta come una risposta data.
-  if (!talkTest && !testo) {
+  // Lo stretching dopo la camminata sta nella stessa riga ma è roba di un altro
+  // discorso: rispondere al talk-test, o toglierlo, non deve cancellarlo.
+  const gia = await db.get("noteWatch", id);
+  const postCardio = gia?.stretchingPostCardio || null;
+  // Niente talk-test, niente nota e niente stretching segnato vuol dire che non
+  // c'è più niente da tenere: una riga vuota in archivio si comporta come una
+  // risposta data.
+  if (!talkTest && !testo && !postCardio) {
     await db.del("noteWatch", id);
     return null;
   }
@@ -3362,6 +3393,44 @@ export async function salvaNotaAllenamento(uuid, { talkTest = null, nota = null 
     uuid: id,
     talkTest: talkTest || null,
     nota: testoScritto(testo),
+    ...(postCardio ? { stretchingPostCardio: postCardio } : {}),
+    aggiornatoIl: new Date().toISOString(),
+  };
+  await db.put("noteWatch", rec);
+  return rec;
+}
+
+/**
+ * Segna (o toglie) lo stretching dopo la camminata su un allenamento.
+ *
+ * Non tocca il talk-test e non tocca la nota: è un fatto suo, e finisce nella
+ * stessa riga solo perché è quella che sopravvive a un import nuovo. Non entra
+ * in nessun punteggio — se un giorno qualcuno lo facesse contare, starebbe
+ * valutando una cosa che il coach ha dichiarato facoltativa.
+ */
+export async function segnaStretchingPostCardio(uuid, fatto) {
+  const id = String(uuid || "");
+  if (!id) throw new Error("Serve l'allenamento.");
+  const gia = (await db.get("noteWatch", id)) || null;
+  if (!fatto) {
+    if (!gia) return null;
+    const { stretchingPostCardio, ...resto } = gia;
+    // Tolto lo stretching, se non resta niente altro la riga non ha più motivo
+    // di esistere: com'è già per il talk-test e la nota.
+    if (!resto.talkTest && !resto.nota) {
+      await db.del("noteWatch", id);
+      return null;
+    }
+    const rec = { ...resto, aggiornatoIl: new Date().toISOString() };
+    await db.put("noteWatch", rec);
+    return rec;
+  }
+  const rec = {
+    uuid: id,
+    talkTest: gia?.talkTest || null,
+    nota: gia?.nota || "",
+    ...gia,
+    stretchingPostCardio: { fatto: true, quando: new Date().toISOString() },
     aggiornatoIl: new Date().toISOString(),
   };
   await db.put("noteWatch", rec);

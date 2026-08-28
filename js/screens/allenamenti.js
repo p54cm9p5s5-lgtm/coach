@@ -824,18 +824,101 @@ async function dettaglio(uuid, { ridisegna }) {
   }
 
   aggiungi(wrap, bloccoTalkTest(a, nota, ridisegna));
+  aggiungi(wrap, bloccoStretchingPostCardio(a, nota, ridisegna));
 
   aggiungi(wrap,
     h("div.group",
       h("p.footnote",
         "Numeri scritti dall'orologio e importati da Salute: l'app non li cambia e li manda al coach così come sono. " +
           (haTalkTest(a)
-            ? "Il talk-test e la nota sono gli unici campi scritti da te, stanno in un archivio a parte, e non spariscono se rifai l'importazione."
+            ? "Il talk-test, la nota e lo stretching dopo la camminata sono gli unici campi scritti da te: stanno in un archivio a parte e non spariscono se rifai l'importazione."
             : "Il talk-test qui non c'è: si risponde solo su camminate, corse ed escursioni, dove l'intensità la decidi tu andando. Su una sessione come questa la dicono carico e RPE, che stanno nel log della seduta.")
       )
     )
   );
   return wrap;
+}
+
+/* Lo stretching dopo la camminata — il «Blocco C» del coach, dal 28/08/2026.
+   Quattro allungamenti sulle gambe, sei minuti, e una cosa che lo distingue da
+   tutto il resto dell'app: è FACOLTATIVO. Non entra in nessun punteggio, non
+   diventa mai un «previsto, non fatto», e saltarlo non è un errore. Serve a
+   poterlo segnare quando lo si fa, non a essere misurati.
+   Per questo qui non c'è nessun tasto rosso, nessuna percentuale e nessun
+   avviso: c'è un interruttore e le istruzioni. Compare dove compare il
+   talk-test, cioè sulle camminate, sulle corse e sulle escursioni. */
+function bloccoStretchingPostCardio(a, nota, ridisegna) {
+  if (!haTalkTest(a)) return null;
+  const blocco = store.stretchingPostCardio();
+  if (!blocco) return null;
+  const fatto = Boolean(nota?.stretchingPostCardio?.fatto);
+  const lungo = (a?.durataSec || 0) >= 30 * 60;
+
+  const passi = h(
+    "div",
+    { style: "margin:14px 0 0" },
+    ...blocco.passi.map((v, i) =>
+      h(
+        "details",
+        { style: "border-top:1px solid var(--separator);padding:10px 0" },
+        h(
+          "summary",
+          { style: "cursor:pointer;font-size:15px;color:var(--label);display:flex;gap:10px;align-items:baseline" },
+          h("span", { style: "font-weight:700;min-width:18px;color:var(--label-secondary)" }, String(i + 1)),
+          h("span", { style: "flex:1" }, v.nome),
+          h("span", { style: "font-size:13px;color:var(--label-secondary);white-space:nowrap" }, v.dose)
+        ),
+        h(
+          "p",
+          { style: "margin:8px 0 0 28px;font-size:14px;color:var(--label-secondary);line-height:1.45" },
+          v.come || ""
+        ),
+        v.video
+          ? h(
+              "p",
+              { style: "margin:8px 0 0 28px;font-size:13px;color:var(--label-secondary)" },
+              `${v.video.titolo} · ${v.video.canale}`
+            )
+          : null
+      )
+    )
+  );
+
+  return h(
+    "div",
+    { style: "margin:24px 16px 0;padding:18px 0 0;border-top:1px solid var(--separator)" },
+    h(
+      "p",
+      { style: "margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px" },
+      "Stretching dopo la camminata"
+    ),
+    h(
+      "p",
+      { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary);line-height:1.4" },
+      "Facoltativo: non conta nel punteggio e saltarlo non è un errore. " +
+        (lungo
+          ? "Dopo una camminata lunga come questa ha senso, soprattutto se i pesi li hai fatti in un altro momento."
+          : "Ha senso dopo una camminata di mezz'ora o più; qui lo puoi segnare lo stesso.") +
+        " Non sostituisce la mobilità di fine seduta: sono quattro posizioni su diciotto, e solo sulle gambe."
+    ),
+    h(
+      "div",
+      { style: "margin:14px 0 0" },
+      h(
+        "button",
+        {
+          "aria-pressed": fatto ? "true" : "false",
+          onclick: unaVoltaSola(async () => {
+            await store.segnaStretchingPostCardio(a.uuid, !fatto);
+            toast(fatto ? "Tolto." : "Segnato.");
+            await ridisegna();
+          }),
+        },
+        fatto ? "Fatto" : "Segna che l'hai fatto"
+      )
+    ),
+    passi
+  );
 }
 
 /* Il talk-test, in fondo alla scheda.

@@ -1151,6 +1151,42 @@ ma senza esercizi — e lì quella voce è tutto il punteggio: aprire il giorno 
 farla vale 100, aprirlo e saltarla vale 0. In quei due giorni il riscaldamento
 non conta, perché non c'è niente da scaldare.
 
+### Lo stretching dopo la camminata — l'unica cosa facoltativa
+
+Dal 28/08/2026 c'è un terzo gruppo di allungamenti, che il coach chiama Blocco
+C: **quattro posizioni sulle gambe, sei minuti, dopo una camminata lunga.** Sono
+le stesse quattro che stanno già dentro al blocco di mobilità — polpaccio a
+gamba tesa, polpaccio a ginocchio flesso, affondo basso, femorali con
+asciugamano — e infatti nell'app non sono scritte due volte: nel file ci sono
+solo i loro nomi, le istruzioni si leggono da lì.
+
+**È diverso da tutto il resto, ed è il punto:** non è prescritto, **non entra in
+nessun punteggio**, saltarlo non è un errore e non produce mai un «previsto, non
+fatto». Non c'è una necessità fisiologica dietro — il guadagno di flessibilità si
+costruisce con la ripetizione nel tempo, e una camminata non annulla la mobilità
+fatta ore prima. Si fa perché fa piacere allungare le gambe dopo aver camminato,
+che è un motivo legittimo ma è comodità, non protocollo.
+
+**Dove si trova**: in Allenamenti, dentro la scheda di una camminata (o di una
+corsa, o di un'escursione), sotto il talk-test. C'è un interruttore, «Segna che
+l'hai fatto», e le quattro posizioni che si aprono a leggere. Su una camminata
+di mezz'ora o più l'app dice che ha senso; sulle altre lo si può segnare
+lo stesso, senza che nessuno insista.
+
+La risposta sta nello stesso archivio del talk-test — quello tuo, che non sparisce
+quando rifai l'importazione da Salute — e **rispondere o togliere il talk-test non
+lo cancella**, sono due cose separate che stanno nella stessa riga.
+
+Nel pacchetto per il coach compare **solo se l'hai fatto almeno una volta**, come
+elenco sotto la tabella degli allenamenti, con scritto che è facoltativo. Non c'è
+una colonna: una colonna piena di trattini si legge come un obbligo disatteso, ed
+è esattamente quello che questo blocco non è.
+
+**Una cosa che il coach tiene d'occhio** (verifica al 07/09): questi sei minuti
+non devono prendere il posto della mobilità di fine seduta. Sono quattro
+posizioni su diciotto, e solo sulle gambe. L'app non fa niente al riguardo — è
+una domanda che ti farà lui — ma lo scrive dove serve.
+
 **Non farsi vedere pesa come saltare un Push** (verificato il 25/08/2026). Un
 sabato con l'evento «Allenamento: Mobilità» sul calendario e nessuna seduta
 aperta produce esattamente quello che produce un Push saltato: nel punteggio

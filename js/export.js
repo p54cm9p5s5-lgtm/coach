@@ -733,6 +733,14 @@ export function bloccoWatch(allenamenti, { giorni = 7, note = new Map(), talkTes
       return n?.nota ? `${dataBreve(a.data)} ${a.tipo || ""}: ${n.nota}` : null;
     })
     .filter(Boolean);
+  // Lo stretching facoltativo dopo la camminata sta sotto, non in colonna: una
+  // colonna piena di trattini si legge come un obbligo disatteso, ed è
+  // esattamente quello che questo blocco NON è. Se non l'ha fatto mai, qui non
+  // compare niente — il silenzio non è un dato mancante.
+  const conStretching = allenamenti
+    .slice(0, 20)
+    .filter((a) => note.get?.(a.uuid)?.stretchingPostCardio?.fatto)
+    .map((a) => `${dataBreve(a.data)} ${a.tipo || ""}`.trim());
   const quantiTagliati = Math.max(0, allenamenti.length - 20);
   return [
     `ALLENAMENTI LETTI DALL'APPLE WATCH (ultimi ${giorni} giorni)`,
@@ -743,6 +751,18 @@ export function bloccoWatch(allenamenti, { giorni = 7, note = new Map(), talkTes
     ),
     "",
     noteScritte.length ? ["NOTE SCRITTE DALL'ATLETA", "", ...noteScritte, ""].join("\n") : null,
+    conStretching.length
+      ? [
+          "STRETCHING DOPO LA CAMMINATA (facoltativo)",
+          "",
+          ...conStretching,
+          "",
+          "Le quattro posizioni sulle gambe del blocco facoltativo, segnate dall'atleta quando le ha fatte. " +
+            "Non è prescritto, non entra in nessun punteggio e saltarlo non è un errore: dove non compare non " +
+            "vuol dire che manca qualcosa.",
+          "",
+        ].join("\n")
+      : null,
     "Sono gli allenamenti registrati dall'Apple Watch e importati dall'app Salute: numeri misurati dall'orologio, non stime dell'app, e non trascritti a mano.",
     conNote
       ? "«Talk-test» è l'unica colonna scritta dall'atleta e non misurata dall'orologio: dice se durante l'allenamento riusciva a parlare. Si risponde solo su camminate, corse ed escursioni — altrove l'intensità la dicono carico e RPE del log — quindi il trattino su una sessione di pesi non è una risposta mancante. Un allenamento con il talk-test risposto fa valere quella giornata come giornata di allenamento nel punteggio Salute; senza risposta la giornata resta fuori dal conto, non vale zero."

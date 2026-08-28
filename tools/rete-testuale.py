@@ -141,6 +141,27 @@ for e in esercizi:
 prot = json.loads(leggi("data/riscaldamento.json"))
 prova("il protocollo ha i suoi giorni", bool(prot.get("giorni")))
 
+# --- 7. il blocco facoltativo dopo la camminata ------------------------------
+# Le sue quattro posizioni non sono scritte due volte: nel file ci sono solo i
+# nomi, e le istruzioni si leggono dal blocco di mobilità. Un nome che non
+# combacia sparirebbe dalla schermata senza dire niente.
+tenute = {v["nome"] for v in (prot.get("tenuteStatiche") or {}).get("passi", [])}
+postcardio = prot.get("stretchingPostCardio") or {}
+if postcardio:
+    prova("il blocco dopo la camminata e dichiarato facoltativo", postcardio.get("facoltativo") is True)
+    for nome in postcardio.get("passi", []):
+        prova(f"«{nome}» esiste fra le tenute", nome in tenute, "nome che non si risolve")
+    prova(
+        "il blocco dopo la camminata non entra nel punteggio",
+        "stretchingPostCardio" not in leggi("js/punteggio.js"),
+        "punteggio.js lo nomina: e dichiarato facoltativo, non deve pesare",
+    )
+    prova(
+        "nessuno lo fa valere nel punteggio Salute",
+        "stretchingPostCardio" not in leggi("js/store.js").split("export async function punteggioSalute")[-1][:6000],
+        "compare dentro punteggioSalute",
+    )
+
 # --- verdetto -----------------------------------------------------------------
 print()
 if errori:

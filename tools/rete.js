@@ -1449,6 +1449,12 @@ export async function provaLaRete() {
  *    basta riscrivere il file della base con un altro strumento per far
  *    sembrare cambiato un archivio identico.
  *
+ * Nella base non ci va niente di DERIVATO. I segnali, per esempio, si
+ * ricalcolano da zero a ogni giro del motore e quelli che il calcolo non
+ * produce piu vengono cancellati: contarli fra gli invarianti faceva scattare
+ * un allarme ogni volta che l'app veniva usata davvero. Sono stati tolti il
+ * 28/08. Quello da cui derivano resta coperto.
+ *
  * Non legge niente da sola: la base gliela passa chi la chiama.
  */
 export async function confrontaConLaBase(base, { magazzino = store, archivio = db } = {}) {

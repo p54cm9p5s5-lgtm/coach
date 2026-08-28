@@ -2163,5 +2163,15 @@
     "serie": 1,
     "durataStimataMin": 30,
     "notaDurata": "~30 minuti reali: 15 posizioni su 18 sono per lato e valgono 90 secondi, non 45 — uniche solo sfinge o cobra, child's pose con braccia estese, farfalla. La stima di ~20 minuti girata la prima volta era sbagliata per difetto."
+  },
+  "stretchingPostCardio": {
+    "facoltativo": true,
+    "nota": "Il «Blocco C» del coach: quattro allungamenti sulle gambe dopo una camminata lunga, ~6 minuti. È FACOLTATIVO e non entra in nessun punteggio: si segna quando lo si fa, saltarlo non è un errore e non produce mai un «previsto, non fatto». Non è protocollo, è comodità — il guadagno di flessibilità si costruisce con la ripetizione nel tempo, e una camminata non annulla il blocco di mobilità fatto ore prima. Ha senso soprattutto quando la camminata è staccata dai pesi (pesi la mattina, camminata il pomeriggio). ATTENZIONE, e il coach lo verifica il 07/09: questi sei minuti NON sostituiscono la mobilità di fine seduta — sono 4 posizioni su 18 e solo sulle gambe.",
+    "passi": [
+      "Polpaccio a gamba tesa",
+      "Polpaccio a ginocchio flesso",
+      "Affondo basso",
+      "Femorali con asciugamano"
+    ]
   }
 }
