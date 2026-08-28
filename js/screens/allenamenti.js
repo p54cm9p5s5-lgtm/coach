@@ -36,6 +36,15 @@ const TIPI = {
   Elliptical: "Ellittica",
   Rowing: "Vogatore",
   StairClimbing: "Scale",
+  // Tipi che l'orologio scrive e che qui restavano in inglese: il nome arriva
+  // da Salute senza il prefisso HKWorkoutActivityType, e quello che non sta in
+  // questa mappa finisce a schermo così com'è. «Cooldown» compariva tale e
+  // quale in mezzo a una schermata tutta in italiano.
+  Cooldown: "Defaticamento",
+  MixedCardio: "Cardio misto",
+  PreparationAndRecovery: "Preparazione e recupero",
+  Flexibility: "Mobilità",
+  MindAndBody: "Corpo e mente",
   Other: "Altro",
 };
 

@@ -2566,10 +2566,17 @@ async function bloccoProssimo(inv) {
   const prossima = vocePrevista(S.sed.progresso.indice + 1);
 
   if (!prossima) {
-    // Un cardio già rimandato non è «il prossimo passo»: dirlo lo stesso
-    // manderebbe a cercare una schermata che quella strada non apre più.
+    // Che cosa viene dopo lo decide la STESSA catena che muove la seduta, non
+    // una frase scritta qui a mano. Prima c'era «il cardio» scritto a parte:
+    // quando il 27/08 l'ordine è cambiato la frase è rimasta indietro, e finiti
+    // i pesi l'app annunciava il cardio e apriva la mobilità.
+    //
+    // Un cardio già rimandato o già fatto non è «il prossimo passo»: dirlo lo
+    // stesso manderebbe a cercare una schermata che quella strada non apre più.
     const cardioDaFare = S.sed.cardio?.previsto && !S.sed.cardio?.rimandato && !S.sed.cardio?.eseguito;
-    const dopo = cardioDaFare ? "il cardio" : "le tenute";
+    const fase = dopoGliEsercizi();
+    const dopo =
+      fase === "cardio" && !cardioDaFare ? "il riepilogo" : PAROLA_DELLA_FASE[fase] || "il riepilogo";
     return h(
       "div.group",
       h("h2", "Dopo questo"),
@@ -3639,6 +3646,16 @@ async function vistaCardioInCorso(corpo, piede, r) {
   S.timerHandle = setInterval(aggiorna, 250);
 }
 
+
+/* Come si chiama, in una frase, il passo che viene dopo. Sta accanto alla
+   catena qui sotto perché è la stessa cosa detta a parole: se un giorno
+   l'ordine cambia di nuovo, le due righe si toccano insieme. */
+const PAROLA_DELLA_FASE = {
+  mobilita: "la mobilità",
+  stretching: "le tenute",
+  cardio: "il cardio",
+  fine: "il riepilogo",
+};
 
 /* L'ordine della seduta, in un posto solo.
 
