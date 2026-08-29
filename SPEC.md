@@ -228,8 +228,9 @@ ragione precisa: quello è roba dell'orologio, si riscrive a ogni import e si pu
 svuotare in blocco. Quello che scrivi tu non deve sparire con lui.
 
 Il **talk-test** è l'unica colonna scritta dall'atleta e non misurata: dice se
-durante l'allenamento riusciva a parlare. Si risponde solo su camminate, corse
-ed escursioni — altrove l'intensità la dicono carico e RPE del log. Una giornata
+durante l'allenamento riusciva a parlare. Si risponde solo dove l'andatura la
+decidi tu — camminate, corse, escursioni, bici e cyclette — perché altrove
+l'intensità la dicono carico e RPE del log. Una giornata
 con un'attività a cui il talk-test è stato risposto vale come giornata di
 allenamento nel punteggio Salute; senza risposta la giornata **resta fuori dal
 conto**, non vale zero.

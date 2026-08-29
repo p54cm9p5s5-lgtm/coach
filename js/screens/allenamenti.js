@@ -74,14 +74,29 @@ const BREVE_TALK = { comode: "parlavo comodo", fiatone: "parlavo col fiatone", f
    lontana, restano per esteso. */
 const RISPOSTA_BREVE = { comode: "Sì, comodo", fiatone: "Sì, col fiatone", fatica: "No" };
 
-/* Il talk-test ha senso solo dove l'intensità la decidi tu camminando: una
-   camminata, una corsa, un'escursione. Su una sessione di pesi la domanda «e
-   riuscivi a parlare?» non vuol dire niente — lì l'intensità sta nel carico e
-   nell'RPE, che l'app registra da un'altra parte — e chiederla su ogni riga
-   voleva dire lasciare per sempre due terzi degli allenamenti «senza risposta».
-   Dove non si applica, il talk-test non compare né si conta. */
-const CON_TALK_TEST = new Set(["Walking", "Running", "Hiking"]);
+/* Il talk-test ha senso solo dove l'intensità la decidi tu andando: una
+   camminata, una corsa, un'escursione, un giro in bici. Su una sessione di pesi
+   la domanda «e riuscivi a parlare?» non vuol dire niente — lì l'intensità sta
+   nel carico e nell'RPE, che l'app registra da un'altra parte — e chiederla su
+   ogni riga voleva dire lasciare per sempre due terzi degli allenamenti «senza
+   risposta». Dove non si applica, il talk-test non compare né si conta.
+
+   La bici è entrata il 28/08 su sua richiesta: pedalare è esattamente lo stesso
+   caso della camminata — l'andatura la scegli tu, e l'orologio misura tutto
+   tranne se riuscivi a parlare. Insieme è entrata la cyclette, che è la stessa
+   domanda al chiuso: nel suo archivio non ce n'è ancora nessuna, ma il giorno
+   che comparisse sarebbe assurdo che l'unica a restare muta fosse quella. */
+const CON_TALK_TEST = new Set(["Walking", "Running", "Hiking", "Cycling", "IndoorCycling"]);
 const haTalkTest = (a) => CON_TALK_TEST.has(a?.tipo);
+
+/* Lo stretching facoltativo dopo la camminata è un'altra domanda, e va tenuta
+   separata: il coach l'ha scritto per le uscite sulle gambe, e quelle quattro
+   posizioni allungano polpacci, flessori dell'anca e femorali. Fino al 28/08 i
+   due elenchi coincidevano e il blocco era agganciato al talk-test — poi è
+   entrata la bici, e senza questa distinzione a fine giro sarebbe comparso un
+   riquadro intitolato «stretching dopo la camminata». Due domande diverse, due
+   elenchi diversi. */
+const CON_STRETCHING_GAMBE = new Set(["Walking", "Running", "Hiking"]);
 
 /* Al chiuso o all'aperto lo dice il nome.
    Per Salute una camminata è sempre «Walking»: il tapis e il giro dell'isolato
@@ -403,7 +418,7 @@ async function elenco({ ridisegna }) {
         h(
           "p",
           { style: "margin:2px 0 0;font-size:12px;color:var(--label-tertiary);line-height:1.4" },
-          `Su ${totale} ${totale === 1 ? "uscita" : "uscite"} con il talk-test risposto, su ${tutti.filter(haTalkTest).length} fra camminate, corse ed escursioni.`
+          `Su ${totale} ${totale === 1 ? "uscita" : "uscite"} con il talk-test risposto, su ${tutti.filter(haTalkTest).length} fra camminate, corse, escursioni e uscite in bici.`
         )
       )
     );
@@ -841,7 +856,7 @@ async function dettaglio(uuid, { ridisegna }) {
         "Numeri scritti dall'orologio e importati da Salute: l'app non li cambia e li manda al coach così come sono. " +
           (haTalkTest(a)
             ? "Il talk-test, la nota e lo stretching dopo la camminata sono gli unici campi scritti da te: stanno in un archivio a parte e non spariscono se rifai l'importazione."
-            : "Il talk-test qui non c'è: si risponde solo su camminate, corse ed escursioni, dove l'intensità la decidi tu andando. Su una sessione come questa la dicono carico e RPE, che stanno nel log della seduta.")
+            : "Il talk-test qui non c'è: si risponde solo su camminate, corse, escursioni e uscite in bici, dove l'intensità la decidi tu andando. Su una sessione come questa la dicono carico e RPE, che stanno nel log della seduta.")
       )
     )
   );
@@ -857,7 +872,7 @@ async function dettaglio(uuid, { ridisegna }) {
    avviso: c'è un interruttore e le istruzioni. Compare dove compare il
    talk-test, cioè sulle camminate, sulle corse e sulle escursioni. */
 function bloccoStretchingPostCardio(a, nota, ridisegna) {
-  if (!haTalkTest(a)) return null;
+  if (!CON_STRETCHING_GAMBE.has(a?.tipo)) return null;
   const blocco = store.stretchingPostCardio();
   if (!blocco) return null;
   const fatto = Boolean(nota?.stretchingPostCardio?.fatto);
@@ -934,7 +949,7 @@ function bloccoStretchingPostCardio(a, nota, ridisegna) {
    Sta dopo i numeri e non prima per due motivi: quello che apri a vedere sono
    i numeri dell'orologio, e questa è l'unica cosa che invece scrivi tu — le
    cose da fare vanno in fondo, dopo quelle da leggere. Compare solo su
-   camminate, corse ed escursioni: altrove la domanda non vuol dire niente. */
+   camminate, corse, escursioni e uscite in bici: altrove la domanda non vuol dire niente. */
 function bloccoTalkTest(a, nota, ridisegna) {
   if (!haTalkTest(a)) return null;
   const uuid = a.uuid;

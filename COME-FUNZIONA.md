@@ -869,8 +869,9 @@ l'osservazione di quello che è successo, non la misura di quanto hai seguito il
 programma.
 
 **Il talk-test invece pesa, ed è l'unica cosa qui dentro che scrivi tu.** In
-fondo alla scheda di una **camminata, di una corsa o di un'escursione** — e solo
-lì — ci sono tre risposte alla domanda «riuscivi a parlare?» — *sì, comodo* ·
+fondo alla scheda di una **camminata, di una corsa, di un'escursione o di
+un'uscita in bici** — cioè dove l'andatura la decidi tu, e solo lì — ci sono tre
+risposte alla domanda «riuscivi a parlare?» — *sì, comodo* ·
 *sì, col fiatone* · *no* — più una nota libera. Su una sessione di pesi la
 domanda non compare: là l'intensità la dicono carico e RPE, che stanno nel log
 della seduta, e chiederla su ogni riga voleva dire lasciare per sempre due terzi
