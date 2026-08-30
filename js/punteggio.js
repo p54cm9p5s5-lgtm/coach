@@ -766,12 +766,22 @@ export function anello(totale, { etichetta = "Completezza", dimensione = ANELLO,
           "position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px",
       },
       (() => {
+        const testo = mostra != null ? String(mostra) : String(totale);
+        // La misura la decide quanto è lungo il numero, non una costante.
+        //
+        // 76 era tarato su due cifre. Con tre — cioè con 100, che è il
+        // punteggio che si vede più spesso quando le cose vanno bene — la
+        // scritta arrivava a toccare l'anello da tutte e due le parti. Non è un
+        // difetto di centratura: è larghezza. Le cifre stanno in un cerchio,
+        // quindi conta la diagonale, e ogni cifra in più la allunga.
+        const perLunghezza = { 1: 76, 2: 76, 3: 63, 4: 48 };
+        const base = perLunghezza[testo.length] ?? 40;
         const numero = h(
           "p",
           {
-            style: `margin:0;font-size:${Math.round(76 * scala)}px;font-weight:700;letter-spacing:-0.055em;font-variant-numeric:tabular-nums lining-nums;line-height:.86;color:${colore}`,
+            style: `margin:0;font-size:${Math.round(base * scala)}px;font-weight:700;letter-spacing:-0.055em;font-variant-numeric:tabular-nums lining-nums;line-height:.86;color:${colore}`,
           },
-          mostra != null ? String(mostra) : String(totale)
+          testo
         );
         return coloreForzato ? numero : coloraPunteggio(numero, totale);
       })(),
