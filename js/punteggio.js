@@ -508,7 +508,12 @@ export function punteggioAllenamento({
 
   const quanti = Math.max(previsti, punteggi.length + saltati);
   const somma = punteggi.reduce((a, b) => a + b, 0);
-  voci.push({
+  // Su una giornata di sola mobilità la riga «Esercizi 0 su 0 —» non dice
+  // niente: non c'era niente da fare, e messa in cima a un riepilogo sembra un
+  // buco. Sparisce solo lì — dove c'è un blocco di mobilità e nessun esercizio
+  // previsto — non su una seduta di pesi finita a zero, che invece va detta.
+  const senzaEsercizi = !quanti && Boolean(mobilita);
+  if (!senzaEsercizi) voci.push({
     nome: "Esercizi",
     // Senza esercizi previsti la voce non ha senso: `null` la tiene fuori dal
     // conto invece di trascinare il punteggio a zero con uno «0 su 0».

@@ -818,9 +818,13 @@ async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
     // il protocollo cambia domani, il punteggio di oggi non deve cambiare
     // con lui.
     //
-    // Un giorno di sola mobilità non ha niente da scaldare: non ci sono pesi
-    // davanti.
-    previstoRiscaldamento: !giornoDiSolaMobilita(g.id),
+    // Il riscaldamento c'è sempre, e su un giorno di sola mobilità è la
+    // camminata di cinque minuti: `passiRiscaldamento` la costruisce dal
+    // protocollo di ogni giorno, sabato e domenica compresi. Per due giorni
+    // qui c'è stato scritto «un giorno di sola mobilità non ha niente da
+    // scaldare» — falso, e il punteggio del sabato dichiarava «non previsti»
+    // una camminata che l'app faceva fare.
+    previstoRiscaldamento: Boolean(riscaldamento(g.id)?.cardio),
     // Lo stretching finale come passaggio a sé NON ESISTE PIÙ dal 27/08 sera:
     // le tenute statiche sono finite dentro al blocco di mobilità, che è uno
     // solo. Resta `false` scritto qui, e non tolto, perché è il valore congelato

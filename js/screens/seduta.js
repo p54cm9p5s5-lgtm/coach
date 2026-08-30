@@ -378,6 +378,89 @@ async function storicoEsercizio(def, esercizioId) {
   );
 }
 
+/* ---------------------------------------------------------------------------
+   Le giornate di sola mobilità hanno bisogno di altri numeri.
+
+   Sabato e domenica nello split ci sono ma non hanno esercizi, e i riepiloghi
+   erano scritti per i pesi: «serie registrate 0», «densità 0,00 serie/min»,
+   «recupero medio —», «esercizi 0 su 0». Non sono numeri sbagliati, sono
+   numeri che valgono zero per costruzione — e messi in fila sembrano una
+   giornata andata male, mentre è una giornata fatta per intero.
+
+   Qui si raccoglie quello che di quella giornata l'app sa davvero: quanti
+   passaggi di mobilità ha attraversato, se il riscaldamento è stato fatto,
+   quanto è durata, e cosa ne ha visto l'orologio. Niente di calcolato per
+   riempire una casella.
+--------------------------------------------------------------------------- */
+function eSoloMobilita(sed) {
+  if (!sed) return false;
+  if (sed.previstiElenco?.length) return false;
+  return Boolean(sed.mobilita) || store.giornoDiSolaMobilita(sed.tipoId);
+}
+
+/** L'allenamento dell'orologio che si sovrappone a questa seduta, se c'è. */
+async function allenamentoDellOrologio(sed) {
+  if (!sed?.oraInizio) return null;
+  const istante = (giorno, hhmm) => {
+    if (!hhmm) return null;
+    const t = new Date(`${giorno}T${String(hhmm).slice(0, 5)}:00`);
+    return Number.isNaN(t.getTime()) ? null : t.getTime();
+  };
+  const fineSeduta = sed.oraFine || Date.now();
+  const candidati = (await store.allenamentiWatch())
+    .filter((a) => a.data === sed.data)
+    .map((a) => {
+      const inizio = istante(a.data, a.inizio);
+      if (inizio == null) return null;
+      const fine = a.fine ? istante(a.data, a.fine) : inizio + (a.durataSec || 0) * 1000;
+      return { a, inizio, fine: fine ?? inizio + (a.durataSec || 0) * 1000 };
+    })
+    .filter(Boolean)
+    // Si sovrappone davvero: un allenamento della mattina non racconta la
+    // mobilità del pomeriggio.
+    .filter((x) => x.inizio < fineSeduta && x.fine > sed.oraInizio)
+    .sort((x, y) => (y.a.durataSec || 0) - (x.a.durataSec || 0));
+  return candidati[0]?.a || null;
+}
+
+/* Quello che resta scritto del blocco di mobilità quando lo si chiude.
+ *
+ * Il numero di passaggi attraversati sta in `progresso.mobPasso`, che è roba
+ * volatile: alla chiusura dell'allenamento il progresso viene azzerato, e una
+ * mobilità saltata a metà finiva per raccontare «1 passaggio su 26» a chi ne
+ * aveva fatti dodici. Quindi il conto si congela adesso, insieme al fatto. */
+function statoMobilita(fatto) {
+  const totali = passiMobilita().length;
+  const arrivato = Math.min((S.sed.progresso?.mobPasso ?? 0) + 1, totali || 1);
+  return {
+    fatto,
+    quando: Date.now(),
+    passi: fatto ? totali : arrivato,
+    totali,
+  };
+}
+
+/** Quanti passaggi di mobilità prevedeva quel giorno, e a quale è arrivato. */
+function passaggiDiMobilita(sed) {
+  const fatta = Boolean(sed.mobilita?.fatto);
+  // Il conto congelato alla chiusura del blocco comanda: è quello vero. Le
+  // sedute chiuse prima che venisse scritto non ce l'hanno, e allora si ricade
+  // sul protocollo di oggi e sul progresso, che per una seduta ancora aperta è
+  // esatto e per una già chiusa è il meglio che si può sapere.
+  if (sed.mobilita?.totali) {
+    return { totali: sed.mobilita.totali, fatti: sed.mobilita.passi ?? (fatta ? sed.mobilita.totali : 0), fatta };
+  }
+  const prot = store.riscaldamento(sed.tipoId);
+  const totali = (prot?.mobilitaFinale || []).length + (prot?.tenuteStatiche?.passi || []).length;
+  if (!totali) return null;
+  // `mobPasso` è l'indice del passaggio in cui era, quindi quelli attraversati
+  // sono uno di più. Se il progresso è già stato azzerato dalla chiusura non si
+  // può sapere: meglio non dare un numero che darne uno finto.
+  const indice = sed.progresso?.mobPasso;
+  if (!fatta && indice == null) return { totali, fatti: null, fatta };
+  return { totali, fatti: fatta ? totali : Math.min(indice + 1, totali), fatta };
+}
+
 async function vistaRisultato(id, vaiA, da = null) {
   const wrap = h("div.screen");
   const sed = await store.seduta(id);
@@ -486,28 +569,77 @@ async function vistaRisultato(id, vaiA, da = null) {
       nota ? h("p", { style: "margin:2px 0 0;font-size:11px;color:var(--label-tertiary)" }, nota) : null
     );
 
-  aggiungi(wrap,
-    h(
-      "div",
-      { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
-      scheda("Esercizi", `${svolti}/${previsti}`, `${serie.length} serie in tutto`),
-      scheda(
-        "Durata",
-        durataSec != null ? durataUmana(durataSec) : "—",
-        // L'etichetta segue il numero: da quando la durata è il lavoro vero
-        // (pause lunghe escluse) dire «dall'inizio alla chiusura» sarebbe
-        // falso proprio nel caso che l'ha resa necessaria, il cardio
-        // rimandato di quattro ore.
-        sed.durataLavoroSec != null ? "tempo di allenamento" : "dall'inizio alla chiusura"
-      ),
-      scheda("RPE medio", rpeMedio != null ? num(rpeMedio) : "—", tecMedia != null ? `tecnica ${num(tecMedia)}` : `zona ${store.regole().rpeTarget.min}-${store.regole().rpeTarget.max}`),
-      scheda(
-        "Recupero medio",
-        recMedio != null ? mmss(recMedio) : "—",
-        recTarget ? `previsti ${mmss(recTarget)}` : "cronometrato dall'app"
+  // Su una giornata di sola mobilità le quattro schede dei pesi sono quattro
+  // zeri per costruzione. Al loro posto vanno i numeri che quella giornata ha
+  // davvero: i passaggi attraversati, il riscaldamento, e cosa ne ha visto
+  // l'orologio — che è l'unico a sapere quanto è durata sul serio, se l'app
+  // l'hai aperta a metà strada.
+  if (eSoloMobilita(sed)) {
+    const mob = passaggiDiMobilita(sed);
+    const watch = await allenamentoDellOrologio(sed);
+    aggiungi(wrap,
+      h(
+        "div",
+        { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
+        scheda(
+          "Mobilità",
+          !mob ? "—" : mob.fatti == null ? "saltata" : `${mob.fatti}/${mob.totali}`,
+          !mob
+            ? "nessun blocco previsto"
+            : mob.fatti == null
+              ? `${mob.totali} passaggi previsti`
+              : mob.fatta
+                ? "passaggi, fino in fondo"
+                : "passaggi, poi saltata"
+        ),
+        scheda(
+          "Riscaldamento",
+          sed.riscaldamento?.fatto ? "fatto" : "saltato",
+          sed.riscaldamento?.modalita === "senzaTapis" ? "senza tapis" : "camminata 5 min"
+        ),
+        scheda(
+          "Durata",
+          durataSec != null ? durataUmana(durataSec) : "—",
+          "con l'app aperta"
+        ),
+        scheda(
+          "Sull'orologio",
+          watch?.durataSec ? durataUmana(watch.durataSec) : "—",
+          watch
+            ? [
+                watch.kcalAttive != null ? `${Math.round(watch.kcalAttive)} kcal` : null,
+                watch.fcMedia != null ? `FC ${Math.round(watch.fcMedia)}` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "letto dall'orologio"
+            : "nessun allenamento importato"
+        )
       )
-    )
-  );
+    );
+  } else {
+    aggiungi(wrap,
+      h(
+        "div",
+        { style: "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 16px 0" },
+        scheda("Esercizi", `${svolti}/${previsti}`, `${serie.length} serie in tutto`),
+        scheda(
+          "Durata",
+          durataSec != null ? durataUmana(durataSec) : "—",
+          // L'etichetta segue il numero: da quando la durata è il lavoro vero
+          // (pause lunghe escluse) dire «dall'inizio alla chiusura» sarebbe
+          // falso proprio nel caso che l'ha resa necessaria, il cardio
+          // rimandato di quattro ore.
+          sed.durataLavoroSec != null ? "tempo di allenamento" : "dall'inizio alla chiusura"
+        ),
+        scheda("RPE medio", rpeMedio != null ? num(rpeMedio) : "—", tecMedia != null ? `tecnica ${num(tecMedia)}` : `zona ${store.regole().rpeTarget.min}-${store.regole().rpeTarget.max}`),
+        scheda(
+          "Recupero medio",
+          recMedio != null ? mmss(recMedio) : "—",
+          recTarget ? `previsti ${mmss(recTarget)}` : "cronometrato dall'app"
+        )
+      )
+    );
+  }
 
   // confronto con l'esposizione precedente, esercizio per esercizio
   const righe = h("div.list");
@@ -619,7 +751,8 @@ async function vistaRisultato(id, vaiA, da = null) {
       )
     );
   }
-  aggiungi(wrap, h("div.group", h("h2", "Esercizio per esercizio"), righe));
+  // Su una giornata senza esercizi il titolo restava lì con niente sotto.
+  if (righe.children.length) aggiungi(wrap, h("div.group", h("h2", "Esercizio per esercizio"), righe));
 
   // La nota scritta chiudendo l'allenamento finiva solo nel pacchetto per il
   // coach: qui dentro non si rivedeva più. Vale per tutto quello che scrivi a
@@ -3724,7 +3857,7 @@ async function vistaMobilita(corpo, piede) {
         "button.btn.secondary",
         {
           onclick: azione(async () => {
-            S.sed = await store.aggiornaSeduta(S.sed.id, { mobilita: { fatto: false } });
+            S.sed = await store.aggiornaSeduta(S.sed.id, { mobilita: statoMobilita(false) });
             await salvaProgresso({ fase: dopoLaMobilita() });
             await disegna();
           }),
@@ -3733,7 +3866,7 @@ async function vistaMobilita(corpo, piede) {
       ),
     ],
     onFine: async () => {
-      S.sed = await store.aggiornaSeduta(S.sed.id, { mobilita: { fatto: true, quando: Date.now() } });
+      S.sed = await store.aggiornaSeduta(S.sed.id, { mobilita: statoMobilita(true) });
       await salvaProgresso({ fase: dopoLaMobilita() });
       await disegna();
     },
@@ -3837,6 +3970,12 @@ async function vistaFine(corpo, piede) {
     }
   }
 
+  // Su una giornata di sola mobilità serie, densità e recuperi sono misure dei
+  // pesi: valgono zero perché non c'erano pesi, non perché sia andata male.
+  // Al loro posto ci va quello che quella giornata ha davvero.
+  const mob = eSoloMobilita(S.sed) ? passaggiDiMobilita(S.sed) : null;
+  const watch = mob ? await allenamentoDellOrologio(S.sed) : null;
+
   aggiungi(corpo, 
     h("div.hero", h("p.kicker", "Riepilogo"), h("h2", S.sed.tipoNome)),
     h(
@@ -3844,12 +3983,61 @@ async function vistaFine(corpo, piede) {
       h("div.list",
         h(
           "div.row",
-          h("div.main", h("span.title", "Durata"), h("span.sub", "tempo di allenamento")),
+          h("div.main", h("span.title", "Durata"), h("span.sub", mob ? "con l'app aperta" : "tempo di allenamento")),
           h("span.value", durataUmana(durataMostrata))
         ),
-        h("div.row", h("div.main", h("span.title", "Serie registrate")), h("span.value", String(serie.length))),
-        h("div.row", h("div.main", h("span.title", "Densità")), h("span.value", `${densita} serie/min`)),
-        h("div.row", h("div.main", h("span.title", "Recupero medio reale")), h("span.value", recMedio != null ? mmss(recMedio) : "—")),
+        ...(mob
+          ? [
+              h(
+                "div.row",
+                h(
+                  "div.main",
+                  h("span.title", "Mobilità"),
+                  h(
+                    "span.sub",
+                    mob.fatti == null
+                      ? `${mob.totali} passaggi previsti`
+                      : mob.fatta
+                        ? "fino in fondo"
+                        : "poi saltata"
+                  )
+                ),
+                h("span.value", mob.fatti == null ? "saltata" : `${mob.fatti} di ${mob.totali}`)
+              ),
+              h(
+                "div.row",
+                h(
+                  "div.main",
+                  h("span.title", "Riscaldamento"),
+                  h("span.sub", S.sed.riscaldamento?.modalita === "senzaTapis" ? "senza tapis" : "camminata 5 min")
+                ),
+                h("span.value", S.sed.riscaldamento?.fatto ? "fatto" : "saltato")
+              ),
+              watch
+                ? h(
+                    "div.row",
+                    h(
+                      "div.main",
+                      h("span.title", "Sull'orologio"),
+                      h(
+                        "span.sub",
+                        [
+                          watch.kcalAttive != null ? `${Math.round(watch.kcalAttive)} kcal` : null,
+                          watch.fcMedia != null ? `FC media ${Math.round(watch.fcMedia)}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "letto dall'orologio"
+                      )
+                    ),
+                    h("span.value", watch.durataSec ? durataUmana(watch.durataSec) : "—")
+                  )
+                : null,
+            ]
+          : [
+              h("div.row", h("div.main", h("span.title", "Serie registrate")), h("span.value", String(serie.length))),
+              h("div.row", h("div.main", h("span.title", "Densità")), h("span.value", `${densita} serie/min`)),
+              h("div.row", h("div.main", h("span.title", "Recupero medio reale")), h("span.value", recMedio != null ? mmss(recMedio) : "—")),
+            ]),
         S.sed.cardio?.previsto
           ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", S.sed.cardio.eseguito
                 ? `${num(S.sed.cardio.kmh)} km/h · ${S.sed.cardio.durataMin} min`
@@ -3952,6 +4140,9 @@ async function vistaFine(corpo, piede) {
         location.hash = `#/seduta?riepilogo=${S.sed.id}`;
       }),
     }, "Chiudi allenamento"),
+    // Su una giornata di sola mobilità il tasto porta alla mobilità: di
+    // esercizi da rivedere non ce ne sono.
+    tastoTornaIndietro() ||
     h("button.btn.secondary", {
       onclick: async () => {
         // La nota che stavi scrivendo si salva prima di cambiare schermata:
@@ -3995,5 +4186,25 @@ async function vistaFine(corpo, piede) {
         await disegna();
       },
     }, "Torna agli esercizi")
+  );
+}
+
+/* Su una giornata di sola mobilità «Torna agli esercizi» manda in un posto che
+   non esiste: di esercizi non ce ne sono. Si torna dove si è stati davvero. */
+function tastoTornaIndietro() {
+  if (!eSoloMobilita(S.sed)) return null;
+  return h(
+    "button.btn.secondary",
+    {
+      onclick: azione(async () => {
+        // Come sull'altro tasto: la nota che stavi scrivendo si salva prima di
+        // cambiare schermata, se no sparisce senza dire niente.
+        const nota = qs("#nota-seduta")?.value;
+        if (nota != null) S.sed = await store.aggiornaSeduta(S.sed.id, { notaGenerale: nota || null });
+        await salvaProgresso({ fase: "mobilita" });
+        await disegna();
+      }),
+    },
+    "Torna alla mobilità"
   );
 }
