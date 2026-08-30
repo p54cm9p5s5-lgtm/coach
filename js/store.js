@@ -988,7 +988,16 @@ export function durataSeduta(sed) {
   if (!sed) return null;
   if (sed.durataLavoroSec != null) return sed.durataLavoroSec;
   if (!sed.oraFine) return null;
-  return Math.round((sed.oraFine - (sed.oraInizioLavoro || sed.oraInizio)) / 1000);
+  // Una seduta non può essere finita PRIMA di una cosa successa dentro di lei.
+  //
+  // Le giornate di sola mobilità chiuse fino al 30/08 hanno in archivio un'ora
+  // di fine impossibile: senza serie, la vecchia stima tagliava la seduta a
+  // dieci minuti dall'apertura, e quel numero è rimasto scritto anche dopo che
+  // la stima è stata corretta. Riscrivere l'archivio no — quei numeri sono
+  // fatti avvenuti — ma leggerlo con la testa sì: se dentro la seduta c'è un
+  // istante più tardo della sua fine, la fine vera è almeno quello.
+  const fine = Math.max(sed.oraFine, sed.mobilita?.quando || 0, sed.riscaldamento?.quando || 0);
+  return Math.round((fine - (sed.oraInizioLavoro || sed.oraInizio)) / 1000);
 }
 
 /**

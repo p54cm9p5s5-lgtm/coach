@@ -545,7 +545,15 @@ async function vistaRisultato(id, vaiA, da = null) {
           })()
         )
       ),
-      h("div.group", h("h2", "Da cosa viene il punteggio"), scomposizione(comp))
+      h(
+        "div.group",
+        h("h2", "Da cosa viene il punteggio"),
+        // Su una giornata di sola mobilità restano solo le voci che il
+        // punteggio l'hanno fatto davvero. Le altre valgono «—» per
+        // costruzione, e le sedute chiuse prima del 30/08 se le portano
+        // congelate dentro: l'archivio non si riscrive, si legge con la testa.
+        scomposizione(comp, { soloQuelloCheConta: eSoloMobilita(sed) })
+      )
     );
   }
 

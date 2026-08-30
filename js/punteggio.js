@@ -800,7 +800,7 @@ export function anello(totale, { etichetta = "Completezza", dimensione = ANELLO,
 }
 
 /** Righe della scomposizione, con l'indicatore a tre segmenti. */
-export function scomposizione(risultato) {
+export function scomposizione(risultato, { soloQuelloCheConta = false } = {}) {
   const riga = (nome, quota, dettaglio) => {
     const nonApplicabile = quota == null;
     const g = giudizio(Math.round((quota ?? 0) * 100));
@@ -839,7 +839,14 @@ export function scomposizione(risultato) {
   // dall'archivio di un tipo di allenamento, un campo mancante faceva morire
   // la schermata intera con «penalita is not iterable». Qui si legge quello
   // che c'è.
-  const lista = h("div.list", ...(risultato.voci || []).map((v) => riga(v.nome, v.quota, v.dettaglio)));
+  // Una voce senza valore non ha spostato il punteggio di un punto: dice solo
+  // «questa cosa qui non si contava». Su un allenamento di pesi è
+  // un'informazione — spiega perché una riga non pesa. Su una giornata di sola
+  // mobilità no: lì «Esercizi 0 su 0 —» e «Riscaldamento e stretching non
+  // previsti —» sono le prime due righe che leggi, occupano tutto lo spazio e
+  // non dicono niente di quello che hai fatto. Chi chiama decide.
+  const voci = (risultato.voci || []).filter((v) => !soloQuelloCheConta || v.quota != null);
+  const lista = h("div.list", ...voci.map((v) => riga(v.nome, v.quota, v.dettaglio)));
   for (const p of risultato.penalita || []) {
     lista.append(
       h(
