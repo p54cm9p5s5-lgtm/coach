@@ -600,7 +600,7 @@ async function vistaRisultato(id, vaiA, da = null) {
         scheda(
           "Durata",
           durataSec != null ? durataUmana(durataSec) : "—",
-          "con l'app aperta"
+          "dall'inizio alla chiusura"
         ),
         scheda(
           "Sull'orologio",
@@ -1488,7 +1488,10 @@ async function vistaRiscaldamento(corpo, piede) {
     onFine: async () => {
       sbloccaAudio();
       S.sed = await store.aggiornaSeduta(S.sed.id, {
-        riscaldamento: { ...S.sed.riscaldamento, fatto: true },
+        // L'ora serve a sapere quando l'allenamento è cominciato davvero: su
+        // una giornata di sola mobilità non ci sono serie, e senza un istante
+        // vero la durata veniva stimata a occhio.
+        riscaldamento: { ...S.sed.riscaldamento, fatto: true, quando: Date.now() },
       });
       await salvaProgresso({ fase: "esercizio", indice: 0 });
       await disegna();
@@ -3983,7 +3986,7 @@ async function vistaFine(corpo, piede) {
       h("div.list",
         h(
           "div.row",
-          h("div.main", h("span.title", "Durata"), h("span.sub", mob ? "con l'app aperta" : "tempo di allenamento")),
+          h("div.main", h("span.title", "Durata"), h("span.sub", mob ? "dall'inizio alla chiusura" : "tempo di allenamento")),
           h("span.value", durataUmana(durataMostrata))
         ),
         ...(mob

@@ -923,6 +923,16 @@ export function fineStimata(sed, serie = []) {
       : 0);
   const ultimoGesto = Math.max(0, ...serie.map((x) => x.tsFineSerie || 0), fineCardio);
   const adesso = Date.now();
+  // Anche chiudere il blocco di mobilità è «una cosa fatta», ed è l'ULTIMA su
+  // una giornata che di serie non ne ha. Senza, `ultimoGesto` restava zero e la
+  // seduta veniva tagliata a dieci minuti dall'apertura: mezz'ora di mobilità
+  // vera diventava «10 min» — misurato su un sabato vero.
+  //
+  // E qui il margine di dieci minuti NON si aggiunge. Quel margine copre quello
+  // che viene dopo l'ultima serie — stretching, questionario — mentre dopo la
+  // mobilità non viene più niente: è lei l'ultimo passaggio della giornata.
+  const chiusuraMobilita = Math.max(0, sed?.mobilita?.quando || 0, sed?.riscaldamento?.quando || 0);
+  if (chiusuraMobilita && chiusuraMobilita >= ultimoGesto) return Math.min(adesso, chiusuraMobilita);
   if (!ultimoGesto) return Math.min(adesso, (sed?.oraInizio || adesso) + 10 * 60000);
   return adesso - ultimoGesto > 10 * 60000 ? ultimoGesto + 10 * 60000 : adesso;
 }
@@ -940,7 +950,15 @@ export function inizioStimato(sed, serie = []) {
     .map((x) => x.tsInizioSerie || x.tsFineSerie)
     .filter(Boolean)
     .sort((a, b) => a - b);
-  if (!gesti.length) return sed?.oraInizio ?? Date.now();
+  if (!gesti.length) {
+    // Senza serie l'unico gesto datato è la chiusura del riscaldamento. Vale la
+    // stessa regola del buco: se fra l'apertura e il primo gesto sono passate
+    // ore, l'allenamento vero comincia dopo — una giornata di mobilità aperta
+    // la mattina e fatta la sera non dura dodici ore.
+    const primo = sed?.riscaldamento?.quando || sed?.mobilita?.quando || null;
+    const inizio = sed?.oraInizio ?? Date.now();
+    return primo && primo - inizio > BUCO ? primo : inizio;
+  }
   let inizio = sed?.oraInizio ?? gesti[0];
   if (gesti[0] - inizio > BUCO) inizio = gesti[0];
   for (let i = 1; i < gesti.length; i++) {
