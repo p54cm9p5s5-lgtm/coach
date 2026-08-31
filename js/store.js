@@ -3639,6 +3639,81 @@ export async function allenamentiWatch() {
  * coach. Adesso non esistono più: si puliscono, e non si riscrivono.
  */
 const VERSIONE_COLLEGAMENTI = 3;
+/* ---------------------------------------------------------------------------
+   Gli allenamenti dell'orologio scritti due volte.
+
+   La chiave con cui l'app riconosce un allenamento è cambiata una volta:
+   prima era `data-ora-durata`, poi è diventata `data-ora-durata-TIPO` per
+   distinguere una camminata da una seduta di pesi cominciate nello stesso
+   minuto. Le righe già in archivio non sono state ri-chiavate, quindi alla
+   prima reimportazione ognuna è rientrata una seconda volta con la chiave
+   nuova: due righe per lo stesso allenamento, stessi minuti, stesse calorie.
+
+   Il difetto è chiuso — dal 14/08 la chiave non cambia più e i doppioni non se
+   ne creano di nuovi — ma quelli fatti restano in archivio e gonfiano i numeri
+   che leggi tu e quelli che legge il coach.
+
+   NON si ripara da sola. Riscrivere l'archivio all'avvio, senza che tu lo
+   sappia, è esattamente quello che questa app non fa: sono i tuoi dati, e la
+   decisione di cancellare una riga è tua. Qui c'è di che contarli e di che
+   unirli; il quando lo decidi in Impostazioni.
+--------------------------------------------------------------------------- */
+
+/** La chiave vecchia non porta il tipo in coda; quella nuova sì. */
+const chiaveSenzaTipo = (uuid) => !/-[a-z]+$/.test(String(uuid).slice(16));
+
+/**
+ * Gli allenamenti presenti due volte, senza toccare niente.
+ * Torna le coppie {tieni, butta}: si butta sempre quella con la chiave vecchia.
+ */
+export async function doppioniWatch() {
+  const tutti = await db.all("allenamentiWatch");
+  const per = new Map();
+  for (const a of tutti) {
+    const k = `${a.data}|${a.inizio}|${a.durataSec}|${String(a.tipo || "").toLowerCase()}`;
+    if (!per.has(k)) per.set(k, []);
+    per.get(k).push(a);
+  }
+  const coppie = [];
+  for (const gruppo of per.values()) {
+    if (gruppo.length < 2) continue;
+    const vecchi = gruppo.filter((a) => chiaveSenzaTipo(a.uuid));
+    const nuovi = gruppo.filter((a) => !chiaveSenzaTipo(a.uuid));
+    // Solo la forma che sappiamo spiegare: uno vecchio e uno nuovo. Qualunque
+    // altra cosa — tre righe, due righe con la stessa forma di chiave — non è
+    // questo difetto, e non la tocca nessuno.
+    if (vecchi.length !== 1 || nuovi.length !== 1) continue;
+    coppie.push({ tieni: nuovi[0], butta: vecchi[0] });
+  }
+  return coppie;
+}
+
+/**
+ * Unisce i doppioni. Torna quanti ne ha tolti.
+ *
+ * Una nota scritta da te (talk-test, stretching dopo la camminata) attaccata
+ * alla riga che sparisce viene spostata su quella che resta: la riga è
+ * dell'orologio, la nota è tua e non deve morire con lei.
+ */
+export async function unisciDoppioniWatch() {
+  const coppie = await doppioniWatch();
+  if (!coppie.length) return { tolti: 0, noteSpostate: 0 };
+  let noteSpostate = 0;
+  for (const { tieni, butta } of coppie) {
+    const nota = await db.get("noteWatch", String(butta.uuid));
+    if (nota) {
+      const gia = await db.get("noteWatch", String(tieni.uuid));
+      if (!gia) {
+        await db.put("noteWatch", { ...nota, uuid: String(tieni.uuid) });
+        noteSpostate++;
+      }
+      await db.del("noteWatch", String(butta.uuid));
+    }
+  }
+  await db.delMulti({ allenamentiWatch: coppie.map((c) => c.butta.uuid) });
+  return { tolti: coppie.length, noteSpostate };
+}
+
 export async function rifaiCollegamentiWatch() {
   const fatta = Number(await impostazione("versioneCollegamentiWatch")) || 0;
   if (fatta >= VERSIONE_COLLEGAMENTI) return 0;

@@ -54,6 +54,8 @@ export async function render({ vaiA, ridisegna }) {
   const prog = store.programma();
   const imp = await store.impostazioni();
   const giorniExport = await store.giorniDaUltimoExport();
+  // Solo per sapere se la voce va mostrata: non tocca niente.
+  const doppioni = await store.doppioniWatch();
   // `true` protetto, `false` cancellabile, `null` il telefono non risponde.
   const archivioProtetto = await (async () => {
     try {
@@ -361,7 +363,21 @@ export async function render({ vaiA, ridisegna }) {
             h("span.sub", "per rileggerli da zero col comando rapido")
           ),
           h("span.chevron", "›")
-        )
+        ),
+        // Compare SOLO se ce ne sono davvero: una voce che non serve a niente
+        // in una schermata di manutenzione fa venire voglia di premerla.
+        doppioni.length
+          ? h(
+              "button.row.accent",
+              { onclick: () => unisciDoppioni(ridisegna, doppioni.length) },
+              h(
+                "div.main",
+                h("span.title", "Unisci gli allenamenti scritti due volte"),
+                h("span.sub", `${doppioni.length} allenamenti dell'orologio sono in archivio due volte`)
+              ),
+              h("span.chevron", "›")
+            )
+          : null
       ),
       h(
         "p.footnote",
@@ -391,6 +407,34 @@ export async function render({ vaiA, ridisegna }) {
  * dava per scontato 600: tutte le percentuali erano sbagliate se il tuo era
  * un altro numero.
  */
+/* Unisce gli allenamenti dell'orologio scritti due volte.
+ *
+ * Non succede da sola all'avvio: cancellare righe dall'archivio è una decisione
+ * dell'atleta, non una manutenzione silenziosa. Qui si dice quante sono, cosa
+ * si tiene e cosa si butta, e si chiede. Il numero è quello contato adesso,
+ * non una stima.
+ */
+async function unisciDoppioni(ridisegna, quanti) {
+  const conferma = await chiedi({
+    titolo: quanti === 1 ? "Un allenamento è in archivio due volte" : `${quanti} allenamenti sono in archivio due volte`,
+    testo:
+      "La chiave con cui l'app riconosce un allenamento dell'orologio è cambiata una volta, a metà agosto, e le righe già scritte sono rientrate una seconda volta alla prima reimportazione. Sono la stessa cosa: stesso giorno, stessa ora, stessa durata, stesse calorie.\n\n" +
+      "Contano doppio dappertutto: nei totali che leggi tu e nella tabella che va al coach.\n\n" +
+      "Tengo la riga nuova e butto quella vecchia. Se su una delle due avevi risposto il talk-test o segnato lo stretching, quella risposta la sposto sulla riga che resta.\n\n" +
+      "Non si può annullare, ma il backup che hai su file resta valido: da lì torna tutto com'era.",
+    opzioni: [{ etichetta: quanti === 1 ? "Unisci" : `Unisci tutti e ${quanti}`, valore: "si" }],
+  });
+  if (conferma !== "si") return;
+  const esito = await store.unisciDoppioniWatch();
+  toast(
+    esito.noteSpostate
+      ? `${esito.tolti} doppioni tolti, ${esito.noteSpostate} ${esito.noteSpostate === 1 ? "risposta spostata" : "risposte spostate"}.`
+      : `${esito.tolti} ${esito.tolti === 1 ? "doppione tolto" : "doppioni tolti"}.`,
+    3200
+  );
+  await ridisegna();
+}
+
 async function cambiaObiettivoMovimento(ridisegna) {
   const attuale = await store.impostazione("obiettivoMovimentoKcal");
   let scelto = Number(attuale) || 600;
