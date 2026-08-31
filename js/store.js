@@ -2311,6 +2311,26 @@ export async function ultimaMisura(tipo) {
  * le scrive solo l'orologio — ed è per questo che un raddoppio si riconosce:
  * le calorie restano identiche e i passi crescono.
  */
+/**
+ * I conteggi che dentro una giornata possono solo salire.
+ *
+ * Passi, distanza, piani, minuti: nessuno di questi può diminuire mentre il
+ * giorno va avanti. Quindi fra due letture dello stesso giorno la più bassa è
+ * la più incompleta — una fonte sola, una finestra tagliata — e non deve
+ * sovrascrivere la più alta. Le kcal attive stanno qui per lo stesso motivo.
+ *
+ * Il battito a riposo NON sta qui: quello è una misura, non un conteggio, e
+ * scende quando stai meglio.
+ */
+const CAMPI_CHE_SOLO_CRESCONO = {
+  passi: "passi",
+  distanzaKm: "distanza",
+  pianiSaliti: "piani",
+  minutiInPiedi: "tempo in piedi",
+  minutiEsercizio: "minuti di esercizio",
+  kcalAttive: "movimento",
+};
+
 const CAMPI_A_RISCHIO_DOPPIO = {
   passi: "passi",
   distanzaKm: "distanza",
@@ -2373,7 +2393,7 @@ function scartaImpossibili(riga, limiti, data, scartati) {
 }
 
 export async function importaSalute(pacchetto) {
-  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [], nottiDiscordanti: [], troppoVecchi: 0 };
+  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [], nottiDiscordanti: [], troppoVecchi: 0, tenutiPiuAlti: [] };
 
   // Il pavimento vale per TUTTE le strade, non solo per l'export letto dal file.
   //
@@ -2444,8 +2464,31 @@ export async function importaSalute(pacchetto) {
         }
       }
     }
+    // Fra due letture dello stesso giorno vince la PIÙ ALTA, per i conteggi che
+    // durante la giornata possono solo crescere.
+    //
+    // È la stessa regola già scritta per le notti, e per lo stesso motivo: una
+    // fonte tagliata o una finestra corta possono soltanto TOGLIERE lavoro, mai
+    // aggiungerlo. Se l'orologio ha visto 634 passi e il telefono 4575, i passi
+    // fatti sono 4575 — chi ne conta meno non ti sta correggendo, ti stava
+    // guardando solo per un pezzo di giornata.
+    //
+    // Il rischio opposto — un conteggio gonfiato che si incolla per sempre —
+    // resta, e resta anche l'avviso qui sopra che lo nomina: un numero che
+    // raddoppia si vede e si può togliere. Un numero che si dimezza in silenzio
+    // no, ed è quello che stava succedendo.
+    const fuso = fondi(prec, g);
+    for (const campo of Object.keys(CAMPI_CHE_SOLO_CRESCONO)) {
+      const vecchio = prec?.[campo];
+      const nuovo = fuso[campo];
+      if (vecchio == null || nuovo == null || !(vecchio > nuovo)) continue;
+      fuso[campo] = vecchio;
+      conteggio.tenutiPiuAlti.push(
+        `${dataBreve(g.data)} ${CAMPI_CHE_SOLO_CRESCONO[campo]}: tenuto ${num(vecchio, 0)}, arrivato ${num(nuovo, 0)}`
+      );
+    }
     await db.put("giorniSalute", {
-      ...fondi(prec, g),
+      ...fuso,
       fonte: "salute",
       importatoIl: new Date().toISOString(),
     });

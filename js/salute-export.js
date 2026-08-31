@@ -140,7 +140,15 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
 
   // I passi li registrano sia iPhone sia Watch, e sommarli conta due volte i
   // periodi in cui li avevi addosso entrambi. Si tengono separati e si sceglie
-  // alla fine: dove l'orologio ha scritto qualcosa, comanda lui.
+  // alla fine: vince il PIÙ ALTO dei due.
+  //
+  // Prima comandava l'orologio ogni volta che aveva scritto qualcosa. Su una
+  // giornata in cui l'orologio lo tieni poco è un disastro: il 30/08 l'app
+  // diceva 634 passi mentre Salute ne contava 4575, perché i primi li aveva
+  // contati l'orologio dal polso e gli altri il telefono in tasca. Un conteggio
+  // parziale non è «il dato buono della fonte buona»: è meno lavoro di quello
+  // che hai fatto, e sotto c'è la stessa regola già scritta per le notti — una
+  // finestra o una fonte tagliata può solo TOGLIERE, mai aggiungere.
   const perGiorno = new Map();
   const perGiornoWatch = new Map();
   const fc = new Map();
@@ -319,7 +327,7 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
     const i = perGiorno.get(g) || {};
     const campi = [];
     const prendi = (chiave, scrivi) => {
-      const v = w[chiave] || i[chiave];
+      const v = Math.max(w[chiave] || 0, i[chiave] || 0);
       if (v) campi.push(scrivi(v));
     };
     prendi("kcal", (v) => `kcal=${Math.round(v)}`);

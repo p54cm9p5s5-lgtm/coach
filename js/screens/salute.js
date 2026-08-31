@@ -1189,14 +1189,30 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
     });
   }
 
+  if (conteggio.tenutiPiuAlti?.length) {
+    await chiedi({
+      titolo:
+        conteggio.tenutiPiuAlti.length === 1
+          ? "Un conteggio arrivato più basso di quello che avevo"
+          : "Conteggi arrivati più bassi di quelli che avevo",
+      testo:
+        `${conteggio.tenutiPiuAlti.slice(0, 6).join("\n")}` +
+        (conteggio.tenutiPiuAlti.length > 6 ? `\n…e altri ${conteggio.tenutiPiuAlti.length - 6}.` : "") +
+        `\n\nHo tenuto i più alti. Passi, distanza, piani e minuti dentro una giornata possono solo salire: fra due letture, quella più bassa è quella che ha visto meno — una fonte sola, o una finestra più corta.` +
+        `\n\nSe succede spesso, quasi sempre è il comando rapido che chiede i passi al solo Apple Watch: nelle giornate in cui l'orologio lo tieni poco, quello che hai camminato col telefono in tasca resta fuori. Toglendo il filtro sull'origine, Salute risponde con il totale che vedi nell'app Salute.`,
+      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
+      annulla: false,
+    });
+  }
+
   if (conteggio.sospetti?.length) {
     await chiedi({
       titolo: "Numeri cambiati su giorni già registrati",
       testo:
         `${conteggio.sospetti.slice(0, 6).join("\n")}` +
-        `\n\nGiorni finiti non cambiano da soli. Di solito succede quando il comando rapido somma i campioni di iPhone e Watch: i passi, la distanza e i piani li registrano tutti e due, e i periodi in cui li avevi entrambi addosso vengono contati due volte. Le calorie attive no, le scrive solo l'orologio: se quelle restano identiche e i passi crescono, è questo.` +
-        `\n\nHo tenuto i numeri nuovi, perché di solito si reimporta proprio per correggere. Se invece quelli giusti erano i vecchi: Impostazioni › «Cancella i dati importati da Salute», poi reimporta col comando sistemato.` +
-        `\n\nControlla su Salute il numero vero di uno di questi giorni e, se serve, filtra l'origine dentro il comando rapido.`,
+        `\n\nGiorni finiti non cambiano da soli. Un salto verso l'alto di solito è il comando rapido che somma i campioni di iPhone e Watch: i periodi in cui li avevi entrambi addosso vengono contati due volte. Le calorie attive no, le scrive solo l'orologio: se quelle restano identiche e i passi crescono, è questo.` +
+        `\n\nHo tenuto il numero più alto, perché su un conteggio che può solo crescere il più basso è quello incompleto. Se invece quello giusto era il più basso — cioè se questo è un raddoppio — vai in Impostazioni › «Cancella i dati importati da Salute» e reimporta col comando sistemato.` +
+        `\n\nControlla su Salute il numero vero di uno di questi giorni.`,
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
       annulla: false,
     });

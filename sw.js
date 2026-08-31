@@ -2,7 +2,7 @@
    Ogni pubblicazione cambia VERSION: la nuova versione prende il comando
    subito e i file si aggiornano da soli, senza conferme da toccare. */
 
-const VERSION = "20260830-183131";
+const VERSION = "20260831-182639";
 const CACHE = `coach-${VERSION}`;
 
 const ASSETS = [
