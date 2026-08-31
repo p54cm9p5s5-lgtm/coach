@@ -718,11 +718,21 @@ inventarsi una proposta:
   variante più difficile»* — falso due volte: non erano al tetto di niente, e
   nessuno aveva chiesto loro di crescere.
 
-Restano invece dentro la progressione normale gli accessori scritti con un range
-vero. **Un avvertimento su quelli molto leggeri**: su un esercizio da 2 kg il più
-piccolo aumento componibile con i dischi di casa è **+1 kg, cioè +50%**. L'app lo
-proporrà e scriverà la percentuale, ma su un distretto piccolo — la cuffia dei
-rotatori — è un salto grosso, e la risposta giusta può benissimo essere «rimando».
+- **Esercizi su cui il carico non si tocca.** Nella libreria un esercizio può
+  dichiarare che il peso non si aumenta: arrivato al tetto delle ripetizioni,
+  l'app non propone chili e lo dice — «prima le ripetizioni piene su tutte le
+  serie, poi semmai una serie in più». Il motivo sta scritto nella scheda
+  dell'esercizio, sotto «Nota», così lo legge chi lo sta facendo.
+
+  Il primo caso sono le **rotazioni esterne di spalla** (decisione del coach,
+  31/08): la cuffia dei rotatori è stabilizzazione, non un distretto da carico, e
+  con i dischi di casa il più piccolo aumento possibile partendo da 2 kg è
+  **+1 kg, cioè +50%**. I gradini sono due — 15 ripetizioni piene su tutte e due
+  le serie, poi eventualmente una terza serie — e la soluzione vera sono gli
+  elastici, dove la resistenza si gradua in modo continuo.
+
+Restano dentro la progressione normale tutti gli altri accessori scritti con un
+range vero.
 
 ---
 

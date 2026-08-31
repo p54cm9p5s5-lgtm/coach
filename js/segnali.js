@@ -281,6 +281,22 @@ export function valutaProgressione({ variante, def, esposizioni, regole, inventa
     };
   }
 
+  // Esercizi su cui il carico non si tocca, per decisione del coach.
+  //
+  // Le rotazioni esterne di spalla sono il primo caso: la cuffia dei rotatori è
+  // stabilizzazione, non un distretto da carico, e con i dischi di casa il più
+  // piccolo aumento possibile partendo da 2 kg è +1 kg — il cinquanta per cento.
+  // Prima si esauriscono le ripetizioni, poi semmai si aggiunge una serie; il
+  // peso viene dopo, e la strada vera sono gli elastici.
+  //
+  // Sta nella libreria e non qui perché è una proprietà dell'esercizio, non
+  // un'eccezione del motore: se domani ne arriva un altro uguale, si scrive lì.
+  if (def?.progressioneCarico === false) {
+    return niente(
+      `${nome}: al tetto delle ripetizioni. Qui il carico non si aumenta — prima le ripetizioni piene su tutte le serie, poi semmai una serie in più.`
+    );
+  }
+
   // Al tetto del range: si sale di carico (livello 4) e si torna al fondo.
   if (def?.attrezzo === "corpo libero" || carico == null) {
     return niente(

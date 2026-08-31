@@ -1649,7 +1649,12 @@ async function vistaEsercizio(corpo, piede) {
       def?.setup ? sezione("Setup", def.setup) : null,
       def?.erroriComuni ? sezione("Errori da evitare", def.erroriComuni) : null,
       def?.cue ? h("section.cue", h("h3", "Cue"), h("p", def.cue)) : null,
-      def?.sicurezza ? h("section.sicurezza", h("h3", "Sicurezza"), h("p", def.sicurezza)) : null
+      def?.sicurezza ? h("section.sicurezza", h("h3", "Sicurezza"), h("p", def.sicurezza)) : null,
+      // La nota della libreria non si vedeva da nessuna parte: c'era scritta e
+      // basta. È il posto dove sta una decisione presa sull'esercizio — perché
+      // il carico non si tocca, perché non conta in un certo volume — e chi lo
+      // sta facendo è chi ha più bisogno di saperlo.
+      def?.nota ? h("section", h("h3", "Nota"), h("p", def.nota)) : null
     )
   );
 
