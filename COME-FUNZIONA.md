@@ -1178,8 +1178,12 @@ costruisce con la ripetizione nel tempo, e una camminata non annulla la mobilit�
 fatta ore prima. Si fa perché fa piacere allungare le gambe dopo aver camminato,
 che è un motivo legittimo ma è comodità, non protocollo.
 
-**Dove si trova**: in Allenamenti, dentro la scheda di una camminata (o di una
-corsa, o di un'escursione), sotto il talk-test. C'è un interruttore, «Segna che
+**Dove si trova**, in due posti, perché il cardio si fa in due momenti diversi:
+alla **fine della seduta**, nel riepilogo, quando il cardio l'hai fatto dentro
+l'allenamento; e in **Allenamenti**, dentro la scheda di una camminata (o di una
+corsa, o di un'escursione), sotto il talk-test, quando invece cammini ore dopo.
+Sono due strade allo stesso gesto: segnarlo in tutte e due non è una
+contraddizione, è la stessa cosa detta due volte. C'è un interruttore, «Segna che
 l'hai fatto», e le quattro posizioni che si aprono a leggere. Su una camminata
 di mezz'ora o più l'app dice che ha senso; sulle altre lo si può segnare
 lo stesso, senza che nessuno insista.

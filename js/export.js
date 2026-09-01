@@ -468,6 +468,10 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
           : "non registrato"
     ),
     riga("Mobilità", seduta.mobilita ? (seduta.mobilita.fatto ? "fatta" : "saltata") : null),
+    // Il blocco facoltativo dopo il cardio compare SOLO se è stato fatto: non è
+    // prescritto, quindi la sua assenza non è un dato mancante e scriverci
+    // «saltato» lo farebbe leggere come un obbligo disatteso.
+    riga("Stretching dopo il cardio", seduta.stretchingPostCardio?.fatto ? "fatto (facoltativo)" : null),
     // Letti sull'orologio a fine allenamento: i Comandi Rapidi non sanno
     // leggere gli allenamenti dell'Apple Watch, quindi questi numeri li scrive
     // l'atleta a mano — e sono quelli esatti della seduta, non di una finestra.

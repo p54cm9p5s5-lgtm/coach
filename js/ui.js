@@ -596,7 +596,24 @@ let playInVolo = null;
  */
 export function avviaAllarme() {
   fermaAllarme();
-  sessioneAudio("transient");
+  // «ambient», non «transient»: l'allarme si mette SOPRA la musica, non al suo
+  // posto.
+  //
+  // «transient» vuol dire, testualmente, «interrompi quello che sta suonando e
+  // poi ridaglielo». iOS la seconda metà la mantiene quando capita una volta
+  // ogni tanto; trentacinque volte in una seduta no — e la musica non ripartiva
+  // più. Trentacinque perché il blocco di mobilità del 27/08 ha portato i
+  // cronometri di una seduta da otto a trentacinque: non è cambiata una riga di
+  // questo file, è cambiato quanto spesso ci si passa.
+  //
+  // È anche quello che questa app aveva già dichiarato di voler fare, il 27/08:
+  // «nessun suono col silenzioso, ma la musica non viene mai toccata». Questa
+  // riga diceva il contrario ed era rimasta indietro.
+  //
+  // Il prezzo, dichiarato: con l'interruttore del silenzioso inserito l'allarme
+  // non si sente. È il patto scelto — meglio un allarme muto quando hai chiesto
+  // silenzio che una musica che non riparte.
+  sessioneAudio("ambient");
   const a = elemento();
   a.loop = true;
   a.currentTime = 0;
@@ -686,6 +703,38 @@ export async function versioneInstallata() {
 
 export function tick() {
   beep(660, 0.05, 0.12);
+}
+
+/** Prova del suono, per verificarlo senza allenarsi.
+ *
+ * Tolta il 25/08, rimessa il 31/08 per un motivo preciso: l'audio è la sola
+ * parte dell'app che non si può provare da un computer, e senza questo tasto
+ * l'unico modo di scoprire se suona — e se la musica sopravvive — era
+ * accorgersene a metà allenamento. */
+let ripristinoProva = null;
+
+export async function provaSuono() {
+  // Il timer della prova precedente va annullato: due prove ravvicinate
+  // lasciavano un timer orfano che rimetteva la ripetizione mentre la seconda
+  // prova stava ancora suonando, e la traccia partiva in loop senza motivo.
+  if (ripristinoProva) clearTimeout(ripristinoProva);
+  await sbloccaAudio();
+  // Come l'allarme vero: sopra la musica, non al posto suo. Se qui fosse
+  // «transient» la prova mentirebbe proprio sulla cosa che si vuole provare.
+  sessioneAudio("ambient");
+  const a = elemento();
+  a.loop = false;
+  a.currentTime = 0;
+  try {
+    await a.play();
+  } catch {
+    /* se l'elemento resta bloccato non c'è altro da fare qui */
+  }
+  ripristinoProva = setTimeout(() => {
+    ripristinoProva = null;
+    a.loop = true;
+    rilasciaAudio();
+  }, 2500);
 }
 
 // ---------- wake lock ----------

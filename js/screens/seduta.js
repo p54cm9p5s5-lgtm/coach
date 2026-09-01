@@ -378,6 +378,68 @@ async function storicoEsercizio(def, esercizioId) {
   );
 }
 
+/* Lo stretching dopo il cardio — il «Blocco C» del coach — dentro la seduta.
+ *
+ * Quattro allungamenti sulle gambe, sei minuti, alla fine del cardio. Le
+ * posizioni sono le stesse del blocco di mobilità: nel file dei protocolli ci
+ * sono solo i loro nomi, e si leggono da lì.
+ *
+ * È FACOLTATIVO, e qui la parola conta: non è una fase della seduta, non chiede
+ * «fatto o saltato?», non entra in nessun punteggio e non produce mai un
+ * «previsto, non fatto». È una cosa che si può segnare, non una su cui si viene
+ * misurati. Per questo sta nel riepilogo come una carta, e non nella catena
+ * delle fasi insieme a mobilità e cardio.
+ *
+ * Lo stesso blocco si può segnare anche dalla scheda di una camminata, in
+ * Allenamenti: sono due strade allo stesso gesto, una per quando il cardio lo
+ * fai dentro la seduta e una per quando lo fai ore dopo. Segnarlo in tutte e
+ * due non è una contraddizione, è la stessa cosa detta due volte.
+ */
+function cartaStretchingPostCardio() {
+  if (!S.sed.cardio?.previsto) return null;
+  const blocco = store.stretchingPostCardio();
+  if (!blocco) return null;
+  const fatto = Boolean(S.sed.stretchingPostCardio?.fatto);
+  return h(
+    "div.group",
+    h("h2", "Stretching dopo il cardio"),
+    h(
+      "p.footnote",
+      { style: "margin:0 16px 10px" },
+      "Facoltativo: non conta nel punteggio e saltarlo non è un errore. Ha senso soprattutto quando il cardio " +
+        "lo fai staccato dai pesi. Non sostituisce la mobilità: sono quattro posizioni su ventisei, e solo sulle gambe."
+    ),
+    h(
+      "div.list",
+      ...blocco.passi.map((v) =>
+        h(
+          "div.row",
+          h("div.main", h("span.title", v.nome), v.come ? h("span.sub", v.come) : null),
+          h("span.value", v.dose)
+        )
+      )
+    ),
+    h(
+      "div",
+      { style: "margin:12px 16px 0" },
+      h(
+        "button.btn.secondary",
+        {
+          "aria-pressed": fatto ? "true" : "false",
+          onclick: azione(async () => {
+            S.sed = await store.aggiornaSeduta(S.sed.id, {
+              stretchingPostCardio: fatto ? null : { fatto: true, quando: Date.now() },
+            });
+            toast(fatto ? "Tolto." : "Segnato.");
+            await disegna();
+          }),
+        },
+        fatto ? "Fatto" : "Segna che l'hai fatto"
+      )
+    )
+  );
+}
+
 /* ---------------------------------------------------------------------------
    Le giornate di sola mobilità hanno bisogno di altri numeri.
 
@@ -4066,6 +4128,7 @@ async function vistaFine(corpo, piede) {
           : null
       )
     ),
+    cartaStretchingPostCardio(),
     logs.length
       ? h("div.group", h("h2", "RPE e tecnica"),
           h("div.list", ...logs.filter((l) => !l.saltato).map((l) => {
