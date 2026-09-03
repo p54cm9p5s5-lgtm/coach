@@ -1178,12 +1178,22 @@ costruisce con la ripetizione nel tempo, e una camminata non annulla la mobilit�
 fatta ore prima. Si fa perché fa piacere allungare le gambe dopo aver camminato,
 che è un motivo legittimo ma è comodità, non protocollo.
 
-**Dove si trova**, in due posti, perché il cardio si fa in due momenti diversi:
-alla **fine della seduta**, nel riepilogo, quando il cardio l'hai fatto dentro
-l'allenamento; e in **Allenamenti**, dentro la scheda di una camminata (o di una
-corsa, o di un'escursione), sotto il talk-test, quando invece cammini ore dopo.
-Sono due strade allo stesso gesto: segnarlo in tutte e due non è una
-contraddizione, è la stessa cosa detta due volte. C'è un interruttore, «Segna che
+**Dove si trova**, in due posti, perché il cardio si fa in due momenti diversi.
+
+**Dentro la seduta**: appena tocchi «Ho finito» sul cardio, arriva da solo —
+quattro posizioni una per volta, con il cronometro sui 45 secondi e i due lati,
+come le tenute. In cima c'è scritto che è facoltativo, e c'è «Salta», che porta
+dritto al riepilogo **senza scrivere niente**: saltarlo non lascia traccia,
+perché non c'era niente di dovuto. Se l'hai saltato e cambi idea, nel riepilogo
+resta una carta con «Fallo adesso» che ti riporta lì; una volta fatto la carta
+sparisce e al suo posto compare una riga di sola lettura.
+
+**In Allenamenti**, dentro la scheda di una camminata (o di una corsa, o di
+un'escursione), sotto il talk-test: è la strada per quando il cardio lo fai ore
+dopo i pesi. Sono due strade allo stesso gesto: segnarlo in tutte e due non è
+una contraddizione, è la stessa cosa detta due volte.
+
+Non compare quando il cardio l'hai **rimandato**: arriverà con lui. C'è un interruttore, «Segna che
 l'hai fatto», e le quattro posizioni che si aprono a leggere. Su una camminata
 di mezz'ora o più l'app dice che ha senso; sulle altre lo si può segnare
 lo stesso, senza che nessuno insista.

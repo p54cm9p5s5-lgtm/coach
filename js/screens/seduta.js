@@ -378,6 +378,58 @@ async function storicoEsercizio(def, esercizioId) {
   );
 }
 
+async function vistaPostCardio(corpo, piede) {
+  const passi = passiPostCardio();
+  await vistaGuidata(corpo, piede, {
+    chiave: "pc",
+    tenuta: true,
+    kicker: "Dopo il cardio",
+    titolo: "Stretching sulle gambe",
+    passi,
+    vuoto: "Niente da fare qui",
+    etichettaFine: "Fatto",
+    extra: (i) =>
+      i === 0
+        ? [
+            h(
+              "div.guida",
+              h(
+                "section",
+                h("h3", "Facoltativo"),
+                h(
+                  "p",
+                  "Quattro posizioni sulle gambe, sei minuti. Non è prescritto: saltarlo non è un errore, " +
+                    "non toglie punti e non lascia scritto niente. Ha senso soprattutto quando il cardio lo " +
+                    "fai staccato dai pesi. Non sostituisce la mobilità: sono quattro posizioni su ventisei."
+                )
+              ),
+            ),
+          ]
+        : [],
+    tastiExtra: () => [
+      h(
+        "button.btn.secondary",
+        {
+          onclick: azione(async () => {
+            // Saltato non scrive niente: non c'è un «non fatto» da registrare
+            // per una cosa che non era dovuta.
+            await salvaProgresso({ fase: dopoPostCardio() });
+            await disegna();
+          }),
+        },
+        "Salta"
+      ),
+    ],
+    onFine: async () => {
+      S.sed = await store.aggiornaSeduta(S.sed.id, {
+        stretchingPostCardio: { fatto: true, quando: Date.now() },
+      });
+      await salvaProgresso({ fase: dopoPostCardio() });
+      await disegna();
+    },
+  });
+}
+
 /* Lo stretching dopo il cardio — il «Blocco C» del coach — dentro la seduta.
  *
  * Quattro allungamenti sulle gambe, sei minuti, alla fine del cardio. Le
@@ -399,7 +451,9 @@ function cartaStretchingPostCardio() {
   if (!S.sed.cardio?.previsto) return null;
   const blocco = store.stretchingPostCardio();
   if (!blocco) return null;
-  const fatto = Boolean(S.sed.stretchingPostCardio?.fatto);
+  // Già fatto: non c'è niente da proporre. Lo dice la riga del riepilogo, non
+  // un invito a rifarlo.
+  if (S.sed.stretchingPostCardio?.fatto) return null;
   return h(
     "div.group",
     h("h2", "Stretching dopo il cardio"),
@@ -425,16 +479,15 @@ function cartaStretchingPostCardio() {
       h(
         "button.btn.secondary",
         {
-          "aria-pressed": fatto ? "true" : "false",
           onclick: azione(async () => {
-            S.sed = await store.aggiornaSeduta(S.sed.id, {
-              stretchingPostCardio: fatto ? null : { fatto: true, quando: Date.now() },
-            });
-            toast(fatto ? "Tolto." : "Segnato.");
+            // Si va a farlo, non si dichiara di averlo fatto: il posto dove si
+            // fa è la sua schermata, con i cronometri. Qui c'è solo la strada
+            // per tornarci se l'avevi saltato.
+            await salvaProgresso({ fase: "postcardio" });
             await disegna();
           }),
         },
-        fatto ? "Fatto" : "Segna che l'hai fatto"
+        "Fallo adesso"
       )
     )
   );
@@ -1159,6 +1212,13 @@ async function disegna() {
     fase = S.sed.progresso.fase;
   }
 
+  // Stessa protezione per gli allungamenti dopo il cardio: se il protocollo non
+  // ne ha, non ci si ferma su una schermata vuota.
+  if (fase === "postcardio" && !passiPostCardio().length) {
+    await salvaProgresso({ fase: dopoPostCardio() });
+    fase = S.sed.progresso.fase;
+  }
+
   clear(S.contenitore);
   S.contenitore.append(testata());
 
@@ -1172,6 +1232,7 @@ async function disegna() {
   else if (fase === "questionario") await vistaQuestionario(corpo, piede);
   else if (fase === "cardio") await vistaCardio(corpo, piede);
   else if (fase === "mobilita") await vistaMobilita(corpo, piede);
+  else if (fase === "postcardio") await vistaPostCardio(corpo, piede);
   else await vistaFine(corpo, piede);
 }
 
@@ -1195,6 +1256,13 @@ function testata() {
     const k = Math.min((S.sed.progresso?.mobPasso ?? 0) + 1, Math.max(q, 1));
     passo = q ? `Mobilità ${k} di ${q}` : "Mobilità";
     avanzamento = q ? 88 + ((k - 1) / q) * 7 : 88;
+  } else if (fase === "postcardio") {
+    // Il blocco facoltativo dopo il cardio: la barra è già quasi in fondo,
+    // perché di obbligatorio non resta più niente.
+    const q = passiPostCardio().length;
+    const k = Math.min((S.sed.progresso?.pcPasso ?? 0) + 1, Math.max(q, 1));
+    passo = q ? `Dopo il cardio ${k} di ${q}` : "Dopo il cardio";
+    avanzamento = q ? 97 + ((k - 1) / q) * 2 : 97;
   } else if (fase === "fine") {
     passo = "Riepilogo";
     avanzamento = 100;
@@ -1488,6 +1556,16 @@ function avvicinamento(def, mobilita) {
  * L'ordine conta ed è di sicurezza: prima il dinamico, poi le tenute. Tenere a
  * lungo un allungamento prima di spingere abbassa la forza — per questo tutto il
  * blocco sta dopo i pesi, e le tenute stanno in coda. */
+/* I quattro allungamenti dopo il cardio — il «Blocco C» del coach.
+ *
+ * Le posizioni sono le stesse del blocco di mobilità: nel file dei protocolli
+ * ci sono solo i loro nomi e si leggono da lì, per non tenere allineate due
+ * copie della stessa lista. */
+function passiPostCardio() {
+  const b = store.stretchingPostCardio();
+  return (b?.passi || []).map((v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video }));
+}
+
 function passiMobilita() {
   const prot = store.riscaldamento(S.sed.tipoId);
   const voce = (v) => ({ nome: v.nome, dose: v.dose, come: v.come, video: v.video });
@@ -3947,7 +4025,15 @@ const dopoLaMobilita = () => dopoLoStretching();
 // Resta come porto d'arrivo per gli allenamenti aperti che si trovano ancora
 // nella vecchia fase «stretching», che non viene più generata da nessuno.
 const dopoLoStretching = () => (S.sed.cardio?.previsto ? "cardio" : "fine");
-const dopoIlCardio = () => "fine";
+/* Dopo il cardio vengono i quattro allungamenti sulle gambe, e solo se il
+ * cardio l'hai fatto davvero: rimandandolo, il blocco arriverà con lui.
+ *
+ * È FACOLTATIVO e resta tale anche stando qui dentro: si può saltare con un
+ * tocco, saltarlo non scrive niente da nessuna parte e non tocca il punteggio.
+ * Sta nella catena e non più in una carta del riepilogo per un motivo pratico:
+ * il riepilogo, finito il cardio, si può non aprire mai — ed è successo. */
+const dopoIlCardio = () => (S.sed.cardio?.eseguito && passiPostCardio().length ? "postcardio" : "fine");
+const dopoPostCardio = () => "fine";
 
 /**
  * Il blocco di mobilità di fine seduta.
@@ -4169,6 +4255,15 @@ async function vistaFine(corpo, piede) {
               h("div.row", h("div.main", h("span.title", "Densità")), h("span.value", `${densita} serie/min`)),
               h("div.row", h("div.main", h("span.title", "Recupero medio reale")), h("span.value", recMedio != null ? mmss(recMedio) : "—")),
             ]),
+        // Fatto: si legge, non si ripropone. La carta con «Fallo adesso»
+        // compare solo finché non l'hai fatto.
+        S.sed.stretchingPostCardio?.fatto
+          ? h(
+              "div.row",
+              h("div.main", h("span.title", "Stretching dopo il cardio"), h("span.sub", "facoltativo")),
+              h("span.value", "fatto")
+            )
+          : null,
         S.sed.cardio?.previsto
           ? h("div.row", h("div.main", h("span.title", "Cardio")), h("span.value", S.sed.cardio.eseguito
                 ? `${num(S.sed.cardio.kmh)} km/h · ${S.sed.cardio.durataMin} min`
