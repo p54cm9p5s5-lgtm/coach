@@ -63,6 +63,23 @@ export function estraiBlocco(testo) {
   }
 }
 
+/**
+ * I testi che una riga del brief può cambiare sull'esercizio.
+ *
+ * Non tutto: il nome, il pattern, l'attrezzo e il video restano della libreria,
+ * perché descrivono l'esercizio in sé e non cambiano con la prescrizione di
+ * oggi. Qui c'è quello che cambia quando cambia il come: l'esecuzione passo per
+ * passo, il cue, la nota, la sicurezza.
+ */
+export const TESTI_ESERCIZIO = {
+  esecuzione: "elenco",
+  setup: "elenco",
+  erroriComuni: "elenco",
+  cue: "frase",
+  nota: "frase",
+  sicurezza: "frase",
+};
+
 export function valida(dati, libreria) {
   const problemi = [];
   const noti = new Set(libreria.map((e) => e.id));
@@ -194,6 +211,33 @@ export function valida(dati, libreria) {
         problemi.push(
           `${v.esercizioId} si tiene a tempo: serve «"aTempo": true» e «durataSec», non un range di ripetizioni.`
         );
+      }
+      // Come si fa un esercizio, quando il coach lo cambia.
+      //
+      // Fino al 03/09 il brief portava solo i numeri — serie, ripetizioni,
+      // carico — e le istruzioni stavano nella libreria dell'app, ferme. Ma un
+      // carico nuovo può cambiare il gesto: il ponte per glutei a 8 kg vuole il
+      // manubrio tenuto in un modo preciso, e quella frase esisteva solo nella
+      // prosa del master, dove l'app non arriva.
+      //
+      // Adesso ogni riga può portarsi dietro le sue istruzioni. Sono
+      // facoltative: una riga senza non cambia niente.
+      for (const [campo, forma] of Object.entries(TESTI_ESERCIZIO)) {
+        const val = v[campo];
+        if (val == null) continue;
+        if (forma === "elenco") {
+          if (!Array.isArray(val) || !val.length || val.some((x) => typeof x !== "string" || !x.trim())) {
+            problemi.push(`«${campo}» di ${v.esercizioId} dev'essere un elenco di frasi, non vuoto.`);
+          } else if (val.length > 12) {
+            problemi.push(`«${campo}» di ${v.esercizioId}: dodici passaggi sono il massimo, ce ne sono ${val.length}.`);
+          } else if (val.some((x) => x.length > 400)) {
+            problemi.push(`«${campo}» di ${v.esercizioId}: un passaggio supera i 400 caratteri.`);
+          }
+        } else if (typeof val !== "string" || !val.trim()) {
+          problemi.push(`«${campo}» di ${v.esercizioId} dev'essere una frase.`);
+        } else if (val.length > 800) {
+          problemi.push(`«${campo}» di ${v.esercizioId}: supera gli 800 caratteri.`);
+        }
       }
     }
   }

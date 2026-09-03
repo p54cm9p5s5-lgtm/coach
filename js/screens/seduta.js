@@ -1801,7 +1801,23 @@ async function vistaEsercizio(corpo, piede) {
       // basta. È il posto dove sta una decisione presa sull'esercizio — perché
       // il carico non si tocca, perché non conta in un certo volume — e chi lo
       // sta facendo è chi ha più bisogno di saperlo.
-      def?.nota ? h("section", h("h3", "Nota"), h("p", def.nota)) : null
+      def?.nota ? h("section", h("h3", "Nota"), h("p", def.nota)) : null,
+      // Da dove arrivano queste istruzioni.
+      //
+      // Quando il coach cambia il come di un esercizio — «il manubrio va tenuto
+      // così» — quel testo arriva dal brief e copre quello della libreria. Chi
+      // legge deve saperlo: un'istruzione scritta dal coach per il carico di
+      // oggi non è la stessa cosa di una descrizione generale dell'esercizio, e
+      // se domani il carico cambia quella frase può sparire.
+      def?.dalBrief
+        ? h(
+            "p.footnote",
+            { style: "margin:10px 0 0" },
+            `${elencaCampi(def.dalBrief)} ${contaCampi(def.dalBrief) === 1 ? "arriva" : "arrivano"} dal master brief` +
+              (def.dalBrief.quando ? ` del ${dataLunga(def.dalBrief.quando)}` : "") +
+              ", non dalla libreria dell'app."
+          )
+        : null
     )
   );
 
@@ -2314,6 +2330,24 @@ function piedeCronometro(v, def, n, inv) {
     await completaSerie(v, def, n, daScrivere);
   });
   return [fine];
+}
+
+/* I nomi dei testi che il coach ha cambiato, scritti come si leggono. */
+const NOMI_CAMPI = {
+  esecuzione: "l'esecuzione",
+  setup: "il setup",
+  erroriComuni: "gli errori da evitare",
+  cue: "il cue",
+  nota: "la nota",
+  sicurezza: "la sicurezza",
+};
+const contaCampi = (d) => Object.keys(d || {}).filter((k) => k !== "quando").length;
+function elencaCampi(d) {
+  const nomi = Object.keys(d || {})
+    .filter((k) => k !== "quando")
+    .map((k) => NOMI_CAMPI[k] || k);
+  if (nomi.length <= 1) return (nomi[0] || "questo testo").replace(/^l'|^il |^la |^gli /, (m) => m.toUpperCase());
+  return `${nomi.slice(0, -1).join(", ")} e ${nomi.at(-1)}`.replace(/^./, (c) => c.toUpperCase());
 }
 
 function sezione(titolo, voci, tag = "ul") {

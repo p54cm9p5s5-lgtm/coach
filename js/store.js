@@ -280,6 +280,10 @@ async function caricaLibreria() {
       ...(vecchio?.videoPersonalizzato
         ? { video: vecchio.video, videoPersonalizzato: true }
         : {}),
+      // E quello che ha scritto il coach nel brief sopravvive all'aggiornamento
+      // del file: il file è la fonte dei contenuti di base, il brief è la
+      // prescrizione di oggi, e fra i due comanda la prescrizione.
+      ...(vecchio?.dalBrief ? { dalBrief: vecchio.dalBrief } : {}),
     };
     if (JSON.stringify(vecchio) !== JSON.stringify(unito)) daScrivere.push(unito);
     perId.set(nuovo.id, unito);
@@ -290,9 +294,28 @@ async function caricaLibreria() {
   return LIBRERIA;
 }
 
+/**
+ * L'esercizio come lo si legge: la scheda della libreria con sopra quello che
+ * il coach ha scritto nel brief per QUESTA prescrizione.
+ *
+ * Il brief vince, ma non cancella: la scheda di base resta scritta in archivio,
+ * e togliendo le righe dal brief torna quella. `dalBrief` resta attaccato
+ * all'esercizio in modo che chi lo mostra possa dire da dove viene un testo —
+ * un'istruzione che arriva dal coach non è la stessa cosa di una scritta
+ * nell'app.
+ */
+function conTestiDelBrief(e) {
+  if (!e?.dalBrief) return e;
+  const { quando, ...testi } = e.dalBrief;
+  return { ...e, ...testi, dalBrief: e.dalBrief };
+}
+
 export const ricaricaLibreria = caricaLibreria;
-export const libreria = () => LIBRERIA || [];
-export const esercizio = (id) => (LIBRERIA || []).find((e) => e.id === id) || null;
+export const libreria = () => (LIBRERIA || []).map(conTestiDelBrief);
+export const esercizio = (id) => {
+  const e = (LIBRERIA || []).find((x) => x.id === id);
+  return e ? conTestiDelBrief(e) : null;
+};
 export const programma = () => PROGRAMMA;
 
 // ---------- impostazioni ----------
@@ -388,6 +411,38 @@ export async function applicaBrief(dati) {
   if (daArchiviare.length) await db.putMany("esercizi", daArchiviare);
   if (daRiattivare.length) await db.putMany("esercizi", daRiattivare);
   if (daArchiviare.length || daRiattivare.length) await caricaLibreria();
+
+  // I testi che il coach ha scritto su un esercizio dentro il brief.
+  //
+  // Vengono riscritti a ogni caricamento e TOLTI quando spariscono dal brief:
+  // un'istruzione rimasta attaccata a un carico che non c'è più sarebbe peggio
+  // che non averla mai avuta. La firma serve a non riscrivere l'archivio quando
+  // non è cambiato niente.
+  const { TESTI_ESERCIZIO } = await import("./brief.js");
+  const testiPerId = new Map();
+  for (const g of record.split) {
+    for (const v of g.esercizi || []) {
+      const testi = {};
+      for (const campo of Object.keys(TESTI_ESERCIZIO)) {
+        if (v[campo] != null) testi[campo] = v[campo];
+      }
+      if (Object.keys(testi).length) {
+        testi.quando = record.aggiornatoIl;
+        testiPerId.set(v.esercizioId, testi);
+      }
+    }
+  }
+  const conTesti = [];
+  for (const e of LIBRERIA || []) {
+    const nuovi = testiPerId.get(e.id) || null;
+    if (JSON.stringify(e.dalBrief ?? null) === JSON.stringify(nuovi)) continue;
+    const { dalBrief, ...resto } = e;
+    conTesti.push(nuovi ? { ...resto, dalBrief: nuovi } : resto);
+  }
+  if (conTesti.length) {
+    await db.putMany("esercizi", conTesti);
+    await caricaLibreria();
+  }
 
   // Il brief nuovo può contenere giorni che prima non esistevano: gli eventi
   // del calendario rimasti senza abbinamento vanno riprovati adesso.

@@ -108,6 +108,46 @@ resta.
   ma scrivere `salute.pesi` con una voce sola **sostituisce tutto il blocco dei
   pesi**. Le voci annidate vanno riscritte per intero
 
+### Cambiare COME si fa un esercizio, dal brief
+
+Dal 3 settembre 2026 una riga del blocco tecnico può portarsi dietro non solo i
+numeri ma anche **le istruzioni**. Serve a un caso preciso: quando cambia il
+carico cambia il gesto — il ponte per glutei a 8 kg vuole il manubrio tenuto in
+un modo che a corpo libero non esisteva — e quella frase, scritta nella prosa
+del master, l'app non la legge.
+
+Campi facoltativi, uno o tutti:
+
+| Campo | Forma | Cosa cambia |
+|---|---|---|
+| `esecuzione` | elenco di frasi | i passaggi numerati della scheda |
+| `setup` | elenco di frasi | come ti metti prima di cominciare |
+| `erroriComuni` | elenco di frasi | gli errori da evitare |
+| `cue` | una frase | la riga che resta in mente |
+| `nota` | una frase | una nota sull'esercizio |
+| `sicurezza` | una frase | l'avvertenza |
+
+```json
+{ "esercizioId": "ponte-glutei", "serie": 3, "ripMin": 10, "ripMax": 12, "carico": 8,
+  "esecuzione": ["…", "…"],
+  "sicurezza": "…" }
+```
+
+**Come si comporta.** Quello che arriva dal brief **copre** quello della libreria
+e nella scheda c'è scritto da dove viene: *«L'esecuzione e la sicurezza arrivano
+dal master brief del 3 settembre, non dalla libreria dell'app.»* La scheda di
+base non viene cancellata: resta in archivio, e **togliendo quelle righe dal
+brief torna quella**. Un'istruzione legata a un carico che non c'è più sarebbe
+peggio che non averla mai avuta.
+
+Non tutto si può cambiare: il nome, il pattern, l'attrezzo e il video restano
+della libreria, perché descrivono l'esercizio in sé e non la prescrizione di
+oggi. Un esercizio nuovo va sempre chiesto prima.
+
+I limiti sono controllati al caricamento: un elenco vuoto, una frase al posto di
+un elenco o un testo sterminato fermano il brief con un messaggio, come qualunque
+altro errore del blocco tecnico.
+
 **Un vincolo da conoscere prima di scrivere il brief**: `esercizioId` deve
 esistere nella libreria dell'app, che contiene per ogni esercizio guida completa
 (setup, esecuzione, errori, cue, sicurezza) e video. Un esercizio nuovo va prima

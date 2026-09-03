@@ -766,7 +766,81 @@ export function verificaLettoreBrief({ validatore = validaBrief } = {}) {
  * vero senza toccarlo. E ognuna deve rifiutare **con una frase che spiega**:
  * un errore in inglese sullo schermo di un'app italiana è un difetto suo.
  */
+/**
+ * I testi che il coach scrive nel brief su un esercizio.
+ *
+ * Dal 03/09 una riga del blocco tecnico può portarsi dietro l'esecuzione, il
+ * cue, la nota: il coach cambia il carico e con lui il modo di farlo, e quella
+ * frase deve arrivare nella scheda dell'esercizio invece di restare nella prosa
+ * del master, dove l'app non arriva.
+ *
+ * Le due cose che possono rompersi in silenzio sono queste: che il testo del
+ * coach non copra quello della libreria, e che l'aggiornamento della libreria
+ * dal file — che gira a ogni avvio — se lo porti via. La seconda è la peggiore,
+ * perché succederebbe il giorno dopo, e nessuno collegherebbe la cosa.
+ *
+ * Non tocca l'archivio vero: lavora su una scheda finta.
+ */
+export async function verificaTestiDalBrief({ magazzino = store } = {}) {
+  const errori = [];
+  let casi = 0;
+  const prova = (nome, condizione) => {
+    casi++;
+    if (!condizione) errori.push(nome);
+  };
+
+  const { TESTI_ESERCIZIO, valida } = await import("../js/brief.js");
+  prova("i campi ammessi sono dichiarati in un posto solo", Object.keys(TESTI_ESERCIZIO || {}).length > 0);
+
+  // Un elenco vuoto, una frase vuota, un elenco al posto di una frase: la
+  // validazione deve fermarli prima che arrivino in libreria.
+  const libreriaFinta = [{ id: "prova-esercizio", nome: "Prova", aTempo: false }];
+  const conRiga = (extra) => ({
+    versione: 1,
+    split: [
+      {
+        id: "giorno-prova",
+        nome: "Prova",
+        giorno: 1,
+        esercizi: [{ esercizioId: "prova-esercizio", serie: 3, ripMin: 8, ripMax: 10, ...extra }],
+      },
+    ],
+  });
+  prova("una riga senza testi passa", valida(conRiga({}), libreriaFinta).length === 0);
+  prova("un'esecuzione vuota viene fermata", valida(conRiga({ esecuzione: [] }), libreriaFinta).length > 0);
+  prova("un'esecuzione con una riga vuota viene fermata", valida(conRiga({ esecuzione: ["  "] }), libreriaFinta).length > 0);
+  prova("una frase al posto di un elenco viene fermata", valida(conRiga({ esecuzione: "tutta di fila" }), libreriaFinta).length > 0);
+  prova("un elenco al posto di una frase viene fermato", valida(conRiga({ cue: ["a", "b"] }), libreriaFinta).length > 0);
+  prova("un'esecuzione buona passa", valida(conRiga({ esecuzione: ["primo passo", "secondo passo"] }), libreriaFinta).length === 0);
+  prova("un testo sterminato viene fermato", valida(conRiga({ cue: "x".repeat(900) }), libreriaFinta).length > 0);
+
+  // E sul vero: qualunque esercizio con testi dal brief deve mostrarli, e
+  // deve continuare a mostrarli dopo un aggiornamento della libreria dal file.
+  const conTesti = magazzino.libreria().filter((e) => e.dalBrief);
+  casi++;
+  for (const e of conTesti) {
+    for (const campo of Object.keys(e.dalBrief)) {
+      if (campo === "quando") continue;
+      if (JSON.stringify(e[campo]) !== JSON.stringify(e.dalBrief[campo])) {
+        errori.push(`${e.id}: «${campo}» del brief non copre quello della libreria`);
+      }
+    }
+  }
+  if (conTesti.length) {
+    await magazzino.ricaricaLibreria();
+    for (const prima of conTesti) {
+      const dopo = magazzino.esercizio(prima.id);
+      if (JSON.stringify(dopo?.dalBrief ?? null) !== JSON.stringify(prima.dalBrief)) {
+        errori.push(`${prima.id}: i testi del brief spariscono quando la libreria si aggiorna dal file`);
+      }
+    }
+  }
+
+  return esito("i testi che il coach scrive sugli esercizi", `${casi} controlli`, errori);
+}
+
 export async function verificaStradeDiGuasto({ magazzino = store } = {}) {
+  const saltate = [];
   const errori = [];
   let casi = 0;
 
@@ -813,7 +887,22 @@ export async function verificaStradeDiGuasto({ magazzino = store } = {}) {
   await deve("una seduta che non c'è", () => magazzino.aggiornaSeduta("mai-esistita", { notaGenerale: "x" }), /seduta non trovata/i);
   await deve("chiudere una seduta che non c'è", () => magazzino.chiudiSeduta("mai-esistita", {}), /non esiste più|eliminata/i);
   await deve("rispondere a una proposta che non c'è", () => magazzino.rispondiAProposta("mai-esistita", "accettata"), /proposta non esiste/i);
-  await deve("un giorno dello split che non c'è", () => magazzino.iniziaSeduta({ data: "2026-08-27", giornoId: "non-esiste-questo" }), /giorno dello split/i);
+  /* Questa si può provare solo se non c'è un allenamento aperto.
+   *
+   * `iniziaSeduta` ha una regola prima di tutte le altre: se una seduta è già
+   * in corso restituisce QUELLA, senza guardare cosa le hai chiesto. È giusto
+   * — riaprire l'app a metà allenamento non deve iniziarne un secondo — ma
+   * vuol dire che con una seduta aperta questa strada di guasto non esiste, e
+   * la prova falliva accusando un codice sano. Verificato: con la seduta
+   * annullata passa, con quella aperta no.
+   *
+   * Non si annulla la seduta per provarla: sono dati, e una prova che cancella
+   * quello che sta misurando non è una prova. Si dice che non è stata fatta. */
+  if (await magazzino.sedutaInCorso()) {
+    saltate.push("un giorno dello split che non c'è: c'è un allenamento aperto, non si può provare");
+  } else {
+    await deve("un giorno dello split che non c'è", () => magazzino.iniziaSeduta({ data: "2026-08-27", giornoId: "non-esiste-questo" }), /giorno dello split/i);
+  }
 
   // L'orologio e le foto
   await deve("nota su un allenamento che non c'è", () => magazzino.salvaNotaAllenamento(null, { talkTest: "si" }), /serve l'allenamento/i);
@@ -838,7 +927,14 @@ export async function verificaStradeDiGuasto({ magazzino = store } = {}) {
   await deve("un backup di una versione più nuova", () => db.importaTutto({ formato: "coach-backup", versione: 99, dati: { sedute: [] } }, "sostituisci"), /formato v99|aggiorna l'app/i);
   await deve("un backup con una sezione illeggibile", () => db.importaTutto({ formato: "coach-backup", versione: 1, dati: { sedute: "rotto" } }, "sostituisci"), /danneggiato/i);
 
-  return esito("le strade di guasto, percorse una per una", `${casi} rifiuti`, errori);
+  // Una prova non fatta si DICE, non si conta come passata: il conteggio è la
+  // sola cosa che si guarda quando la rete è verde, e «23 rifiuti» quando ne
+  // hai provati 22 è una bugia piccola che rende inutile tutto il resto.
+  return esito(
+    "le strade di guasto, percorse una per una",
+    `${casi} rifiuti${saltate.length ? ` (${saltate.length} non provata: ${saltate.join("; ")})` : ""}`,
+    errori
+  );
 }
 
 /* --------------------------------------------- 10. le schermate, disegnate */
@@ -953,6 +1049,7 @@ export async function rete() {
     verificaLettorePacchetto(),
     verificaLettoreBrief(),
     await verificaStradeDiGuasto(),
+    await verificaTestiDalBrief(),
     await verificaSchermate(),
     verificaDisegniEBlocchi(),
     await verificaVeritaDeiDati(),
