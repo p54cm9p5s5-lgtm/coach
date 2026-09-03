@@ -482,6 +482,16 @@ export function differenzeRegole(vecchie, nuove, prefisso = "") {
   return righe;
 }
 
+/* Come si chiamano, a schermo, i testi che il coach può cambiare. */
+const NOMI_TESTI = {
+  esecuzione: "esecuzione",
+  setup: "setup",
+  erroriComuni: "errori da evitare",
+  cue: "cue",
+  nota: "nota",
+  sicurezza: "sicurezza",
+};
+
 export function confronta(corrente, nuovo, libreria) {
   const nome = (id) => libreria.find((e) => e.id === id)?.nome || id;
   const righe = [];
@@ -572,6 +582,27 @@ export function confronta(corrente, nuovo, libreria) {
             ? `blocco ${vecchio.blocco} → ${v.blocco}`
             : `entra nel blocco ${v.blocco}`
           : `esce dal blocco ${vecchio.blocco}`
+      );
+    }
+    // Le istruzioni scritte dal coach sull'esercizio: se cambiano, cambia come
+    // lo fai, ed è una modifica quanto un carico.
+    //
+    // Senza questo pezzo, il brief che ha portato l'esecuzione del ponte per
+    // glutei a 8 kg si presentava come «Nessuna differenza rispetto al
+    // programma attuale»: i numeri erano gli stessi e nessuno guardava i testi.
+    // Dire «uguale» a un brief che cambia il modo di fare un esercizio è la
+    // bugia peggiore che questa schermata possa raccontare, perché è l'unica
+    // cosa che leggi prima di premere «Applica».
+    for (const campo of Object.keys(TESTI_ESERCIZIO)) {
+      const prima = vecchio[campo] ?? null;
+      const dopo = v[campo] ?? null;
+      if (JSON.stringify(prima) === JSON.stringify(dopo)) continue;
+      cambi.push(
+        dopo == null
+          ? `${NOMI_TESTI[campo] || campo} tolta dal brief`
+          : prima == null
+            ? `${NOMI_TESTI[campo] || campo} scritta dal coach`
+            : `${NOMI_TESTI[campo] || campo} riscritta`
       );
     }
     if (cambi.length) {
