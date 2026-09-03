@@ -220,7 +220,7 @@ async function vistaProgramma(vaiA, ridisegna) {
                 // aprendo l'esercizio: con una proposta accettata comandano le
                 // ripetizioni dell'obiettivo, non il campo del brief, e una
                 // tenuta di tre minuti si scrive «3 min» come là, non «180s».
-                store.bersaglioProposto(v, obiettivo, durataScritta),
+                store.bersaglioProposto(v, obiettivo, durataScritta, def),
                 dischi,
               ]
                 .filter(Boolean)
@@ -922,7 +922,14 @@ async function vistaRisultato(id, vaiA, da = null) {
   aggiungi(wrap,
     h(
       "div.btn-wrap",
-      h("button.btn", { onclick: () => vaiA("export") }, "Claude"),
+      // Il pacchetto DI QUESTO allenamento, non dell'ultimo fatto. Aprendo il
+      // risultato di venerdì per mandarlo, ricevere il log di domenica è
+      // esattamente il contrario di quello che si è chiesto.
+      h(
+        "button.btn",
+        { onclick: () => (location.hash = `#/export?seduta=${sed.id}`) },
+        "Claude"
+      ),
       h("div", { style: "height:8px" }),
       daAltrove
         ? h(
@@ -1616,12 +1623,12 @@ async function vistaEsercizio(corpo, piede) {
   // seduta (l'app è ripartita), infine il carico dedotto dallo storico.
   S.caricoCorrente = S.caricoCorrente ?? S.sed.progresso?.caricoCorrente ?? caricoPrec;
 
-  const bersaglio = store.bersaglioProposto(v, obiettivo, durataScritta);
+  const bersaglio = store.bersaglioProposto(v, obiettivo, durataScritta, def);
 
   // Col cronometro in corso il numero grande è il tempo che scorre, non il
   // carico: è l'unica cosa che serve guardare mentre tieni la posizione.
   if (v.aTempo && S.cronoFine) {
-    aggiungi(corpo, quadranteCronometro(v, n));
+    aggiungi(corpo, quadranteCronometro(v, n, def));
   } else {
     aggiungi(corpo, 
       h(
@@ -1779,7 +1786,9 @@ async function vistaEsercizio(corpo, piede) {
  * bloccare lo schermo o riaprire l'app non falsa il conto: il tempo si misura
  * sull'orologio, non su un contatore che gira solo mentre guardi.
  */
-function quadranteCronometro(v, n) {
+function quadranteCronometro(v, n, def = null) {
+  const perLato = Boolean(def?.perLato);
+  const lato = perLato ? S.sed.progresso?.lato ?? 0 : 0;
   // Un plank da 45 secondi si legge bene come numero secco; una camminata da
   // 3600 mostrerebbe «3600», che non vuol dire niente. Sopra il minuto si
   // passa ai minuti, come nel recupero.
@@ -1827,7 +1836,13 @@ function quadranteCronometro(v, n) {
     "div.hero",
     // Un plank si tiene, una sessione di Pilates o una camminata da un'ora si
     // fanno: il verbo lo decide la durata, non la schermata.
-    h("p.kicker", `Serie ${n} di ${v.serie} · ${lungo ? "in corso" : "tieni la posizione"}`),
+    // Su una tenuta che si fa da tutte e due le parti, quale braccio stai
+    // tenendo è l'unica cosa che non si vede da nessun'altra parte: il numero
+    // grande è il tempo, e il tempo è uguale per tutti e due i lati.
+    h(
+      "p.kicker",
+      `Serie ${n} di ${v.serie}${perLato ? ` · ${lato === 0 ? "primo lato" : "secondo lato"}` : ""} · ${lungo ? "in corso" : "tieni la posizione"}`
+    ),
     quadrante,
     h("p.target", `Previsti ${durataScritta(v.durataSec || 0)} · «Fine» se molli prima`)
   );
@@ -2158,7 +2173,24 @@ function aggiungiPiede(piede, ...figli) {
   aggiungi(piede, ...vivi.filter((x) => !avanti.includes(x)), ...avanti);
 }
 
+/* Una tenuta che si fa da tutte e due le parti sono DUE cronometri, non uno.
+ *
+ * Il suitcase hold si tiene con un braccio alla volta: «2 × 30s per lato» vuol
+ * dire quattro tenute, non due. Finché il cronometro era uno solo per serie,
+ * l'app ne chiedeva metà e chi la seguiva alla lettera faceva metà lavoro.
+ *
+ * Il lato in corso sta nel progresso salvato — come tutto il resto della
+ * seduta — così chiudere l'app fra un braccio e l'altro non fa ricominciare.
+ *
+ * Quello che finisce in archivio è il lato PIÙ CORTO dei due: la serie vale
+ * quanto la sua parte debole, e la media nasconderebbe proprio il braccio che
+ * ha ceduto. Il bersaglio con cui si confronta resta `durataSec`, cioè i
+ * secondi di UN lato: sono grandezze omogenee.
+ */
 function piedeCronometro(v, def, n, inv) {
+  const perLato = Boolean(def?.perLato);
+  const lato = perLato ? S.sed.progresso?.lato ?? 0 : 0;
+  const nomeLato = lato === 0 ? "primo lato" : "secondo lato";
   const inCorso = Boolean(S.cronoFine);
   if (!inCorso) {
     return [
@@ -2179,20 +2211,29 @@ function piedeCronometro(v, def, n, inv) {
             await disegna();
           }),
         },
-        `Avvia · ${durataScritta(v.durataSec || 0)}`
+        `Avvia · ${durataScritta(v.durataSec || 0)}${perLato ? ` · ${nomeLato}` : ""}`
       ),
     ];
   }
 
-  const fine = h("button.btn", {}, "Fine");
+  const fine = h("button.btn", {}, perLato && lato === 0 ? "Fatto · altro lato" : "Fine");
   fine.onclick = azione(async () => {
     const restanti = Math.max(0, (S.cronoFine - Date.now()) / 1000);
     const tenuti = Math.max(0, (v.durataSec || 0) - restanti);
     fermaAllarme();
     fermaTimer();
     S.cronoFine = null;
-    await salvaProgresso({ cronoFine: null });
-    await completaSerie(v, def, n, tenuti);
+    if (perLato && lato === 0) {
+      // Primo braccio finito: si azzera il cronometro e si passa all'altro.
+      // La serie non è ancora una serie.
+      await salvaProgresso({ cronoFine: null, lato: 1, tenutiPrimoLato: tenuti });
+      await disegna();
+      return;
+    }
+    const primo = perLato ? S.sed.progresso?.tenutiPrimoLato ?? tenuti : null;
+    const daScrivere = perLato ? Math.min(primo, tenuti) : tenuti;
+    await salvaProgresso({ cronoFine: null, lato: 0, tenutiPrimoLato: null });
+    await completaSerie(v, def, n, daScrivere);
   });
   return [fine];
 }
@@ -2755,14 +2796,26 @@ async function avanzaEsercizio() {
   S.obiettivo = null;
   // Il carico appartiene all'esercizio che finisce qui: se restasse scritto,
   // il prossimo partirebbe dal carico di quello precedente.
+  // Il lato di una tenuta appartiene alla serie che finisce qui: se restasse
+  // scritto, la prima serie del prossimo esercizio partirebbe dal «secondo
+  // lato» di quello di prima.
   if (prossimo >= S.esercizi.length) {
     await salvaProgresso({
       fase: dopoGliEsercizi(),
       indice: prossimo,
       caricoCorrente: null,
+      lato: 0,
+      tenutiPrimoLato: null,
     });
   } else {
-    await salvaProgresso({ fase: "esercizio", indice: prossimo, recuperoFine: null, caricoCorrente: null });
+    await salvaProgresso({
+      fase: "esercizio",
+      indice: prossimo,
+      recuperoFine: null,
+      caricoCorrente: null,
+      lato: 0,
+      tenutiPrimoLato: null,
+    });
   }
   await disegna();
 }
@@ -2799,7 +2852,7 @@ async function bloccoProssimo(inv) {
   const def = store.esercizio(prossima.esercizioId);
   const obiettivo = prossima.aTempo ? null : await store.obiettivoCorrente(prossima.esercizioId);
   const carico = await store.caricoProposto(prossima, { obiettivo });
-  const bersaglio = store.bersaglioProposto(prossima, obiettivo, durataScritta);
+  const bersaglio = store.bersaglioProposto(prossima, obiettivo, durataScritta, def);
 
   const gruppo = h(
     "div.group",

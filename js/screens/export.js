@@ -42,11 +42,43 @@ function scelteDelProfilo() {
   );
 }
 
+/* Quale allenamento va nel pacchetto.
+ *
+ * Senza indicazioni è l'ultimo chiuso, che è quello che serve nove volte su
+ * dieci. Ma arrivando qui dal risultato di UN allenamento preciso — il tasto
+ * «Claude» dentro la sua schermata — il pacchetto deve essere il suo: se ti
+ * accorgi lunedì di non aver mandato il Push di venerdì, aprirlo e ricevere il
+ * log di domenica non serve a niente.
+ */
+function sedutaChiesta() {
+  const q = location.hash.split("?")[1] || "";
+  return new URLSearchParams(q).get("seduta") || null;
+}
+
 export async function render({ vaiA }) {
   const wrap = h("div.screen");
   aggiungi(wrap, intestazione("Pacchetto", { etichetta: "Home", onclick: () => vaiA("oggi") }));
 
-  const stato = { seduta: true, salute: true, proposte: true, segnali: true, fumo: true, acqua: true, corpo: false };
+  const chiesta = sedutaChiesta();
+  const sedutaScelta = chiesta ? await store.seduta(chiesta) : null;
+  const stato = { seduta: true, salute: true, proposte: true, segnali: true, fumo: true, acqua: true, corpo: false, sedutaId: sedutaScelta?.id || null };
+
+  // Quando il pacchetto è di un allenamento preciso va detto prima di tutto il
+  // resto: è l'unica differenza fra questo pacchetto e quello di sempre, e non
+  // deve essere una cosa che si scopre leggendo l'anteprima.
+  if (sedutaScelta) {
+    aggiungi(wrap,
+      h(
+        "div.group",
+        h(
+          "p.footnote",
+          { style: "margin:0 16px" },
+          `Pacchetto di un allenamento preciso: ${sedutaScelta.tipoNome} di ${dataLunga(sedutaScelta.data)}. ` +
+            "Gli altri dati — salute, proposte, segnali — sono quelli di adesso, come sempre."
+        )
+      )
+    );
+  }
   const anteprima = h("pre", {
     style:
       "margin:0;padding:14px;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;" +
@@ -106,6 +138,12 @@ export async function render({ vaiA }) {
 
   const lista = h("div.list");
   for (const s of scelteDelProfilo()) {
+    // Con un allenamento scelto la voce non è più «l'ultimo»: è quello lì, e
+    // l'etichetta lo deve dire, se no la spunta e l'avviso qui sopra si
+    // contraddicono a vicenda.
+    if (s.id === "seduta" && sedutaScelta) {
+      s = { ...s, nome: `Log di ${sedutaScelta.tipoNome} del ${dataBreve(sedutaScelta.data)}`, sub: "formato §12, con recuperi e densità reali" };
+    }
     const spunta = h("input", { type: "checkbox", checked: stato[s.id] });
     spunta.addEventListener("change", async () => {
       stato[s.id] = spunta.checked;
@@ -183,6 +221,8 @@ async function componi(stato) {
 
   if (stato.seduta) {
     const tutte = await store.allenamenti();
+    // Un allenamento chiesto per nome vince su qualunque regola di scelta.
+    const voluta = stato.sedutaId ? tutte.find((s) => s.id === stato.sedutaId) : null;
     // La più recente per orario, non la prima trovata: con due allenamenti
     // nello stesso giorno veniva esportato quello più vecchio.
     // Ordinare per la sola ora di fine mandava in fondo — e quindi fuori dal
@@ -191,7 +231,7 @@ async function componi(stato) {
     // niente glielo dicesse. Prima si guarda la data (che c'è sempre), poi
     // l'ora di fine fra due dello stesso giorno, e da ultimo l'id, che nasce
     // in ordine di tempo.
-    const ultima = tutte
+    const ultima = voluta || tutte
       .filter((s) => s.stato === "completata")
       .sort((a, b) => {
         if (a.data !== b.data) return a.data < b.data ? 1 : -1;
@@ -203,7 +243,10 @@ async function componi(stato) {
     // Un allenamento ancora aperto oggi non entra nel pacchetto (i dati non
     // sono chiusi), ma va detto: senza, il coach riceveva il log di ieri
     // credendo che fosse l'ultima cosa fatta.
-    const aperta = tutte.find((s) => s.stato === "inCorso");
+    // L'avviso sull'allenamento aperto serve a spiegare perché nel pacchetto
+    // c'è quello di ieri. Se l'allenamento l'hai scelto tu, non c'è niente da
+    // spiegare: hai chiesto quello.
+    const aperta = voluta ? null : tutte.find((s) => s.stato === "inCorso");
     if (aperta) {
       const quante = (await store.serieDi(aperta.id)).length;
       pezzi.push(
@@ -230,7 +273,8 @@ async function componi(stato) {
       const uno = altriDelGiorno.length === 1;
       pezzi.push(
         `NOTA: lo stesso giorno ${uno ? "c'è un altro allenamento chiuso" : "ci sono altri allenamenti chiusi"}: ` +
-          `${elenco.join(", ")}. Nel pacchetto ne entra uno solo, il più recente: ` +
+          `${elenco.join(", ")}. Nel pacchetto ne entra uno solo, ` +
+          `${voluta ? "quello scelto" : "il più recente"}: ` +
           `${uno ? "quello va mandato" : "quelli vanno mandati"} con un pacchetto a parte.`
       );
       contenuto.push(

@@ -1025,15 +1025,23 @@ export async function caricoProposto(v, { obiettivo = undefined, fatte = [] } = 
   );
 }
 
-/** Come si scrive il bersaglio di un esercizio: «3 × 8-10», «3 × 12», «3 × 3 min». */
-export function bersaglioProposto(v, obiettivo = null, durataScritta = null) {
+/**
+ * Come si scrive il bersaglio di un esercizio: «3 × 8-10», «3 × 12», «3 × 3 min».
+ *
+ * «per lato» non sta nel brief ma nella libreria, perché è una proprietà del
+ * gesto: il suitcase hold si tiene con un braccio alla volta, sempre, chiunque
+ * lo prescriva. Scriverlo qui serve a non far leggere «2 × 30s» a una cosa che
+ * di secondi ne chiede centoventi.
+ */
+export function bersaglioProposto(v, obiettivo = null, durataScritta = null, def = null) {
   if (!v) return null;
   const tempo = durataScritta || ((sec) => (sec >= 60 && sec % 60 === 0 ? `${sec / 60} min` : `${sec}s`));
-  if (v.aTempo) return `${v.serie} × ${tempo(v.durataSec || 0)}`;
+  const lati = def?.perLato ? " per lato" : "";
+  if (v.aTempo) return `${v.serie} × ${tempo(v.durataSec || 0)}${lati}`;
   if (obiettivo?.rip != null) return `${v.serie} × ${obiettivo.rip}`;
   // Una serie da una ripetizione sola non è un bersaglio: è un gesto singolo.
   if (v.serie === 1 && v.ripMin === 1 && v.ripMax === 1) return null;
-  return `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}`;
+  return `${v.serie} × ${v.ripMin === v.ripMax ? v.ripMin : `${v.ripMin}-${v.ripMax}`}${lati}`;
 }
 
 /**
