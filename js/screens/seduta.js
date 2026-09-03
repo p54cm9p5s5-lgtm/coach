@@ -1788,38 +1788,7 @@ async function vistaEsercizio(corpo, piede) {
     );
   }
 
-  aggiungi(corpo, 
-    h(
-      "div.guida",
-      def?.video ? riquadroVideo(def) : null,
-      def?.esecuzione ? sezione("Esecuzione", def.esecuzione, "ol") : null,
-      def?.setup ? sezione("Setup", def.setup) : null,
-      def?.erroriComuni ? sezione("Errori da evitare", def.erroriComuni) : null,
-      def?.cue ? h("section.cue", h("h3", "Cue"), h("p", def.cue)) : null,
-      def?.sicurezza ? h("section.sicurezza", h("h3", "Sicurezza"), h("p", def.sicurezza)) : null,
-      // La nota della libreria non si vedeva da nessuna parte: c'era scritta e
-      // basta. È il posto dove sta una decisione presa sull'esercizio — perché
-      // il carico non si tocca, perché non conta in un certo volume — e chi lo
-      // sta facendo è chi ha più bisogno di saperlo.
-      def?.nota ? h("section", h("h3", "Nota"), h("p", def.nota)) : null,
-      // Da dove arrivano queste istruzioni.
-      //
-      // Quando il coach cambia il come di un esercizio — «il manubrio va tenuto
-      // così» — quel testo arriva dal brief e copre quello della libreria. Chi
-      // legge deve saperlo: un'istruzione scritta dal coach per il carico di
-      // oggi non è la stessa cosa di una descrizione generale dell'esercizio, e
-      // se domani il carico cambia quella frase può sparire.
-      def?.dalBrief
-        ? h(
-            "p.footnote",
-            { style: "margin:10px 0 0" },
-            `${elencaCampi(def.dalBrief)} ${contaCampi(def.dalBrief) === 1 ? "arriva" : "arrivano"} dal master brief` +
-              (def.dalBrief.quando ? ` del ${dataLunga(def.dalBrief.quando)}` : "") +
-              ", non dalla libreria dell'app."
-          )
-        : null
-    )
-  );
+  aggiungi(corpo, guidaEsercizio(def));
 
   // Su un esercizio a tempo la serie non è una cosa che «completi»: è una cosa
   // che tieni, e quanto la tieni è il dato. Il cronometro parte con «Avvia» e
@@ -2348,6 +2317,51 @@ function elencaCampi(d) {
     .map((k) => NOMI_CAMPI[k] || k);
   if (nomi.length <= 1) return (nomi[0] || "questo testo").replace(/^l'|^il |^la |^gli /, (m) => m.toUpperCase());
   return `${nomi.slice(0, -1).join(", ")} e ${nomi.at(-1)}`.replace(/^./, (c) => c.toUpperCase());
+}
+
+/**
+ * La guida di un esercizio: video, esecuzione, setup, errori, cue, sicurezza,
+ * nota, e da dove arrivano quei testi.
+ *
+ * Esce da qui perché serve anche fuori dall'allenamento. Fino al 03/09 le
+ * istruzioni si potevano leggere SOLO sotto il bilanciere: il coach scriveva
+ * come si fa un esercizio e per vederlo bisognava cominciare una seduta. Adesso
+ * si apre anche dallo Storico, la sera prima.
+ *
+ * Una funzione sola, non due disegni: due copie della stessa scheda prima o poi
+ * divergono, e quella che diverge è sempre quella che nessuno guarda.
+ */
+export function guidaEsercizio(def) {
+  return h(
+      "div.guida",
+      def?.video ? riquadroVideo(def) : null,
+      def?.esecuzione ? sezione("Esecuzione", def.esecuzione, "ol") : null,
+      def?.setup ? sezione("Setup", def.setup) : null,
+      def?.erroriComuni ? sezione("Errori da evitare", def.erroriComuni) : null,
+      def?.cue ? h("section.cue", h("h3", "Cue"), h("p", def.cue)) : null,
+      def?.sicurezza ? h("section.sicurezza", h("h3", "Sicurezza"), h("p", def.sicurezza)) : null,
+      // La nota della libreria non si vedeva da nessuna parte: c'era scritta e
+      // basta. È il posto dove sta una decisione presa sull'esercizio — perché
+      // il carico non si tocca, perché non conta in un certo volume — e chi lo
+      // sta facendo è chi ha più bisogno di saperlo.
+      def?.nota ? h("section", h("h3", "Nota"), h("p", def.nota)) : null,
+      // Da dove arrivano queste istruzioni.
+      //
+      // Quando il coach cambia il come di un esercizio — «il manubrio va tenuto
+      // così» — quel testo arriva dal brief e copre quello della libreria. Chi
+      // legge deve saperlo: un'istruzione scritta dal coach per il carico di
+      // oggi non è la stessa cosa di una descrizione generale dell'esercizio, e
+      // se domani il carico cambia quella frase può sparire.
+      def?.dalBrief
+        ? h(
+            "p.footnote",
+            { style: "margin:10px 0 0" },
+            `${elencaCampi(def.dalBrief)} ${contaCampi(def.dalBrief) === 1 ? "arriva" : "arrivano"} dal master brief` +
+              (def.dalBrief.quando ? ` del ${dataLunga(def.dalBrief.quando)}` : "") +
+              ", non dalla libreria dell'app."
+          )
+        : null
+  );
 }
 
 function sezione(titolo, voci, tag = "ul") {

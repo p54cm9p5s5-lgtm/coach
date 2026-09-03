@@ -270,9 +270,20 @@ async function dettaglioEsercizio(id) {
   const def = store.esercizio(id);
   aggiungi(wrap, intestazione(def?.nome || id, { etichetta: "Indietro", onclick: () => indietro("storico") }));
 
+  // Come si fa, prima di come è andata.
+  //
+  // Fino al 03/09 questa schermata mostrava solo la tabella delle esposizioni:
+  // le istruzioni — video, esecuzione, cue, sicurezza — si potevano leggere
+  // SOLO durante un allenamento. Da quando il coach può cambiarle dal brief la
+  // cosa è diventata assurda: ti scrive come tenere il manubrio e per leggerlo
+  // dovevi cominciare la seduta. È lo stesso identico disegno della scheda
+  // dell'allenamento, non una copia.
+  const { guidaEsercizio } = await import("./seduta.js");
+  aggiungi(wrap, guidaEsercizio(def));
+
   const esp = await store.esposizioni(id);
   if (!esp.length) {
-    aggiungi(wrap, h("div.empty", h("h3", "Nessuna esposizione registrata")));
+    aggiungi(wrap, h("div.empty", h("h3", "Non l'hai ancora fatto nemmeno una volta")));
     return wrap;
   }
 

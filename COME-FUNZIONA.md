@@ -133,6 +133,12 @@ Campi facoltativi, uno o tutti:
   "sicurezza": "…" }
 ```
 
+**Dove si legge.** Nella scheda dell'esercizio durante l'allenamento, e — dal
+3 settembre — anche fuori: **Salute › Storico › l'esercizio**. Prima le
+istruzioni si potevano leggere solo sotto il bilanciere, il che è diventato
+assurdo da quando il coach può cambiarle: ti scrive come tenere il manubrio e per
+vederlo dovevi cominciare una seduta. È la stessa identica scheda, non una copia.
+
 **Come si comporta.** Quello che arriva dal brief **copre** quello della libreria
 e nella scheda c'è scritto da dove viene: *«L'esecuzione e la sicurezza arrivano
 dal master brief del 3 settembre, non dalla libreria dell'app.»* La scheda di
