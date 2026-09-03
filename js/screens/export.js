@@ -137,13 +137,23 @@ export async function render({ vaiA }) {
   };
 
   const lista = h("div.list");
-  for (const s of scelteDelProfilo()) {
+  for (const scelta of scelteDelProfilo()) {
     // Con un allenamento scelto la voce non è più «l'ultimo»: è quello lì, e
     // l'etichetta lo deve dire, se no la spunta e l'avviso qui sopra si
     // contraddicono a vicenda.
-    if (s.id === "seduta" && sedutaScelta) {
-      s = { ...s, nome: `Log di ${sedutaScelta.tipoNome} del ${dataBreve(sedutaScelta.data)}`, sub: "formato §12, con recuperi e densità reali" };
-    }
+    //
+    // La riga nuova è una COPIA: qui c'era una riassegnazione della variabile
+    // del ciclo, che è dichiarata `const`, e la schermata moriva con
+    // «Attempted to assign to readonly property» — sul telefono, dove nessuno
+    // l'aveva riaperta dopo l'ultima modifica.
+    const s =
+      scelta.id === "seduta" && sedutaScelta
+        ? {
+            ...scelta,
+            nome: `Log di ${sedutaScelta.tipoNome} del ${dataBreve(sedutaScelta.data)}`,
+            sub: "formato §12, con recuperi e densità reali",
+          }
+        : scelta;
     const spunta = h("input", { type: "checkbox", checked: stato[s.id] });
     spunta.addEventListener("change", async () => {
       stato[s.id] = spunta.checked;

@@ -872,6 +872,25 @@ export async function verificaSchermate({ schermate = null } = {}) {
     ["Impostazioni", "../js/screens/impostazioni.js"],
   ];
   const finto = () => {};
+  /* L'indirizzo va messo a zero prima di disegnare.
+   *
+   * Diverse schermate leggono i parametri da `location.hash` per decidere cosa
+   * mostrare: lo Storico con `?seduta=…` non disegna l'elenco, rimanda al
+   * risultato e restituisce una pagina vuota. Lanciando la rete mentre l'app
+   * stava sul pacchetto di un allenamento — indirizzo `#/export?seduta=…` —
+   * usciva «Storico: esce quasi vuota», che è vero e non è un difetto: è la
+   * prova che guarda una schermata nel posto sbagliato.
+   *
+   * Una rete il cui esito dipende da dove ti trovi è una rete che prima o poi
+   * grida al lupo, e a quel punto smetti di crederle. Si azzera con
+   * `replaceState`, che cambia l'indirizzo senza far scattare il router, e alla
+   * fine si rimette quello di prima. */
+  const indirizzoPrec = location.hash;
+  try {
+    history.replaceState(null, "", "#/rete");
+  } catch {
+    /* se il browser non lo permette si disegna com'è: meglio di niente */
+  }
   for (const [nome, modulo] of SCHERMATE) {
     casi++;
     let el = null;
@@ -909,6 +928,11 @@ export async function verificaSchermate({ schermate = null } = {}) {
         errori.push(`${nome}: un ${n.tagName.toLowerCase()} punta a «${v.slice(0, 40)}»`);
       }
     }
+  }
+  try {
+    history.replaceState(null, "", indirizzoPrec || "#/");
+  } catch {
+    /* niente: l'indirizzo è cosmetico, l'esito qui sopra è già calcolato */
   }
   return esito("le schermate, disegnate una per una", `${casi} schermate`, errori);
 }
