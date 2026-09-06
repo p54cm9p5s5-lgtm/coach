@@ -2921,6 +2921,13 @@ const paroleDi = (s) =>
  *   finiva sul giorno «sabato» — la voce «domenica» non veniva usata mai, e
  *   nello storico un allenamento di domenica risultava fatto di sabato.
  */
+/* I nomi dei giorni della settimana, come li scrive `paroleDi`. Servono a non
+   scambiare un «quando» per un «cosa»: vedi il commento dentro
+   `abbinaAlloSplit`. */
+const GIORNI_PAROLE = new Set([
+  "lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica",
+]);
+
 export function abbinaAlloSplit(titolo, data = null) {
   const t = chiaveTitolo(titolo);
   if (!t) return null;
@@ -2937,6 +2944,16 @@ export function abbinaAlloSplit(titolo, data = null) {
     for (const g of giorniSplit()) {
       for (const insieme of [paroleDi(g.nome), paroleDi(g.id)]) {
         if (!insieme.length) continue;
+        // Il nome di un giorno della settimana non identifica un allenamento.
+        //
+        // Gli id dei due giorni di sola mobilità sono «sabato» e «domenica»:
+        // parole comunissime, che in un titolo dicono QUANDO, non COSA. Il
+        // 06/09 l'unico evento del calendario era «Peso + misure + foto
+        // progressi (anticipato a domenica)» e l'app ci ha letto dentro il
+        // giorno «domenica», annunciando la mobilità per una giornata in cui
+        // il coach non aveva previsto niente. Il titolo vero — «Mobilità» —
+        // continua a combaciare, perché quello è il NOME del giorno.
+        if (insieme.every((p) => GIORNI_PAROLE.has(p))) continue;
         if (!insieme.every((p) => parole.has(p))) continue;
         // A parità di parole vince quello che cade nel giorno della settimana
         // dell'evento: è l'unica cosa che distingue due giorni omonimi.

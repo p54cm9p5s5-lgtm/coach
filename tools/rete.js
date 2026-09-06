@@ -781,6 +781,61 @@ export function verificaLettoreBrief({ validatore = validaBrief } = {}) {
  *
  * Non tocca l'archivio vero: lavora su una scheda finta.
  */
+/**
+ * Il titolo di un evento del calendario e il giorno dello split.
+ *
+ * Il 06/09 l'app annunciava «Mobilità» in una domenica in cui il coach non
+ * aveva previsto niente. L'unico evento era «Peso + misure + foto progressi
+ * (anticipato a domenica)»: gli id dei due giorni di sola mobilità sono
+ * «sabato» e «domenica», e la parola nel titolo diceva QUANDO, non COSA.
+ *
+ * È la stessa famiglia di errore delle regexp che pescano «null» dentro
+ * «annullata»: una parola comune usata come identificatore. Qui si prova che
+ * un promemoria non diventa un allenamento, e che gli allenamenti veri
+ * continuano a essere riconosciuti — comprese le due mobilità omonime del
+ * fine settimana, che si distinguono solo per la data.
+ */
+export function verificaAbbinamentoCalendario({ magazzino = store } = {}) {
+  const errori = [];
+  let casi = 0;
+  const prova = (titolo, data, atteso) => {
+    casi++;
+    const avuto = magazzino.abbinaAlloSplit(titolo, data);
+    if (avuto !== atteso) errori.push(`«${titolo}» del ${data}: ${avuto ?? "niente"}, atteso ${atteso ?? "niente"}`);
+  };
+
+  // I giorni dello split, presi dal programma vero: senza programma non c'è
+  // niente da provare.
+  const giorni = magazzino.giorniSplit?.() || [];
+  if (!giorni.length) return esito("il calendario e i giorni dello split", "0 titoli", []);
+  const perGiorno = new Map(giorni.map((g) => [g.giorno, g]));
+
+  // Un promemoria che nomina un giorno della settimana NON è un allenamento.
+  const NOMI = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"];
+  for (const n of NOMI) {
+    prova(`Peso + misure + foto progressi (anticipato a ${n})`, "2026-09-06", null);
+    prova(`Promemoria: spostato a ${n}`, "2026-09-06", null);
+    prova(n, "2026-09-06", null);
+  }
+  prova("Laser", "2026-09-08", null);
+  prova("Carlo — Cardiologia", "2026-09-07", null);
+
+  // Gli allenamenti veri continuano a essere riconosciuti, per NOME.
+  for (const g of giorni) {
+    if (!g.nome) continue;
+    // La data giusta per quel giorno dello split, così due giorni omonimi non
+    // si contendono il titolo.
+    const dom = "2026-09-06"; // domenica
+    const data = ["2026-09-06","2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-12"][g.giorno] || dom;
+    prova(`Allenamento: ${g.nome}`, data, g.id);
+  }
+
+  // E il riposo resta riposo.
+  prova("Riposo", "2026-09-06", "riposo");
+
+  return esito("il calendario e i giorni dello split", `${casi} titoli`, errori);
+}
+
 export async function verificaTestiDalBrief({ magazzino = store } = {}) {
   const errori = [];
   let casi = 0;
@@ -1050,6 +1105,7 @@ export async function rete() {
     verificaLettoreBrief(),
     await verificaStradeDiGuasto(),
     await verificaTestiDalBrief(),
+    verificaAbbinamentoCalendario(),
     await verificaSchermate(),
     verificaDisegniEBlocchi(),
     await verificaVeritaDeiDati(),
