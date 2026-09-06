@@ -1136,6 +1136,16 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
   if (conteggio.allenamenti) righe.push(`${conteggio.allenamenti} ${conteggio.allenamenti === 1 ? "allenamento" : "allenamenti"} dal Watch`);
   if (conteggio.agenda) {
     righe.push(`${conteggio.agenda} ${conteggio.agenda === 1 ? "giorno" : "giorni"} dal calendario`);
+  } else if ((await store.agenda()).length) {
+    // Silenzio pericoloso: un pacchetto senza righe AGENDA lascia il calendario
+    // esattamente com'era, e chi l'ha appena incollato crede di averlo
+    // aggiornato. Se poi l'app continua a proporre un allenamento che sul
+    // calendario non c'è più, la conclusione naturale è «l'app sbaglia» —
+    // mentre sta mostrando fedelmente l'ultima lettura, che è vecchia.
+    righe.push(
+      "Nessun evento del calendario in questo pacchetto: gli allenamenti programmati restano quelli letti l'ultima volta. " +
+        "Per aggiornarli serve il comando «Coach Calendario»."
+    );
   }
   if (conteggio.troppoVecchi) {
     righe.push(
