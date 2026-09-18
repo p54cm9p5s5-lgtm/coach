@@ -3,6 +3,7 @@ import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { estraiBlocco, valida, confronta } from "../brief.js";
 import { apriImport } from "./salute.js";
+import * as sync from "../sync.js";
 
 const NOME_SHORTCUT_CALENDARIO = "Coach Calendario";
 
@@ -56,6 +57,7 @@ export async function render({ vaiA, ridisegna }) {
   const giorniExport = await store.giorniDaUltimoExport();
   // Solo per sapere se la voce va mostrata: non tocca niente.
   const doppioni = await store.doppioniWatch();
+  const statoSync = await sync.stato().catch(() => ({ attiva: false }));
   // `true` protetto, `false` cancellabile, `null` il telefono non risponde.
   const archivioProtetto = await (async () => {
     try {
@@ -306,6 +308,8 @@ export async function render({ vaiA, ridisegna }) {
     )
   );
 
+  aggiungi(wrap, gruppoSincronizzazione(statoSync, ridisegna));
+
   aggiungi(wrap,
     h(
       "div.group",
@@ -410,7 +414,13 @@ export async function render({ vaiA, ridisegna }) {
   );
 
   aggiungi(wrap, 
-    h("p.footnote", { style: "margin:24px 16px" }, "Coach · i dati restano su questo dispositivo, non vengono inviati da nessuna parte.")
+    h(
+      "p.footnote",
+      { style: "margin:24px 16px" },
+      statoSync.attiva
+        ? "Coach · i dati vivono su questo dispositivo; la sincronizzazione ne manda una copia cifrata al tuo repository privato su GitHub, e nient'altro esce."
+        : "Coach · i dati restano su questo dispositivo, non vengono inviati da nessuna parte."
+    )
   );
 
   return wrap;
@@ -1081,4 +1091,204 @@ async function forzaAggiornamento() {
     }
   }
   location.reload(true);
+}
+
+// ---------- sincronizzazione con il Mac ----------
+
+function oraBreve(iso) {
+  if (!iso) return "mai";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const oggi = isoDate() === isoDate(d);
+  return oggi
+    ? `oggi ${d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`
+    : d.toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function gruppoSincronizzazione(st, ridisegna) {
+  const righe = [];
+  if (!st.attiva) {
+    righe.push(
+      h(
+        "div.row",
+        h("div.main", h("span.title", "Spenta"), h("span.sub", "i dati restano solo su questo dispositivo"))
+      ),
+      h(
+        "button.row.accent",
+        { onclick: () => apriAttivazione("principale", ridisegna) },
+        h("div.main", h("span.title", "Questo è l'iPhone: manda i dati"), h("span.sub", "il dispositivo dove registri")),
+        h("span.chevron", "›")
+      ),
+      h(
+        "button.row.accent",
+        { onclick: () => apriAttivazione("copia", ridisegna) },
+        h("div.main", h("span.title", "Questo è il Mac: ricevi i dati"), h("span.sub", "qui si guarda soltanto")),
+        h("span.chevron", "›")
+      )
+    );
+  } else {
+    const principale = st.ruolo === "principale";
+    righe.push(
+      h(
+        "div.row",
+        h(
+          "div.main",
+          h("span.title", principale ? "Manda i dati al Mac" : "Riceve i dati dall'iPhone"),
+          h("span.sub", st.repo)
+        ),
+        h("span.value", principale ? `inviati ${oraBreve(st.ultimaVolta)}` : `dati di ${oraBreve(st.datiDel)}`),
+        principale && st.inAttesa && !st.errore ? h("span.pill.warn", "da mandare") : null
+      )
+    );
+    if (st.errore) {
+      righe.push(
+        h(
+          "div.row",
+          h("div.main", h("span.title", "Non ci riesce"), h("span.sub", st.errore)),
+          h("span.pill.warn", "fermo")
+        )
+      );
+    }
+    righe.push(
+      h(
+        "button.row.accent",
+        {
+          onclick: async () => {
+            toast(principale ? "Mando…" : "Guardo se c'è qualcosa di nuovo…");
+            await sync.giro(async () => {
+              await store.init();
+            });
+            const dopo = await sync.stato();
+            toast(dopo.errore ? "Non ci è riuscito: il motivo è scritto qui." : principale ? "Mandati." : "Aggiornato.");
+            if (ridisegna) await ridisegna();
+          },
+        },
+        h("div.main", h("span.title", principale ? "Manda adesso" : "Aggiorna adesso")),
+        h("span.chevron", "›")
+      ),
+      h(
+        "button.row.accent",
+        { onclick: () => spegniSincronizzazione(st, ridisegna) },
+        h("div.main", h("span.title", "Spegni la sincronizzazione")),
+        h("span.chevron", "›")
+      )
+    );
+  }
+  return h(
+    "div.group",
+    h("h2", "Sincronizzazione con il Mac"),
+    h("div.list", ...righe),
+    h(
+      "p.footnote",
+      st.attiva && st.ruolo === "copia"
+        ? "Qui si guarda soltanto: allenamenti, misure e il resto si registrano dall'iPhone e arrivano da soli, entro un minuto da quando l'iPhone li ha mandati."
+        : "L'iPhone scrive, il Mac legge. I dati partono cifrati con una frase che sai solo tu e finiscono in un tuo repository privato su GitHub: senza la frase lì sono illeggibili. Le foto viaggiano a parte, e solo quando cambiano."
+    )
+  );
+}
+
+function campo({ etichetta, tipo = "text", segnaposto = "", valore = "" }) {
+  const input = h("input", {
+    type: tipo,
+    autocapitalize: "off",
+    autocorrect: "off",
+    spellcheck: false,
+    autocomplete: tipo === "password" ? "new-password" : "off",
+    placeholder: segnaposto,
+    style:
+      "display:block;box-sizing:border-box;width:100%;border:0;background:var(--fill-tertiary);border-radius:10px;" +
+      "padding:12px;font:inherit;font-size:17px;color:var(--label)",
+  });
+  input.value = valore;
+  const blocco = h(
+    "div",
+    { style: "padding:10px 16px 0" },
+    h("div", { style: "font-size:13px;color:var(--label-secondary);margin:0 0 6px 4px" }, etichetta),
+    input
+  );
+  return { input, blocco };
+}
+
+async function apriAttivazione(ruolo, ridisegna) {
+  const principale = ruolo === "principale";
+  const repo = campo({ etichetta: "Repository privato (utente/nome)", segnaposto: "utente/coach-dati" });
+  const token = campo({ etichetta: "Token di GitHub", tipo: "password", segnaposto: "github_pat_…" });
+  const frase = campo({ etichetta: "Frase segreta (almeno 12 caratteri)", tipo: "password" });
+  const ripeti = principale ? campo({ etichetta: "Ripeti la frase", tipo: "password" }) : null;
+  const messaggio = h("p.footnote", { style: "margin:12px 16px 0;min-height:1em" });
+  const bottone = h("button.btn", "Attiva");
+
+  const fatto = await sheet((close) => {
+    bottone.onclick = async () => {
+      if (ripeti && ripeti.input.value !== frase.input.value) {
+        messaggio.textContent = "Le due frasi non sono uguali.";
+        return;
+      }
+      bottone.disabled = true;
+      bottone.textContent = principale ? "Cifro e mando…" : "Scarico e apro…";
+      messaggio.textContent = "";
+      try {
+        await sync.attiva(
+          { ruolo, repo: repo.input.value, token: token.input.value, frase: frase.input.value },
+          {
+            conferma: (testo) =>
+              chiedi({
+                titolo: "Nel repository c'è già qualcosa",
+                testo,
+                opzioni: [{ etichetta: "Sostituisci", valore: true }],
+              }).then((v) => v === true),
+            applica: async () => {
+              await store.init();
+            },
+          }
+        );
+        close(true);
+      } catch (e) {
+        messaggio.textContent = e?.message || String(e);
+        bottone.disabled = false;
+        bottone.textContent = "Riprova";
+      }
+    };
+    return h(
+      "div",
+      h("h2", { style: "text-align:center" }, principale ? "Manda i dati al Mac" : "Ricevi i dati dall'iPhone"),
+      h(
+        "p.footnote",
+        { style: "margin:4px 16px 0" },
+        principale
+          ? "La frase non si salva da nessuna parte e non si può recuperare: scrivila dove tieni le password. Servirà uguale sul Mac."
+          : "Stesso repository, stesso token e stessa frase che hai messo sull'iPhone. L'archivio di questo Mac verrà sostituito con quello dell'iPhone."
+      ),
+      repo.blocco,
+      token.blocco,
+      frase.blocco,
+      ripeti?.blocco || null,
+      messaggio,
+      h(
+        "div.btn-wrap",
+        { style: "display:grid;gap:12px" },
+        bottone,
+        h("button.btn.secondary", { onclick: () => close(false) }, "Annulla")
+      )
+    );
+  });
+  if (fatto) {
+    toast(principale ? "Sincronizzazione accesa: i dati sono partiti." : "Sincronizzazione accesa: qui c'è la copia dell'iPhone.", 3500);
+    if (ridisegna) await ridisegna();
+  }
+}
+
+async function spegniSincronizzazione(st, ridisegna) {
+  const ok = await chiedi({
+    titolo: "Spegnere la sincronizzazione?",
+    testo:
+      st.ruolo === "principale"
+        ? "Questo iPhone smette di mandare i dati. Quelli già mandati restano nel repository finché non li cancelli tu da GitHub."
+        : "Questo Mac smette di ricevere e torna un'app normale, con i dati che ha adesso.",
+    opzioni: [{ etichetta: "Spegni", valore: true }],
+  });
+  if (ok !== true) return;
+  await sync.spegni();
+  toast("Sincronizzazione spenta.");
+  if (ridisegna) await ridisegna();
 }

@@ -1,8 +1,12 @@
 # Coach
 
 App personale di allenamento. PWA, nessun build step, nessun server, nessuna dipendenza.
-I dati restano sul dispositivo (IndexedDB): nessun account, nessun server, niente
-che venga inviato. Le uniche richieste che escono sono verso YouTube, e sono due:
+I dati vivono sul dispositivo (IndexedDB): nessun account, nessun server. Se accendi
+la **sincronizzazione con il Mac** (Impostazioni, spenta di base), l'iPhone manda
+l'archivio **cifrato sul telefono** (AES-GCM, chiave da una frase che non si salva)
+a un tuo repository **privato** su GitHub (`api.github.com`), e il Mac lo scarica
+in sola lettura: l'iPhone scrive, il Mac legge (`js/sync.js`). A parte questo, le
+uniche richieste che escono sono verso YouTube, e sono due:
 il player (`youtube-nocookie.com`) e la miniatura del video (`i.ytimg.com`).
 Partono **quando la scheda dell'esercizio compare a schermo**, non al tocco: il
 player è già montato, così parte subito quando lo tocchi, e la miniatura serve il

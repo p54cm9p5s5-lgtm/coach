@@ -33,9 +33,12 @@ coach resta l'unico a poterle mettere nero su bianco.
 
 - Applicazione web installata sulla schermata Home dell'iPhone (PWA). Nessuno
   store, nessun account, nessun login.
-- **Tutti i dati restano sul telefono** (IndexedDB). Niente server, niente cloud,
-  niente invii automatici. L'unico modo in cui un dato esce è che l'atleta copi
-  il pacchetto e lo incolli in chat.
+- **I dati vivono sul telefono** (IndexedDB). Niente server, niente account. Al
+  coach un dato arriva solo se l'atleta copia il pacchetto e lo incolla in chat.
+  C'è un'eccezione, scelta dall'atleta: la **sincronizzazione con il Mac**, che
+  manda l'archivio **cifrato sul telefono** in un suo repository privato su
+  GitHub, dove senza la sua frase è illeggibile. L'iPhone scrive, il Mac legge
+  soltanto.
 - Funziona **completamente offline**, comprese le ricariche: verificato a rete
   staccata su tutte le schermate.
 - Si aggiorna da sola alla riapertura, **tranne mentre un allenamento è aperto**:
@@ -1308,9 +1311,11 @@ Sono la parte che conta più delle funzioni.
 - **Non lascia un bottone spento senza spiegare cosa manca.**
 - **Non tratta pressione arteriosa né ECG**, non interpreta dati clinici, non
   calcola fabbisogni calorici e non dà indicazioni alimentari.
-- **Non manda fuori dal telefono nessun tuo dato.** Allenamenti, misure, foto,
-  sonno, sigarette: restano nell'archivio del telefono e non esistono altrove.
-  Non c'è nessun server, nessun account, nessuna statistica raccolta.
+- **Non manda fuori dal telefono nessun tuo dato in chiaro.** Allenamenti, misure,
+  foto, sonno, sigarette restano nell'archivio del telefono. Se accendi la
+  sincronizzazione con il Mac ne esce una copia **cifrata** verso un tuo
+  repository privato su GitHub, illeggibile senza la frase; spenta, non esce
+  niente. Non c'è nessun server nostro, nessun account, nessuna statistica raccolta.
   Le uniche richieste che possono uscire riguardano i **video degli esercizi**, e
   non portano fuori niente di tuo.
 

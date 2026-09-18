@@ -69,7 +69,7 @@ for cosa, segno, solo in REGOLE:
           f"non si trova più in {', '.join(solo)}: la prova non controlla più niente")
 
 # --- 2. dove può andare la rete ----------------------------------------------
-AMMESSI = {"www.youtube-nocookie.com", "i.ytimg.com", "www.w3.org"}
+AMMESSI = {"www.youtube-nocookie.com", "i.ytimg.com", "www.w3.org", "api.github.com"}
 for f in FONTI + ["index.html", "css/app.css", "manifest.webmanifest", "sw.js"]:
     for d in set(re.findall(r"https?://([A-Za-z0-9.-]+)", leggi(f))):
         prova(f"nessun dominio nuovo in {f}", d in AMMESSI, f"contatta {d}")
@@ -82,7 +82,7 @@ if m:
     csp = " ".join(m.group(1).split())
     for pezzo in ["default-src 'self'", "script-src 'self'", "object-src 'none'",
                   "form-action 'none'", "frame-src https://www.youtube-nocookie.com",
-                  "connect-src 'self' https://i.ytimg.com"]:
+                  "connect-src 'self' https://i.ytimg.com https://api.github.com"]:
         prova(f"la CSP dice «{pezzo}»", pezzo in csp)
     prova("la CSP non permette di eseguire testo", "unsafe-eval" not in csp)
     prova("la CSP non ha caratteri jolly", " *" not in csp)

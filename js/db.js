@@ -1,5 +1,6 @@
 /* Livello dati: IndexedDB, nessuna dipendenza.
-   Tutti i dati restano sul dispositivo. */
+   I dati vivono sul dispositivo. Escono solo se accendi la sincronizzazione
+   con il Mac, e allora escono cifrati (js/sync.js). */
 
 const DB_NAME = "coach";
 // Sale solo quando si aggiunge un archivio: l'aggiornamento qui sotto crea
@@ -195,7 +196,47 @@ export function seScriveUnAltraCopia(fn) {
   }
 }
 
+/* La sincronizzazione (js/sync.js) vuole sapere cosa è stato scritto: sul
+   dispositivo principale ogni salvataggio fa partire, dopo qualche secondo,
+   l'invio dei dati cifrati. È una sola funzione e non un elenco: chi ascolta
+   è sempre uno. */
+let dopoLaScrittura = null;
+export function dopoOgniScrittura(fn) {
+  dopoLaScrittura = fn;
+}
+
+/* Sul Mac, che riceve la copia dell'iPhone, i tuoi dati non si toccano.
+ *
+ * Quello che registrassi lì sparirebbe alla prossima copia in arrivo, in
+ * silenzio: meglio dirlo subito, sul tocco. Restano scrivibili solo gli
+ * archivi che non sono dati tuoi o che l'app riscrive da sé — impostazioni,
+ * programma, libreria degli esercizi, copertine dei video — perché bloccarli
+ * fermerebbe l'avvio, e la copia successiva li rimette comunque come
+ * sull'iPhone. */
+let solaLettura = false;
+const SEMPRE_SCRIVIBILI = new Set(["impostazioni", "programma", "esercizi", "copertine"]);
+export const MESSAGGIO_SOLA_LETTURA =
+  "Qui Coach mostra la copia dell'iPhone: si registra dall'iPhone, e arriva qui da solo.";
+
+export function impostaSolaLettura(si) {
+  solaLettura = Boolean(si);
+}
+
+export function inSolaLettura() {
+  return solaLettura;
+}
+
+function controllaScrittura(archivi) {
+  if (!solaLettura) return;
+  if (archivi.some((a) => !SEMPRE_SCRIVIBILI.has(a))) throw new Error(MESSAGGIO_SOLA_LETTURA);
+}
+
 function annuncia(archivi) {
+  try {
+    dopoLaScrittura?.(archivi);
+  } catch {
+    /* chi ascolta non deve far fallire un salvataggio già riuscito */
+  }
   // Le copertine dei video non sono un tuo dato: annunciarle farebbe lampeggiare
   // l'avviso mentre l'app scarica miniature in sottofondo, per niente.
   const utili = archivi.filter((a) => a !== "copertine");
@@ -208,6 +249,7 @@ function annuncia(archivi) {
 }
 
 export async function put(store, value) {
+  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).put(value);
@@ -218,6 +260,7 @@ export async function put(store, value) {
 
 export async function putMany(store, values) {
   if (!values.length) return values;
+  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   const os = t.objectStore(store);
@@ -241,6 +284,7 @@ export async function putMany(store, values) {
 export async function delMulti(gruppi) {
   const nomi = Object.keys(gruppi).filter((n) => (gruppi[n] || []).length);
   if (!nomi.length) return 0;
+  controllaScrittura(nomi);
   const db = await open();
   const { t, done } = tx(db, nomi, "readwrite");
   let quante = 0;
@@ -268,6 +312,7 @@ export async function delMulti(gruppi) {
 }
 
 export async function del(store, key) {
+  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).delete(key);
@@ -276,10 +321,12 @@ export async function del(store, key) {
 }
 
 export async function clearStore(store) {
+  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).clear();
   await done;
+  annuncia([store]);
 }
 
 /**
@@ -287,12 +334,14 @@ export async function clearStore(store) {
  * niente. A pezzi, un'interruzione lasciava l'app con metà archivio.
  */
 export async function svuotaTutto() {
+  controllaScrittura(Object.keys(SCHEMA));
   const db = await open();
   const mancanti = await archiviMancanti();
   const presenti = Object.keys(SCHEMA).filter((s) => !mancanti.includes(s));
   const { t, done } = tx(db, presenti, "readwrite");
   for (const s of presenti) t.objectStore(s).clear();
   await done;
+  annuncia(presenti);
   return presenti;
 }
 
@@ -359,7 +408,7 @@ export async function esportaTutto({ salta = [] } = {}) {
  * com'era. Prima erano decine di transazioni separate: un'interruzione
  * lasciava l'archivio mezzo cancellato, senza modo di tornare indietro.
  */
-export async function importaTutto(dump, modo = "sostituisci") {
+export async function importaTutto(dump, modo = "sostituisci", { daSincronizzazione = false } = {}) {
   if (!dump || dump.formato !== "coach-backup") {
     throw new Error("File non riconosciuto: manca l'intestazione coach-backup.");
   }
@@ -409,6 +458,12 @@ export async function importaTutto(dump, modo = "sostituisci") {
       `Il file è danneggiato: ${conRigheRotte.join(", ")} non ${conRigheRotte.length === 1 ? "ha una forma" : "hanno una forma"} leggibile. Non ho toccato niente.`
     );
   }
+
+  // Sul Mac l'unica strada che scrive l'archivio è la copia che arriva
+  // dall'iPhone: un ripristino da file lì verrebbe cancellato dalla prossima.
+  // Dopo i controlli sul file e non prima: un file rotto si dice rotto
+  // ovunque, prima di dire che qui non si ripristina.
+  if (!daSincronizzazione) controllaScrittura(Object.keys(SCHEMA));
 
   // Si scrive solo negli archivi che questo telefono ha davvero: nominarne uno
   // inesistente farebbe fallire tutto il ripristino, dati validi compresi.

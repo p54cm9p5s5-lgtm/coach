@@ -1840,6 +1840,10 @@ export function propostaSuperataDalBrief(proposta, variante) {
 
 export async function aggiornaProposte(cache = null) {
   if (!PROGRAMMA) return { create: 0, tolte: 0 };
+  // Sul Mac che riceve la copia dell'iPhone il motore non gira: proposte e
+  // segnali li ha già calcolati l'iPhone, e arrivano con tutto il resto.
+  // Ricalcolarli qui vorrebbe dire scrivere dove non si scrive.
+  if (db.inSolaLettura()) return { create: 0, tolte: 0 };
   const oggi = isoDate();
   const reg = regole();
   const inv = await inventario();
@@ -2221,6 +2225,7 @@ export async function segnali({ inclusiArchiviati = false } = {}) {
  * il messaggio resta identico: se il segnale cambia, torna a farsi vedere.
  */
 export async function aggiornaSegnali(cache = null) {
+  if (db.inSolaLettura()) return (await db.all("segnali")).length; // vedi aggiornaProposte
   const complete = (await allenamenti()).filter((s) => s.stato === "completata");
   // I segnali guardano indietro di quattro allenamenti: leggere i questionari di
   // tutto lo storico a ogni giro sarebbe lavoro buttato via.

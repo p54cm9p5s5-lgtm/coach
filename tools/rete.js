@@ -37,6 +37,7 @@ import { tutto as nucleoDimostrato } from "./verifica-esaustiva.js";
 import { valutaProgressione } from "../js/segnali.js";
 import { analizza } from "../js/salute.js";
 import { valida as validaBrief, estraiBlocco } from "../js/brief.js";
+import * as sincro from "../js/sync.js";
 import { carichiPossibili, carichiManubrio, aPaio } from "../js/plates.js";
 import * as grafico from "../js/grafico.js";
 import { pacchettoDaExport } from "../js/salute-export.js";
@@ -96,7 +97,7 @@ export async function verificaSorgenteUnica() {
   const FILE = [
     "js/store.js", "js/ui.js", "js/db.js", "js/export.js", "js/punteggio.js", "js/segnali.js",
     "js/salute.js", "js/salute-export.js", "js/brief.js", "js/calendario.js", "js/grafico.js",
-    "js/plates.js", "js/app.js",
+    "js/plates.js", "js/app.js", "js/sync.js",
     "js/screens/oggi.js", "js/screens/seduta.js", "js/screens/storico.js", "js/screens/salute.js",
     "js/screens/corpo.js", "js/screens/fumo.js", "js/screens/acqua.js", "js/screens/proposte.js",
     "js/screens/export.js", "js/screens/allenamenti.js", "js/screens/impostazioni.js",
@@ -128,10 +129,12 @@ export async function verificaSorgenteUnica() {
     }
   }
   // Quali domini l'app può contattare. È l'invariante che vale più di tutti:
-  // «niente esce dal telefono» non è una promessa da scrivere in un documento,
-  // è una cosa che si conta. Due soli, tutti e due di YouTube. Se un domani ne
-  // compare un terzo, questa prova lo dice prima che lo scopra la rete di casa.
-  const AMMESSI = new Set(["www.youtube-nocookie.com", "i.ytimg.com", "www.w3.org"]);
+  // cosa esce dal telefono non è una promessa da scrivere in un documento, è
+  // una cosa che si conta. Due di YouTube, e dal 19/09 uno di GitHub: la
+  // sincronizzazione con il Mac, scelta dall'utente, spenta finché non la
+  // accendi, e con i dati cifrati prima di partire. Se un domani ne compare
+  // un quarto, questa prova lo dice prima che lo scopra la rete di casa.
+  const AMMESSI = new Set(["www.youtube-nocookie.com", "i.ytimg.com", "www.w3.org", "api.github.com"]);
   const domini = new Set();
   for (const [f, testo] of sorgenti) {
     for (const m of (testo || "").matchAll(/https?:\/\/([A-Za-z0-9.-]+)/g)) {
@@ -154,7 +157,7 @@ export async function verificaSorgenteUnica() {
         ["object-src 'none'", "niente oggetti incorporati"],
         ["form-action 'none'", "nessun modulo che spedisce"],
         ["frame-src https://www.youtube-nocookie.com", "il player"],
-        ["connect-src 'self' https://i.ytimg.com", "la miniatura"],
+        ["connect-src 'self' https://i.ytimg.com https://api.github.com", "la miniatura e la sincronizzazione"],
       ];
       for (const [pezzo, perche] of ATTESE) if (!csp.includes(pezzo)) errori.push(`la CSP non dice più «${pezzo}» (${perche})`);
       // e non deve essersi allargata a domini nuovi
@@ -795,6 +798,75 @@ export function verificaLettoreBrief({ validatore = validaBrief } = {}) {
  * continuano a essere riconosciuti — comprese le due mobilità omonime del
  * fine settimana, che si distinguono solo per la data.
  */
+/**
+ * La sincronizzazione con il Mac (19/09): quello che esce dal telefono deve
+ * essere illeggibile, la frase sbagliata non deve aprire niente, e sul Mac
+ * l'archivio deve ricevere solo quello che è arrivato — senza svuotare le
+ * parti di cui la copia non sa niente. Niente rete e niente archivio toccato:
+ * la sola scrittura provata è la cancellazione di una chiave che non esiste,
+ * e deve essere FERMATA prima di arrivare all'archivio.
+ */
+export async function verificaSincronizzazione({ modulo = sincro, archivio = db } = {}) {
+  const errori = [];
+  let casi = 0;
+  const prova = (cosa, vero) => {
+    casi++;
+    if (!vero) errori.push(cosa);
+  };
+  const sale = new Uint8Array(16);
+  const chiave = await modulo.derivaChiave("frase di prova della rete", sale);
+  const altra = await modulo.derivaChiave("un'altra frase di prova", sale);
+  const contenuto = { dati: { fumo: [{ id: "f1", data: "2026-09-19", nota: "segreto-in-chiaro è" }] } };
+  const busta = await modulo.sigilla(contenuto, chiave, { sale, dispositivo: "rete" });
+  prova("nella busta si legge il contenuto in chiaro", !JSON.stringify(busta).includes("segreto-in-chiaro"));
+  prova("nella busta si legge il nome di un archivio", !JSON.stringify(busta).includes("fumo"));
+  let riaperto = null;
+  try {
+    riaperto = await modulo.apri(busta, chiave);
+  } catch (e) {
+    errori.push(`la frase giusta non riapre la busta: ${e.message}`);
+  }
+  prova("la busta riaperta non è uguale a quella chiusa", JSON.stringify(riaperto) === JSON.stringify(contenuto));
+  const nonSiApre = async (b, k) => {
+    try {
+      await modulo.apri(b, k);
+      return false;
+    } catch (e) {
+      return e instanceof modulo.FraseSbagliata;
+    }
+  };
+  prova("una frase sbagliata apre i dati", await nonSiApre(busta, altra));
+  const manomessa = { ...busta, dati: busta.dati.slice(0, -4) + (busta.dati.endsWith("AAAA") ? "BBBB" : "AAAA") };
+  prova("una busta manomessa si apre lo stesso", await nonSiApre(manomessa, chiave));
+
+  const tutti = Object.keys(archivio.SCHEMA);
+  const d = modulo.daApplicare([{ dati: { fumo: [{ id: "f1" }], copertine: [{ id: "c" }], inventato: [{ id: "x" }] } }]);
+  prova("arriva il fumo e non viene applicato", Array.isArray(d.dati.fumo) && d.dati.fumo.length === 1);
+  prova("le copertine viaggiano con la sincronizzazione", !("copertine" in d.dati) && d.parziale.includes("copertine"));
+  prova("un archivio sconosciuto viene applicato", !("inventato" in d.dati));
+  prova(
+    "un archivio che non è arrivato verrebbe svuotato",
+    tutti.filter((a) => a !== "fumo").every((a) => d.parziale.includes(a)) && !d.parziale.includes("fumo")
+  );
+  const vuoto = modulo.daApplicare([]);
+  prova("senza niente di arrivato qualcosa verrebbe svuotato", tutti.every((a) => vuoto.parziale.includes(a)));
+
+  const prima = archivio.inSolaLettura();
+  try {
+    archivio.impostaSolaLettura(true);
+    let fermata = false;
+    try {
+      await archivio.del("fumo", "__rete_chiave_che_non_esiste__");
+    } catch (e) {
+      fermata = e.message === archivio.MESSAGGIO_SOLA_LETTURA;
+    }
+    prova("sul Mac si può cancellare un dato tuo", fermata);
+  } finally {
+    archivio.impostaSolaLettura(prima);
+  }
+  return esito("la sincronizzazione con il Mac", `${casi} controlli`, errori);
+}
+
 export function verificaAbbinamentoCalendario({ magazzino = store } = {}) {
   const errori = [];
   let casi = 0;
@@ -1106,6 +1178,7 @@ export async function rete() {
     await verificaStradeDiGuasto(),
     await verificaTestiDalBrief(),
     verificaAbbinamentoCalendario(),
+    await verificaSincronizzazione(),
     await verificaSchermate(),
     verificaDisegniEBlocchi(),
     await verificaVeritaDeiDati(),

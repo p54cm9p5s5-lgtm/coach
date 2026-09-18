@@ -32,8 +32,18 @@ resta nella conversazione con Claude.
 - **Hosting:** GitHub Pages, repo **pubblico** → *nel repo non entra alcun dato
   personale*. Codice e contenuti generici sì; dati di salute mai. Il caricamento
   dei dati avviene sul telefono, importando i file.
-- **Persistenza:** IndexedDB sul dispositivo. Nessun server, nessun account,
-  nessun dato in rete.
+- **Persistenza:** IndexedDB sul dispositivo. Nessun server, nessun account.
+  Unica eccezione, scelta dall'utente il 19/09/2026 e spenta finché non la accendi:
+  la **sincronizzazione iPhone → Mac** (`js/sync.js`). L'iPhone («principale»)
+  cifra l'archivio sul telefono — PBKDF2 600.000 giri + AES-GCM 256, frase mai
+  salvata, chiave non estraibile — e lo scrive in un repository GitHub **privato**
+  in due file (`coach-dati.json`, `coach-foto.json`; le copertine dei video no).
+  Il Mac («copia») controlla ogni minuto e all'apertura, e sostituisce il suo
+  archivio con quello arrivato; lì gli archivi con dati tuoi sono in **sola
+  lettura** e il motore delle proposte non gira. Un solo dispositivo scrive: se
+  un altro prende il suo posto, il vecchio si ferma e lo dice invece di
+  sovrascrivere. Token e chiave stanno in un archivio a parte (`coach-sync`),
+  fuori dai backup.
 - **Due sole richieste esterne, tutt'e due verso YouTube.** Nessuna schermata
   contatta niente, tranne la scheda di un esercizio: quando compare a schermo
   monta il player (`youtube-nocookie.com`) e scarica la miniatura (`i.ytimg.com`),

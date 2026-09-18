@@ -2,6 +2,7 @@
 
 import { h, qs, qsa, clear, toast, chiudiFogli, foglioAperto } from "./ui.js";
 import * as store from "./store.js";
+import * as sync from "./sync.js";
 
 const ROTTE = {
   oggi: () => import("./screens/oggi.js"),
@@ -669,6 +670,16 @@ async function avvia() {
   qs("#view")?.addEventListener("scroll", aggiornaOmbraTestata, { passive: true });
 
   registraServiceWorker();
+
+  // La sincronizzazione con il Mac, se è accesa. Sulla copia, quando arriva
+  // un archivio nuovo, lo stato in memoria (programma, calendario, libreria)
+  // va riletto prima di ridisegnare — e non sotto un foglio aperto.
+  sync
+    .avvia(async () => {
+      await store.init();
+      if (!foglioAperto()) await ridisegna();
+    })
+    .catch((e) => console.error(e));
 
   // Le altre schermate si caricano subito dopo la prima, senza fretta: se la
   // rete se ne va mentre sei in palestra, cambiare scheda continua a
