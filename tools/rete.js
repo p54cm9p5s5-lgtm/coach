@@ -685,6 +685,20 @@ export function verificaLettorePacchetto({ lettore = analizza } = {}) {
     if ((r.notti[0]?.durataMin ?? null) !== atteso) errori.push(`una notte di ${min} minuti si legge ${r.notti[0]?.durataMin}, atteso ${atteso}`);
   }
 
+  // Un valore che non è un numero va detto, come i negativi e i fuori scala
+  // (Controllo 3, F.3): «kcal=abc» spariva senza una parola. E un pacchetto
+  // giusto non deve far scattare niente.
+  {
+    casi++;
+    const sporco = lettore("COACH-DATI v1\nGIORNO 2026-08-21 passi=8000 kcal=abc");
+    if (!(sporco.avvisi || []).some((a) => /kcal.*non è un numero/.test(a))) {
+      errori.push("«kcal=abc» sparisce senza avviso");
+    }
+    casi++;
+    const pulito = lettore(["COACH-DATI v1", ...BUONE].join("\n"));
+    const falsi = (pulito.avvisi || []).filter((a) => /non (è un numero|sono numeri)/.test(a));
+    if (falsi.length) errori.push(`un pacchetto giusto dà avvisi di valori non numerici: ${falsi[0]}`);
+  }
   return esito("il lettore del pacchetto, preso a picconate", `${casi} pacchetti`, errori);
 }
 
@@ -731,10 +745,16 @@ export function verificaLettoreBrief({ validatore = validaBrief } = {}) {
     ["stesso esercizio due volte nel giorno", brief([giorno({ esercizi: [es(), es()] })]), /due volte/i],
     ["range di ripetizioni al contrario", brief([giorno({ esercizi: [es({ ripMin: 12, ripMax: 8 })] })]), /range ripetizioni/i],
     ["blocco con un esercizio solo", brief([giorno({ esercizi: [es({ blocco: "A" })] })]), /blocco/i],
+    // Controllo 3 (F.1): tetti che mancavano, come quello del carico.
+    ["serie fuori scala", brief([giorno({ esercizi: [es({ serie: 100 })] })]), /serie fuori scala/i],
+    ["ripetizioni fuori scala", brief([giorno({ esercizi: [es({ ripMax: 1000000 })] })]), /ripetizioni fuori scala/i],
+    ["recupero fuori scala", brief([giorno({ esercizi: [es({ recuperoSec: 7200 })] })]), /recupero fuori scala/i],
   ];
   if (aTempo) {
     CASI.push(["esercizio a tempo scritto a ripetizioni",
       brief([giorno({ esercizi: [es({ esercizioId: aTempo })] })]), /a tempo/i]);
+    CASI.push(["durata fuori scala",
+      brief([giorno({ esercizi: [es({ esercizioId: aTempo, aTempo: true, durataSec: 36000, ripMin: undefined, ripMax: undefined })] })]), /durata fuori scala/i]);
   }
 
   for (const [nome, dati, atteso] of CASI) {
@@ -1105,6 +1125,9 @@ export async function verificaStradeDiGuasto({ magazzino = store } = {}) {
   // Il brief
   await deve("un brief senza il blocco", () => estraiBlocco("un documento qualunque, senza niente dentro"), /blocco|COACH-DATA/i);
   await deve("un blocco che non è JSON", () => estraiBlocco("```COACH-DATA\n{ questo non è json\n```"), /json|blocco/i);
+  // Il messaggio dice DOVE, in italiano: prima si portava dietro la frase
+  // inglese del browser (Controllo 3, F.1).
+  await deve("un JSON rotto spiegato in italiano, con il punto", () => estraiBlocco("COACH-DATA v1\n{\"versione\": 1,,\n\"split\": []}\n/COACH-DATA"), /^(?!.*(Expected|Unexpected|position|line \d)).*(riga \d+, colonna \d+|carattere \d+)/is);
 
   // Il pacchetto dei dati
   await deve("appunti vuoti", () => analizza(""), /niente da leggere|vuoti/i);

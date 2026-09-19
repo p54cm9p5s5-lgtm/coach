@@ -25,6 +25,9 @@ function dataVera(iso) {
  * non dieci virgola sette, e «886,5» ha la virgola decimale. Senza questa
  * distinzione i passi finirebbero divisi per mille senza dare nessun segnale.
  */
+/* I campi che numeri non sono: orari, tipo, identificativo, al chiuso. */
+const CAMPI_NON_NUMERICI = new Set(["uuid", "inizio", "fine", "tipo", "indoor", "titolo", "nota"]);
+
 const NUMERO = (v, intero = false) => {
   if (v === undefined || v === null || v === "") return null;
   // Un numero negativo qui dentro non esiste: passi, minuti, chilometri,
@@ -265,6 +268,19 @@ export function analizza(testo) {
     if (negativi.length) {
       risultato.avvisi.push(
         `${data}: ${negativi.join(", ")} ${negativi.length === 1 ? "ha un valore negativo e resta" : "hanno valori negativi e restano"} non registrat${negativi.length === 1 ? "o" : "i"}.`
+      );
+    }
+
+    // Stessa cosa per un valore che non è un numero — «kcal=abc», una cifra
+    // con una lettera dentro: diventava «non registrato» senza una parola,
+    // mentre negativi e fuori scala venivano detti (Controllo 3, F.3). I campi
+    // che numeri non sono (orari, tipo, identificativo) restano fuori.
+    const nonNumerici = Object.entries(c)
+      .filter(([k, v]) => !CAMPI_NON_NUMERICI.has(k) && String(v).trim() !== "" && !/^\s*-\d/.test(String(v)) && NUMERO(v) === null)
+      .map(([k]) => k);
+    if (nonNumerici.length) {
+      risultato.avvisi.push(
+        `${data}: ${nonNumerici.join(", ")} ${nonNumerici.length === 1 ? "non è un numero e resta" : "non sono numeri e restano"} non registrat${nonNumerici.length === 1 ? "o" : "i"}.`
       );
     }
 

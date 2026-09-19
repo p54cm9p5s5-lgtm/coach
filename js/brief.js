@@ -59,7 +59,22 @@ export function estraiBlocco(testo) {
   try {
     return JSON.parse(corpo);
   } catch (e) {
-    throw new Error(`Il blocco COACH-DATA non è JSON valido: ${e.message}`);
+    // Il messaggio del browser è in inglese e cambia da un browser all'altro
+    // («Expected double-quoted property name…»): chi scrive il brief ne
+    // leggeva mezza frase che non gli serve. Quello che serve è DOVE: riga e
+    // colonna, quando il browser le dice, o almeno il carattere. Trovato nel
+    // Controllo 3 (F.1).
+    const m = String(e?.message || "");
+    const rc = /line (\d+) column (\d+)/i.exec(m);
+    const pos = /position (\d+)/i.exec(m);
+    const dove = rc
+      ? ` alla riga ${rc[1]}, colonna ${rc[2]} del blocco`
+      : pos
+        ? ` intorno al carattere ${pos[1]} del blocco`
+        : "";
+    throw new Error(
+      `Il blocco COACH-DATA non è JSON valido${dove}: di solito è una virgola in più o in meno, o una virgoletta non chiusa.`
+    );
   }
 }
 
@@ -165,6 +180,13 @@ export function valida(dati, libreria) {
         problemi.push(`Esercizio sconosciuto: "${v.esercizioId}" in ${giorno.nome || giorno.id}.`);
       }
       if (!(v.serie > 0)) problemi.push(`Serie non valide per ${v.esercizioId}.`);
+      // Tetti come quello del carico qui sotto: fermano le cifre impossibili,
+      // non quelle pesanti. Prima 100 serie e un milione di ripetizioni
+      // passavano, e sarebbero arrivate in palestra come obiettivo (Controllo
+      // 3, F.1).
+      else if (v.serie > 20) {
+        problemi.push(`Serie fuori scala per ${v.esercizioId}: ${v.serie}. Se non è un refuso, scrivilo a mano.`);
+      }
       // Un carico negativo (o scritto a parole) arrivava fino alla schermata
       // dell'esercizio e ci restava: «-20 kg da montare» non vuol dire niente,
       // e quel numero entra anche nel punteggio come carico previsto.
@@ -187,6 +209,8 @@ export function valida(dati, libreria) {
       }
       if (v.recuperoSec != null && !(v.recuperoSec > 0)) {
         problemi.push(`Recupero non valido per ${v.esercizioId}: dev'essere un numero di secondi.`);
+      } else if (v.recuperoSec > 1800) {
+        problemi.push(`Recupero fuori scala per ${v.esercizioId}: ${v.recuperoSec} secondi, più di mezz'ora.`);
       }
       // Lo stesso esercizio due volte nello stesso giorno manderebbe in
       // confusione punteggio e proposte, che ragionano per esercizio.
@@ -199,8 +223,13 @@ export function valida(dati, libreria) {
       // allenamento chiedeva «0 secondi».
       if (v.aTempo) {
         if (!(v.durataSec > 0)) problemi.push(`Durata non valida per ${v.esercizioId}.`);
+        else if (v.durataSec > 3600) {
+          problemi.push(`Durata fuori scala per ${v.esercizioId}: ${v.durataSec} secondi, più di un'ora.`);
+        }
       } else if (!(v.ripMax >= v.ripMin && v.ripMin > 0)) {
         problemi.push(`Range ripetizioni non valido per ${v.esercizioId}.`);
+      } else if (v.ripMax > 200) {
+        problemi.push(`Ripetizioni fuori scala per ${v.esercizioId}: ${v.ripMax}. Se non è un refuso, scrivilo a mano.`);
       }
       // Un esercizio che si tiene a tempo (il plank) scritto a ripetizioni
       // passerebbe tutti i controlli e poi in palestra chiederebbe «8-10
