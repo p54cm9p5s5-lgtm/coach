@@ -804,6 +804,24 @@ async function dettaglio(uuid, { ridisegna }) {
       )
     : [];
   const quante = caselle.filter(Boolean).length;
+  /* Quanto tempo coprono le caselle. Il lettore le costruisce dall'inizio alla
+     fine dell'allenamento come li segna l'orologio — l'intervallo PIENO, pause
+     comprese. Qui si passava la durata attiva, che le pause le toglie: in una
+     camminata ferma a metà, toccando l'ultima barretta (verso le 16:54) si
+     leggeva 16:50. Trovato nel Controllo 3 (B.10). La durata attiva resta il
+     ripiego quando la fine non c'è. */
+  const durataDelleCaselle = (x, n) => {
+    // `oraInSecondi` dà 0 quando l'ora manca, non «non lo so»: senza questo
+    // controllo un allenamento senza fine sarebbe durato quasi un giorno.
+    const ora = /^\d{1,2}:\d{2}$/;
+    if (ora.test(x.inizio || "") && ora.test(x.fine || "")) {
+      const i = oraInSecondi(x.inizio);
+      const f = oraInSecondi(x.fine);
+      const d = f >= i ? f - i : f + 86400 - i; // a cavallo della mezzanotte
+      if (d > 0 && d < 86400) return d;
+    }
+    return x.durataSec || n * 30;
+  };
   if (quante >= 3) {
     aggiungi(wrap,
       h(
@@ -813,7 +831,7 @@ async function dettaglio(uuid, { ridisegna }) {
         graficoBattito({
           caselle,
           inizioSec: oraInSecondi(a.inizio),
-          durataSec: a.durataSec || quante * 30,
+          durataSec: durataDelleCaselle(a, caselle.length),
           media: a.fcMedia ?? null,
         })
       )
