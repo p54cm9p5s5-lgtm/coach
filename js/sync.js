@@ -15,8 +15,8 @@
    parti fra uno scambio e l'altro: lì si tiene una versione e si dice quale,
    in Impostazioni. Vedi `unisci`.
 
-   Ogni dispositivo, ogni 5 secondi mentre è aperto, guarda se di là è cambiato
-   qualcosa; a ogni salvataggio, dopo un secondo e mezzo, fonde e manda.
+   Ogni dispositivo, ogni secondo e mezzo mentre è aperto, guarda se di là è
+   cambiato qualcosa; a ogni salvataggio, dopo 300 ms, fonde e manda.
 
    La configurazione — token, chiave, impronte — vive in un archivio A PARTE
    («coach-sync»), fuori da quello dell'app: non finisce nei backup su file,
@@ -225,16 +225,28 @@ async function leggiFile(conf, file) {
 
 /**
  * Gli sha dei file nella radice del repository, senza scaricarne nessuno.
- * È la domanda che la copia fa ogni 5 secondi: «è cambiato qualcosa?». Chiedere
+ * È la domanda che ogni dispositivo fa di continuo: «è cambiato qualcosa?». Chiedere
  * i file uno per uno scaricherebbe ogni volta i dati interi, anche se sono gli
  * stessi di un minuto fa.
  */
+let elencoEtag = null;
+let elencoUltimo = null;
+
 async function shaDeiFile(conf) {
-  const r = await fetch(`${indirizzo(conf)}/contents/`, { headers: intestazioni(conf), cache: "no-store" });
+  // La domanda si fa «condizionata»: se niente è cambiato GitHub risponde 304
+  // senza contenuto, e quelle risposte NON contano nel limite di richieste
+  // l'ora. È quello che permette di chiedere ogni secondo e mezzo invece che
+  // ogni 5: prima ogni domanda consumava il limite, e più spesso di così i due
+  // dispositivi insieme l'avrebbero finito.
+  const extra = elencoEtag && elencoUltimo ? { "If-None-Match": elencoEtag } : {};
+  const r = await fetch(`${indirizzo(conf)}/contents/`, { headers: intestazioni(conf, extra), cache: "no-store" });
+  if (r.status === 304 && elencoUltimo) return elencoUltimo;
   if (r.status === 404) return {};
   if (!r.ok) throw erroreDiGitHub(r.status, "guardando cosa c'è nel repository");
   const elenco = await r.json();
-  return Object.fromEntries((Array.isArray(elenco) ? elenco : []).map((f) => [f.name, f.sha]));
+  elencoEtag = r.headers.get("ETag");
+  elencoUltimo = Object.fromEntries((Array.isArray(elenco) ? elenco : []).map((f) => [f.name, f.sha]));
+  return elencoUltimo;
 }
 
 class Conflitto extends Error {}
@@ -424,6 +436,7 @@ export async function stato() {
     ultimaVolta: c.ultimaVolta || null,
     errore: c.errore || null,
     conflitti: c.conflitti || [],
+    ultimoArrivo: c.ultimoArrivo || null,
     inAttesa: Object.values(c.sporco || {}).some(Boolean),
   };
 }
@@ -453,17 +466,23 @@ async function giroDellaParte(parte, presenti) {
 
   // Il segno si toglie PRIMA di leggere l'archivio: una scrittura che arriva
   // mentre questo giro lavora lo rimette, e il giro dopo la manda.
+  const salvatoIl = c.sporcoDal?.[parte] || null;
   await segna(parte, false);
   const scrittureAllInizio = db.scritture();
   const locale = await contenutoDi(parte);
 
   let remoto = null;
   let shaLetto = c.sha?.[parte] || null;
+  let arrivo = null;
   if (cambiatoDiLa && shaDiLa) {
     const f = await leggiFile(c, file);
     if (f) {
       remoto = (await apri(f.busta, c.chiave))?.dati || {};
       shaLetto = f.sha;
+      // Quanto ci ha messo: dal salvataggio di là a adesso. Si mostra in
+      // Impostazioni, perché «è lento» si discute meglio con un numero.
+      const t = Date.parse(f.busta.salvatoIl || f.busta.scrittoIl);
+      if (f.busta.scrittoDa !== c.dispositivo && Number.isFinite(t)) arrivo = { ms: Math.max(0, Date.now() - t), quando: new Date().toISOString() };
     }
   }
 
@@ -489,6 +508,7 @@ async function giroDellaParte(parte, presenti) {
   const daMandare = !remoto ? Boolean(c.sporco?.[parte]) || !shaDiLa : !uguali(unito, remoto);
   if (daMandare) {
     const busta = await sigilla({ dati: unito }, c.chiave, { sale: daBase64(c.sale), dispositivo: c.dispositivo });
+    if (salvatoIl) busta.salvatoIl = salvatoIl;
     try {
       nuovoSha = await scriviFile(c, file, busta, shaDiLa);
     } catch (e) {
@@ -503,6 +523,10 @@ async function giroDellaParte(parte, presenti) {
   const ora = await leggiConf();
   await scriviConf({
     ...ora,
+    ...(arrivo ? { ultimoArrivo: arrivo } : {}),
+    // Il momento del primo salvataggio non ancora partito si dimentica solo
+    // se nel frattempo non ne è arrivato un altro.
+    sporcoDal: { ...(ora.sporcoDal || {}), [parte]: ora.sporco?.[parte] ? ora.sporcoDal?.[parte] || null : null },
     sha: { ...(ora.sha || {}), [parte]: nuovoSha },
     impronte: { ...(ora.impronte || {}), [parte]: improntaDi(unito) },
     conflitti: conflitti.length
@@ -595,16 +619,20 @@ function ascolta(applica) {
     const ora = await leggiConf();
     if (!ora) return;
     const sporco = { ...(ora.sporco || {}) };
-    for (const p of parti) sporco[p] = true;
-    await scriviConf({ ...ora, sporco });
+    const sporcoDal = { ...(ora.sporcoDal || {}) };
+    const adesso = new Date().toISOString();
+    for (const p of parti) {
+      sporco[p] = true;
+      if (!sporcoDal[p]) sporcoDal[p] = adesso;
+    }
+    await scriviConf({ ...ora, sporco, sporcoDal });
     avvisa("sporco");
-    // Un secondo e mezzo di calma: abbastanza perché le scritture di un gesto
-    // solo partano insieme, poco abbastanza da vederle dall'altra parte quasi
-    // subito. Erano 5 secondi, e con il controllo ogni minuto una sigaretta
-    // ci metteva fino a un minuto abbondante: «voglio che si aggiorni
-    // istantaneamente» (19/09).
+    // Un attimo di calma, 300 ms: le scritture di un gesto solo (una serie e
+    // i suoi campi) partono insieme, e l'attesa non si sente. Erano 5 secondi
+    // la mattina, poi 1,5: «voglio che si aggiorni istantaneamente», e poi
+    // «ci mette comunque troppo» (19/09).
     clearTimeout(timer);
-    timer = setTimeout(() => giro(applica), 1500);
+    timer = setTimeout(() => giro(applica), 300);
   });
   document.addEventListener("visibilitychange", () => {
     // Uscendo si manda subito (iOS può fermare l'app da un momento all'altro;
@@ -613,14 +641,14 @@ function ascolta(applica) {
     clearTimeout(timer);
     giro(applica);
   });
-  // Ogni 5 secondi, finché la finestra è visibile. Istantaneo davvero
-  // vorrebbe un server nostro che avvisa, ed è escluso: questo è il più
-  // vicino con solo GitHub. È una richiesta piccola (l'elenco dei file, non i
-  // dati): due dispositivi fanno 1440 richieste l'ora contro le 5000 che
-  // GitHub concede, e i dati si scaricano solo quando sono cambiati.
+  // Ogni secondo e mezzo, finché la finestra è visibile. Istantaneo davvero
+  // vorrebbe qualcuno che AVVISA l'altro dispositivo, e GitHub non lo fa:
+  // questo è il più vicino con solo GitHub. La domanda è condizionata (vedi
+  // `shaDeiFile`): quando niente è cambiato la risposta è un 304 vuoto che
+  // non consuma il limite, e i dati si scaricano solo quando sono cambiati.
   setInterval(() => {
     if (document.visibilityState === "visible") giro(applica);
-  }, 5000);
+  }, 1500);
 }
 
 // ---------- accendere e spegnere ----------

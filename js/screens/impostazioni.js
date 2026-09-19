@@ -1150,6 +1150,18 @@ function gruppoSincronizzazione(st, ridisegna) {
         st.inAttesa && !st.errore ? h("span.pill.warn", "da mandare") : null
       )
     );
+    // Il ritardo misurato davvero, dal salvataggio sull'altro dispositivo a
+    // quando è arrivato qui: «è lento» si discute meglio con un numero.
+    if (st.ultimoArrivo) {
+      const sec = st.ultimoArrivo.ms / 1000;
+      righe.push(
+        h(
+          "div.row",
+          h("div.main", h("span.title", "Ultimo arrivo dall'altro"), h("span.sub", `${oraBreve(st.ultimoArrivo.quando)}, dal salvataggio a qui`)),
+          h("span.value", sec < 60 ? `${num(sec, 1)} s` : `${Math.round(sec / 60)} min`)
+        )
+      );
+    }
     if (st.errore) {
       righe.push(
         h(

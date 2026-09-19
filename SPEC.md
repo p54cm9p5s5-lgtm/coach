@@ -39,8 +39,9 @@ resta nella conversazione con Claude.
   256, frase mai salvata, chiave non estraibile — e lo scambia attraverso un
   repository GitHub **privato**, in due file (`coach-dati.json`,
   `coach-foto.json`; le copertine dei video e le impostazioni del singolo
-  dispositivo — copia interna, ultimo backup su file — no). Ogni 5 secondi
-  mentre l'app è visibile, e 1,5 s dopo ogni salvataggio, si guarda se di là è
+  dispositivo — copia interna, ultimo backup su file — no). Ogni 1,5 secondi
+  mentre l'app è visibile (domanda condizionata: il 304 di «niente di nuovo» non
+  consuma il limite di GitHub), e 300 ms dopo ogni salvataggio, si guarda se di là è
   cambiato qualcosa, si **fonde riga per riga** e si rimanda. La fusione sa
   com'erano le righe all'ultimo scambio (impronte per riga), quindi tiene ogni
   cambiamento fatto da una parte sola — aggiunte, modifiche, cancellazioni. La

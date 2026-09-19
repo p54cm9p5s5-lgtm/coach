@@ -81,8 +81,22 @@ class Gestore(SimpleHTTPRequestHandler):
         if nome == "":
             if not stato["file"]:
                 return self.rispondi(404, {"message": "This repository is empty."})
-            return self.rispondi(200, [{"name": n, "sha": f["sha"], "size": len(f["testo"])}
-                                       for n, f in stato["file"].items()])
+            elenco = [{"name": n, "sha": f["sha"], "size": len(f["testo"])} for n, f in stato["file"].items()]
+            etag = '"' + hashlib.sha1(json.dumps(elenco).encode()).hexdigest() + '"'
+            # Come GitHub: con If-None-Match uguale, 304 senza corpo.
+            if self.headers.get("If-None-Match") == etag:
+                self.send_response(304)
+                self.send_header("ETag", etag)
+                self.end_headers()
+                return
+            dati = json.dumps(elenco).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("ETag", etag)
+            self.send_header("Content-Length", str(len(dati)))
+            self.end_headers()
+            self.wfile.write(dati)
+            return
         f = stato["file"].get(nome)
         if not f:
             return self.rispondi(404, {"message": "Not Found"})
