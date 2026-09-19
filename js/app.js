@@ -671,13 +671,16 @@ async function avvia() {
 
   registraServiceWorker();
 
-  // La sincronizzazione con il Mac, se è accesa. Sulla copia, quando arriva
-  // un archivio nuovo, lo stato in memoria (programma, calendario, libreria)
-  // va riletto prima di ridisegnare — e non sotto un foglio aperto.
+  // La sincronizzazione con l'altro dispositivo, se è accesa. Quando arriva
+  // qualcosa, lo stato in memoria (programma, calendario, libreria) va
+  // riletto prima di ridisegnare — e non sotto un foglio aperto, né dentro un
+  // allenamento: lì ridisegnare porta via quello che stai scrivendo, come
+  // per l'altra copia aperta qui sopra.
   sync
     .avvia(async () => {
       await store.init();
-      if (!foglioAperto()) await ridisegna();
+      if (rottaCorrente === "seduta" || foglioAperto()) return;
+      await ridisegna();
     })
     .catch((e) => console.error(e));
 

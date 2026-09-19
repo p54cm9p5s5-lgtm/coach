@@ -34,16 +34,24 @@ resta nella conversazione con Claude.
   dei dati avviene sul telefono, importando i file.
 - **Persistenza:** IndexedDB sul dispositivo. Nessun server, nessun account.
   Unica eccezione, scelta dall'utente il 19/09/2026 e spenta finché non la accendi:
-  la **sincronizzazione iPhone → Mac** (`js/sync.js`). L'iPhone («principale»)
-  cifra l'archivio sul telefono — PBKDF2 600.000 giri + AES-GCM 256, frase mai
-  salvata, chiave non estraibile — e lo scrive in un repository GitHub **privato**
-  in due file (`coach-dati.json`, `coach-foto.json`; le copertine dei video no).
-  Il Mac («copia») controlla ogni minuto e all'apertura, e sostituisce il suo
-  archivio con quello arrivato; lì gli archivi con dati tuoi sono in **sola
-  lettura** e il motore delle proposte non gira. Un solo dispositivo scrive: se
-  un altro prende il suo posto, il vecchio si ferma e lo dice invece di
-  sovrascrivere. Token e chiave stanno in un archivio a parte (`coach-sync`),
-  fuori dai backup.
+  la **sincronizzazione fra iPhone e Mac** (`js/sync.js`), e si registra da tutti
+  e due. Ogni dispositivo cifra l'archivio da sé — PBKDF2 600.000 giri + AES-GCM
+  256, frase mai salvata, chiave non estraibile — e lo scambia attraverso un
+  repository GitHub **privato**, in due file (`coach-dati.json`,
+  `coach-foto.json`; le copertine dei video e le impostazioni del singolo
+  dispositivo — copia interna, ultimo backup su file — no). Ogni 5 secondi
+  mentre l'app è visibile, e 1,5 s dopo ogni salvataggio, si guarda se di là è
+  cambiato qualcosa, si **fonde riga per riga** e si rimanda. La fusione sa
+  com'erano le righe all'ultimo scambio (impronte per riga), quindi tiene ogni
+  cambiamento fatto da una parte sola — aggiunte, modifiche, cancellazioni. La
+  stessa riga cambiata da tutti e due fra uno scambio e l'altro è un conflitto:
+  vince il dispositivo che fonde, tranne quando l'altro l'ha modificata e questo
+  cancellata (si tiene la modifica), e l'avviso resta in Impostazioni. L'iPhone
+  si accende per primo e crea il deposito; il Mac si aggiunge e ne prende il
+  contenuto, sostituendo il suo. Le proposte e i segnali li calcola solo
+  l'iPhone: calcolati sui due, la stessa proposta nascerebbe due volte con due id.
+  Token, chiave e impronte stanno in un archivio a parte (`coach-sync`), fuori
+  dai backup.
 - **Due sole richieste esterne, tutt'e due verso YouTube.** Nessuna schermata
   contatta niente, tranne la scheda di un esercizio: quando compare a schermo
   monta il player (`youtube-nocookie.com`) e scarica la miniatura (`i.ytimg.com`),

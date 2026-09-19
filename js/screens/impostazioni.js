@@ -1105,6 +1105,22 @@ function oraBreve(iso) {
     : d.toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+const NOMI_ARCHIVI = {
+  sedute: "un allenamento",
+  serie: "una serie",
+  esercizioLog: "un questionario",
+  misure: "una misura",
+  foto: "una foto",
+  giorniSalute: "un giorno di Salute",
+  notti: "una notte",
+  fumo: "una sigaretta",
+  acqua: "l'acqua di un giorno",
+  noteWatch: "una nota su un allenamento del Watch",
+  proposte: "una proposta",
+  decisioni: "una decisione",
+  impostazioni: "un'impostazione",
+};
+
 function gruppoSincronizzazione(st, ridisegna) {
   const righe = [];
   if (!st.attiva) {
@@ -1115,28 +1131,23 @@ function gruppoSincronizzazione(st, ridisegna) {
       h(
         "button.row.accent",
         { onclick: () => apriAttivazione("principale", ridisegna) },
-        h("div.main", h("span.title", "Questo è l'iPhone: manda i dati"), h("span.sub", "il dispositivo dove registri")),
+        h("div.main", h("span.title", "Questo è l'iPhone"), h("span.sub", "si accende per primo e crea il deposito")),
         h("span.chevron", "›")
       ),
       h(
         "button.row.accent",
         { onclick: () => apriAttivazione("copia", ridisegna) },
-        h("div.main", h("span.title", "Questo è il Mac: ricevi i dati"), h("span.sub", "qui si guarda soltanto")),
+        h("div.main", h("span.title", "Questo è il Mac"), h("span.sub", "si aggiunge e prende i dati dell'iPhone")),
         h("span.chevron", "›")
       )
     );
   } else {
-    const principale = st.ruolo === "principale";
     righe.push(
       h(
         "div.row",
-        h(
-          "div.main",
-          h("span.title", principale ? "Manda i dati al Mac" : "Riceve i dati dall'iPhone"),
-          h("span.sub", st.repo)
-        ),
-        h("span.value", principale ? `inviati ${oraBreve(st.ultimaVolta)}` : `dati di ${oraBreve(st.datiDel)}`),
-        principale && st.inAttesa && !st.errore ? h("span.pill.warn", "da mandare") : null
+        h("div.main", h("span.title", "Sincronizzata"), h("span.sub", st.repo)),
+        h("span.value", `ultimo scambio ${oraBreve(st.ultimaVolta)}`),
+        st.inAttesa && !st.errore ? h("span.pill.warn", "da mandare") : null
       )
     );
     if (st.errore) {
@@ -1148,21 +1159,47 @@ function gruppoSincronizzazione(st, ridisegna) {
         )
       );
     }
+    // La stessa cosa cambiata da tutte e due le parti: si è tenuta una
+    // versione, e va detto quale — non inghiottito.
+    if (st.conflitti?.length) {
+      const c = st.conflitti[0];
+      const cosa = NOMI_ARCHIVI[c.archivio] || `una riga di «${c.archivio}»`;
+      righe.push(
+        h(
+          "button.row",
+          {
+            onclick: async () => {
+              await sync.dimenticaConflitti();
+              if (ridisegna) await ridisegna();
+            },
+          },
+          h(
+            "div.main",
+            h("span.title", st.conflitti.length === 1 ? "Cambiata su tutti e due" : `${st.conflitti.length} cose cambiate su tutti e due`),
+            h(
+              "span.sub",
+              `L'ultima: ${cosa}, ${oraBreve(c.quando)}. Ho tenuto la versione ${c.tenuto === "questo" ? "di questo dispositivo" : "dell'altro"}. Tocca per togliere l'avviso.`
+            )
+          ),
+          h("span.pill.warn", "guarda")
+        )
+      );
+    }
     righe.push(
       h(
         "button.row.accent",
         {
           onclick: async () => {
-            toast(principale ? "Mando…" : "Guardo se c'è qualcosa di nuovo…");
+            toast("Sincronizzo…");
             await sync.giro(async () => {
               await store.init();
             });
             const dopo = await sync.stato();
-            toast(dopo.errore ? "Non ci è riuscito: il motivo è scritto qui." : principale ? "Mandati." : "Aggiornato.");
+            toast(dopo.errore ? "Non ci è riuscito: il motivo è scritto qui." : "Fatto.");
             if (ridisegna) await ridisegna();
           },
         },
-        h("div.main", h("span.title", principale ? "Manda adesso" : "Aggiorna adesso")),
+        h("div.main", h("span.title", "Sincronizza adesso")),
         h("span.chevron", "›")
       ),
       h(
@@ -1175,15 +1212,13 @@ function gruppoSincronizzazione(st, ridisegna) {
   }
   return h(
     "div.group",
-    h("h2", "Sincronizzazione con il Mac"),
+    h("h2", "Sincronizzazione iPhone e Mac"),
     h("div.list", ...righe),
     h(
       "p.footnote",
-      st.attiva && st.ruolo === "copia"
-        ? "Qui si guarda soltanto: allenamenti, misure e il resto si registrano dall'iPhone e arrivano da soli, entro un minuto da quando l'iPhone li ha mandati."
-        : !st.attiva
-          ? "Adesso è spenta: i dati restano solo su questo dispositivo. Per accenderla tocca una delle due righe qui sopra — sull'iPhone la prima, sul Mac la seconda. I dati partono cifrati con una frase che sai solo tu e finiscono in un tuo repository privato su GitHub."
-          : "L'iPhone scrive, il Mac legge. I dati partono cifrati con una frase che sai solo tu e finiscono in un tuo repository privato su GitHub: senza la frase lì sono illeggibili. Le foto viaggiano a parte, e solo quando cambiano."
+      !st.attiva
+        ? "Adesso è spenta: i dati restano solo su questo dispositivo. Per accenderla tocca una delle due righe qui sopra — prima sull'iPhone, poi sul Mac. I dati partono cifrati con una frase che sai solo tu e finiscono in un tuo repository privato su GitHub."
+        : "Registri dove vuoi: quello che salvi qui arriva di là in pochi secondi, e viceversa, finché l'app è aperta. I dati viaggiano cifrati con una frase che sai solo tu. Se la stessa cosa cambia su tutti e due fra uno scambio e l'altro — lo stesso allenamento aperto sui due — se ne tiene una versione e te lo dico qui. Le proposte del coach le calcola l'iPhone."
     )
   );
 }
@@ -1252,13 +1287,13 @@ async function apriAttivazione(ruolo, ridisegna) {
     };
     return h(
       "div",
-      h("h2", { style: "text-align:center" }, principale ? "Manda i dati al Mac" : "Ricevi i dati dall'iPhone"),
+      h("h2", { style: "text-align:center" }, principale ? "Sincronizza questo iPhone" : "Sincronizza questo Mac"),
       h(
         "p.footnote",
         { style: "margin:4px 16px 0" },
         principale
           ? "La frase non si salva da nessuna parte e non si può recuperare: scrivila dove tieni le password. Servirà uguale sul Mac."
-          : "Stesso repository, stesso token e stessa frase che hai messo sull'iPhone. L'archivio di questo Mac verrà sostituito con quello dell'iPhone."
+          : "Stesso repository, stesso token e stessa frase che hai messo sull'iPhone. Quello che c'è adesso su questo Mac viene sostituito con i dati dell'iPhone; da lì in poi registri da tutti e due."
       ),
       repo.blocco,
       token.blocco,
@@ -1274,7 +1309,7 @@ async function apriAttivazione(ruolo, ridisegna) {
     );
   });
   if (fatto) {
-    toast(principale ? "Sincronizzazione accesa: i dati sono partiti." : "Sincronizzazione accesa: qui c'è la copia dell'iPhone.", 3500);
+    toast(principale ? "Sincronizzazione accesa: i dati sono partiti." : "Sincronizzazione accesa: qui ci sono i dati dell'iPhone.", 3500);
     if (ridisegna) await ridisegna();
   }
 }
@@ -1283,9 +1318,7 @@ async function spegniSincronizzazione(st, ridisegna) {
   const ok = await chiedi({
     titolo: "Spegnere la sincronizzazione?",
     testo:
-      st.ruolo === "principale"
-        ? "Questo iPhone smette di mandare i dati. Quelli già mandati restano nel repository finché non li cancelli tu da GitHub."
-        : "Questo Mac smette di ricevere e torna un'app normale, con i dati che ha adesso.",
+      "Questo dispositivo smette di scambiare i dati e resta con quelli che ha adesso. Quelli già mandati restano nel repository finché non li cancelli tu da GitHub.",
     opzioni: [{ etichetta: "Spegni", valore: true }],
   });
   if (ok !== true) return;

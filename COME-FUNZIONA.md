@@ -35,10 +35,10 @@ coach resta l'unico a poterle mettere nero su bianco.
   store, nessun account, nessun login.
 - **I dati vivono sul telefono** (IndexedDB). Niente server, niente account. Al
   coach un dato arriva solo se l'atleta copia il pacchetto e lo incolla in chat.
-  C'è un'eccezione, scelta dall'atleta: la **sincronizzazione con il Mac**, che
-  manda l'archivio **cifrato sul telefono** in un suo repository privato su
-  GitHub, dove senza la sua frase è illeggibile. L'iPhone scrive, il Mac legge
-  soltanto.
+  C'è un'eccezione, scelta dall'atleta: la **sincronizzazione fra iPhone e Mac**,
+  che scambia l'archivio **cifrato sul dispositivo** attraverso un suo repository
+  privato su GitHub, dove senza la sua frase è illeggibile. Si registra da tutti
+  e due; le proposte le calcola l'iPhone.
 - Funziona **completamente offline**, comprese le ricariche: verificato a rete
   staccata su tutte le schermate.
 - Si aggiorna da sola alla riapertura, **tranne mentre un allenamento è aperto**:

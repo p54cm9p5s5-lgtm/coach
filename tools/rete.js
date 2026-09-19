@@ -799,12 +799,11 @@ export function verificaLettoreBrief({ validatore = validaBrief } = {}) {
  * fine settimana, che si distinguono solo per la data.
  */
 /**
- * La sincronizzazione con il Mac (19/09): quello che esce dal telefono deve
- * essere illeggibile, la frase sbagliata non deve aprire niente, e sul Mac
- * l'archivio deve ricevere solo quello che è arrivato — senza svuotare le
- * parti di cui la copia non sa niente. Niente rete e niente archivio toccato:
- * la sola scrittura provata è la cancellazione di una chiave che non esiste,
- * e deve essere FERMATA prima di arrivare all'archivio.
+ * La sincronizzazione fra iPhone e Mac (19/09): quello che esce dal telefono
+ * deve essere illeggibile, la frase sbagliata non deve aprire niente, e la
+ * fusione di due archivi deve tenere ogni cambiamento fatto da una parte sola
+ * — aggiunte, modifiche e cancellazioni — raccontando i conflitti invece di
+ * inghiottirli. Niente rete e niente archivio toccato: è tutto su dati finti.
  */
 export async function verificaSincronizzazione({ modulo = sincro, archivio = db } = {}) {
   const errori = [];
@@ -839,32 +838,39 @@ export async function verificaSincronizzazione({ modulo = sincro, archivio = db 
   const manomessa = { ...busta, dati: busta.dati.slice(0, -4) + (busta.dati.endsWith("AAAA") ? "BBBB" : "AAAA") };
   prova("una busta manomessa si apre lo stesso", await nonSiApre(manomessa, chiave));
 
+  // La fusione, riga per riga. `base` è com'erano all'ultimo scambio.
+  const r = (id, v) => ({ id, data: "2026-09-19", v });
+  const base = modulo.improntaDi({ fumo: [r("tenuta", 1), r("cambiataQui", 1), r("cambiataDiLa", 1), r("toltaQui", 1), r("toltaDiLa", 1), r("tuttiEDue", 1), r("toltaQuiCambiataDiLa", 1)] });
+  const qui = { fumo: [r("tenuta", 1), r("cambiataQui", 2), r("cambiataDiLa", 1), r("toltaDiLa", 1), r("tuttiEDue", 2), r("nuovaQui", 1)] };
+  const dila = { fumo: [r("tenuta", 1), r("cambiataQui", 1), r("cambiataDiLa", 3), r("toltaQui", 1), r("tuttiEDue", 3), r("nuovaDiLa", 1), r("toltaQuiCambiataDiLa", 4)] };
+  const { unito, conflitti } = modulo.unisci(base, qui, dila);
+  const m = new Map((unito.fumo || []).map((x) => [x.id, x.v]));
+  prova("una riga che nessuno ha toccato si perde", m.get("tenuta") === 1);
+  prova("una modifica fatta qui si perde", m.get("cambiataQui") === 2);
+  prova("una modifica arrivata di là si perde", m.get("cambiataDiLa") === 3);
+  prova("una cancellazione fatta qui non vale", !m.has("toltaQui"));
+  prova("una cancellazione arrivata di là non vale", !m.has("toltaDiLa"));
+  prova("una riga nuova fatta qui si perde", m.get("nuovaQui") === 1);
+  prova("una riga nuova arrivata di là si perde", m.get("nuovaDiLa") === 1);
+  prova("cancellata qui e modificata di là: si perde la modifica", m.get("toltaQuiCambiataDiLa") === 4);
+  prova("cambiata su tutti e due: non vince questo dispositivo", m.get("tuttiEDue") === 2);
+  prova(
+    "i conflitti non vengono raccontati",
+    conflitti.length === 2 && conflitti.some((c) => c.chiave === "tuttiEDue") && conflitti.some((c) => c.chiave === "toltaQuiCambiataDiLa")
+  );
+  const prima = modulo.unisci({}, { fumo: [r("a", 1)] }, { fumo: [r("b", 1)] }).unito.fumo || [];
+  prova("al primo incontro non si ottiene l'unione", prima.length === 2);
+  const ignoto = modulo.unisci({}, { inventato: [r("x", 1)], copertine: [r("c", 1)] }, {}).unito;
+  prova("un archivio sconosciuto o le copertine vengono fusi", !("inventato" in ignoto) && !("copertine" in ignoto));
+
   const tutti = Object.keys(archivio.SCHEMA);
-  const d = modulo.daApplicare([{ dati: { fumo: [{ id: "f1" }], copertine: [{ id: "c" }], inventato: [{ id: "x" }] } }]);
-  prova("arriva il fumo e non viene applicato", Array.isArray(d.dati.fumo) && d.dati.fumo.length === 1);
-  prova("le copertine viaggiano con la sincronizzazione", !("copertine" in d.dati) && d.parziale.includes("copertine"));
-  prova("un archivio sconosciuto viene applicato", !("inventato" in d.dati));
+  const d = modulo.daApplicare({ fumo: [{ id: "f1" }], copertine: [{ id: "c" }], inventato: [{ id: "x" }] });
+  prova("le copertine vengono applicate", !("copertine" in d.dati) && d.parziale.includes("copertine"));
   prova(
     "un archivio che non è arrivato verrebbe svuotato",
     tutti.filter((a) => a !== "fumo").every((a) => d.parziale.includes(a)) && !d.parziale.includes("fumo")
   );
-  const vuoto = modulo.daApplicare([]);
-  prova("senza niente di arrivato qualcosa verrebbe svuotato", tutti.every((a) => vuoto.parziale.includes(a)));
-
-  const prima = archivio.inSolaLettura();
-  try {
-    archivio.impostaSolaLettura(true);
-    let fermata = false;
-    try {
-      await archivio.del("fumo", "__rete_chiave_che_non_esiste__");
-    } catch (e) {
-      fermata = e.message === archivio.MESSAGGIO_SOLA_LETTURA;
-    }
-    prova("sul Mac si può cancellare un dato tuo", fermata);
-  } finally {
-    archivio.impostaSolaLettura(prima);
-  }
-  return esito("la sincronizzazione con il Mac", `${casi} controlli`, errori);
+  return esito("la sincronizzazione fra iPhone e Mac", `${casi} controlli`, errori);
 }
 
 export function verificaAbbinamentoCalendario({ magazzino = store } = {}) {

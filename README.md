@@ -2,10 +2,11 @@
 
 App personale di allenamento. PWA, nessun build step, nessun server, nessuna dipendenza.
 I dati vivono sul dispositivo (IndexedDB): nessun account, nessun server. Se accendi
-la **sincronizzazione con il Mac** (Impostazioni, spenta di base), l'iPhone manda
-l'archivio **cifrato sul telefono** (AES-GCM, chiave da una frase che non si salva)
-a un tuo repository **privato** su GitHub (`api.github.com`), e il Mac lo scarica
-in sola lettura: l'iPhone scrive, il Mac legge (`js/sync.js`). A parte questo, le
+la **sincronizzazione fra iPhone e Mac** (Impostazioni, spenta di base), i due
+dispositivi si scambiano l'archivio **cifrato sul dispositivo** (AES-GCM, chiave da
+una frase che non si salva) attraverso un tuo repository **privato** su GitHub
+(`api.github.com`), fondendolo riga per riga: si registra da tutti e due
+(`js/sync.js`). A parte questo, le
 uniche richieste che escono sono verso YouTube, e sono due:
 il player (`youtube-nocookie.com`) e la miniatura del video (`i.ytimg.com`).
 Partono **quando la scheda dell'esercizio compare a schermo**, non al tocco: il

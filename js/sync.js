@@ -1,4 +1,4 @@
-/* Sincronizzazione iPhone → Mac, cifrata sul dispositivo.
+/* Sincronizzazione fra iPhone e Mac, cifrata sul dispositivo.
 
    Una scelta dell'utente del 19/09/2026, e cambia una regola che valeva da
    sempre: fino a qui niente usciva dal telefono. Adesso, SE la accendi, esce
@@ -6,20 +6,19 @@
    in un repository PRIVATO del tuo GitHub. Chi lo custodisce vede solo byte
    illeggibili; senza la frase non si apre, nemmeno da parte tua.
 
-   I ruoli sono due, e non si mescolano:
-   - il «principale» (l'iPhone) scrive: a ogni salvataggio, dopo qualche
-     secondo di calma, manda l'archivio;
-   - la «copia» (il Mac) legge: all'apertura e ogni minuto guarda se c'è
-     qualcosa di nuovo, e se c'è sostituisce il suo archivio con quello.
+   Si registra da tutti e due. Il primo giorno l'iPhone scriveva e il Mac
+   leggeva soltanto; la sera stessa: «voglio poter registrare anche da Mac».
+   Fondere due archivi è possibile se ognuno si ricorda com'erano le righe
+   all'ultimo scambio (`impronte`): così, per ogni riga, si sa CHI l'ha cambiata —
+   aggiunta, modificata o cancellata — e si tiene quel cambiamento. Il solo
+   caso che non si risolve da sé è la stessa riga cambiata da tutte e due le
+   parti fra uno scambio e l'altro: lì si tiene una versione e si dice quale,
+   in Impostazioni. Vedi `unisci`.
 
-   Perché non tutti e due scrivono: fondere due archivi non si può fare bene.
-   Non c'è modo di sapere se una riga manca perché l'hai cancellata di qua o
-   perché di là non c'è ancora — e indovinare vuol dire perdere dati senza
-   dirlo. Con uno che scrive e uno che legge non c'è niente da indovinare. E
-   la copia non finge di poter registrare: sul Mac gli archivi tuoi sono in
-   sola lettura (js/db.js), e chi prova lo legge scritto.
+   Ogni dispositivo, ogni 5 secondi mentre è aperto, guarda se di là è cambiato
+   qualcosa; a ogni salvataggio, dopo un secondo e mezzo, fonde e manda.
 
-   La configurazione — token, chiave, ruolo — vive in un archivio A PARTE
+   La configurazione — token, chiave, impronte — vive in un archivio A PARTE
    («coach-sync»), fuori da quello dell'app: non finisce nei backup su file,
    non viaggia dentro la sincronizzazione stessa, e un ripristino non la
    cancella. La frase non si salva da nessuna parte: si salva la chiave che ne
@@ -226,7 +225,7 @@ async function leggiFile(conf, file) {
 
 /**
  * Gli sha dei file nella radice del repository, senza scaricarne nessuno.
- * È la domanda che la copia fa ogni minuto: «è cambiato qualcosa?». Chiedere
+ * È la domanda che la copia fa ogni 5 secondi: «è cambiato qualcosa?». Chiedere
  * i file uno per uno scaricherebbe ogni volta i dati interi, anche se sono gli
  * stessi di un minuto fa.
  */
@@ -256,7 +255,7 @@ async function scriviFile(conf, file, busta, sha) {
   return (await r.json()).content?.sha;
 }
 
-// ---------- cosa si manda, cosa si applica ----------
+// ---------- cosa viaggia ----------
 
 function parteDi(archivio) {
   if (FUORI.includes(archivio)) return null;
@@ -264,40 +263,143 @@ function parteDi(archivio) {
   return "dati";
 }
 
-/** Il pezzo di archivio che va in una parte. */
+/* Impostazioni che appartengono al dispositivo e non all'archivio: la copia
+   interna (un archivio intero, e ogni dispositivo ha la sua), quando è stato
+   fatto il backup su file DA QUI, e il segno di una sistemazione già fatta
+   sul database di questo dispositivo. Fatte viaggiare, il Mac crederebbe di
+   avere un backup che ha fatto l'iPhone. */
+const IMPOSTAZIONI_LOCALI = new Set(["snapshotAutomatico", "ultimoSnapshot", "ultimoExport", "versioneCollegamentiWatch"]);
+
+function viaggia(archivio, riga) {
+  return !(archivio === "impostazioni" && IMPOSTAZIONI_LOCALI.has(riga?.chiave));
+}
+
+/** Il pezzo di archivio che va in una parte: { archivio: [righe] }. */
 async function contenutoDi(parte) {
   const tutti = Object.keys(db.SCHEMA);
   const dentro = tutti.filter((a) => parteDi(a) === parte);
   const dump = await db.esportaTutto({ salta: tutti.filter((a) => !dentro.includes(a)) });
-  for (const a of tutti) if (!dentro.includes(a)) delete dump.dati[a];
-  return dump;
+  const dati = {};
+  for (const a of dentro) if (Array.isArray(dump.dati[a])) dati[a] = dump.dati[a].filter((r) => viaggia(a, r));
+  return dati;
+}
+
+// ---------- fondere due archivi ----------
+
+/* Un'impronta per riga: cyrb53, veloce e senza dipendenze. Non protegge
+   niente — a quello pensa la cifratura — serve solo a dire «questa riga è
+   ancora quella di prima?». */
+function impronta(testo) {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < testo.length; i++) {
+    const c = testo.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+function chiaveDi(archivio, riga) {
+  const kp = db.SCHEMA[archivio]?.keyPath;
+  return kp ? String(riga?.[kp]) : null;
+}
+
+/** { archivio: { chiave: impronta } } — com'era l'archivio all'ultimo scambio. */
+export function improntaDi(dati) {
+  const out = {};
+  for (const [a, righe] of Object.entries(dati || {})) {
+    out[a] = {};
+    for (const r of righe) out[a][chiaveDi(a, r)] = impronta(JSON.stringify(r));
+  }
+  return out;
 }
 
 /**
- * Da quello che è arrivato al backup da ripristinare. Pura: la rete la prova
- * senza toccare nessun archivio.
+ * Fonde due archivi riga per riga, sapendo com'erano all'ultimo scambio
+ * (`base`). Pura: la rete la prova senza toccare niente.
  *
- * Ogni archivio che NON arriva finisce in `parziale`: «di questo non so
- * niente», e il ripristino lo lascia com'è invece di svuotarlo. È la regola
- * che già protegge le foto nella copia interna (js/db.js), e qui vale per le
- * copertine — sempre — e per la parte che non è cambiata.
+ * Per ogni riga:
+ * - uguale da tutte e due le parti → quella;
+ * - cambiata da una parte sola → vince chi l'ha cambiata (anche se l'ha
+ *   cancellata: cancellare è un cambiamento come un altro);
+ * - cambiata da tutte e due in modo diverso → è un CONFLITTO. Se una delle
+ *   due parti l'ha cancellata e l'altra modificata, si tiene la modificata:
+ *   perdere una cancellazione si rimedia cancellando di nuovo, perdere una
+ *   modifica no. Se tutte e due l'hanno modificata vince questo dispositivo —
+ *   è quello che stai usando adesso — e il conflitto si racconta, non si
+ *   inghiotte.
+ *
+ * Senza `base` (il primo incontro) niente è stato «cancellato»: le righe che
+ * ci sono da una parte sola restano, e si ottiene l'unione.
  */
-export function daApplicare(arrivati) {
-  const dump = { formato: "coach-backup", versione: db.VERSIONE_BACKUP, dati: {}, motivo: "sincronizzazione" };
-  for (const pezzo of arrivati) {
-    for (const [a, righe] of Object.entries(pezzo?.dati || {})) {
-      // Solo archivi che questa versione conosce: uno scritto da un'app più
-      // nuova non si applica a metà.
-      if (a in db.SCHEMA && parteDi(a) !== null && Array.isArray(righe)) dump.dati[a] = righe;
+export function unisci(base, locale, remoto) {
+  const unito = {};
+  const conflitti = [];
+  const archivi = new Set([...Object.keys(locale || {}), ...Object.keys(remoto || {})]);
+  for (const a of archivi) {
+    if (!(a in db.SCHEMA) || parteDi(a) === null) continue;
+    // Quello che appartiene al dispositivo non si fonde: la versione che
+    // mandava soltanto faceva viaggiare anche la copia interna.
+    const L = new Map((locale?.[a] || []).filter((r) => viaggia(a, r)).map((r) => [chiaveDi(a, r), r]));
+    const R = new Map((remoto?.[a] || []).filter((r) => viaggia(a, r)).map((r) => [chiaveDi(a, r), r]));
+    const B = base?.[a] || {};
+    const righe = [];
+    for (const k of new Set([...L.keys(), ...R.keys()])) {
+      const l = L.get(k);
+      const r = R.get(k);
+      const hl = l ? impronta(JSON.stringify(l)) : null;
+      const hr = r ? impronta(JSON.stringify(r)) : null;
+      const hb = B[k] ?? null;
+      let scelta;
+      if (hl === hr) scelta = l;
+      else if (hl === hb) scelta = r;
+      else if (hr === hb) scelta = l;
+      else {
+        scelta = l ?? r;
+        conflitti.push({ archivio: a, chiave: k, tenuto: l ? "questo" : "altro" });
+      }
+      if (scelta) righe.push(scelta);
     }
+    unito[a] = righe;
   }
+  return { unito, conflitti };
+}
+
+function uguali(x, y) {
+  const a = improntaDi(x);
+  const b = improntaDi(y);
+  const nomi = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const n of nomi) {
+    const pa = a[n] || {};
+    const pb = b[n] || {};
+    const ka = Object.keys(pa);
+    if (ka.length !== Object.keys(pb).length) return false;
+    for (const k of ka) if (pa[k] !== pb[k]) return false;
+  }
+  return true;
+}
+
+/** Il backup da ripristinare con quello che è uscito dalla fusione. */
+export function daApplicare(dati) {
+  const dump = { formato: "coach-backup", versione: db.VERSIONE_BACKUP, dati: {}, motivo: "sincronizzazione" };
+  for (const [a, righe] of Object.entries(dati || {})) {
+    // Solo archivi che questa versione conosce: uno scritto da un'app più
+    // nuova non si applica a metà.
+    if (a in db.SCHEMA && parteDi(a) !== null && Array.isArray(righe)) dump.dati[a] = righe;
+  }
+  // Tutto quello che non c'è è «di questo non so niente»: il ripristino lo
+  // lascia com'è invece di svuotarlo (la regola di js/db.js che protegge già
+  // le foto nella copia interna). Vale per le copertine e per l'altra parte.
   dump.parziale = Object.keys(db.SCHEMA).filter((a) => !(a in dump.dati));
   return dump;
 }
 
 // ---------- stato, per chi guarda ----------
 
-let ascoltatori = new Set();
+const ascoltatori = new Set();
 export function quandoCambia(fn) {
   ascoltatori.add(fn);
   return () => ascoltatori.delete(fn);
@@ -320,81 +422,95 @@ export async function stato() {
     ruolo: c.ruolo,
     repo: c.repo,
     ultimaVolta: c.ultimaVolta || null,
-    datiDel: c.datiDel || null,
     errore: c.errore || null,
-    inAttesa: c.ruolo === "principale" && Object.values(c.sporco || {}).some(Boolean),
+    conflitti: c.conflitti || [],
+    inAttesa: Object.values(c.sporco || {}).some(Boolean),
   };
 }
 
-// ---------- il principale: manda ----------
+// ---------- il giro: prendi, fondi, rimanda ----------
 
 let giroInCorso = null;
-let rimandato = null;
+let rimandato = false;
 
-async function manda() {
+async function segna(parte, valore) {
   const c = await leggiConf();
-  if (!c || c.ruolo !== "principale") return;
-  const daMandare = Object.keys(PARTI).filter((p) => c.sporco?.[p]);
-  if (!daMandare.length) return;
-  const sale = daBase64(c.sale);
-  const nuoviSha = { ...(c.sha || {}) };
-  for (const parte of daMandare) {
-    // Si toglie il segno PRIMA di leggere l'archivio: una scrittura che arriva
-    // mentre si spedisce lo rimette, e il giro dopo la manda.
-    await ritocca({ sporco: { ...((await leggiConf()).sporco || {}), [parte]: false } });
-    const busta = await sigilla(await contenutoDi(parte), c.chiave, { sale, dispositivo: c.dispositivo });
-    const file = PARTI[parte].file;
-    try {
-      nuoviSha[parte] = await scriviFile(c, file, busta, nuoviSha[parte]);
-    } catch (e) {
-      if (!(e instanceof Conflitto)) {
-        await ritocca({ sporco: { ...((await leggiConf()).sporco || {}), [parte]: true } });
-        throw e;
-      }
-      // Lo sha che avevo è vecchio. Se l'ultimo a scrivere sono stato io —
-      // un'altra scheda di questo stesso telefono — si riprova. Se è un altro
-      // dispositivo, NO: vuol dire che qualcuno è diventato principale al
-      // posto mio, e sovrascriverlo cancellerebbe quello che ha scritto.
-      const lì = await leggiFile(c, file);
-      if (lì && lì.busta?.scrittoDa !== c.dispositivo) {
-        await ritocca({ sporco: { ...((await leggiConf()).sporco || {}), [parte]: true } });
-        throw new Error(
-          "Un altro dispositivo è diventato quello che scrive. Questo non manda più niente: se deve tornare a esserlo, riattiva la sincronizzazione qui."
-        );
-      }
-      nuoviSha[parte] = await scriviFile(c, file, busta, lì?.sha);
+  if (c) await scriviConf({ ...c, sporco: { ...(c.sporco || {}), [parte]: valore } });
+}
+
+/**
+ * Una parte (dati o foto): se nessuno ha cambiato niente non si fa niente; se
+ * è cambiata di là si scarica e si fonde; se il risultato è diverso da quello
+ * che c'è qui si scrive qui, se è diverso da quello che c'è di là si manda.
+ * Torna true se l'archivio di questo dispositivo è cambiato.
+ */
+async function giroDellaParte(parte, presenti) {
+  const c = await leggiConf();
+  const file = PARTI[parte].file;
+  const shaDiLa = presenti[file] || null;
+  const cambiatoDiLa = shaDiLa !== (c.sha?.[parte] || null);
+  if (!cambiatoDiLa && !c.sporco?.[parte] && c.impronte?.[parte]) return false;
+
+  // Il segno si toglie PRIMA di leggere l'archivio: una scrittura che arriva
+  // mentre questo giro lavora lo rimette, e il giro dopo la manda.
+  await segna(parte, false);
+  const scrittureAllInizio = db.scritture();
+  const locale = await contenutoDi(parte);
+
+  let remoto = null;
+  let shaLetto = c.sha?.[parte] || null;
+  if (cambiatoDiLa && shaDiLa) {
+    const f = await leggiFile(c, file);
+    if (f) {
+      remoto = (await apri(f.busta, c.chiave))?.dati || {};
+      shaLetto = f.sha;
     }
   }
-  await ritocca({ sha: nuoviSha, ultimaVolta: new Date().toISOString(), errore: null });
-}
 
-// ---------- la copia: riceve ----------
+  // Senza impronte (non dovrebbe capitare: `avvia` le costruisce) si fonde
+  // come al primo incontro, cioè senza cancellare niente.
+  const base = c.impronte?.[parte] || {};
 
-async function ricevi(applica) {
-  const c = await leggiConf();
-  if (!c || c.ruolo !== "copia") return false;
-  const arrivati = [];
-  const nuoviSha = { ...(c.sha || {}) };
-  let datiDel = c.datiDel || null;
-  const presenti = await shaDeiFile(c);
-  for (const [parte, p] of Object.entries(PARTI)) {
-    const sha = presenti[p.file];
-    if (!sha || sha === c.sha?.[parte]) continue;
-    const f = await leggiFile(c, p.file);
-    if (!f || f.sha === c.sha?.[parte]) continue;
-    arrivati.push(await apri(f.busta, c.chiave));
-    nuoviSha[parte] = f.sha;
-    if (!datiDel || f.busta.scrittoIl > datiDel) datiDel = f.busta.scrittoIl;
+  const { unito, conflitti } = remoto ? unisci(base, locale, remoto) : { unito: locale, conflitti: [] };
+
+  let cambiatoQui = false;
+  if (remoto && !uguali(unito, locale)) {
+    // Se nel frattempo hai salvato qualcosa qui, scrivere adesso lo
+    // cancellerebbe: si lascia stare, e il giro dopo rifonde con quello.
+    if (db.scritture() !== scrittureAllInizio) {
+      await segna(parte, true);
+      return false;
+    }
+    await db.importaTutto(daApplicare(unito), "sostituisci", { daSincronizzazione: true });
+    cambiatoQui = true;
   }
-  if (arrivati.length) {
-    await db.importaTutto(daApplicare(arrivati), "sostituisci", { daSincronizzazione: true });
-  }
-  await ritocca({ sha: nuoviSha, datiDel, ultimaVolta: new Date().toISOString(), errore: null });
-  if (arrivati.length) await applica?.();
-  return arrivati.length > 0;
-}
 
-// ---------- il giro ----------
+  let nuovoSha = shaLetto;
+  const daMandare = !remoto ? Boolean(c.sporco?.[parte]) || !shaDiLa : !uguali(unito, remoto);
+  if (daMandare) {
+    const busta = await sigilla({ dati: unito }, c.chiave, { sale: daBase64(c.sale), dispositivo: c.dispositivo });
+    try {
+      nuovoSha = await scriviFile(c, file, busta, shaDiLa);
+    } catch (e) {
+      // Qualcuno ha scritto di là mentre fondevo: si ricomincia al giro dopo,
+      // con quello che ha scritto.
+      await segna(parte, true);
+      if (e instanceof Conflitto) return cambiatoQui;
+      throw e;
+    }
+  }
+
+  const ora = await leggiConf();
+  await scriviConf({
+    ...ora,
+    sha: { ...(ora.sha || {}), [parte]: nuovoSha },
+    impronte: { ...(ora.impronte || {}), [parte]: improntaDi(unito) },
+    conflitti: conflitti.length
+      ? [...conflitti.map((x) => ({ ...x, quando: new Date().toISOString() })), ...(ora.conflitti || [])].slice(0, 20)
+      : ora.conflitti || [],
+  });
+  return cambiatoQui;
+}
 
 /** Un giro alla volta: se ne chiedi un altro mentre gira, parte dopo. */
 export async function giro(applica) {
@@ -406,10 +522,15 @@ export async function giro(applica) {
     try {
       const c = await leggiConf();
       if (!c) return;
-      if (c.ruolo === "principale") await manda();
-      else await ricevi(applica);
+      const presenti = await shaDeiFile(c);
+      let cambiato = false;
+      for (const parte of Object.keys(PARTI)) cambiato = (await giroDellaParte(parte, presenti)) || cambiato;
+      const ora = await leggiConf();
+      if (ora) await scriviConf({ ...ora, ultimaVolta: new Date().toISOString(), errore: null });
+      if (cambiato) await applica?.();
     } catch (e) {
-      await ritocca({ errore: e?.message || String(e) });
+      const ora = await leggiConf();
+      if (ora) await scriviConf({ ...ora, errore: e?.message || String(e) });
     } finally {
       giroInCorso = null;
       avvisa("giro");
@@ -423,57 +544,83 @@ export async function giro(applica) {
 }
 
 /**
- * Da chiamare una volta all'avvio. `applica` ridisegna la schermata quando
- * sulla copia arriva qualcosa di nuovo.
+ * Da chiamare una volta all'avvio. `applica` rilegge e ridisegna quando
+ * dall'altro dispositivo arriva qualcosa.
  */
 export async function avvia(applica) {
-  const c = await leggiConf();
-  db.impostaSolaLettura(c?.ruolo === "copia");
+  let c = await leggiConf();
+  db.impostaMotoreAltrove(c?.ruolo === "copia");
   if (!c) return;
-  ascolta(c.ruolo, applica);
+  if (!c.impronte && c.sha) c = await impronteDallaVersioneDiPrima(c);
+  ascolta(applica);
   giro(applica);
 }
 
-/* Gli ascoltatori si mettono una volta sola per ruolo: accendere la
-   sincronizzazione dalle Impostazioni non deve aspettare una riapertura
-   dell'app per cominciare a lavorare, e riaccenderla non deve raddoppiarli. */
-const inAscolto = new Set();
-
-function ascolta(ruolo, applica) {
-  if (inAscolto.has(ruolo)) return;
-  inAscolto.add(ruolo);
-  if (ruolo === "principale") {
-    let timer = null;
-    db.dopoOgniScrittura(async (archivi) => {
-      const parti = new Set(archivi.map(parteDi).filter(Boolean));
-      if (!parti.size) return;
-      const ora = await leggiConf();
-      if (!ora || ora.ruolo !== "principale") return;
-      const sporco = { ...(ora.sporco || {}) };
-      for (const p of parti) sporco[p] = true;
-      await ritocca({ sporco });
-      avvisa("sporco");
-      // Qualche secondo di calma: registrando una serie dopo l'altra non si
-      // spedisce l'archivio a ogni tocco.
-      clearTimeout(timer);
-      timer = setTimeout(() => giro(applica), 5000);
-    });
-    // Uscendo dall'app si prova subito: iOS può fermarla da un momento
-    // all'altro. Se non ci riesce, il segno resta e si manda alla riapertura.
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") {
-        clearTimeout(timer);
-        giro(applica);
-      }
-    });
-  } else {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") giro(applica);
-    });
-    setInterval(() => {
-      if (document.visibilityState === "visible") giro(applica);
-    }, 60000);
+/**
+ * Chi arriva dalla versione del primo giorno — l'iPhone mandava e basta, il
+ * Mac riceveva e basta — non ha il «com'era all'ultimo scambio». Si ricostruisce
+ * qui, all'avvio, PRIMA che tu possa registrare qualcosa: in quel momento
+ * l'archivio di qui È l'ultimo scambio (il Mac applicava tutto, l'iPhone
+ * mandava tutto).
+ *
+ * Tranne una parte con salvataggi che non erano ancora partiti: lì l'archivio
+ * è PIÙ NUOVO dell'ultimo scambio, e prenderlo come base farebbe credere che
+ * quei salvataggi ci fossero già di là — la fusione li cancellerebbe, visto
+ * che di là mancano. Per quella parte si parte senza base, cioè dall'unione:
+ * non si cancella niente, al massimo torna una riga cancellata di là. È
+ * successo nella prova del 19/09: una sigaretta segnata sul Mac prima del
+ * primo giro spariva.
+ */
+async function impronteDallaVersioneDiPrima(c) {
+  const impronte = {};
+  for (const parte of Object.keys(PARTI)) {
+    impronte[parte] = c.sporco?.[parte] ? {} : improntaDi(await contenutoDi(parte));
   }
+  const ora = await leggiConf();
+  return scriviConf({ ...ora, impronte });
+}
+
+/* Gli ascoltatori si mettono una volta sola: accendere la sincronizzazione
+   dalle Impostazioni non deve aspettare una riapertura per cominciare a
+   lavorare, e riaccenderla non deve raddoppiarli. */
+let inAscolto = false;
+
+function ascolta(applica) {
+  if (inAscolto) return;
+  inAscolto = true;
+  let timer = null;
+  db.dopoOgniScrittura(async (archivi) => {
+    const parti = new Set(archivi.map(parteDi).filter(Boolean));
+    if (!parti.size) return;
+    const ora = await leggiConf();
+    if (!ora) return;
+    const sporco = { ...(ora.sporco || {}) };
+    for (const p of parti) sporco[p] = true;
+    await scriviConf({ ...ora, sporco });
+    avvisa("sporco");
+    // Un secondo e mezzo di calma: abbastanza perché le scritture di un gesto
+    // solo partano insieme, poco abbastanza da vederle dall'altra parte quasi
+    // subito. Erano 5 secondi, e con il controllo ogni minuto una sigaretta
+    // ci metteva fino a un minuto abbondante: «voglio che si aggiorni
+    // istantaneamente» (19/09).
+    clearTimeout(timer);
+    timer = setTimeout(() => giro(applica), 1500);
+  });
+  document.addEventListener("visibilitychange", () => {
+    // Uscendo si manda subito (iOS può fermare l'app da un momento all'altro;
+    // se non ci riesce il segno resta e si manda alla riapertura), e
+    // rientrando si guarda cosa è cambiato dall'altra parte.
+    clearTimeout(timer);
+    giro(applica);
+  });
+  // Ogni 5 secondi, finché la finestra è visibile. Istantaneo davvero
+  // vorrebbe un server nostro che avvisa, ed è escluso: questo è il più
+  // vicino con solo GitHub. È una richiesta piccola (l'elenco dei file, non i
+  // dati): due dispositivi fanno 1440 richieste l'ora contro le 5000 che
+  // GitHub concede, e i dati si scaricano solo quando sono cambiati.
+  setInterval(() => {
+    if (document.visibilityState === "visible") giro(applica);
+  }, 5000);
 }
 
 // ---------- accendere e spegnere ----------
@@ -485,9 +632,14 @@ function repoValido(repo) {
 /**
  * Accende la sincronizzazione su questo dispositivo.
  *
- * `conferma(testo)` viene chiamata solo se serve una decisione — sul
- * principale, quando nel deposito ci sono già dati scritti da un altro
- * dispositivo o con un'altra frase.
+ * «principale» è l'iPhone: crea il deposito se è vuoto, e se c'è già lo
+ * fonde con il suo archivio. «copia» è il Mac: si unisce a un deposito che
+ * esiste già e PRENDE quello che c'è — il suo archivio di prima viene
+ * sostituito, per non mescolare dati vecchi di un backup ripristinato chissà
+ * quando. Dopo, tutti e due registrano; la sola differenza è che le proposte
+ * del coach le calcola l'iPhone (vedi `impostaMotoreAltrove` in js/db.js).
+ *
+ * `conferma(testo)` viene chiamata solo se serve una decisione.
  */
 export async function attiva({ ruolo, repo, token, frase, base }, { conferma, applica } = {}) {
   repo = String(repo || "").trim().replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/$/, "");
@@ -496,7 +648,7 @@ export async function attiva({ ruolo, repo, token, frase, base }, { conferma, ap
   if (!token) throw new Error("Manca il token.");
   if (String(frase || "").length < 12) throw new Error("La frase deve avere almeno 12 caratteri: è l'unica cosa che protegge i dati.");
   const conf = { ruolo, repo, token, base };
-  await controllaRepo(conf, { scrive: ruolo === "principale" });
+  await controllaRepo(conf, { scrive: true });
 
   const esistente = await leggiFile(conf, PARTI.dati.file);
   let sale = null;
@@ -519,12 +671,12 @@ export async function attiva({ ruolo, repo, token, frase, base }, { conferma, ap
   } else if (ruolo === "copia") {
     throw new Error("Nel repository non c'è ancora niente: attiva prima la sincronizzazione sull'iPhone.");
   }
+  const riparteDaZero = !sale;
   if (!sale) {
     sale = crypto.getRandomValues(new Uint8Array(16));
     chiave = await derivaChiave(frase, sale);
   }
 
-  const dispositivo = crypto.getRandomValues(new Uint32Array(2)).join("-");
   const nuova = {
     ruolo,
     repo,
@@ -532,30 +684,80 @@ export async function attiva({ ruolo, repo, token, frase, base }, { conferma, ap
     base,
     chiave,
     sale: inBase64(sale),
-    dispositivo,
+    dispositivo: crypto.getRandomValues(new Uint32Array(2)).join("-"),
     sha: {},
-    sporco: ruolo === "principale" ? { dati: true, foto: true } : {},
+    impronte: {},
+    sporco: { dati: true, foto: true },
+    conflitti: [],
     errore: null,
   };
-  if (ruolo === "principale" && esistente) {
-    // Prendere il posto di chi scriveva: si parte dallo sha che c'è, e il
-    // vecchio principale se ne accorge al suo prossimo invio.
-    nuova.sha = { dati: esistente.sha };
-    const foto = await leggiFile(conf, PARTI.foto.file);
-    if (foto) nuova.sha.foto = foto.sha;
+  if (ruolo === "copia") {
+    // Il Mac prende il deposito così com'è: niente fusione con quello che
+    // aveva prima. Dopo questo giro il «com'era all'ultimo scambio» è il
+    // deposito stesso.
+    const presenti = await shaDeiFile(conf);
+    const arrivati = {};
+    for (const [parte, p] of Object.entries(PARTI)) {
+      if (!presenti[p.file]) continue;
+      const f = await leggiFile(conf, p.file);
+      const dati = (await apri(f.busta, chiave))?.dati || {};
+      Object.assign(arrivati, dati);
+      nuova.sha[parte] = f.sha;
+      nuova.impronte[parte] = improntaDi(dati);
+    }
+    await db.importaTutto(daApplicare(arrivati), "sostituisci", { daSincronizzazione: true });
+    nuova.sporco = {};
+  } else if (esistente && riparteDaZero) {
+    // Frase nuova: quello che c'è non si apre, si sovrascrive (confermato).
+    const presenti = await shaDeiFile(conf);
+    for (const [parte, p] of Object.entries(PARTI)) if (presenti[p.file]) nuova.sha[parte] = presenti[p.file];
+    nuova.impronte = { dati: {}, foto: {} };
   }
+  // Principale con un deposito che si apre: sha e base vuoti, e il primo giro
+  // fonde senza cancellare niente (l'unione di quello che c'è di qua e di là).
   await scriviConf(nuova);
-  db.impostaSolaLettura(ruolo === "copia");
-  ascolta(ruolo, applica);
-  await giro(applica);
+  db.impostaMotoreAltrove(ruolo === "copia");
+  ascolta(applica);
+  if (ruolo === "principale" && esistente && riparteDaZero) {
+    // La fusione non si può fare con dati che non si aprono: si manda e basta.
+    await giroForzato();
+  } else {
+    await giro(applica);
+  }
+  if (ruolo === "copia") await applica?.();
   const dopo = await stato();
   if (dopo.errore) throw new Error(dopo.errore);
   return dopo;
 }
 
+/** Manda l'archivio di qui sopra quello che c'è, senza leggerlo. */
+async function giroForzato() {
+  const c = await leggiConf();
+  for (const [parte, p] of Object.entries(PARTI)) {
+    const dati = await contenutoDi(parte);
+    const busta = await sigilla({ dati }, c.chiave, { sale: daBase64(c.sale), dispositivo: c.dispositivo });
+    const sha = await scriviFile(c, p.file, busta, c.sha?.[parte]);
+    const ora = await leggiConf();
+    await scriviConf({
+      ...ora,
+      sha: { ...(ora.sha || {}), [parte]: sha },
+      impronte: { ...(ora.impronte || {}), [parte]: improntaDi(dati) },
+      sporco: { ...(ora.sporco || {}), [parte]: false },
+    });
+  }
+  const ora = await leggiConf();
+  await scriviConf({ ...ora, ultimaVolta: new Date().toISOString(), errore: null });
+}
+
+/** Dimentica i conflitti già letti. */
+export async function dimenticaConflitti() {
+  const c = await leggiConf();
+  if (c) await scriviConf({ ...c, conflitti: [] });
+}
+
 /** Spegne: dimentica token e chiave. Il deposito su GitHub resta com'è. */
 export async function spegni() {
   await scriviConf(null);
-  db.impostaSolaLettura(false);
+  db.impostaMotoreAltrove(false);
   avvisa("spenta");
 }

@@ -196,44 +196,39 @@ export function seScriveUnAltraCopia(fn) {
   }
 }
 
-/* La sincronizzazione (js/sync.js) vuole sapere cosa è stato scritto: sul
-   dispositivo principale ogni salvataggio fa partire, dopo qualche secondo,
-   l'invio dei dati cifrati. È una sola funzione e non un elenco: chi ascolta
-   è sempre uno. */
+/* La sincronizzazione (js/sync.js) vuole sapere cosa è stato scritto: ogni
+   salvataggio fa partire, dopo un secondo e mezzo, la fusione con l'altro
+   dispositivo. È una sola funzione e non un elenco: chi ascolta è sempre uno.
+   Il contatore serve alla fusione per accorgersi che hai salvato qualcosa
+   MENTRE fondeva: in quel caso non scrive, per non cancellarlo. */
 let dopoLaScrittura = null;
+let contatoreScritture = 0;
 export function dopoOgniScrittura(fn) {
   dopoLaScrittura = fn;
 }
+export function scritture() {
+  return contatoreScritture;
+}
 
-/* Sul Mac, che riceve la copia dell'iPhone, i tuoi dati non si toccano.
+/* Le proposte del coach si calcolano su un dispositivo solo, l'iPhone.
  *
- * Quello che registrassi lì sparirebbe alla prossima copia in arrivo, in
- * silenzio: meglio dirlo subito, sul tocco. Restano scrivibili solo gli
- * archivi che non sono dati tuoi o che l'app riscrive da sé — impostazioni,
- * programma, libreria degli esercizi, copertine dei video — perché bloccarli
- * fermerebbe l'avvio, e la copia successiva li rimette comunque come
- * sull'iPhone. */
-let solaLettura = false;
-const SEMPRE_SCRIVIBILI = new Set(["impostazioni", "programma", "esercizi", "copertine"]);
-export const MESSAGGIO_SOLA_LETTURA =
-  "Qui Coach mostra la copia dell'iPhone: si registra dall'iPhone, e arriva qui da solo.";
-
-export function impostaSolaLettura(si) {
-  solaLettura = Boolean(si);
+ * Il motore crea una proposta con un id nuovo: se girasse anche sul Mac,
+ * dallo stesso allenamento ne nascerebbero due uguali con due id diversi, e la
+ * fusione le terrebbe tutte e due. Sul Mac le proposte arrivano dall'iPhone e
+ * lì si possono accettare o rifiutare come sempre. */
+let motoreAltrove = false;
+export function impostaMotoreAltrove(si) {
+  motoreAltrove = Boolean(si);
+}
+export function ilMotoreGiraAltrove() {
+  return motoreAltrove;
 }
 
-export function inSolaLettura() {
-  return solaLettura;
-}
-
-function controllaScrittura(archivi) {
-  if (!solaLettura) return;
-  if (archivi.some((a) => !SEMPRE_SCRIVIBILI.has(a))) throw new Error(MESSAGGIO_SOLA_LETTURA);
-}
-
-function annuncia(archivi) {
+function annuncia(archivi, { daSincronizzazione = false } = {}) {
+  contatoreScritture++;
+  // Quello che arriva dall'altro dispositivo non va rimandato indietro.
   try {
-    dopoLaScrittura?.(archivi);
+    if (!daSincronizzazione) dopoLaScrittura?.(archivi);
   } catch {
     /* chi ascolta non deve far fallire un salvataggio già riuscito */
   }
@@ -249,7 +244,6 @@ function annuncia(archivi) {
 }
 
 export async function put(store, value) {
-  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).put(value);
@@ -260,7 +254,6 @@ export async function put(store, value) {
 
 export async function putMany(store, values) {
   if (!values.length) return values;
-  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   const os = t.objectStore(store);
@@ -284,7 +277,6 @@ export async function putMany(store, values) {
 export async function delMulti(gruppi) {
   const nomi = Object.keys(gruppi).filter((n) => (gruppi[n] || []).length);
   if (!nomi.length) return 0;
-  controllaScrittura(nomi);
   const db = await open();
   const { t, done } = tx(db, nomi, "readwrite");
   let quante = 0;
@@ -312,7 +304,6 @@ export async function delMulti(gruppi) {
 }
 
 export async function del(store, key) {
-  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).delete(key);
@@ -321,7 +312,6 @@ export async function del(store, key) {
 }
 
 export async function clearStore(store) {
-  controllaScrittura([store]);
   const db = await open();
   const { t, done } = tx(db, [store], "readwrite");
   t.objectStore(store).clear();
@@ -334,7 +324,6 @@ export async function clearStore(store) {
  * niente. A pezzi, un'interruzione lasciava l'app con metà archivio.
  */
 export async function svuotaTutto() {
-  controllaScrittura(Object.keys(SCHEMA));
   const db = await open();
   const mancanti = await archiviMancanti();
   const presenti = Object.keys(SCHEMA).filter((s) => !mancanti.includes(s));
@@ -459,12 +448,6 @@ export async function importaTutto(dump, modo = "sostituisci", { daSincronizzazi
     );
   }
 
-  // Sul Mac l'unica strada che scrive l'archivio è la copia che arriva
-  // dall'iPhone: un ripristino da file lì verrebbe cancellato dalla prossima.
-  // Dopo i controlli sul file e non prima: un file rotto si dice rotto
-  // ovunque, prima di dire che qui non si ripristina.
-  if (!daSincronizzazione) controllaScrittura(Object.keys(SCHEMA));
-
   // Si scrive solo negli archivi che questo telefono ha davvero: nominarne uno
   // inesistente farebbe fallire tutto il ripristino, dati validi compresi.
   const mancanti = await archiviMancanti();
@@ -534,7 +517,7 @@ export async function importaTutto(dump, modo = "sostituisci", { daSincronizzazi
     throw new Error(`Ripristino annullato, archivio invariato: ${e.message}`);
   }
   await done;
-  annuncia(coinvolti);
+  annuncia(coinvolti, { daSincronizzazione });
   // Quello che il file conteneva e questo telefono non sa dove mettere va
   // detto, non inghiottito in silenzio.
   const ignorati = Object.keys(dump.dati || {}).filter(
