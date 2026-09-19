@@ -514,6 +514,37 @@ contare due volte.
 Resta l'ingrandimento di sistema dell'iPhone (Impostazioni → Accessibilità →
 Zoom), che vive fuori dall'app.
 
+### I grafici che scorrono
+
+Nella Home, sul grafico **Andamento**, il periodo **«Sempre»** contiene davvero
+tutto: ogni giorno dal primo dato registrato. A schermo se ne vede la stessa
+finestra di prima, che finisce su oggi e sui giorni in programma; il resto si
+raggiunge **scorrendoci sopra**, col dito o col trackpad: il passato sta a
+sinistra, oggi a destra.
+
+Sopra un grafico che scorre, un gesto di lato **muove solo il grafico**: non
+porta mai alla pagina di prima né a quella dopo, **nemmeno quando il grafico è
+già arrivato in fondo** — lì resta fermo e basta. Un gesto dall'alto in basso
+invece fa scorrere la pagina come sempre. Fuori dal grafico il gesto indietro
+del browser funziona come prima.
+
+### Sul Mac
+
+Sotto i 900 punti di larghezza l'app è quella del telefono, identica. Il Mac
+cambia due cose, e non tocca l'iPhone:
+
+- **A tutto schermo** (900 punti e oltre) le sezioni diventano una colonna a
+  sinistra, con quella aperta segnata da un filo d'inchiostro; il contenuto sta
+  in una colonna centrata e **si ingrandisce con lo schermo** (da 1200, 1400 e
+  1800 punti), la colonna delle sezioni no. I pannelli che salgono dal basso sul
+  telefono qui sono finestre al centro. I grafici si disegnano su un foglio più
+  largo, quindi hanno più giorni leggibili, non solo scritte più grandi.
+- **In finestra** (fra 600 e 900 punti) i grafici occupano tutta la larghezza
+  della finestra e si ridisegnano quando la allarghi o la stringi.
+
+Da 600 punti in su i grafici di Salute sono anche **più alti** (176 invece di
+104): sul telefono restano come sono.
+
 ### Tornare indietro dove eri
 
 Toccare una riga e tornare **rimette la pagina dov'era**, non in cima. Dalla Home

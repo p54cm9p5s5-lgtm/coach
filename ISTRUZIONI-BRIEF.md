@@ -87,10 +87,10 @@ dalla schermata Corpo e dal pacchetto per il coach senza dire perché.
 | `giorno` | numero **0-6**, dove **0 = domenica**, 1 = lunedì … 6 = sabato |
 | `cardio` | `true` se quel giorno prevede cardio dopo i pesi; si può omettere |
 | `esercizi[].esercizioId` | **deve esistere nella libreria dell'app** (elenco al punto 5) |
-| `esercizi[].serie` | numero maggiore di 0 |
-| `esercizi[].ripMin` / `ripMax` | `ripMin > 0` e `ripMax >= ripMin` |
-| `esercizi[].carico` | kg totali di partenza, bilanciere compreso; si omette a corpo libero |
-| `esercizi[].recuperoSec` | secondi di recupero dopo la serie; se manca, l'app usa quello della scheda |
+| `esercizi[].serie` | numero maggiore di 0, al massimo 20 |
+| `esercizi[].ripMin` / `ripMax` | `ripMin > 0` e `ripMax >= ripMin`, `ripMax` al massimo 200 |
+| `esercizi[].carico` | kg totali di partenza, bilanciere compreso, da 0 a 500; si omette a corpo libero |
+| `esercizi[].recuperoSec` | secondi di recupero dopo la serie, al massimo 1800 (mezz'ora); se manca, l'app usa quello della scheda |
 
 **Non ripetere lo stesso esercizio due volte nello stesso giorno**: l'app lo
 rifiuta, perché punteggio e progressioni ragionano per esercizio.
@@ -390,11 +390,13 @@ cronometro e senza obiettivo. Se invece la durata conta davvero, usa `aTempo` e
 | «Nel file non c'è il blocco COACH-DATA» | mancano le righe di apertura e chiusura |
 | «la scritta c'è ma non nella forma che apre il blocco» | i marcatori sono stati mangiati dalla chat: manda il file allegato |
 | «aperto ma non chiuso» | manca la riga di chiusura |
-| «non è JSON valido» | virgola di troppo, virgolette storte, parentesi non chiusa |
+| «non è JSON valido» | virgola di troppo, virgolette storte, parentesi non chiusa. Se il browser sa dove, il messaggio aggiunge «alla riga R, colonna C del blocco» (la riga 1 è quella con la `{` di apertura) o «intorno al carattere N»; Safari su iPhone spesso non lo dice |
 | «Esercizio sconosciuto: "x"» | quell'`esercizioId` non è nella libreria (punto 5) |
 | «Serie non valide» | `serie` mancante o non maggiore di 0 |
 | «Range ripetizioni non valido» | manca `ripMin`/`ripMax`, oppure `ripMax < ripMin` |
 | «Durata non valida» | esercizio `aTempo` senza `durataSec` |
+| «Carico non valido» | `carico` negativo o scritto a parole |
+| «… fuori scala» | serie oltre 20, `ripMax` oltre 200, carico oltre 500 kg, recupero oltre 1800 secondi, `durataSec` oltre 3600: sono tetti del possibile, non del consigliabile, e fermano i refusi (un milione di ripetizioni, 99999 kg) |
 | «compare due volte» | stesso esercizio ripetuto nello stesso giorno |
 | «Giorno della settimana non valido» | `giorno` fuori da 0-6 |
 | «Disco X in numero dispari» | quantità dispari nell'inventario |

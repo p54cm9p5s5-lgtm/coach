@@ -23,7 +23,7 @@ Specifica funzionale: [SPEC.md](SPEC.md).
 index.html            shell dell'app
 manifest.webmanifest  installazione sulla schermata Home
 sw.js                 service worker (offline + aggiornamenti)
-css/app.css           stile iOS nativo, chiaro/scuro automatico
+css/app.css           la pelle «Referto» (carta chiara, niente tema scuro) e il Mac da 600/900 punti
 js/app.js             avvio e routing
 js/ui.js              mattoni comuni: DOM, fogli, suoni, date
 js/db.js              IndexedDB e backup
@@ -36,15 +36,24 @@ js/punteggio.js       i tre punteggi e il loro disegno
 js/export.js          il pacchetto di testo per il coach
 js/grafico.js         grafici in SVG, senza librerie
 js/calendario.js      calendario mensile e cose attese
+js/sync.js            sincronizzazione cifrata iPhone↔Mac via repository GitHub privato
 js/screens/*.js       una schermata per file
 data/esercizi.json    libreria esercizi (contenuto generico)
 data/riscaldamento.json  riscaldamento per giorno, mobilità (Blocco A) e tenute statiche (Blocco B)
-tools/icona.py        ritaglia e riquadra l'icona sorgente
-tools/icona-da-immagine.sh  genera le tre misure delle icone
+tools/icona.py        disegna l'icona «anello» di Referto (non più in uso)
+tools/icona-da-immagine.sh  dall'immagine sorgente alle tre misure in icons/
 tools/serve.py        server di sviluppo senza cache
 tools/pubblica.sh     pubblica su GitHub Pages, con i controlli anti-fuga dati
 tools/passa-file.py   passa i file personali al telefono sulla Wi-Fi di casa
 tools/salute-da-export.py  dall'export di Salute al pacchetto, senza Comandi Rapidi
+tools/rete.js         il collaudo nel browser: import('/tools/rete.js').rete()
+tools/rete-testuale.py    i controlli che non hanno bisogno del browser
+tools/verifica-esaustiva.js  percorre tutto lo spazio degli ingressi del nucleo
+tools/schermata-che-esplode.js  guasto apposta, per provare che il collaudo se ne accorge
+tools/prova-guardie.sh    prova che le guardie di pubblica.sh fermano davvero
+tools/non-fermarti.sh     hook: non chiudere un controllo con voci aperte
+tools/github-finto.py     finta API di GitHub, per provare la sincronizzazione in locale
+tools/icona-da-immagine.py  ritaglia e riquadra l'immagine sorgente (lo usa il .sh)
 ```
 
 ## Sviluppo

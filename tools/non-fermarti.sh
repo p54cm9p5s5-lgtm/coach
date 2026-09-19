@@ -38,10 +38,15 @@ APERTE="${APERTE//[^0-9]/}"
 [ -z "$APERTE" ] && APERTE=0
 [ "$APERTE" -eq 0 ] && exit 0
 
+# La guida per riprendere sta nella cartella del controllo più recente. Scritta
+# qui a mano restava quella di agosto anche nel controllo di settembre.
+RIPRESA="$(ls -d _privato/controllo-*/04-come-si-riprende.md 2>/dev/null | sort | tail -1)"
+[ -z "$RIPRESA" ] && RIPRESA="04-come-si-riprende.md nella cartella del controllo"
+
 # Da qui in giù: si va avanti.
 #
 # Il messaggio non dice solo «no». Dice anche cosa fare nei due casi in cui
 # fermarsi sembrerebbe legittimo — una voce che dipende da una decisione sua,
 # e il contesto che si riempie — perché sono esattamente le due scuse con cui
 # ci si è fermati le altre volte.
-printf '{"decision":"block","reason":"Restano %s voci DA FARE in ESITO.md: il controllo non è finito e non ci si ferma. Riprendi dal primo blocco aperto seguendo PIANO.md, senza riepiloghi intermedi.\\n\\nSe una voce dipende da una decisione sua: NON aspettare. Chiudila come SOLO TELEFONO scrivendo la domanda nel campo «come», e vai avanti: le domande si consegnano tutte insieme in §8 alla fine.\\n\\nSe il contesto si sta riempiendo: NON scrivere un resoconto. La conversazione viene riassunta da sola e il lavoro riprende; la continuità sta in _privato/controllo-2026-08/04-come-si-riprende.md, che va aggiornata mentre si lavora e non alla fine. Ogni colpo speso a riferire è un colpo tolto alle voci aperte.\\n\\nSi parla solo quando questo comando dà zero:\\n    grep -cE \\"^\\\\|.*DA FARE\\" ESITO.md"}' "$APERTE"
+printf '{"decision":"block","reason":"Restano %s voci DA FARE in ESITO.md: il controllo non è finito e non ci si ferma. Riprendi dal primo blocco aperto seguendo la guida di ripresa (qui sotto), senza riepiloghi intermedi.\\n\\nSe una voce dipende da una decisione sua: NON aspettare. Chiudila come SOLO TELEFONO scrivendo la domanda nel campo «come», e vai avanti: le domande si consegnano tutte insieme in §8 alla fine.\\n\\nSe il contesto si sta riempiendo: NON scrivere un resoconto. La conversazione viene riassunta da sola e il lavoro riprende; la continuità sta in %s, che va aggiornata mentre si lavora e non alla fine. Ogni colpo speso a riferire è un colpo tolto alle voci aperte.\\n\\nSi parla solo quando questa stessa guardia lascia passare: bash tools/non-fermarti.sh non stampa niente. Il grep grezzo sulla parola DA FARE conta anche le citazioni come CARDIO DA FARE e non arriva mai a zero."}' "$APERTE" "$RIPRESA"

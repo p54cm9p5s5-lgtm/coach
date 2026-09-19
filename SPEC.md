@@ -136,7 +136,18 @@ resta nella conversazione con Claude.
   registra qualcosa ogni giorno, e la barra resta per quello che si tocca
   durante la giornata. Mentre sono aperti la scheda accesa resta Salute.
   Impostazioni raggiungibile dall'header di Home.
-- Safe area rispettata (notch e barra Home). Nessuno scroll orizzontale mai.
+- Safe area rispettata (notch e barra Home). Nessuno scroll orizzontale della
+  pagina. L'unica cosa che scorre di lato è il grafico Andamento della Home su
+  «Sempre», dentro il suo riquadro; lì un gesto di lato muove solo il grafico e
+  non porta mai alla pagina di prima o dopo, nemmeno arrivato in fondo.
+- **Sul Mac** (le regole valgono solo da 600 punti in su: l'iPhone non cambia).
+  Da 900 punti la barra delle sezioni diventa una colonna a sinistra da 220 px,
+  il contenuto una colonna centrata da 760 ingrandita con `zoom` (1,15 / 1,3 /
+  1,45 da 1200 / 1400 / 1800 punti; la colonna delle sezioni no), i pannelli
+  finestre centrate, e i grafici si disegnano su un foglio largo 700 invece di
+  320. Fra 600 e 900 il foglio dei grafici è largo quanto la finestra meno 72, e
+  si ridisegna quando la finestra cambia. Da 600 i grafici di Salute sono alti
+  176 invece di 104.
 - Tocco: target minimo 44px. In Modalità Seduta il tasto che porta avanti è a
   54px e quelli di servizio a 44px, separati da un fosso di 10px: con i tasti
   attaccati un tocco un po' alto su «Serie completata» finiva su «Salta
@@ -281,6 +292,11 @@ fumoContatoDal · fumoTettoDichiarato · agenda · videoRiscaldamento
 - Seduta prevista oggi secondo lo split, con tasto **[Inizia]**. Quale
   allenamento tocca lo decide il brief (o il calendario del coach): l'app lo
   esegue e non offre di cambiarlo, perché non è una scelta che le spetta.
+- Solo quando per oggi **non c'è niente in programma** (riposo, calendario
+  vuoto) compare il riquadro **«Nuovo allenamento»**: si sceglie uno dei giorni
+  dello split e si parte. La seduta porta `fuoriProgramma: true` e nel
+  pacchetto per il coach la riga «Nota: fuori programma». Con un allenamento
+  in programma il riquadro non c'è.
 - Cosa manca: peso settimanale scaduto, foto attese, import Salute vecchio di N giorni.
 - Stato finestre: `Movimento 12/21 giorni · Sonno 9/21 notti`.
 - Proposte in sospeso.
