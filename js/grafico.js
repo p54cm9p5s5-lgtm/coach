@@ -55,9 +55,17 @@ const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
    spazio fra un giorno e l'altro. La soglia è la stessa del CSS (900 punti), e
    passando da finestra a tutto schermo app.js ridisegna la schermata. */
 export const SOGLIA_LARGO = "(min-width: 900px)";
+/* In mezzo — il Mac in finestra, fra 600 e 900 punti — il foglio segue la
+   finestra: prima restava quello del telefono, e in una finestra larga il
+   doppio il grafico era un francobollo al centro (19/09: «resta proprio
+   piccolo piccolo piccolo»). 72 punti sono i margini del riquadro del
+   grafico (22 per lato del gruppo, 14 per lato dentro). Sotto i 600 punti
+   c'è solo il telefono, e lì resta 320: non cambia niente. */
 function larghezzaDelDisegno() {
   try {
-    return globalThis.matchMedia?.(SOGLIA_LARGO).matches ? 700 : 320;
+    if (globalThis.matchMedia?.(SOGLIA_LARGO).matches) return 700;
+    const w = Number(globalThis.innerWidth) || 0;
+    return w >= 600 ? Math.round(w - 72) : 320;
   } catch {
     return 320;
   }

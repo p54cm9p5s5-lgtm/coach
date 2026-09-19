@@ -640,6 +640,25 @@ async function avvia() {
   } catch {
     /* un browser senza matchMedia resta com'è: i grafici si adattano alla prossima schermata */
   }
+  // Il Mac in finestra: fra 600 e 900 punti il foglio dei grafici segue la
+  // larghezza della finestra, quindi ridimensionarla ridisegna — a gesto
+  // finito, e solo se la larghezza è cambiata davvero. Sul telefono la
+  // larghezza non cambia (ruotarlo sì, ma resta sotto i 600 o passa la soglia
+  // qui sopra), e questo non scatta.
+  let larghezzaDisegnata = innerWidth;
+  let attesaRidimensiona = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(attesaRidimensiona);
+    attesaRidimensiona = setTimeout(() => {
+      const w = innerWidth;
+      const conta = (x) => x >= 600 && x < 900;
+      if (!conta(w) && !conta(larghezzaDisegnata)) return;
+      if (Math.abs(w - larghezzaDisegnata) < 24) return;
+      if (rottaCorrente === "seduta" || foglioAperto()) return;
+      larghezzaDisegnata = w;
+      ridisegna();
+    }, 250);
+  });
 
   // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta
   // ieri finché non si ricarica, e la Home propone l'allenamento sbagliato.
