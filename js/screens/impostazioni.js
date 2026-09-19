@@ -620,14 +620,11 @@ async function caricaBrief(ridisegna) {
   if (problemi.length) {
     await chiedi({
       titolo: "Blocco non valido",
-      // Sei problemi e poi il silenzio: chi legge non sa se sono sei o
-      // sessanta, e sistemati quelli scopre che ce n'erano altri. Il numero
-      // vero si dice, come fanno le tabelle del pacchetto.
+      // Tutti, non i primi sei: con «e altri N» chi corregge il brief
+      // sistemava sei righe, ricaricava e ne scopriva altre (19/09/2026: «devo
+      // poterli vedere tutti»). Il pannello scorre.
       testo:
-        problemi.slice(0, 6).join("\n") +
-        (problemi.length > 6
-          ? `\n\nE altri ${problemi.length - 6}: sistemati questi, ricarica il brief e te li mostro.`
-          : ""),
+        (problemi.length > 1 ? `${problemi.length} problemi:\n\n` : "") + problemi.join("\n"),
       opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
       annulla: false,
     });
@@ -644,7 +641,7 @@ async function caricaBrief(ridisegna) {
         "div.group",
         h(
           "div.list",
-          ...differenze.slice(0, 40).map((d) =>
+          ...differenze.map((d) =>
             h(
               "div.row",
               h("div.main", h("span.title", d.testo)),
@@ -660,15 +657,6 @@ async function caricaBrief(ridisegna) {
           )
         )
       ),
-      differenze.length > 40
-        ? h(
-            "p.footnote",
-            { style: "margin:10px 16px 0" },
-            // Quaranta righe e poi basta: senza dirlo, un brief molto diverso
-            // sembrava cambiare meno di quanto cambia davvero.
-            `Qui ne vedi 40 su ${differenze.length}: le altre ${differenze.length - 40} sono dello stesso tipo, e vengono applicate insieme a queste.`
-          )
-        : null,
       h(
         "p.footnote",
         { style: "margin:10px 16px 0" },

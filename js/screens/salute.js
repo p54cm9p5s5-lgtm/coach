@@ -1114,7 +1114,7 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
       }
       return;
     }
-    const dettagli = e.avvisi?.length ? `\n\nRighe scartate:\n${e.avvisi.slice(0, 5).join("\n")}` : "";
+    const dettagli = e.avvisi?.length ? `\n\nRighe scartate:\n${e.avvisi.join("\n")}` : "";
     await chiedi({
       titolo: "Non importato",
       testo: `${e.message}${dettagli}`,

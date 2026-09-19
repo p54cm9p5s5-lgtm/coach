@@ -207,10 +207,16 @@ async function elenco(vaiA) {
         h("h2", "Registro decisioni"),
         h(
           "div.list",
-          ...dec.slice(0, 20).map((d) => {
+          ...dec.map((d, i) => {
             const riga = d.propostaId
               ? h("a.row", { href: `#/proposte?proposta=${d.propostaId}` })
               : h("div.row");
+            // Le prime venti a vista, le altre dietro «Mostra tutte»: prima
+            // oltre la ventesima non c'era modo di vederle.
+            if (i >= 20) {
+              riga.style.display = "none";
+              riga.dataset.nascosta = "1";
+            }
             aggiungi(
               riga,
               h(
@@ -235,6 +241,22 @@ async function elenco(vaiA) {
             return riga;
           })
         ),
+        dec.length > 20
+          ? h(
+              "div.btn-wrap",
+              h(
+                "button.btn.secondary",
+                {
+                  onclick: (e) => {
+                    const gruppo = e.currentTarget.closest(".group");
+                    for (const r of gruppo.querySelectorAll("[data-nascosta]")) r.style.display = "";
+                    e.currentTarget.closest(".btn-wrap").remove();
+                  },
+                },
+                `Mostra tutte le ${dec.length}`
+              )
+            )
+          : null,
         h(
           "p.footnote",
           `${dec.length} ${dec.length === 1 ? "decisione registrata" : "decisioni registrate"}. Ogni modifica accettata porta una data di verifica: senza esito resta aperta.`

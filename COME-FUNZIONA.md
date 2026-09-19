@@ -21,6 +21,8 @@ l'app usa davvero.
 > - **Dati di Salute** (§9). Quando un numero arriva diverso da quello già
 >   registrato, decide l'atleta, una volta sola, e la scelta resta. I numeri
 >   che leggi nel pacchetto sono quindi quelli che ha confermato lui.
+> - **Elenchi completi** (§14). Un brief con molti errori li mostra tutti,
+>   non i primi sei: puoi sistemarli in un giro solo.
 > - **iPhone e Mac** (§2, §5). L'app gira anche sul Mac, sincronizzata con
 >   l'iPhone attraverso un repository privato e cifrato. Si registra da tutti e
 >   due, e le proposte le calcola solo l'iPhone. I dati restano suoi: niente in
@@ -1410,6 +1412,13 @@ Sono la parte che conta più delle funzioni.
 - **Non sovrascrive in silenzio.** Quando un giorno già chiuso cambia di molto,
   lo dice e spiega come tornare indietro.
 - **Non lascia un bottone spento senza spiegare cosa manca.**
+- **Non taglia gli elenchi.** Quando un messaggio elenca qualcosa — i problemi
+  di un brief, le differenze fra il brief vecchio e il nuovo, le righe scartate
+  di un pacchetto, le attività da eliminare, i dati da decidere dopo un import —
+  le mostra tutte, e il pannello scorre. Prima ne mostrava alcune e poi «…e altri
+  N»: chi correggeva il brief sistemava sei righe, lo ricaricava e ne scopriva
+  altre. L'unico elenco che parte corto è il Registro decisioni in Storico, che
+  cresce ogni settimana: mostra le ultime venti e sotto c'è «Mostra tutte».
 - **Non tratta pressione arteriosa né ECG**, non interpreta dati clinici, non
   calcola fabbisogni calorici e non dà indicazioni alimentari.
 - **Non manda fuori dal telefono nessun tuo dato in chiaro.** Allenamenti, misure,

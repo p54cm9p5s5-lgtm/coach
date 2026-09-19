@@ -496,10 +496,10 @@ export function analizza(testo) {
     // che ci sono spiega una notte più corta del solito.
     if (sonnellini.length) {
       const totale = sonnellini.reduce((t, x) => t + x.minuti, 0);
-      const elenco = sonnellini.slice(0, 3).map((x) => `${x.quando} (${x.minuti} min)`).join(", ");
+      const elenco = sonnellini.map((x) => `${x.quando} (${x.minuti} min)`).join(", ");
       risultato.avvisi.push(
         `${sonnellini.length} ${sonnellini.length === 1 ? "sonnellino di giorno" : "sonnellini di giorno"} per ${totale} minuti in tutto` +
-          `${elenco ? `: ${elenco}` : ""}${sonnellini.length > 3 ? " e altri" : ""}. Restano fuori dalle notti: il punteggio del sonno guarda la notte, non il pomeriggio.`
+          `${elenco ? `: ${elenco}` : ""}. Restano fuori dalle notti: il punteggio del sonno guarda la notte, non il pomeriggio.`
       );
     }
   }

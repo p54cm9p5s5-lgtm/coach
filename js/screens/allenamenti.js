@@ -620,10 +620,8 @@ function bloccoRisposta(a, ridisegna) {
 
 /** La carta che chiude la vecchia sezione Extra: si vedono e si buttano. */
 function cartaVecchieExtra(righe, ridisegna) {
-  const elenco = righe
-    .slice(0, 8)
-    .map((x) => `${x.tipo} del ${dataBreve(x.data)}`)
-    .join("\n");
+  // Tutte: si sta per eliminarle, e si elimina solo quello che si è visto.
+  const elenco = righe.map((x) => `${x.tipo} del ${dataBreve(x.data)}`).join("\n");
   return h(
     "div.group",
     h("h2", "Attività scritte a mano"),
@@ -636,7 +634,7 @@ function cartaVecchieExtra(righe, ridisegna) {
             const scelta = await chiedi({
               titolo: righe.length === 1 ? "Eliminare l'attività?" : `Eliminare tutte e ${righe.length}?`,
               testo:
-                `${elenco}${righe.length > 8 ? `\n…e altre ${righe.length - 8}` : ""}\n\n` +
+                `${elenco}\n\n` +
                 "Erano registrate a mano nella vecchia sezione Extra. Le stesse uscite l'orologio le ha già scritte da " +
                 "solo, e da qui in avanti il talk-test si risponde sul suo allenamento.\n\n" +
                 "Le giornate che valevano come allenamento solo grazie a queste righe tornano a essere giornate senza " +
