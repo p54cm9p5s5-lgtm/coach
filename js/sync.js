@@ -426,6 +426,30 @@ function uguali(x, y) {
   return impronteUguali(improntaDi(x), improntaDi(y));
 }
 
+/**
+ * Da quello che c'è qui a quello che deve esserci: le sole righe da scrivere o
+ * da cancellare, ognuna con la versione che mi aspetto di trovare. Pura.
+ */
+export function differenze(locale, unito) {
+  const ops = [];
+  const archivi = new Set([...Object.keys(locale || {}), ...Object.keys(unito || {})]);
+  for (const a of archivi) {
+    if (!(a in db.SCHEMA) || parteDi(a) === null) continue;
+    const L = new Map((locale?.[a] || []).filter((r) => viaggia(a, r)).map((r) => [chiaveDi(a, r), r]));
+    const U = new Map((unito?.[a] || []).filter((r) => viaggia(a, r)).map((r) => [chiaveDi(a, r), r]));
+    const kp = db.SCHEMA[a].keyPath;
+    for (const [k, r] of U) {
+      const l = L.get(k);
+      const atteso = l ? JSON.stringify(l) : null;
+      if (atteso !== JSON.stringify(r)) ops.push({ archivio: a, chiave: r[kp], atteso, nuovo: r });
+    }
+    for (const [k, l] of L) {
+      if (!U.has(k)) ops.push({ archivio: a, chiave: l[kp], atteso: JSON.stringify(l), nuovo: null });
+    }
+  }
+  return ops;
+}
+
 /** Il backup da ripristinare con quello che è uscito dalla fusione. */
 export function daApplicare(dati) {
   const dump = { formato: "coach-backup", versione: db.VERSIONE_BACKUP, dati: {}, motivo: "sincronizzazione" };
@@ -500,7 +524,6 @@ async function giroDellaParte(parte, presenti) {
   // mentre questo giro lavora lo rimette, e il giro dopo la manda.
   const salvatoIl = c.sporcoDal?.[parte] || null;
   await segna(parte, false);
-  const scrittureAllInizio = db.scritture();
   const locale = await contenutoDi(parte);
 
   let remoto = null;
@@ -526,14 +549,12 @@ async function giroDellaParte(parte, presenti) {
 
   let cambiatoQui = false;
   if (remoto && !uguali(unito, locale)) {
-    // Se nel frattempo hai salvato qualcosa qui, scrivere adesso lo
-    // cancellerebbe: si lascia stare, e il giro dopo rifonde con quello.
-    if (db.scritture() !== scrittureAllInizio) {
-      await segna(parte, true);
-      return false;
-    }
-    await db.importaTutto(daApplicare(unito), "sostituisci", { daSincronizzazione: true });
-    cambiatoQui = true;
+    // Si scrivono solo le righe che cambiano, e ognuna solo se è ancora come
+    // l'ho letta (js/db.js, `applicaDifferenze`): quello che salvi mentre
+    // questo giro lavora non viene toccato, e parte al giro dopo.
+    const esito = await db.applicaDifferenze(differenze(locale, unito));
+    if (esito.saltate) await segna(parte, true);
+    cambiatoQui = esito.scritte > 0;
   }
 
   let nuovoSha = shaLetto;

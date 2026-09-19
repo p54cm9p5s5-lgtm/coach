@@ -527,6 +527,57 @@ export async function importaTutto(dump, modo = "sostituisci", { daSincronizzazi
 }
 
 /**
+ * Scrive le differenze arrivate dall'altro dispositivo, riga per riga, e SOLO
+ * se la riga è ancora com'era quando la sincronizzazione l'ha letta.
+ *
+ * Prima la fusione sostituiva l'archivio intero. Controllava sì di non avere
+ * scritture in mezzo, ma con un contatore che sale a salvataggio FINITO: un
+ * salvataggio partito nei millisecondi della fusione passava inosservato, e
+ * la sostituzione lo cancellava. Trovato il 19/09 nel Controllo 3: una
+ * sigaretta segnata a 20 ms dall'inizio di un giro spariva. In palestra
+ * sarebbe stata una serie.
+ *
+ * Qui ogni riga si rilegge DENTRO la stessa transazione in cui si scrive: se
+ * nel frattempo l'hai toccata tu, si lascia com'è — il tuo salvataggio ha già
+ * segnato «da mandare», e al giro dopo si rifonde con quello. Le righe che la
+ * fusione non tocca non entrano nemmeno nella transazione.
+ *
+ * @param operazioni [{ archivio, chiave, atteso, nuovo }] — `atteso` è la riga
+ *   letta (JSON) o null se non c'era; `nuovo` la riga da scrivere o null per
+ *   cancellarla.
+ * @returns quante operazioni sono state saltate perché la riga era cambiata
+ */
+export async function applicaDifferenze(operazioni, { daSincronizzazione = true } = {}) {
+  const valide = (operazioni || []).filter((o) => o && o.archivio in SCHEMA);
+  if (!valide.length) return { scritte: 0, saltate: 0 };
+  const mancanti = await archiviMancanti();
+  const nomi = [...new Set(valide.map((o) => o.archivio))].filter((n) => !mancanti.includes(n));
+  if (!nomi.length) return { scritte: 0, saltate: 0 };
+  const db = await open();
+  const { t, done } = tx(db, nomi, "readwrite");
+  let scritte = 0;
+  let saltate = 0;
+  for (const o of valide) {
+    if (!nomi.includes(o.archivio)) continue;
+    const os = t.objectStore(o.archivio);
+    const letta = os.get(o.chiave);
+    letta.onsuccess = () => {
+      const ora = letta.result === undefined ? null : JSON.stringify(letta.result);
+      if (ora !== (o.atteso ?? null)) {
+        saltate++;
+        return;
+      }
+      if (o.nuovo) os.put(o.nuovo);
+      else os.delete(o.chiave);
+      scritte++;
+    };
+  }
+  await done;
+  if (scritte) annuncia(nomi, { daSincronizzazione });
+  return { scritte, saltate };
+}
+
+/**
  * Chiede a iOS di non buttare via l'archivio quando lo spazio scarseggia.
  * Senza, i dati di un'app installata dalla schermata Home sono considerati
  * cancellabili: mesi di allenamenti possono sparire senza preavviso.

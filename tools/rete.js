@@ -870,6 +870,27 @@ export async function verificaSincronizzazione({ modulo = sincro, archivio = db 
     "un archivio che non è arrivato verrebbe svuotato",
     tutti.filter((a) => a !== "fumo").every((a) => d.parziale.includes(a)) && !d.parziale.includes("fumo")
   );
+  // La fusione scrive solo le differenze, e ognuna solo se la riga è ancora
+  // come l'ha letta (Controllo 3, 19/09: sostituendo l'archivio intero una
+  // sigaretta salvata a 20 ms dall'inizio di un giro spariva).
+  const loc = { fumo: [r("a", 1), r("b", 1), r("via", 1)] };
+  const uni = { fumo: [r("a", 1), r("b", 2), r("c", 1)] };
+  const ops = modulo.differenze(loc, uni);
+  const op = (k) => ops.find((o) => o.chiave === k);
+  prova("una riga uguale finisce fra le cose da scrivere", !op("a"));
+  prova("una riga cambiata non si scrive, o non con la versione letta come attesa", op("b")?.nuovo?.v === 2 && op("b")?.atteso === JSON.stringify(r("b", 1)));
+  prova("una riga nuova non si scrive, o si aspetta di trovarne una", op("c")?.nuovo?.v === 1 && op("c")?.atteso === null);
+  prova("una riga sparita di là non si cancella", op("via") && op("via").nuovo === null);
+  // Il pezzo che protegge i salvataggi fatti durante la fusione: se la riga
+  // non è com'era attesa, non si scrive. Provato su una chiave che non esiste,
+  // così anche sulla copia dei dati veri non si scrive niente.
+  const chiaveFinta = "__rete_non_esiste__";
+  const esitoCas = await archivio.applicaDifferenze([
+    { archivio: "fumo", chiave: chiaveFinta, atteso: JSON.stringify({ id: chiaveFinta }), nuovo: { id: chiaveFinta, data: "2000-01-01" } },
+  ]);
+  prova("una riga diversa da quella attesa viene sovrascritta", esitoCas.saltate === 1 && esitoCas.scritte === 0);
+  prova("la riga finta è finita in archivio", !(await archivio.get("fumo", chiaveFinta)));
+
   // Gli errori, in parole: senza rete il browser dice «Load failed» in
   // inglese, e un errore di programmazione non va scambiato per mancanza di
   // rete; il limite di richieste di GitHub non è un token sbagliato.
