@@ -54,6 +54,30 @@ const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
    disegno tiene scritte e puntini della loro misura: il grafico ha solo più
    spazio fra un giorno e l'altro. La soglia è la stessa del CSS (900 punti), e
    passando da finestra a tutto schermo app.js ridisegna la schermata. */
+/* Il gesto di lato, sopra un grafico, è del grafico.
+
+   Sul Mac due dita di lato sul trackpad vogliono dire anche «pagina indietro»
+   (o avanti): scorrendo Andamento fino all'inizio, o passando sopra un
+   grafico di Salute che non scorre affatto, il browser prendeva il gesto e
+   tornava alla schermata di prima. «Solo ed esclusivamente quando sono su un
+   grafico, se vado indietro non succede nulla se non muovere il grafico»
+   (19/09). Il gesto orizzontale qui lo trattiene l'app — il browser non lo
+   vede, quindi non naviga — e se il grafico scorre lo sposta lei. Il gesto
+   verticale passa com'è: la pagina continua a scorrere anche col puntatore
+   sopra un grafico. Fuori dai grafici non cambia niente. */
+function trattieniGestoDiLato(el, scorrevole = null) {
+  el.style.overscrollBehaviorX = "none";
+  el.addEventListener(
+    "wheel",
+    (e) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      if (scorrevole) scorrevole.scrollLeft += e.deltaX;
+    },
+    { passive: false }
+  );
+}
+
 export const SOGLIA_LARGO = "(min-width: 900px)";
 /* In mezzo — il Mac in finestra, fra 600 e 900 punti — il foglio segue la
    finestra: prima restava quello del telefono, e in una finestra larga il
@@ -281,7 +305,10 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null, 
   svg.style.touchAction = scorre ? "pan-x pan-y" : "pan-y";
   svg.style.cursor = "pointer";
 
-  if (!scorre) return h("div", lettura, svg);
+  if (!scorre) {
+    trattieniGestoDiLato(svg);
+    return h("div", lettura, svg);
+  }
 
   // Il riquadro che scorre di lato. Sull'iPhone lo muove il dito — un tocco
   // legge il giorno, un trascinamento scorre, perché appena il sistema prende
@@ -309,6 +336,7 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null, 
     if (++tentativi < 120) requestAnimationFrame(allaFine);
   };
   requestAnimationFrame(allaFine);
+  trattieniGestoDiLato(riquadro, riquadro);
   return h("div", lettura, riquadro);
 }
 
@@ -675,6 +703,7 @@ export function graficoLinea({
   svg.addEventListener("pointerleave", rilascia);
   svg.style.touchAction = "pan-y";
   svg.style.cursor = "pointer";
+  trattieniGestoDiLato(svg);
 
   return h("div", lettura, svg);
 }
@@ -921,6 +950,7 @@ export function graficoBattito({ caselle, inizioSec, durataSec, media = null, al
   svg.addEventListener("pointerleave", rilascia);
   svg.style.touchAction = "pan-y";
   svg.style.cursor = "pointer";
+  trattieniGestoDiLato(svg);
 
   return h(
     "div",
