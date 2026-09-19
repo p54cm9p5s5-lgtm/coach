@@ -45,6 +45,24 @@ const soloNumeri = (punti) =>
 
 const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
+/* Quanto è largo il foglio su cui si disegna.
+
+   Sul telefono 320: è la misura per cui sono stati pensati margini, scritte e
+   puntini. A tutto schermo sul Mac la colonna è larga più del doppio, e un
+   foglio da 320 alto 104 — che il browser non può allargare senza alzarlo —
+   restava un francobollo in mezzo al bianco. Allargare il FOGLIO invece del
+   disegno tiene scritte e puntini della loro misura: il grafico ha solo più
+   spazio fra un giorno e l'altro. La soglia è la stessa del CSS (900 punti), e
+   passando da finestra a tutto schermo app.js ridisegna la schermata. */
+export const SOGLIA_LARGO = "(min-width: 900px)";
+function larghezzaDelDisegno() {
+  try {
+    return globalThis.matchMedia?.(SOGLIA_LARGO).matches ? 700 : 320;
+  } catch {
+    return 320;
+  }
+}
+
 /**
  * @param dati [{ data, kcal|null, obiettivo, allenamento: bool, presente, futuro, previsto }]
  */
@@ -53,7 +71,7 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
   // giorno senza dati, e va disegnato come tale — un trattino, non una barra
   // alta «NaN» che porta giù tutto il grafico.
   dati = (dati || []).map((d) => (Number.isFinite(d?.kcal) ? d : { ...d, kcal: null }));
-  const L = 320;
+  const L = larghezzaDelDisegno();
   const A = altezza;
   const margineBasso = 22;
   const areaBarre = A - margineBasso;
@@ -403,7 +421,7 @@ export function graficoLinea({
   estremo = null,
 }) {
   punti = soloNumeri(punti);
-  const L = 320;
+  const L = larghezzaDelDisegno();
   const A = altezza;
   const margineBasso = 18;
   const margineAlto = 8;
@@ -720,7 +738,7 @@ export function tastoSpiegazione(titolo, testo) {
  */
 export function graficoBattito({ caselle, inizioSec, durataSec, media = null, altezza = 150 }) {
   const validi = caselle.filter((c) => c != null);
-  const L = 320;
+  const L = larghezzaDelDisegno();
   const A = altezza;
   const bassoTesti = 16;
   const altoTesti = 12;

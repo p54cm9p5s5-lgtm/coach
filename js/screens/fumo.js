@@ -122,11 +122,10 @@ export async function render({ ridisegna }) {
   // niente finisce sotto la barra del menu qualunque sia lo schermo.
   aggiungi(wrap,
     h(
-      "div",
-      {
-        style:
-          "height:calc(100dvh - var(--tabbar-h) - 104px);display:flex;flex-direction:column;padding:0 16px",
-      },
+      // L'altezza sta nel CSS (.fumo-conteggio): a tutto schermo sul Mac
+      // quella del telefono lasciava un vuoto di mezzo schermo sopra il numero.
+      "div.fumo-conteggio",
+      { style: "display:flex;flex-direction:column;padding:0 16px" },
       h(
         "div",
         {

@@ -628,6 +628,19 @@ async function avvia() {
     ridisegna();
   });
 
+  // Da finestra a tutto schermo, e ritorno: i grafici si disegnano su un
+  // foglio largo quanto lo schermo permette (js/grafico.js), quindi passando
+  // la soglia si ridisegna. Non dentro un allenamento e non sotto un foglio
+  // aperto, per la stessa ragione di sopra.
+  try {
+    matchMedia("(min-width: 900px)").addEventListener("change", () => {
+      if (rottaCorrente === "seduta" || foglioAperto()) return;
+      ridisegna();
+    });
+  } catch {
+    /* un browser senza matchMedia resta com'è: i grafici si adattano alla prossima schermata */
+  }
+
   // L'app resta aperta per giorni: senza questo, a mezzanotte «oggi» resta
   // ieri finché non si ricarica, e la Home propone l'allenamento sbagliato.
   let giornoDisegnato = new Date().toDateString();
