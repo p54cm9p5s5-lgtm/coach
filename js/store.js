@@ -848,7 +848,7 @@ export function iniziaSeduta(argomenti) {
   return inCoda(() => iniziaSedutaVera(argomenti));
 }
 
-async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
+async function iniziaSedutaVera({ data = isoDate(), giornoId, fuoriProgramma = false }) {
   invalidaCacheSedute();
   const gia = await sedutaInCorso();
   if (gia) return gia;
@@ -860,6 +860,10 @@ async function iniziaSedutaVera({ data = isoDate(), giornoId }) {
     tipoId: g.id,
     tipoNome: g.nome,
     tipoProgrammatoId: giornoPrevisto(data)?.id || null,
+    // Cominciato da «Nuovo allenamento», in un giorno in cui non c'era niente:
+    // una scelta tua, e il coach deve poterlo leggere come tale. Il campo c'è
+    // solo quando è vero, così le sedute di prima restano identiche.
+    ...(fuoriProgramma ? { fuoriProgramma: true } : {}),
     // Cosa prevedeva il programma per questo allenamento, congelato adesso:
     // se il coach cambia lo split domani, il punteggio e il riepilogo di oggi
     // devono restare quelli di oggi.

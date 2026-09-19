@@ -1290,6 +1290,16 @@ tornano a valere, perché lì non c'è nessun altro a dirle. Restano sempre
 dell'app soltanto due promemoria, che il coach non può conoscere: il backup su
 file e l'import dei dati salute.
 
+**Un giorno senza niente in programma non è chiuso.** Quando per oggi non c'è
+nessun allenamento — riposo, calendario vuoto — la schermata Oggi mostra sotto
+il riquadro del giorno un secondo riquadro, **«Nuovo allenamento»**: l'atleta
+sceglie uno dei giorni dello split (Push, Pull, Legs, Upper, Lower, Mobilità)
+e parte subito, con gli esercizi e i carichi di quel giorno. Nel pacchetto
+quell'allenamento porta la riga **«Nota: fuori programma — quel giorno sul
+calendario non c'era nessun allenamento, l'ha scelto l'atleta dalla schermata
+Oggi.»** Quando il calendario ha già un allenamento per oggi il riquadro non
+compare: si fa quello.
+
 ---
 
 ## 14. Regole di condotta dell'app

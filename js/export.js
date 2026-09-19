@@ -496,7 +496,9 @@ export function logSeduta({ seduta, serie, questionari, esercizio, giornoSplit, 
     riga("Nota generale", seduta.notaGenerale),
     giornoSplit && seduta.tipoProgrammatoId && seduta.tipoProgrammatoId !== seduta.tipoId
       ? `Nota: in programma era ${giornoSplit(seduta.tipoProgrammatoId)?.nome || seduta.tipoProgrammatoId}`
-      : null,
+      : seduta.fuoriProgramma
+        ? "Nota: fuori programma — quel giorno sul calendario non c'era nessun allenamento, l'ha scelto l'atleta dalla schermata Oggi."
+        : null,
     righeDettaglio.length ? "" : null,
     righeDettaglio.length ? "DETTAGLIO SERIE PER SERIE" : null,
     righeDettaglio.length

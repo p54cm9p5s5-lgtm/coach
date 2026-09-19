@@ -187,7 +187,12 @@ async function vistaProgramma(vaiA, ridisegna) {
               "Evento non riconosciuto: serve il brief aggiornato per sapere cosa contiene."
             )
           : null
-      )
+      ),
+      // Un giorno senza niente in programma non è un giorno in cui non si può
+      // fare niente: «vorrei un altro riquadro sotto, nuovo allenamento, solo
+      // quando non c'è niente in giornata» (19/09). Solo qui: quando il
+      // calendario ha già un allenamento, il riquadro sopra è quello.
+      previsto ? null : riquadroNuovoAllenamento(oggi, ridisegna)
     )
   );
 
@@ -288,13 +293,89 @@ async function vistaProgramma(vaiA, ridisegna) {
             "p.footnote",
             { style: "text-align:center;margin:0" },
             origine.fonte === "calendario"
-              ? "Gli allenamenti li mette il coach sul calendario. Se oggi non c'è niente, non c'è niente da fare."
-              : "Il riposo fa parte del programma. Se serve un allenamento diverso, lo decide il coach e arriva con il brief aggiornato."
+              ? "Gli allenamenti li mette il coach sul calendario. Se oggi vuoi allenarti lo stesso, scegli da «Nuovo allenamento»: il coach lo vedrà come fuori programma."
+              : "Il riposo fa parte del programma. Se oggi vuoi allenarti lo stesso, scegli da «Nuovo allenamento»: il coach lo vedrà come fuori programma."
           )
     )
   );
 
   return wrap;
+}
+
+/**
+ * «Nuovo allenamento»: un giorno dello split scelto da te, in un giorno in cui
+ * il programma non ne prevede nessuno. Parte subito, come «Inizia
+ * allenamento», e resta segnato come fuori programma.
+ */
+function riquadroNuovoAllenamento(oggi, ridisegna) {
+  return h(
+    "button",
+    {
+      style:
+        "display:block;width:100%;margin:12px 0 0;padding:18px 16px;border:1.5px solid var(--label);" +
+        "border-radius:2px;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer",
+      onclick: unaVoltaSola(async () => {
+        sbloccaAudio();
+        const scelto = await scegliGiorno();
+        if (!scelto) return;
+        const gia = await store.sedutaInCorso();
+        if (!gia) await store.iniziaSeduta({ data: oggi, giornoId: scelto, fuoriProgramma: true });
+        await ridisegna();
+      }),
+    },
+    h("p", { style: "margin:0;font-size:20px;font-weight:700;letter-spacing:-0.4px" }, "Nuovo allenamento"),
+    h(
+      "p",
+      { style: "margin:6px 0 0;font-size:13px;color:var(--label-secondary)" },
+      "Scegli tu cosa fare oggi"
+    )
+  );
+}
+
+/** L'elenco dei giorni dello split. Torna l'id scelto, o null. */
+async function scegliGiorno() {
+  // Due giorni con lo stesso nome — la mobilità del sabato e quella della
+  // domenica — sono la stessa scelta: in elenco una volta sola.
+  const visti = new Set();
+  const giorni = store.giorniSplit().filter((g) => {
+    const chiave = (g.nome || g.id).toLowerCase();
+    if (visti.has(chiave)) return false;
+    visti.add(chiave);
+    return true;
+  });
+  const descrivi = (g) => {
+    if (store.giornoDiSolaMobilita(g.id)) {
+      const quanti = (store.riscaldamento(g.id)?.mobilitaFinale || []).length;
+      return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità`;
+    }
+    const n = (g.esercizi || []).length;
+    return `${n} ${n === 1 ? "esercizio" : "esercizi"}${g.cardio ? " + cardio" : ""}`;
+  };
+  const scelta = await sheet((close) =>
+    h(
+      "div",
+      h("h2", { style: "text-align:center" }, "Nuovo allenamento"),
+      h(
+        "p.footnote",
+        { style: "margin:6px 16px 0;text-align:center" },
+        "Oggi non c'è niente in programma. Scegli cosa fare: parte subito, e il coach lo vedrà come fuori programma."
+      ),
+      h(
+        "div.list",
+        { style: "margin:12px var(--pad) 0" },
+        ...giorni.map((g) =>
+          h(
+            "button.row.accent",
+            { onclick: () => close(g.id) },
+            h("div.main", h("span.title", g.nome || g.id), h("span.sub", descrivi(g))),
+            h("span.chevron", "›")
+          )
+        )
+      ),
+      h("div.btn-wrap", h("button.btn.secondary", { onclick: () => close(null) }, "Annulla"))
+    )
+  );
+  return typeof scelta === "string" ? scelta : null;
 }
 
 // ---------- risultato dell'allenamento appena chiuso ----------
