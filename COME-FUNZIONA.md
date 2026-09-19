@@ -907,7 +907,19 @@ import quel numero arriva ancora diverso, la domanda torna. Le scelte fatte si
 vedono in Impostazioni › «Scelte sui dati di Salute» e si tolgono una per una;
 «Cancella i dati importati da Salute» le porta via insieme ai dati. Per la
 giornata di oggi non si chiede niente: non è finita, i conteggi salgono ancora,
-e l'app tiene il più alto.
+e l'app tiene il più alto senza dirlo.
+
+Due numeri che a schermo sarebbero identici non sono una domanda: la distanza si
+mostra con due decimali (prima «avevo 4, arrivato 4» voleva dire 4,32 contro
+4,05), e se anche così i due valori si leggono uguali l'app tiene il più alto e
+non dice niente.
+
+Anche gli **avvisi che tornerebbero uguali a ogni import** — una riga del
+pacchetto scartata perché fuori scala o scritta male, il calendario che nel
+pacchetto non c'è, le notti scritte a mano lasciate com'erano, le righe più
+vecchie dell'inizio della storia — stanno nello stesso pannello, con «Non
+dirmelo più» o «Ricordamelo». Zittiti, non tornano; si riaccendono dallo stesso
+elenco in Impostazioni.
 
 **Reimportare ripara: non serve mai cancellare.** Le fasi raccontano per intero
 le notti che coprono, quindi una notte archiviata sotto una data sbagliata da una

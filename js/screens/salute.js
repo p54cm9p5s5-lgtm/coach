@@ -1134,6 +1134,27 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
   // Nel riepilogo compare solo quello che il pacchetto conteneva davvero: una
   // fila di zeri fa sembrare fallito un import riuscito.
   const righe = [];
+  // Gli avvisi che tornano uguali a ogni import — il comando rapido rimanda
+  // sempre gli ultimi 30 giorni, quindi la stessa riga scartata, lo stesso
+  // calendario assente — non si ripetono più se hai detto «Non dirmelo più»
+  // (19/09/2026). Quelli non ancora zittiti vanno nel pannello delle scelte.
+  const giaDecisi = await store.scelteSalute();
+  const avvisi = [];
+  const avviso = (testo, chiaveStabile = testo) => {
+    const chiave = store.chiaveAvvisoSalute(chiaveStabile);
+    if (giaDecisi.has(chiave)) return;
+    avvisi.push({
+      chiave,
+      genere: "avviso",
+      data: /\d{4}-\d{2}-\d{2}/.exec(chiaveStabile)?.[0] || "-",
+      cosa: testo,
+      testo,
+      opzioni: [
+        { etichetta: "Non dirmelo più", valore: true, predefinita: true },
+        { etichetta: "Ricordamelo", valore: null },
+      ],
+    });
+  };
   if (conteggio.giorni) {
     righe.push(
       `${conteggio.giorni} ${conteggio.giorni === 1 ? "giorno" : "giorni"} di movimento` +
@@ -1144,9 +1165,10 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
   // Una notte che hai corretto tu non viene sovrascritta: se non lo dicessi,
   // vedresti «importato» e penseresti che il numero dell'orologio è tornato.
   if (conteggio.nottiAMano) {
-    righe.push(
+    avviso(
       `${conteggio.nottiAMano} ${conteggio.nottiAMano === 1 ? "notte scritta" : "notti scritte"} da te: ` +
-        `${conteggio.nottiAMano === 1 ? "lasciata" : "lasciate"} com'${conteggio.nottiAMano === 1 ? "era" : "erano"}, l'orologio non la sovrascrive`
+        `${conteggio.nottiAMano === 1 ? "lasciata" : "lasciate"} com'${conteggio.nottiAMano === 1 ? "era" : "erano"}, l'orologio non le sovrascrive.`,
+      "notti scritte a mano lasciate com'erano"
     );
   }
   if (conteggio.allenamenti) righe.push(`${conteggio.allenamenti} ${conteggio.allenamenti === 1 ? "allenamento" : "allenamenti"} dal Watch`);
@@ -1155,25 +1177,22 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
   } else if ((await store.agenda()).length) {
     // Silenzio pericoloso: un pacchetto senza righe AGENDA lascia il calendario
     // esattamente com'era, e chi l'ha appena incollato crede di averlo
-    // aggiornato. Se poi l'app continua a proporre un allenamento che sul
-    // calendario non c'è più, la conclusione naturale è «l'app sbaglia» —
-    // mentre sta mostrando fedelmente l'ultima lettura, che è vecchia.
-    righe.push(
+    // aggiornato. Per questo si dice — finché non chiedi di smettere.
+    avviso(
       "Nessun evento del calendario in questo pacchetto: gli allenamenti programmati restano quelli letti l'ultima volta. " +
-        "Per aggiornarli serve il comando «Coach Calendario»."
+        "Per aggiornarli serve il comando «Coach Calendario».",
+      "calendario assente dal pacchetto"
     );
   }
   if (conteggio.troppoVecchi) {
-    righe.push(
-      `${conteggio.troppoVecchi} ${conteggio.troppoVecchi === 1 ? "riga più vecchia" : "righe più vecchie"} dell'inizio di questa storia: ${conteggio.troppoVecchi === 1 ? "lasciata fuori" : "lasciate fuori"}`
+    avviso(
+      `${conteggio.troppoVecchi} ${conteggio.troppoVecchi === 1 ? "riga più vecchia" : "righe più vecchie"} dell'inizio di questa storia: ${conteggio.troppoVecchi === 1 ? "lasciata fuori" : "lasciate fuori"}.`,
+      "righe più vecchie dell'inizio della storia"
     );
   }
   if (conteggio.vuoti) righe.push(`${conteggio.vuoti} ${conteggio.vuoti === 1 ? "giorno" : "giorni"} senza dati, ${conteggio.vuoti === 1 ? "segnato" : "segnati"} come non ${conteggio.vuoti === 1 ? "registrato" : "registrati"}`);
-  if (pacchetto.avvisi.length) righe.push(`Avvisi:\n${pacchetto.avvisi.join("\n")}`);
+  for (const a of pacchetto.avvisi) avviso(a);
 
-  // Un giorno già passato che cambia di molto vuol dire che uno dei due
-  // conteggi è sbagliato — quasi sempre il comando rapido che somma iPhone e
-  // Watch insieme. Sovrascrivere in silenzio sarebbe scegliere al posto tuo.
   // Notti rimosse perché rimpiazzate: va detto, non fatto di nascosto.
   if (conteggio.nottiTolte?.length) {
     righe.push(
@@ -1183,20 +1202,19 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
 
   // Tutto quello su cui l'import ha dovuto scegliere fra due numeri — un
   // valore impossibile, una notte di un'altra durata, un conteggio arrivato
-  // più basso, un salto grande — lo scegli tu, riga per riga, e la scelta resta
-  // salvata: al prossimo import quel giorno e quel dato non vengono più
-  // chiesti (19/09/2026). Prima erano quattro avvisi da «Ho capito», con le
-  // prime sei righe e poi «…e altri N», e tornavano identici a ogni import.
-  if (conteggio.daScegliere?.length) {
-    const salvate = await scegliDopoImport(conteggio.daScegliere);
-    if (salvate) righe.push(`${salvate} ${salvate === 1 ? "scelta salvata" : "scelte salvate"}: quei dati non verranno più chiesti`);
-    else righe.push(`${conteggio.daScegliere.length} ${conteggio.daScegliere.length === 1 ? "dato da decidere lasciato" : "dati da decidere lasciati"} per dopo: tenuto per ora quello che dice la regola, e se al prossimo import arrivano ancora diversi te li richiedo`);
-  }
-  if (conteggio.giaScelti) {
-    righe.push(`${conteggio.giaScelti} ${conteggio.giaScelti === 1 ? "dato già deciso" : "dati già decisi"} da te: ${conteggio.giaScelti === 1 ? "tenuto" : "tenuti"} come avevi scelto`);
-  }
-  if (conteggio.oggiTenutiPiuAlti?.length) {
-    righe.push(`Oggi, arrivati più bassi (la giornata non è finita, tengo il più alto):\n${conteggio.oggiTenutiPiuAlti.join("\n")}`);
+  // più basso, un salto grande — e gli avvisi non ancora zittiti: li scegli
+  // tu, riga per riga, e la scelta resta salvata (19/09/2026). Prima erano
+  // quattro avvisi da «Ho capito», con le prime sei righe e poi «…e altri N»,
+  // e tornavano identici a ogni import. I dati già decisi non si nominano
+  // nemmeno: il punto era smettere di sentirli.
+  const daScegliere = [...(conteggio.daScegliere || []), ...avvisi];
+  if (daScegliere.length) {
+    const salvate = await scegliDopoImport(daScegliere);
+    if (salvate) righe.push(`${salvate} ${salvate === 1 ? "scelta salvata" : "scelte salvate"}: non te le richiedo più`);
+    else {
+      const una = daScegliere.length === 1;
+      righe.push(`${daScegliere.length} ${una ? "cosa da decidere lasciata" : "cose da decidere lasciate"} per dopo: per ora vale la regola dell'app, e se al prossimo import ${una ? "si ripresenta te la richiedo" : "si ripresentano te le richiedo"}`);
+    }
   }
 
   await chiedi({
@@ -1218,12 +1236,15 @@ const SPIEGAZIONE_SCELTA = {
     "Notti già registrate che arrivano con un'altra durata. Di solito la più corta è quella incompleta (una finestra tagliata toglie sonno, non ne aggiunge), e per ora ho tenuto la più lunga.",
   giorno:
     "Giorni già finiti che arrivano con un numero diverso. Più basso: di solito una fonte sola, per esempio solo l'orologio. Molto più alto: di solito iPhone e Watch contati insieme. Per ora ho tenuto il più alto.",
+  avviso:
+    "Cose che l'import ti segnala e che tornerebbero uguali ogni volta. «Non dirmelo più» le zittisce: restano elencate in Impostazioni, dove si possono riaccendere.",
 };
 
 const TITOLO_SCELTA = {
   impossibile: "Numeri impossibili",
   notte: "Notti con due durate",
   giorno: "Numeri diversi da quelli che avevo",
+  avviso: "Avvisi",
 };
 
 /**
@@ -1232,7 +1253,7 @@ const TITOLO_SCELTA = {
  */
 async function scegliDopoImport(conflitti) {
   const scelta = new Map(conflitti.map((c) => [c.chiave, c.opzioni.find((o) => o.predefinita) || c.opzioni[0]]));
-  const ordine = ["impossibile", "notte", "giorno"];
+  const ordine = ["impossibile", "notte", "giorno", "avviso"];
   const perGenere = ordine
     .map((g) => [g, conflitti.filter((c) => c.genere === g).sort((a, b) => a.data.localeCompare(b.data))])
     .filter(([, elenco]) => elenco.length);
@@ -1269,11 +1290,11 @@ async function scegliDopoImport(conflitti) {
   const esito = await sheet((close) =>
     h(
       "div",
-      h("h2", conflitti.length === 1 ? "Un dato da decidere" : `${conflitti.length} dati da decidere`),
+      h("h2", conflitti.length === 1 ? "Una cosa da decidere" : `${conflitti.length} cose da decidere`),
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
-        "Per ognuno scegli quale numero tenere. La scelta resta salvata: ai prossimi import quel giorno e quel dato non te li chiedo più. Le scelte si possono togliere da Impostazioni."
+        "Per ognuna scegli tu. La scelta resta salvata: ai prossimi import non te la chiedo più. Le scelte si possono togliere da Impostazioni."
       ),
       ...perGenere.map(([genere, elenco]) =>
         h(
@@ -1293,7 +1314,8 @@ async function scegliDopoImport(conflitti) {
   );
   if (esito !== "salva") return 0;
   await store.applicaScelteSalute(conflitti.map((c) => ({ conflitto: c, opzione: scelta.get(c.chiave) })));
-  return conflitti.length;
+  // «Ricordamelo» su un avviso non è una scelta salvata: tornerà.
+  return conflitti.filter((c) => !(c.genere === "avviso" && scelta.get(c.chiave).valore !== true)).length;
 }
 
 // ---------- istruzioni ----------

@@ -407,7 +407,7 @@ export async function render({ vaiA, ridisegna }) {
               h(
                 "div.main",
                 h("span.title", "Scelte sui dati di Salute"),
-                h("span.sub", `${scelteSalute.length} ${scelteSalute.length === 1 ? "dato deciso" : "dati decisi"} da te, che gli import non richiedono più`)
+                h("span.sub", `${scelteSalute.length} ${scelteSalute.length === 1 ? "cosa decisa" : "cose decise"} da te, che gli import non richiedono più`)
               ),
               h("span.chevron", "›")
             )
@@ -470,8 +470,13 @@ async function mostraScelteSalute(ridisegna) {
             "div.row",
             h(
               "div.main",
-              h("span.title", `${dataBreve(r.data)} · ${r.cosa}`),
-              h("span.sub", r.valore == null ? "non registrato" : `tenuto ${r.etichetta}`)
+              r.genere === "avviso"
+                ? h("span.title", r.cosa)
+                : h("span.title", `${dataBreve(r.data)} · ${r.cosa}`),
+              h(
+                "span.sub",
+                r.genere === "avviso" ? "avviso non più ripetuto" : r.valore == null ? "non registrato" : `tenuto ${r.etichetta}`
+              )
             ),
             h(
               "button.btn.secondary",
@@ -497,7 +502,7 @@ async function mostraScelteSalute(ridisegna) {
       h(
         "p",
         { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
-        "Numeri che hai deciso tu dopo un import. Gli import successivi li lasciano come li hai scelti e non te li chiedono più. Togliendone una, il numero resta com'è adesso e al prossimo import, se arriva ancora diverso, te lo richiedo."
+        "Numeri che hai deciso tu dopo un import, e avvisi che hai chiesto di non ripeterti. Gli import successivi li lasciano come li hai scelti e non te li chiedono più. Togliendone una, il numero resta com'è adesso e al prossimo import, se si ripresenta, te lo richiedo."
       ),
       elenco,
       h("div.btn-wrap", h("button.btn.secondary", { onclick: () => close() }, "Chiudi"))

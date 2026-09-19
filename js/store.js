@@ -2513,6 +2513,14 @@ function scartaImpossibili(riga, limiti, data, scartati, { tipo = "giorno", scel
    una per una, e si possono togliere una per una. */
 const PREFISSO_SCELTA = "sceltaSalute:";
 
+/* Con quanti decimali si mostra un campo. La distanza scritta senza decimali
+   dava «avevo 4, arrivato 4» per 4,32 contro 4,05 km: due numeri diversi
+   mostrati identici, e una domanda che non si capiva. */
+const DECIMALI_CAMPO = { distanzaKm: 2 };
+const mostra = (campo, v) => num(v, DECIMALI_CAMPO[campo] ?? 0);
+/** Due valori che a schermo sarebbero identici non sono un conflitto. */
+const ugualiAVista = (campo, a, b) => mostra(campo, a) === mostra(campo, b);
+
 export function chiaveSceltaSalute(tipo, data, campo) {
   return `${PREFISSO_SCELTA}${tipo}:${data}:${campo}`;
 }
@@ -2532,6 +2540,16 @@ export async function elencoScelteSalute() {
   return righe.sort((a, b) => String(b.data).localeCompare(String(a.data)) || String(a.cosa).localeCompare(String(b.cosa)));
 }
 
+/**
+ * Un avviso dell'import (una riga scartata dal lettore, il calendario che non
+ * c'è) che hai detto di non ripeterti: la chiave è il testo stesso, che per la
+ * stessa riga dello stesso giorno è sempre identico.
+ */
+export function chiaveAvvisoSalute(testo) {
+  const data = /\d{4}-\d{2}-\d{2}/.exec(testo)?.[0] || "-";
+  return chiaveSceltaSalute("avviso", data, testo);
+}
+
 export async function dimenticaSceltaSalute(chiave) {
   if (!String(chiave).startsWith(PREFISSO_SCELTA)) return;
   await db.del("impostazioni", chiave);
@@ -2545,6 +2563,15 @@ export async function dimenticaSceltaSalute(chiave) {
 export async function applicaScelteSalute(scelte) {
   const ora = new Date().toISOString();
   for (const { conflitto: c, opzione: o } of scelte) {
+    if (c.genere === "avviso") {
+      // «Ricordamelo» non salva niente: l'avviso torna al prossimo import.
+      if (o.valore !== true) continue;
+      await db.put("impostazioni", {
+        chiave: c.chiave,
+        valore: { valore: true, genere: "avviso", data: c.data, cosa: c.testo, etichetta: "non ripetuto", decisoIl: ora },
+      });
+      continue;
+    }
     if (c.genere === "notte") {
       const prec = await db.get("notti", c.data);
       if (prec && prec.fonte !== "mano") {
@@ -2657,10 +2684,10 @@ export async function importaSalute(pacchetto) {
         data: g.data,
         campo,
         cosa: nome,
-        testo: `${dataBreve(g.data)} · ${nome}: avevo ${num(vecchio, 0)}, arrivato ${num(nuovo, 0)}`,
+        testo: `${dataBreve(g.data)} · ${nome}: avevo ${mostra(campo, vecchio)}, arrivato ${mostra(campo, nuovo)}`,
         opzioni: [
-          { etichetta: `Tieni ${num(vecchio, 0)}`, valore: vecchio, predefinita: tenuto === vecchio },
-          { etichetta: `Tieni ${num(nuovo, 0)}`, valore: nuovo, predefinita: tenuto !== vecchio },
+          { etichetta: `Tieni ${mostra(campo, vecchio)}`, valore: vecchio, predefinita: tenuto === vecchio },
+          { etichetta: `Tieni ${mostra(campo, nuovo)}`, valore: nuovo, predefinita: tenuto !== vecchio },
         ],
       };
       conflittiDelGiorno.set(campo, c);
@@ -2675,10 +2702,11 @@ export async function importaSalute(pacchetto) {
         const nuovo = g[campo];
         if (vecchio == null || nuovo == null || vecchio <= 0) continue;
         if (decisi.has(campo)) continue;
+        if (ugualiAVista(campo, vecchio, nuovo)) continue;
         const rapporto = nuovo / vecchio;
         if (rapporto >= 1.4 || rapporto <= 0.7) {
           conteggio.sospetti.push(
-            `${dataBreve(g.data)} ${nome}: ${num(vecchio, 0)} → ${num(nuovo, 0)} (×${num(rapporto, 2)})`
+            `${dataBreve(g.data)} ${nome}: ${mostra(campo, vecchio)} → ${mostra(campo, nuovo)} (×${num(rapporto, 2)})`
           );
           conflitto(campo, nome, vecchio, nuovo);
         }
@@ -2704,7 +2732,10 @@ export async function importaSalute(pacchetto) {
       if (vecchio == null || nuovo == null || !(vecchio > nuovo)) continue;
       if (decisi.has(campo)) continue;
       fuso[campo] = vecchio;
-      const riga = `${dataBreve(g.data)} ${CAMPI_CHE_SOLO_CRESCONO[campo]}: tenuto ${num(vecchio, 0)}, arrivato ${num(nuovo, 0)}`;
+      // Più alto di un soffio, ma a schermo identico: si tiene il più alto e
+      // non si dice niente — «tenuto 4, arrivato 4» non è una notizia.
+      if (ugualiAVista(campo, vecchio, nuovo)) continue;
+      const riga = `${dataBreve(g.data)} ${CAMPI_CHE_SOLO_CRESCONO[campo]}: tenuto ${mostra(campo, vecchio)}, arrivato ${mostra(campo, nuovo)}`;
       // Oggi la giornata non è finita: il numero cresce ancora, e fissarlo con
       // una scelta lo fermerebbe per sempre. Si dice e basta.
       if (g.data >= oggi) {
