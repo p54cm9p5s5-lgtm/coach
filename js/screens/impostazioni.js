@@ -308,7 +308,7 @@ export async function render({ vaiA, ridisegna }) {
     )
   );
 
-  aggiungi(wrap, gruppoSincronizzazione(statoSync, ridisegna));
+  aggiungi(wrap, gruppoSincronizzazioneVivo(statoSync, ridisegna));
 
   aggiungi(wrap,
     h(
@@ -1130,6 +1130,46 @@ const NOMI_ARCHIVI = {
   decisioni: "una decisione",
   impostazioni: "un'impostazione",
 };
+
+/* Il riquadro si aggiorna da solo quando lo stato cambia davvero.
+
+   Prima si disegnava una volta all'apertura della schermata: tornata la rete,
+   restava scritto «Senza rete · in attesa» finché non si usciva e rientrava —
+   trovato nel Controllo 3 (A.12). Si rifà solo il riquadro, non la pagina, e
+   solo quando cambia qualcosa che si legge: la sincronizzazione gira ogni
+   secondo e mezzo, e ridisegnare a ogni giro farebbe saltare quello che stai
+   guardando. Un ascoltatore alla volta: riaprendo la schermata il vecchio si
+   stacca. */
+let staccaSync = null;
+
+function chiaveDelloStato(st) {
+  return JSON.stringify([
+    st.attiva, st.ruolo, st.errore, st.inAttesa, oraBreve(st.ultimaVolta),
+    st.conflitti?.length || 0, st.ultimoArrivo?.quando || null,
+  ]);
+}
+
+function gruppoSincronizzazioneVivo(st, ridisegna) {
+  let corrente = gruppoSincronizzazione(st, ridisegna);
+  let chiave = chiaveDelloStato(st);
+  staccaSync?.();
+  staccaSync = sync.quandoCambia(async () => {
+    if (!corrente.isConnected) {
+      staccaSync?.();
+      staccaSync = null;
+      return;
+    }
+    const ora = await sync.stato().catch(() => null);
+    if (!ora) return;
+    const k = chiaveDelloStato(ora);
+    if (k === chiave) return;
+    chiave = k;
+    const nuovo = gruppoSincronizzazione(ora, ridisegna);
+    corrente.replaceWith(nuovo);
+    corrente = nuovo;
+  });
+  return corrente;
+}
 
 function gruppoSincronizzazione(st, ridisegna) {
   const righe = [];
