@@ -66,19 +66,23 @@ function larghezzaDelDisegno() {
 /**
  * @param dati [{ data, kcal|null, obiettivo, allenamento: bool, presente, futuro, previsto }]
  */
-export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null } = {}) {
+export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null, finestra = null } = {}) {
   // Stesso motivo di «soloNumeri»: un movimento che non è un numero finito è un
   // giorno senza dati, e va disegnato come tale — un trattino, non una barra
   // alta «NaN» che porta giù tutto il grafico.
   dati = (dati || []).map((d) => (Number.isFinite(d?.kcal) ? d : { ...d, kcal: null }));
-  const L = larghezzaDelDisegno();
+  // Con `finestra` il grafico è più lungo di quello che si vede: il foglio si
+  // allunga in proporzione ai giorni, ogni giorno resta largo quanto prima, e
+  // il riquadro scorre di lato. Senza, è il grafico di sempre.
+  const scorre = Number.isFinite(finestra) && finestra > 0 && dati.length > finestra;
+  const L = scorre ? (larghezzaDelDisegno() * dati.length) / finestra : larghezzaDelDisegno();
   const A = altezza;
   const margineBasso = 22;
   const areaBarre = A - margineBasso;
 
   const svg = el("svg", {
     viewBox: `0 0 ${L} ${A}`,
-    width: "100%",
+    width: scorre ? `${((100 * dati.length) / finestra).toFixed(3)}%` : "100%",
     height: A,
     role: "img",
     "aria-label": "Movimento giornaliero e allenamenti",
@@ -186,7 +190,11 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
       "margin:0 0 6px;min-height:17px;font-size:12px;line-height:17px;color:var(--label-secondary);" +
       "font-variant-numeric:tabular-nums",
   });
-  const riposo = h("span", { style: "opacity:.75" }, "Tocca una colonna per vedere il giorno");
+  const riposo = h(
+    "span",
+    { style: "opacity:.75" },
+    scorre ? "Tocca una colonna per vedere il giorno · scorri per tornare indietro" : "Tocca una colonna per vedere il giorno"
+  );
   lettura.append(riposo);
 
   const evidenza = el("line", {
@@ -262,10 +270,38 @@ export function graficoAttivita(dati, { altezza = 128, obiettivoRipiego = null }
   svg.addEventListener("pointercancel", rilascia);
   svg.addEventListener("pointerleave", rilascia);
   // scorrere la pagina resta possibile: si cattura solo il movimento orizzontale
-  svg.style.touchAction = "pan-y";
+  svg.style.touchAction = scorre ? "pan-x pan-y" : "pan-y";
   svg.style.cursor = "pointer";
 
-  return h("div", lettura, svg);
+  if (!scorre) return h("div", lettura, svg);
+
+  // Il riquadro che scorre di lato. Sull'iPhone lo muove il dito — un tocco
+  // legge il giorno, un trascinamento scorre, perché appena il sistema prende
+  // lo scorrimento il tocco si interrompe da solo — sul Mac due dita sul
+  // trackpad (la barra sottile che il Mac mostra mentre scorri dice dove sei
+  // nello storico).
+  const riquadro = h(
+    "div",
+    {
+      style:
+        "overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;" +
+        "scrollbar-width:thin",
+    },
+    svg
+  );
+  // Si apre sull'ultimo tratto, cioè su quello che si vedeva prima: oggi e i
+  // giorni in programma. Bisogna aspettare che sia a schermo per sapere quanto
+  // è largo; se non ci arriva mai (una schermata buttata via) si smette.
+  let tentativi = 0;
+  const allaFine = () => {
+    if (riquadro.isConnected && riquadro.scrollWidth > riquadro.clientWidth) {
+      riquadro.scrollLeft = riquadro.scrollWidth;
+      return;
+    }
+    if (++tentativi < 120) requestAnimationFrame(allaFine);
+  };
+  requestAnimationFrame(allaFine);
+  return h("div", lettura, riquadro);
 }
 
 /** Riga di numeri sopra il grafico. */

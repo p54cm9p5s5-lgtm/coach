@@ -91,10 +91,16 @@ async function bloccoGrafico(ridisegna) {
   const disponibili = giorniTra(inizio, oggi) + 1;
   let quanti = Math.min(periodo.graficoGiorni, Math.max(disponibili, 7));
   if (periodo.id === "7") quanti = 7;
+  // «Sempre» vuol dire tutto: il grafico contiene ogni giorno dal primo dato,
+  // ma a schermo se ne vede la stessa finestra di prima e il resto si
+  // raggiunge scorrendo verso sinistra (19/09: «quello che si vede deve
+  // rimanere com'è, ma se volessi andare indietro scorrendoci sopra…»).
+  const tuttoLoStorico = periodo.id === "tutto" && disponibili > quanti;
+  const giorniNelGrafico = tuttoLoStorico ? disponibili : quanti;
 
   const GIORNI_FUTURI = periodo.futuri;
   const serie = [];
-  for (let i = quanti - 1; i >= -GIORNI_FUTURI; i--) {
+  for (let i = giorniNelGrafico - 1; i >= -GIORNI_FUTURI; i--) {
     const d = new Date(oggi + "T00:00:00");
     d.setDate(d.getDate() - i);
     const p = (n) => String(n).padStart(2, "0");
@@ -309,7 +315,10 @@ async function bloccoGrafico(ridisegna) {
             : `${quanteNotti} ${quanteNotti === 1 ? "notte" : "notti"} · ${etichettaPeriodo(periodo)}`,
         },
       ]),
-      graficoAttivita(serie, { obiettivoRipiego: obiettivo }),
+      graficoAttivita(serie, {
+        obiettivoRipiego: obiettivo,
+        finestra: tuttoLoStorico ? quanti + GIORNI_FUTURI : null,
+      }),
       legenda()
     )
   );
