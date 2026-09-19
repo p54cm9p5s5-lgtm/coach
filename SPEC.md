@@ -379,6 +379,12 @@ recuperi reali su tutti gli esercizi, densità della seduta, tempo per esercizio
   quello del calendario, che funziona.
 - Finestra mobile **30 giorni**, import **idempotente** (chiave = tipo + data),
   riscrive i dati di Salute, **non tocca mai** note, RPE, carichi, misure manuali.
+- Dopo l'import, **un pannello solo con tutti i dati in conflitto** (conteggio
+  più basso o salto grande su un giorno finito, notte con altra durata, valore
+  impossibile), ognuno con due scelte. Le scelte salvate sono righe
+  `sceltaSalute:<tipo>:<data>:<campo>` in `impostazioni` (viaggiano con la
+  sincronizzazione): gli import successivi le applicano e non chiedono più.
+  Elenco e «Togli» in Impostazioni; `svuotaSalute` le cancella.
 - Tabelle movimento e sonno equivalenti a §9-bis e §9-ter, calcolate non digitate.
 - Stato delle finestre di 3 settimane con giorni mancanti evidenziati.
 - Gli allenamenti del Watch **non si collegano** alle sedute e non hanno un

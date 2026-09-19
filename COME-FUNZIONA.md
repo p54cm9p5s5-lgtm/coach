@@ -894,6 +894,21 @@ viene importato normalmente, e l'app dice cosa ha rifiutato e perché. Un numero
 assurdo che entra in silenzio si ritrova mesi dopo dentro una media, ed è
 troppo tardi.
 
+**Quando un numero arriva diverso, scegli tu, una volta sola.** Un giorno già
+finito che arriva con un conteggio più basso o molto più alto, una notte già
+registrata che arriva con un'altra durata, un valore impossibile: l'app tiene
+per il momento quello che dice la sua regola (il conteggio più alto, la notte
+più lunga, il valore impossibile lasciato fuori) e poi mostra **tutti** questi
+dati in un pannello solo, senza tagli, ognuno con le sue due possibilità —
+«Tieni 6.200» / «Tieni 3.002». Con «Salva le scelte» la decisione resta: ai
+prossimi import quel giorno e quel dato **non vengono più chiesti**, vale
+quello che hai scelto. Con «Decidi dopo» non si salva niente, e se al prossimo
+import quel numero arriva ancora diverso, la domanda torna. Le scelte fatte si
+vedono in Impostazioni › «Scelte sui dati di Salute» e si tolgono una per una;
+«Cancella i dati importati da Salute» le porta via insieme ai dati. Per la
+giornata di oggi non si chiede niente: non è finita, i conteggi salgono ancora,
+e l'app tiene il più alto.
+
 **Reimportare ripara: non serve mai cancellare.** Le fasi raccontano per intero
 le notti che coprono, quindi una notte archiviata sotto una data sbagliata da una
 versione precedente viene sostituita dal pacchetto nuovo. Quello che viene

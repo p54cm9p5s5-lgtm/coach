@@ -2457,23 +2457,132 @@ const LIMITI_NOTTE = {
  * viene importato lo stesso: un campo sbagliato non deve buttare via la
  * giornata intera.
  */
-function scartaImpossibili(riga, limiti, data, scartati) {
+function scartaImpossibili(riga, limiti, data, scartati, { tipo = "giorno", scelte = null, conteggio = null } = {}) {
   const pulita = { ...riga };
   for (const [campo, L] of Object.entries(limiti)) {
     const v = pulita[campo];
     if (v == null) continue;
     if (!Number.isFinite(v) || v < L.min || v > L.max) {
+      // Già deciso da te su questo giorno e questo dato: si applica la scelta
+      // e non si chiede più (19/09: «una volta che faccio quella scelta deve
+      // essere salvata»).
+      const chiave = chiaveSceltaSalute(tipo, data, campo);
+      const scelta = scelte?.get(chiave);
+      if (scelta) {
+        pulita[campo] = scelta.valore;
+        if (conteggio) conteggio.giaScelti++;
+        continue;
+      }
       scartati.push(
         `${dataBreve(data)} ${L.nome}: ${num(v, 0)}${L.unita ? ` ${L.unita}` : ""} — fuori da quello che una giornata può contenere`
       );
       pulita[campo] = null;
+      if (conteggio) {
+        const unita = L.unita ? ` ${L.unita}` : "";
+        const opzioni = [{ etichetta: "Non registrarlo", valore: null, predefinita: true }];
+        // Un numero negativo o scritto male non si può registrare: resta solo
+        // la scelta di lasciarlo fuori, ma resta anche quella di non sentirselo
+        // ridire a ogni import.
+        if (Number.isFinite(v) && v >= 0) opzioni.push({ etichetta: `Registra ${num(v, 0)}${unita}`, valore: v });
+        conteggio.daScegliere.push({
+          chiave,
+          genere: "impossibile",
+          tipo,
+          data,
+          campo,
+          cosa: L.nome,
+          testo: `${dataBreve(data)} · ${L.nome}: arrivato ${num(v, 0)}${unita}, fuori da quello che una giornata può contenere`,
+          opzioni,
+        });
+      }
     }
   }
   return pulita;
 }
 
+/* ---------- scelte sui dati di Salute ----------
+
+   Quando un import porta un numero diverso da quello che c'era — un conteggio
+   più basso, un salto grande, una notte di un'altra durata, un valore
+   impossibile — l'app tiene quello che le sue regole dicono e ti fa scegliere.
+   La scelta si salva: al prossimo import quel giorno e quel dato non vengono
+   più chiesti, vale quello che hai deciso.
+
+   Ogni scelta è una riga di `impostazioni` con la chiave che comincia per
+   «sceltaSalute:», una per giorno e dato: così la sincronizzazione le fonde
+   una per una, e si possono togliere una per una. */
+const PREFISSO_SCELTA = "sceltaSalute:";
+
+export function chiaveSceltaSalute(tipo, data, campo) {
+  return `${PREFISSO_SCELTA}${tipo}:${data}:${campo}`;
+}
+
+export async function scelteSalute() {
+  const out = new Map();
+  for (const r of await db.all("impostazioni")) {
+    if (typeof r.chiave === "string" && r.chiave.startsWith(PREFISSO_SCELTA) && r.valore) out.set(r.chiave, r.valore);
+  }
+  return out;
+}
+
+/** Le scelte salvate, dalla più recente, per l'elenco in Impostazioni. */
+export async function elencoScelteSalute() {
+  const righe = [];
+  for (const [chiave, v] of await scelteSalute()) righe.push({ chiave, ...v });
+  return righe.sort((a, b) => String(b.data).localeCompare(String(a.data)) || String(a.cosa).localeCompare(String(b.cosa)));
+}
+
+export async function dimenticaSceltaSalute(chiave) {
+  if (!String(chiave).startsWith(PREFISSO_SCELTA)) return;
+  await db.del("impostazioni", chiave);
+}
+
+/**
+ * Applica le scelte fatte sul riepilogo dell'import e le salva.
+ * `scelte`: [{ conflitto, opzione }] — `conflitto` è una riga di
+ * `conteggio.daScegliere`, `opzione` una delle sue `opzioni`.
+ */
+export async function applicaScelteSalute(scelte) {
+  const ora = new Date().toISOString();
+  for (const { conflitto: c, opzione: o } of scelte) {
+    if (c.genere === "notte") {
+      const prec = await db.get("notti", c.data);
+      if (prec && prec.fonte !== "mano") {
+        const altra = c.opzioni.find((x) => x !== o)?.valore || null;
+        await db.put("notti", { ...prec, ...o.valore, presente: true, fonte: "salute", scartata: altra, importatoIl: ora });
+      }
+    } else if (c.genere === "impossibile") {
+      // «Non registrarlo» lascia com'è: il valore non era entrato. «Registra»
+      // lo scrive adesso.
+      if (o.valore != null) {
+        const archivio = c.tipo === "notte" ? "notti" : "giorniSalute";
+        const prec = await db.get(archivio, c.data);
+        if (!(archivio === "notti" && prec?.fonte === "mano")) {
+          await db.put(archivio, { ...(prec || { data: c.data, fonte: "salute" }), [c.campo]: o.valore, presente: true });
+        }
+      }
+    } else {
+      const prec = await db.get("giorniSalute", c.data);
+      if (prec) await db.put("giorniSalute", { ...prec, [c.campo]: o.valore });
+    }
+    await db.put("impostazioni", {
+      chiave: c.chiave,
+      valore: {
+        valore: o.valore,
+        genere: c.genere,
+        data: c.data,
+        cosa: c.cosa,
+        etichetta: o.etichetta.replace(/^(Tieni|Registra) /, ""),
+        decisoIl: ora,
+      },
+    });
+  }
+}
+
 export async function importaSalute(pacchetto) {
-  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [], nottiDiscordanti: [], troppoVecchi: 0, tenutiPiuAlti: [] };
+  const conteggio = { giorni: 0, notti: 0, allenamenti: 0, vuoti: 0, aggiornati: 0, sospetti: [], impossibili: [], nottiTolte: [], nottiDiscordanti: [], troppoVecchi: 0, tenutiPiuAlti: [], daScegliere: [], giaScelti: 0, oggiTenutiPiuAlti: [] };
+  const scelte = await scelteSalute();
+  const oggi = isoDate();
 
   // Il pavimento vale per TUTTE le strade, non solo per l'export letto dal file.
   //
@@ -2525,9 +2634,38 @@ export async function importaSalute(pacchetto) {
   const nottiViste = new Set();
   for (const gGrezzo of pacchetto.giorni) {
     // Prima di tutto il resto: quello che non può essere vero non entra.
-    const g = scartaImpossibili(gGrezzo, LIMITI_GIORNO, gGrezzo.data, conteggio.impossibili);
+    const g = scartaImpossibili(gGrezzo, LIMITI_GIORNO, gGrezzo.data, conteggio.impossibili, { tipo: "giorno", scelte, conteggio });
     const prec = await db.get("giorniSalute", g.data);
     if (prec?.presente && !giorniVisti.has(g.data)) conteggio.aggiornati++;
+    // I campi di questo giorno su cui hai già deciso: niente avvisi, vale la
+    // tua scelta.
+    const decisi = new Map();
+    for (const campo of Object.keys(LIMITI_GIORNO)) {
+      const scelta = scelte.get(chiaveSceltaSalute("giorno", g.data, campo));
+      if (scelta && scelta.genere !== "impossibile") decisi.set(campo, scelta.valore);
+    }
+    // Un conflitto per giorno e dato, anche quando due regole lo vedono tutte
+    // e due (un calo del 40% è sia «più basso» sia «salto grande»).
+    const conflittiDelGiorno = new Map();
+    const conflitto = (campo, nome, vecchio, nuovo) => {
+      if (conflittiDelGiorno.has(campo)) return;
+      const tenuto = Math.max(vecchio, nuovo);
+      const c = {
+        chiave: chiaveSceltaSalute("giorno", g.data, campo),
+        genere: "giorno",
+        tipo: "giorno",
+        data: g.data,
+        campo,
+        cosa: nome,
+        testo: `${dataBreve(g.data)} · ${nome}: avevo ${num(vecchio, 0)}, arrivato ${num(nuovo, 0)}`,
+        opzioni: [
+          { etichetta: `Tieni ${num(vecchio, 0)}`, valore: vecchio, predefinita: tenuto === vecchio },
+          { etichetta: `Tieni ${num(nuovo, 0)}`, valore: nuovo, predefinita: tenuto !== vecchio },
+        ],
+      };
+      conflittiDelGiorno.set(campo, c);
+      conteggio.daScegliere.push(c);
+    };
     // Un giorno già chiuso non cambia: se il valore nuovo è molto diverso da
     // quello che c'era, uno dei due conteggi è sbagliato. Sovrascrivere in
     // silenzio significherebbe scegliere al posto tuo quale credere.
@@ -2536,11 +2674,13 @@ export async function importaSalute(pacchetto) {
         const vecchio = prec[campo];
         const nuovo = g[campo];
         if (vecchio == null || nuovo == null || vecchio <= 0) continue;
+        if (decisi.has(campo)) continue;
         const rapporto = nuovo / vecchio;
         if (rapporto >= 1.4 || rapporto <= 0.7) {
           conteggio.sospetti.push(
             `${dataBreve(g.data)} ${nome}: ${num(vecchio, 0)} → ${num(nuovo, 0)} (×${num(rapporto, 2)})`
           );
+          conflitto(campo, nome, vecchio, nuovo);
         }
       }
     }
@@ -2562,10 +2702,22 @@ export async function importaSalute(pacchetto) {
       const vecchio = prec?.[campo];
       const nuovo = fuso[campo];
       if (vecchio == null || nuovo == null || !(vecchio > nuovo)) continue;
+      if (decisi.has(campo)) continue;
       fuso[campo] = vecchio;
-      conteggio.tenutiPiuAlti.push(
-        `${dataBreve(g.data)} ${CAMPI_CHE_SOLO_CRESCONO[campo]}: tenuto ${num(vecchio, 0)}, arrivato ${num(nuovo, 0)}`
-      );
+      const riga = `${dataBreve(g.data)} ${CAMPI_CHE_SOLO_CRESCONO[campo]}: tenuto ${num(vecchio, 0)}, arrivato ${num(nuovo, 0)}`;
+      // Oggi la giornata non è finita: il numero cresce ancora, e fissarlo con
+      // una scelta lo fermerebbe per sempre. Si dice e basta.
+      if (g.data >= oggi) {
+        conteggio.oggiTenutiPiuAlti.push(riga);
+        continue;
+      }
+      conteggio.tenutiPiuAlti.push(riga);
+      conflitto(campo, CAMPI_CHE_SOLO_CRESCONO[campo], vecchio, nuovo);
+    }
+    for (const [campo, valore] of decisi) {
+      if (g[campo] == null && gGrezzo[campo] == null) continue;
+      if (fuso[campo] !== valore) fuso[campo] = valore;
+      conteggio.giaScelti++;
     }
     await db.put("giorniSalute", {
       ...fuso,
@@ -2577,8 +2729,13 @@ export async function importaSalute(pacchetto) {
   }
 
   for (const nGrezza of pacchetto.notti) {
-    const n = scartaImpossibili(nGrezza, LIMITI_NOTTE, nGrezza.data, conteggio.impossibili);
-    const prec = await db.get("notti", n.data);
+    const prec = await db.get("notti", nGrezza.data);
+    // Le notti scritte a mano non passano dai controlli dell'orologio: non
+    // c'è niente da chiederti su una notte che hai deciso tu.
+    const n =
+      prec?.fonte === "mano"
+        ? scartaImpossibili(nGrezza, LIMITI_NOTTE, nGrezza.data, [], {})
+        : scartaImpossibili(nGrezza, LIMITI_NOTTE, nGrezza.data, conteggio.impossibili, { tipo: "notte", scelte, conteggio });
     nottiViste.add(n.data);
     // Una notte corretta a mano vince sull'orologio, sempre. È l'unica cosa
     // che sappiamo per certo — l'hai scritta tu — e l'orologio è proprio la
@@ -2610,6 +2767,14 @@ export async function importaSalute(pacchetto) {
     //
     // La differenza viene detta comunque: una notte che cambia da sola, anche
     // in meglio, è una cosa che chi legge il pacchetto deve sapere.
+    // La durata di questa notte l'hai già scelta tu: vale quella.
+    const sceltaNotte = scelte.get(chiaveSceltaSalute("notte", n.data, "durata"));
+    if (sceltaNotte?.valore && prec?.presente && n.data < oggi) {
+      await db.put("notti", { ...prec, ...sceltaNotte.valore, presente: true, fonte: "salute", importatoIl: new Date().toISOString() });
+      conteggio.giaScelti++;
+      conteggio.notti = nottiViste.size;
+      continue;
+    }
     const scartoNotte =
       prec?.presente &&
       prec.fonte === "salute" &&
@@ -2624,6 +2789,21 @@ export async function importaSalute(pacchetto) {
       conteggio.nottiDiscordanti.push(
         `${dataBreve(n.data)}: tengo ${durataUmana(tenuta * 60)}, scarto ${durataUmana(scartata * 60)} (${tengoQuellaInArchivio ? "la più corta arrivava nel pacchetto" : "la più corta era in archivio"})`
       );
+      const datiPrima = soloDatiNotte(prec);
+      const datiArrivati = soloDatiNotte(n);
+      conteggio.daScegliere.push({
+        chiave: chiaveSceltaSalute("notte", n.data, "durata"),
+        genere: "notte",
+        tipo: "notte",
+        data: n.data,
+        campo: "durata",
+        cosa: "sonno",
+        testo: `${dataBreve(n.data)} · sonno: avevo ${durataUmana(prec.durataMin * 60)}, arrivato ${durataUmana(n.durataMin * 60)}`,
+        opzioni: [
+          { etichetta: `Tieni ${durataUmana(prec.durataMin * 60)}`, valore: datiPrima, predefinita: tengoQuellaInArchivio },
+          { etichetta: `Tieni ${durataUmana(n.durataMin * 60)}`, valore: datiArrivati, predefinita: !tengoQuellaInArchivio },
+        ],
+      });
       const base = tengoQuellaInArchivio ? prec : { ...fondi(prec, n), fonte: "salute" };
       await db.put("notti", {
         ...base,
@@ -3663,6 +3843,9 @@ export async function svuotaSalute() {
     await db.put("notti", resto);
   }
   await setImpostazione("ultimoImportSalute", null);
+  // Le scelte fatte sugli import vecchi vanno via con i dati: si cancella per
+  // rileggere da zero, e una scelta rimasta imporrebbe il numero di prima.
+  for (const chiave of (await scelteSalute()).keys()) await db.del("impostazioni", chiave);
   return aMano.length;
 }
 

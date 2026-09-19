@@ -1169,7 +1169,7 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
     );
   }
   if (conteggio.vuoti) righe.push(`${conteggio.vuoti} ${conteggio.vuoti === 1 ? "giorno" : "giorni"} senza dati, ${conteggio.vuoti === 1 ? "segnato" : "segnati"} come non ${conteggio.vuoti === 1 ? "registrato" : "registrati"}`);
-  if (pacchetto.avvisi.length) righe.push(`Avvisi: ${pacchetto.avvisi.slice(0, 3).join(" · ")}`);
+  if (pacchetto.avvisi.length) righe.push(`Avvisi:\n${pacchetto.avvisi.join("\n")}`);
 
   // Un giorno già passato che cambia di molto vuol dire che uno dei due
   // conteggi è sbagliato — quasi sempre il comando rapido che somma iPhone e
@@ -1177,71 +1177,26 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
   // Notti rimosse perché rimpiazzate: va detto, non fatto di nascosto.
   if (conteggio.nottiTolte?.length) {
     righe.push(
-      `${conteggio.nottiTolte.length} ${conteggio.nottiTolte.length === 1 ? "notte doppia rimossa" : "notti doppie rimosse"} (${conteggio.nottiTolte.slice(0, 6).join(", ")}${conteggio.nottiTolte.length > 6 ? "…" : ""})`
+      `${conteggio.nottiTolte.length} ${conteggio.nottiTolte.length === 1 ? "notte doppia rimossa" : "notti doppie rimosse"} (${conteggio.nottiTolte.join(", ")})`
     );
   }
 
-  // Valori impossibili: non sono entrati, e va detto prima di ogni altra cosa.
-  // Un numero che l'app ha rifiutato è un numero che manca, e chi legge deve
-  // sapere che manca e perché.
-  if (conteggio.impossibili?.length) {
-    await chiedi({
-      titolo: conteggio.impossibili.length === 1 ? "Un numero non l'ho registrato" : "Alcuni numeri non li ho registrati",
-      testo:
-        `${conteggio.impossibili.slice(0, 8).join("\n")}` +
-        (conteggio.impossibili.length > 8 ? `\n…e altri ${conteggio.impossibili.length - 8}.` : "") +
-        `\n\nSono fuori da quello che una giornata umana può contenere: quasi sempre vuol dire che il comando rapido ha sommato una finestra intera in un giorno solo, oppure ha messo un campo al posto di un altro. Il resto della giornata è stato importato normalmente.` +
-        `\n\nControlla su Salute il valore vero di quel giorno e come è impostato il comando rapido. Finché il numero non torna, quel campo resta vuoto invece che sbagliato.`,
-      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
-      annulla: false,
-    });
+  // Tutto quello su cui l'import ha dovuto scegliere fra due numeri — un
+  // valore impossibile, una notte di un'altra durata, un conteggio arrivato
+  // più basso, un salto grande — lo scegli tu, riga per riga, e la scelta resta
+  // salvata: al prossimo import quel giorno e quel dato non vengono più
+  // chiesti (19/09/2026). Prima erano quattro avvisi da «Ho capito», con le
+  // prime sei righe e poi «…e altri N», e tornavano identici a ogni import.
+  if (conteggio.daScegliere?.length) {
+    const salvate = await scegliDopoImport(conteggio.daScegliere);
+    if (salvate) righe.push(`${salvate} ${salvate === 1 ? "scelta salvata" : "scelte salvate"}: quei dati non verranno più chiesti`);
+    else righe.push(`${conteggio.daScegliere.length} ${conteggio.daScegliere.length === 1 ? "dato da decidere lasciato" : "dati da decidere lasciati"} per dopo: tenuto per ora quello che dice la regola, e se al prossimo import arrivano ancora diversi te li richiedo`);
   }
-
-  // Una notte già archiviata che arriva con un'altra durata: l'app non sceglie
-  // da sola quale credere, perché quel numero il coach lo legge nel pacchetto.
-  if (conteggio.nottiDiscordanti?.length) {
-    await chiedi({
-      titolo:
-        conteggio.nottiDiscordanti.length === 1
-          ? "Una notte già registrata arriva con un'altra durata"
-          : "Notti già registrate arrivano con altre durate",
-      testo:
-        `${conteggio.nottiDiscordanti.slice(0, 6).join("\n")}` +
-        (conteggio.nottiDiscordanti.length > 6 ? `\n…e altre ${conteggio.nottiDiscordanti.length - 6}.` : "") +
-        `\n\nFra le due ho tenuto la più lunga. Su una notte finita i campioni di Salute non cambiano più: quello che cambia è la finestra con cui il comando rapido li chiede, e una finestra tagliata può solo togliere sonno, mai aggiungerlo — quindi la durata corta è quella incompleta.` +
-        `\n\nSe per qualche motivo quella giusta era la corta, aprila da Salute › Sonno e scrivila a mano: una notte scritta da te non viene più toccata da nessun import.`,
-      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
-      annulla: false,
-    });
+  if (conteggio.giaScelti) {
+    righe.push(`${conteggio.giaScelti} ${conteggio.giaScelti === 1 ? "dato già deciso" : "dati già decisi"} da te: ${conteggio.giaScelti === 1 ? "tenuto" : "tenuti"} come avevi scelto`);
   }
-
-  if (conteggio.tenutiPiuAlti?.length) {
-    await chiedi({
-      titolo:
-        conteggio.tenutiPiuAlti.length === 1
-          ? "Un conteggio arrivato più basso di quello che avevo"
-          : "Conteggi arrivati più bassi di quelli che avevo",
-      testo:
-        `${conteggio.tenutiPiuAlti.slice(0, 6).join("\n")}` +
-        (conteggio.tenutiPiuAlti.length > 6 ? `\n…e altri ${conteggio.tenutiPiuAlti.length - 6}.` : "") +
-        `\n\nHo tenuto i più alti. Passi, distanza, piani e minuti dentro una giornata possono solo salire: fra due letture, quella più bassa è quella che ha visto meno — una fonte sola, o una finestra più corta.` +
-        `\n\nSe succede spesso, quasi sempre è il comando rapido che chiede i passi al solo Apple Watch: nelle giornate in cui l'orologio lo tieni poco, quello che hai camminato col telefono in tasca resta fuori. Toglendo il filtro sull'origine, Salute risponde con il totale che vedi nell'app Salute.`,
-      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
-      annulla: false,
-    });
-  }
-
-  if (conteggio.sospetti?.length) {
-    await chiedi({
-      titolo: "Numeri cambiati su giorni già registrati",
-      testo:
-        `${conteggio.sospetti.slice(0, 6).join("\n")}` +
-        `\n\nGiorni finiti non cambiano da soli. Un salto verso l'alto di solito è il comando rapido che somma i campioni di iPhone e Watch: i periodi in cui li avevi entrambi addosso vengono contati due volte. Le calorie attive no, le scrive solo l'orologio: se quelle restano identiche e i passi crescono, è questo.` +
-        `\n\nHo tenuto il numero più alto, perché su un conteggio che può solo crescere il più basso è quello incompleto. Se invece quello giusto era il più basso — cioè se questo è un raddoppio — vai in Impostazioni › «Cancella i dati importati da Salute» e reimporta col comando sistemato.` +
-        `\n\nControlla su Salute il numero vero di uno di questi giorni.`,
-      opzioni: [{ etichetta: "Ho capito", valore: "ok" }],
-      annulla: false,
-    });
+  if (conteggio.oggiTenutiPiuAlti?.length) {
+    righe.push(`Oggi, arrivati più bassi (la giornata non è finita, tengo il più alto):\n${conteggio.oggiTenutiPiuAlti.join("\n")}`);
   }
 
   await chiedi({
@@ -1252,6 +1207,93 @@ async function incolla(ridisegna, { shortcut = null, titolo = null, testo: sotto
   });
 
   await ridisegna();
+}
+
+// ---------- scelte dopo l'import ----------
+
+const SPIEGAZIONE_SCELTA = {
+  impossibile:
+    "Numeri fuori da quello che una giornata può contenere: di solito il comando rapido ha sommato una finestra intera in un giorno solo, o ha messo un campo al posto di un altro. Per ora non li ho registrati.",
+  notte:
+    "Notti già registrate che arrivano con un'altra durata. Di solito la più corta è quella incompleta (una finestra tagliata toglie sonno, non ne aggiunge), e per ora ho tenuto la più lunga.",
+  giorno:
+    "Giorni già finiti che arrivano con un numero diverso. Più basso: di solito una fonte sola, per esempio solo l'orologio. Molto più alto: di solito iPhone e Watch contati insieme. Per ora ho tenuto il più alto.",
+};
+
+const TITOLO_SCELTA = {
+  impossibile: "Numeri impossibili",
+  notte: "Notti con due durate",
+  giorno: "Numeri diversi da quelli che avevo",
+};
+
+/**
+ * Il pannello con TUTTI i dati da decidere, ognuno con le sue due scelte.
+ * Torna quante scelte ha salvato, o 0 se hai rimandato.
+ */
+async function scegliDopoImport(conflitti) {
+  const scelta = new Map(conflitti.map((c) => [c.chiave, c.opzioni.find((o) => o.predefinita) || c.opzioni[0]]));
+  const ordine = ["impossibile", "notte", "giorno"];
+  const perGenere = ordine
+    .map((g) => [g, conflitti.filter((c) => c.genere === g).sort((a, b) => a.data.localeCompare(b.data))])
+    .filter(([, elenco]) => elenco.length);
+
+  const riga = (c) => {
+    const tasti = h("div.segmented", { style: "margin:6px 0 0" });
+    const disegna = () => {
+      tasti.replaceChildren(
+        ...c.opzioni.map((o) =>
+          h(
+            "button",
+            {
+              type: "button",
+              "aria-pressed": String(scelta.get(c.chiave) === o),
+              onclick: () => {
+                scelta.set(c.chiave, o);
+                disegna();
+              },
+            },
+            o.etichetta
+          )
+        )
+      );
+    };
+    disegna();
+    return h(
+      "div.scelta-import",
+      { style: "padding:12px var(--pad);border-top:1px solid var(--separator)" },
+      h("p", { style: "margin:0;font-size:15px" }, c.testo),
+      tasti
+    );
+  };
+
+  const esito = await sheet((close) =>
+    h(
+      "div",
+      h("h2", conflitti.length === 1 ? "Un dato da decidere" : `${conflitti.length} dati da decidere`),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
+        "Per ognuno scegli quale numero tenere. La scelta resta salvata: ai prossimi import quel giorno e quel dato non te li chiedo più. Le scelte si possono togliere da Impostazioni."
+      ),
+      ...perGenere.map(([genere, elenco]) =>
+        h(
+          "div.group",
+          h("h2", TITOLO_SCELTA[genere]),
+          h("p", { style: "margin:4px 16px 8px;color:var(--label-secondary);font-size:14px" }, SPIEGAZIONE_SCELTA[genere]),
+          ...elenco.map(riga)
+        )
+      ),
+      h(
+        "div.btn-wrap",
+        { style: "display:grid;gap:12px" },
+        h("button.btn", { onclick: () => close("salva") }, "Salva le scelte"),
+        h("button.btn.secondary", { onclick: () => close(undefined) }, "Decidi dopo")
+      )
+    )
+  );
+  if (esito !== "salva") return 0;
+  await store.applicaScelteSalute(conflitti.map((c) => ({ conflitto: c, opzione: scelta.get(c.chiave) })));
+  return conflitti.length;
 }
 
 // ---------- istruzioni ----------

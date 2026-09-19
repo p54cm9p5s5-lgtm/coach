@@ -1,4 +1,4 @@
-import { h, toast, sheet, chiedi, num, dataLunga, isoDate, aggiungi, provaSuono, versioneInstallata } from "../ui.js";
+import { h, toast, sheet, chiedi, num, dataLunga, dataBreve, isoDate, aggiungi, provaSuono, versioneInstallata } from "../ui.js";
 import { intestazione } from "../app.js";
 import * as store from "../store.js";
 import { estraiBlocco, valida, confronta } from "../brief.js";
@@ -57,6 +57,7 @@ export async function render({ vaiA, ridisegna }) {
   const giorniExport = await store.giorniDaUltimoExport();
   // Solo per sapere se la voce va mostrata: non tocca niente.
   const doppioni = await store.doppioniWatch();
+  const scelteSalute = await store.elencoScelteSalute();
   const statoSync = await sync.stato().catch(() => ({ attiva: false }));
   // `true` protetto, `false` cancellabile, `null` il telefono non risponde.
   const archivioProtetto = await (async () => {
@@ -396,6 +397,20 @@ export async function render({ vaiA, ridisegna }) {
               ),
               h("span.chevron", "›")
             )
+          : null,
+        // Le scelte fatte dopo un import («tieni questo numero») restano
+        // finché non le togli: qui si vedono tutte e si tolgono una per una.
+        scelteSalute.length
+          ? h(
+              "button.row.accent",
+              { onclick: () => mostraScelteSalute(ridisegna) },
+              h(
+                "div.main",
+                h("span.title", "Scelte sui dati di Salute"),
+                h("span.sub", `${scelteSalute.length} ${scelteSalute.length === 1 ? "dato deciso" : "dati decisi"} da te, che gli import non richiedono più`)
+              ),
+              h("span.chevron", "›")
+            )
           : null
       ),
       h(
@@ -439,6 +454,58 @@ export async function render({ vaiA, ridisegna }) {
  * si tiene e cosa si butta, e si chiede. Il numero è quello contato adesso,
  * non una stima.
  */
+async function mostraScelteSalute(ridisegna) {
+  let cambiato = false;
+  await sheet((close) => {
+    const elenco = h("div.group");
+    const disegna = async () => {
+      const righe = await store.elencoScelteSalute();
+      if (!righe.length) {
+        close();
+        return;
+      }
+      elenco.replaceChildren(
+        ...righe.map((r) =>
+          h(
+            "div.row",
+            h(
+              "div.main",
+              h("span.title", `${dataBreve(r.data)} · ${r.cosa}`),
+              h("span.sub", r.valore == null ? "non registrato" : `tenuto ${r.etichetta}`)
+            ),
+            h(
+              "button.btn.secondary",
+              {
+                style: "width:auto;min-height:44px;margin:0;padding:0 14px",
+                onclick: async () => {
+                  await store.dimenticaSceltaSalute(r.chiave);
+                  cambiato = true;
+                  toast("Scelta tolta: al prossimo import quel dato si richiede.");
+                  await disegna();
+                },
+              },
+              "Togli"
+            )
+          )
+        )
+      );
+    };
+    disegna();
+    return h(
+      "div",
+      h("h2", "Scelte sui dati di Salute"),
+      h(
+        "p",
+        { style: "margin:6px 16px 0;color:var(--label-secondary);font-size:15px" },
+        "Numeri che hai deciso tu dopo un import. Gli import successivi li lasciano come li hai scelti e non te li chiedono più. Togliendone una, il numero resta com'è adesso e al prossimo import, se arriva ancora diverso, te lo richiedo."
+      ),
+      elenco,
+      h("div.btn-wrap", h("button.btn.secondary", { onclick: () => close() }, "Chiudi"))
+    );
+  });
+  if (cambiato) await ridisegna();
+}
+
 async function unisciDoppioni(ridisegna, quanti) {
   const conferma = await chiedi({
     titolo: quanti === 1 ? "Un allenamento è in archivio due volte" : `${quanti} allenamenti sono in archivio due volte`,
