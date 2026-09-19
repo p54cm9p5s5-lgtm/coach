@@ -1108,11 +1108,10 @@ function oraBreve(iso) {
 function gruppoSincronizzazione(st, ridisegna) {
   const righe = [];
   if (!st.attiva) {
+    // Niente riga «Spenta» in cima: sembrava un interruttore, e il 19/09 è
+    // stata toccata invano — i due bottoni per accendere stavano sotto. Lo
+    // stato lo dice la nota in fondo al gruppo.
     righe.push(
-      h(
-        "div.row",
-        h("div.main", h("span.title", "Spenta"), h("span.sub", "i dati restano solo su questo dispositivo"))
-      ),
       h(
         "button.row.accent",
         { onclick: () => apriAttivazione("principale", ridisegna) },
@@ -1182,7 +1181,9 @@ function gruppoSincronizzazione(st, ridisegna) {
       "p.footnote",
       st.attiva && st.ruolo === "copia"
         ? "Qui si guarda soltanto: allenamenti, misure e il resto si registrano dall'iPhone e arrivano da soli, entro un minuto da quando l'iPhone li ha mandati."
-        : "L'iPhone scrive, il Mac legge. I dati partono cifrati con una frase che sai solo tu e finiscono in un tuo repository privato su GitHub: senza la frase lì sono illeggibili. Le foto viaggiano a parte, e solo quando cambiano."
+        : !st.attiva
+          ? "Adesso è spenta: i dati restano solo su questo dispositivo. Per accenderla tocca una delle due righe qui sopra — sull'iPhone la prima, sul Mac la seconda. I dati partono cifrati con una frase che sai solo tu e finiscono in un tuo repository privato su GitHub."
+          : "L'iPhone scrive, il Mac legge. I dati partono cifrati con una frase che sai solo tu e finiscono in un tuo repository privato su GitHub: senza la frase lì sono illeggibili. Le foto viaggiano a parte, e solo quando cambiano."
     )
   );
 }
