@@ -873,6 +873,31 @@ export async function verificaSincronizzazione({ modulo = sincro, archivio = db 
   return esito("la sincronizzazione fra iPhone e Mac", `${casi} controlli`, errori);
 }
 
+/**
+ * Il motore, girato due volte sugli stessi dati, la seconda volta non scrive
+ * niente. Ogni apertura della Home lo fa girare: se riscrive righe identiche,
+ * due copie dell'app aperte insieme si rimbalzano le scritture all'infinito
+ * (una scrive, l'altra ridisegna e riscrive…), e con la sincronizzazione
+ * accesa ogni rimbalzo diventa un invio. Trovato il 19/09: 350 scritture di
+ * «segnali» in quattro secondi. Il primo giro può scrivere — i dati possono
+ * essere cambiati — il secondo no.
+ */
+export async function verificaMotoreFermo({ magazzino = store, archivio = db } = {}) {
+  const errori = [];
+  await magazzino.inCoda(async () => {
+    await magazzino.aggiornaProposte();
+    await magazzino.aggiornaSegnali();
+  });
+  const prima = archivio.scritture();
+  await magazzino.inCoda(async () => {
+    await magazzino.aggiornaProposte();
+    await magazzino.aggiornaSegnali();
+  });
+  const scritte = archivio.scritture() - prima;
+  if (scritte) errori.push(`il secondo giro sugli stessi dati ha scritto ${scritte} ${scritte === 1 ? "volta" : "volte"}: con due copie aperte rimbalzerebbe`);
+  return esito("il motore non riscrive quello che non cambia", "2 giri", errori);
+}
+
 export function verificaAbbinamentoCalendario({ magazzino = store } = {}) {
   const errori = [];
   let casi = 0;
@@ -1185,6 +1210,7 @@ export async function rete() {
     await verificaTestiDalBrief(),
     verificaAbbinamentoCalendario(),
     await verificaSincronizzazione(),
+    await verificaMotoreFermo(),
     await verificaSchermate(),
     verificaDisegniEBlocchi(),
     await verificaVeritaDeiDati(),

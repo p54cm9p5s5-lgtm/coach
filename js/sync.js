@@ -380,18 +380,20 @@ export function unisci(base, locale, remoto) {
   return { unito, conflitti };
 }
 
-function uguali(x, y) {
-  const a = improntaDi(x);
-  const b = improntaDi(y);
-  const nomi = new Set([...Object.keys(a), ...Object.keys(b)]);
+function impronteUguali(a, b) {
+  const nomi = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
   for (const n of nomi) {
-    const pa = a[n] || {};
-    const pb = b[n] || {};
+    const pa = a?.[n] || {};
+    const pb = b?.[n] || {};
     const ka = Object.keys(pa);
     if (ka.length !== Object.keys(pb).length) return false;
     for (const k of ka) if (pa[k] !== pb[k]) return false;
   }
   return true;
+}
+
+function uguali(x, y) {
+  return impronteUguali(improntaDi(x), improntaDi(y));
 }
 
 /** Il backup da ripristinare con quello che è uscito dalla fusione. */
@@ -505,7 +507,13 @@ async function giroDellaParte(parte, presenti) {
   }
 
   let nuovoSha = shaLetto;
-  const daMandare = !remoto ? Boolean(c.sporco?.[parte]) || !shaDiLa : !uguali(unito, remoto);
+  // Una scrittura che non ha cambiato niente — la stessa riga riscritta
+  // uguale — segna «da mandare» lo stesso: se l'archivio è identico a quello
+  // dell'ultimo scambio, non si manda niente.
+  const comeAllUltimoScambio = Boolean(c.impronte?.[parte]) && impronteUguali(improntaDi(unito), c.impronte[parte]);
+  const daMandare = !remoto
+    ? !shaDiLa || (Boolean(c.sporco?.[parte]) && !comeAllUltimoScambio)
+    : !uguali(unito, remoto);
   if (daMandare) {
     const busta = await sigilla({ dati: unito }, c.chiave, { sale: daBase64(c.sale), dispositivo: c.dispositivo });
     if (salvatoIl) busta.salvatoIl = salvatoIl;

@@ -2264,11 +2264,19 @@ export async function aggiornaSegnali(cache = null) {
   for (const s of nuovi) {
     const prec = vecchi.get(s.id);
     const invariato = prec && prec.messaggio === s.messaggio && prec.dettaglio === s.dettaglio;
-    await db.put("segnali", {
+    const riga = {
       ...s,
       archiviato: invariato ? Boolean(prec.archiviato) : false,
       creatoIl: prec?.creatoIl || new Date().toISOString(),
-    });
+    };
+    // Si scrive solo se il segnale è cambiato davvero. Riscriverli tutti a
+    // ogni giro — cioè a ogni apertura della Home — con due copie dell'app
+    // aperte insieme era un rimbalzo senza fine: una scrive, l'altra se ne
+    // accorge e ridisegna la Home, che riscrive, e la prima ridisegna… Trovato
+    // il 19/09 contando 350 scritture in quattro secondi, con la
+    // sincronizzazione che provava a mandarle tutte a GitHub.
+    if (prec && JSON.stringify(prec) === JSON.stringify(riga)) continue;
+    await db.put("segnali", riga);
   }
   for (const id of vecchi.keys()) if (!vivi.has(id)) await db.del("segnali", id);
 
