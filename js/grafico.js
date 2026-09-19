@@ -67,10 +67,30 @@ const GIORNI_ABBR = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
    sopra un grafico. Fuori dai grafici non cambia niente. */
 function trattieniGestoDiLato(el, scorrevole = null) {
   el.style.overscrollBehaviorX = "none";
+  // Un gesto sul trackpad è una raffica di segnali: il primo arriva spesso
+  // VUOTO (nessuno spostamento), e poi continua da solo anche dopo che hai
+  // staccato le dita. La prima versione guardava i segnali uno per uno e
+  // lasciava passare quello vuoto — ed è proprio lì che Safari decide se
+  // tornare indietro: arrivati in fondo al grafico, un gesto di troppo
+  // cambiava ancora pagina. Adesso il gesto si segue dall'inizio alla fine:
+  // i segnali vuoti si trattengono, la direzione si decide al primo movimento
+  // vero e vale per tutta la raffica. Orizzontale: trattenuto tutto, anche al
+  // bordo, dove il grafico resta fermo. Verticale: passa, la pagina scorre.
+  let direzione = null;
+  let ultimo = -Infinity;
   el.addEventListener(
     "wheel",
     (e) => {
-      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      if (e.timeStamp - ultimo > 250) direzione = null; // un gesto nuovo
+      ultimo = e.timeStamp;
+      if (direzione === null) {
+        if (e.deltaX === 0 && e.deltaY === 0) {
+          e.preventDefault();
+          return;
+        }
+        direzione = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? "x" : "y";
+      }
+      if (direzione === "y") return;
       e.preventDefault();
       if (scorrevole) scorrevole.scrollLeft += e.deltaX;
     },
