@@ -5,6 +5,18 @@ import { analizza } from "../salute.js";
 import { graficoLinea, schedaGrafico, tastoSpiegazione, periodoSalvato, selettorePeriodo, inizioPeriodo, etichettaPeriodo } from "../grafico.js";
 import { anello, giudizio, coloreDaPunteggio } from "../punteggio.js";
 
+/* Sul Mac i grafici di Salute sono larghi quanto la finestra, e alti 104
+   punti come sul telefono erano strisce schiacciate: «allargali un po' in
+   altezza» (19/09). Da 600 punti in su — cioè il Mac, in finestra o a tutto
+   schermo — sette decimi in più. Sul telefono restano quelli di sempre. */
+function altezzaDeiGrafici() {
+  try {
+    return (Number(globalThis.innerWidth) || 0) >= 600 ? 176 : 104;
+  } catch {
+    return 104;
+  }
+}
+
 
 /**
  * Il grafico delle sigarette al giorno.
@@ -530,6 +542,7 @@ async function schermataSalute({ ridisegna }) {
           ? `${mKcal.quanti} ${mKcal.quanti === 1 ? "giorno" : "giorni"} con dati · ${fMov2.etichetta}${notaOggiEscluso(righeKcal, "kcalAttive")}`
           : `nessun dato · ${fMov2.etichetta}`,
         grafico: graficoLinea({
+          altezza: altezzaDeiGrafici(),
           punti: giorniMov.map((g) => ({
             data: g.data,
             valore: g.presente ? g.kcalAttive : null,
@@ -570,6 +583,7 @@ async function schermataSalute({ ridisegna }) {
           ? `${mPassi.quanti} ${mPassi.quanti === 1 ? "giorno" : "giorni"} con dati · ${fPassi.etichetta}${notaOggiEscluso(righePassi, "passi")}`
           : `nessun dato · ${fPassi.etichetta}`,
         grafico: graficoLinea({
+          altezza: altezzaDeiGrafici(),
           punti: giorniPassi.map((g) => ({
             data: g.data,
             valore: g.presente ? g.passi : null,
@@ -626,6 +640,7 @@ async function schermataSalute({ ridisegna }) {
             ? etichettaSonno
             : `nessun dato · ${etichettaSonno}`,
         grafico: graficoLinea({
+          altezza: altezzaDeiGrafici(),
           punti: nottiOrd.map((n) => ({
             data: n.data,
             valore: n.presente ? n.durataMin : null,
@@ -736,6 +751,7 @@ async function schermataSalute({ ridisegna }) {
         : `nessun dato · ${f.etichetta}`,
       grafico: finali.length
         ? graficoLinea({
+          altezza: altezzaDeiGrafici(),
             punti: finali.map((p) => ({
               data: p.data,
               valore: p.valore,
