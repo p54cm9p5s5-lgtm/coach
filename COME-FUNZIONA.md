@@ -6,6 +6,26 @@ l'app, con quali regole, e come leggere quello che manda.**
 Scritto leggendo il codice, non a memoria: ogni numero qui dentro è quello che
 l'app usa davvero.
 
+> **Cosa è cambiato il 19/09/2026** — le parti che toccano il tuo lavoro:
+>
+> - **Allenamento fuori programma** (§13). Nei giorni senza niente in
+>   calendario l'atleta può avviare lui un giorno dello split dalla schermata
+>   Oggi. Nel pacchetto quell'allenamento porta la riga «Nota: fuori programma».
+> - **Punteggio del giorno** (§6.3). Un allenamento fatto in un giorno che non
+>   lo prevedeva conta solo se alza il giorno: fatto a metà non vale più meno
+>   di non farlo. Nei giorni in programma non cambia niente.
+> - **Tetti nel brief** (§3). Oltre al carico (500 kg) ora ci sono serie (20),
+>   ripetizioni (200), recupero (1800 s) e durata a tempo (3600 s). Sopra, il
+>   brief viene rifiutato con un messaggio che nomina l'esercizio. Il JSON
+>   rotto viene segnalato in italiano, con riga e colonna quando il browser le sa.
+> - **Dati di Salute** (§9). Quando un numero arriva diverso da quello già
+>   registrato, decide l'atleta, una volta sola, e la scelta resta. I numeri
+>   che leggi nel pacchetto sono quindi quelli che ha confermato lui.
+> - **iPhone e Mac** (§2, §5). L'app gira anche sul Mac, sincronizzata con
+>   l'iPhone attraverso un repository privato e cifrato. Si registra da tutti e
+>   due, e le proposte le calcola solo l'iPhone. I dati restano suoi: niente in
+>   chiaro esce dai suoi dispositivi.
+
 ---
 
 ## 1. A cosa serve
@@ -90,7 +110,11 @@ resta.
 - `split[]` — per ogni giorno: `id`, `nome`, `giorno` (0 = domenica … 6 = sabato),
   `cardio` (sì/no), `esercizi[]`
 - ogni esercizio: `esercizioId`, `serie`, `ripMin`, `ripMax`, `carico`, oppure
-  `aTempo: true` + `durataSec`
+  `aTempo: true` + `durataSec`. Ci sono tetti che fermano i refusi, non i
+  carichi pesanti: `serie` fino a 20, `ripMax` fino a 200, `carico` da 0 a 500
+  kg, `recuperoSec` fino a 1800 (mezz'ora), `durataSec` fino a 3600 (un'ora).
+  Un valore oltre il tetto fa rifiutare il brief con un messaggio «… fuori
+  scala per <esercizio>»: non viene troncato in silenzio.
 - `inventario` — `barra`, `dischi` (peso → quantità totale posseduta, in numero
   pari perché si montano a coppie) e, facoltativo, `manubri`:
 
