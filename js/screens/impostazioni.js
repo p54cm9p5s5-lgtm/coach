@@ -937,9 +937,12 @@ async function importaBackup(ridisegna) {
   // sotto rende l'errore rimediabile; questo lo rende evitabile.
   const quantoCe = await confrontoBackup(dump);
 
+  // Come per «Elimina tutti i dati»: con la sincronizzazione accesa il
+  // ripristino viaggia, e anche l'altro dispositivo torna a quel backup.
+  const sincronizzata = (await sync.stato().catch(() => ({ attiva: false }))).attiva;
   const scelta = await chiedi({
     titolo: "Ripristinare il backup?",
-    testo: `Backup del ${quando}. I dati attuali vengono sostituiti.\n\n${quantoCe}`,
+    testo: `Backup del ${quando}. I dati attuali vengono sostituiti.${sincronizzata ? " La sincronizzazione è accesa: anche l'altro dispositivo torna a questo backup." : ""}\n\n${quantoCe}`,
     opzioni: [{ etichetta: "Sostituisci tutto", valore: "si", stile: "destructive" }],
   });
   if (scelta !== "si") return;
@@ -997,9 +1000,16 @@ async function importaBackup(ridisegna) {
 }
 
 async function azzera(ridisegna) {
+  // Con la sincronizzazione accesa lo svuotamento viaggia come ogni altra
+  // cancellazione, e l'altro dispositivo resta vuoto anche lui. È quello che
+  // vuol dire «elimina tutto», ma va detto prima, con la strada per svuotare
+  // soltanto questo.
+  const sincronizzata = (await sync.stato().catch(() => ({ attiva: false }))).attiva;
   const uno = await chiedi({
     titolo: "Eliminare tutti i dati?",
-    testo: "Allenamenti, misure, foto, programma. Non si può annullare.",
+    testo: sincronizzata
+      ? "Allenamenti, misure, foto, programma. Non si può annullare. La sincronizzazione è accesa: spariscono anche dall'altro dispositivo. Se vuoi svuotare solo questo, spegni prima la sincronizzazione qui sopra."
+      : "Allenamenti, misure, foto, programma. Non si può annullare.",
     opzioni: [{ etichetta: "Continua", valore: "si", stile: "destructive" }],
   });
   if (uno !== "si") return;
@@ -1163,11 +1173,15 @@ function gruppoSincronizzazione(st, ridisegna) {
       );
     }
     if (st.errore) {
+      // Senza rete non è un guasto: si aspetta e riparte da solo. Detto con
+      // le stesse parole di un guasto («Non ci riesce», «fermo») faceva
+      // pensare di dover rifare qualcosa.
+      const senzaRete = st.errore === sync.SENZA_RETE;
       righe.push(
         h(
           "div.row",
-          h("div.main", h("span.title", "Non ci riesce"), h("span.sub", st.errore)),
-          h("span.pill.warn", "fermo")
+          h("div.main", h("span.title", senzaRete ? "Senza rete" : "Non ci riesce"), h("span.sub", st.errore)),
+          h("span.pill.warn", senzaRete ? "in attesa" : "fermo")
         )
       );
     }
@@ -1292,7 +1306,7 @@ async function apriAttivazione(ruolo, ridisegna) {
         );
         close(true);
       } catch (e) {
-        messaggio.textContent = e?.message || String(e);
+        messaggio.textContent = sync.inParole(e);
         bottone.disabled = false;
         bottone.textContent = "Riprova";
       }

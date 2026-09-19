@@ -870,6 +870,16 @@ export async function verificaSincronizzazione({ modulo = sincro, archivio = db 
     "un archivio che non è arrivato verrebbe svuotato",
     tutti.filter((a) => a !== "fumo").every((a) => d.parziale.includes(a)) && !d.parziale.includes("fumo")
   );
+  // Gli errori, in parole: senza rete il browser dice «Load failed» in
+  // inglese, e un errore di programmazione non va scambiato per mancanza di
+  // rete; il limite di richieste di GitHub non è un token sbagliato.
+  prova("senza rete si legge il messaggio inglese del browser", modulo.inParole(new TypeError("Load failed")) === modulo.SENZA_RETE);
+  prova("un errore di programmazione passa per mancanza di rete", modulo.inParole(new TypeError("x is undefined")) === "x is undefined");
+  const limite = modulo.erroreDiGitHub(new Response("", { status: 403, headers: { "x-ratelimit-remaining": "0" } }), "").message;
+  prova("il limite di richieste passa per un token senza permessi", /rallentare/.test(limite));
+  const permessi = modulo.erroreDiGitHub(new Response("", { status: 403, headers: { "x-ratelimit-remaining": "4000" } }), "").message;
+  prova("un token senza permessi non viene riconosciuto", /permesso di scrivere/.test(permessi));
+
   return esito("la sincronizzazione fra iPhone e Mac", `${casi} controlli`, errori);
 }
 

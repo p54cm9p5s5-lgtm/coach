@@ -144,6 +144,28 @@ export async function sigilla(contenuto, chiave, { sale, dispositivo }) {
 
 export class FraseSbagliata extends Error {}
 
+/**
+ * Il motivo di un errore, in parole di chi usa l'app.
+ *
+ * Senza rete `fetch` non risponde con un codice ma si rompe, e il browser ci
+ * mette un messaggio suo, in inglese — «Load failed» su Safari, «Failed to
+ * fetch» altrove — che finiva così com'era in Impostazioni. In palestra senza
+ * campo è il caso più normale di tutti, e va detto per quello che è: niente di
+ * rotto, si riprova da soli.
+ */
+export const SENZA_RETE = "Nessuna connessione: quello che salvi resta qui e parte da solo appena torna la rete.";
+
+export function inParole(e) {
+  // Solo i messaggi di rete dei browser: un errore di programmazione è anche
+  // lui un TypeError, e spacciarlo per «nessuna connessione» lo nasconderebbe.
+  const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+  const diRete = e instanceof TypeError && /load failed|failed to fetch|networkerror|network connection/i.test(e.message || "");
+  if (offline || diRete) {
+    return SENZA_RETE;
+  }
+  return e?.message || String(e);
+}
+
 export async function apri(busta, chiave) {
   if (!busta || busta.formato !== FORMATO) throw new Error("Nel deposito c'è un file che non è di Coach.");
   if (Number(busta.versione) > VERSIONE) {
@@ -166,7 +188,15 @@ export async function apri(busta, chiave) {
 // ---------- il deposito su GitHub ----------
 
 /** Cosa dire quando GitHub risponde di no — con le parole di chi usa l'app. */
-function erroreDiGitHub(stato, cosa) {
+export function erroreDiGitHub(risposta, cosa) {
+  const stato = risposta.status;
+  // Il limite di richieste: GitHub risponde 429, oppure 403 con zero
+  // richieste rimaste. Col solo 403 lo si scambiava per «il token non può
+  // scrivere», e si finiva a rifare un token che andava benissimo.
+  const esaurito = risposta.headers?.get?.("x-ratelimit-remaining") === "0";
+  if (stato === 429 || (stato === 403 && esaurito)) {
+    return new Error("GitHub chiede di rallentare: troppe richieste in poco tempo. Riprovo da solo fra qualche minuto, i dati salvati qui non si perdono.");
+  }
   if (stato === 401) return new Error("GitHub non riconosce il token: forse è scaduto. Creane uno nuovo e reinseriscilo.");
   if (stato === 403) return new Error("Il token non ha il permesso di scrivere: serve «Contents: Read and write» su quel repository.");
   if (stato === 404) return new Error("GitHub non trova il repository: controlla il nome (utente/nome) e che il token lo possa vedere.");
@@ -191,7 +221,7 @@ function indirizzo(conf, file = "") {
 /** Il repository esiste, è privato, e questo token ci può scrivere? */
 async function controllaRepo(conf, { scrive }) {
   const r = await fetch(indirizzo(conf), { headers: intestazioni(conf), cache: "no-store" });
-  if (!r.ok) throw erroreDiGitHub(r.status, "aprendo il repository");
+  if (!r.ok) throw erroreDiGitHub(r, "aprendo il repository");
   const info = await r.json();
   // Un repository pubblico no, anche se i dati sono cifrati: la frase è
   // l'unica protezione, e non c'è motivo di esporli a chiunque per provarci.
@@ -205,7 +235,7 @@ async function controllaRepo(conf, { scrive }) {
 async function leggiFile(conf, file) {
   const r = await fetch(indirizzo(conf, file), { headers: intestazioni(conf), cache: "no-store" });
   if (r.status === 404) return null;
-  if (!r.ok) throw erroreDiGitHub(r.status, `leggendo ${file}`);
+  if (!r.ok) throw erroreDiGitHub(r, `leggendo ${file}`);
   const info = await r.json();
   let testo;
   // Sopra un mega GitHub non manda il contenuto dentro la risposta: va chiesto
@@ -217,7 +247,7 @@ async function leggiFile(conf, file) {
       headers: intestazioni(conf, { Accept: "application/vnd.github.raw+json" }),
       cache: "no-store",
     });
-    if (!g.ok) throw erroreDiGitHub(g.status, `scaricando ${file}`);
+    if (!g.ok) throw erroreDiGitHub(g, `scaricando ${file}`);
     testo = await g.text();
   }
   return { sha: info.sha, busta: JSON.parse(testo) };
@@ -242,7 +272,7 @@ async function shaDeiFile(conf) {
   const r = await fetch(`${indirizzo(conf)}/contents/`, { headers: intestazioni(conf, extra), cache: "no-store" });
   if (r.status === 304 && elencoUltimo) return elencoUltimo;
   if (r.status === 404) return {};
-  if (!r.ok) throw erroreDiGitHub(r.status, "guardando cosa c'è nel repository");
+  if (!r.ok) throw erroreDiGitHub(r, "guardando cosa c'è nel repository");
   const elenco = await r.json();
   elencoEtag = r.headers.get("ETag");
   elencoUltimo = Object.fromEntries((Array.isArray(elenco) ? elenco : []).map((f) => [f.name, f.sha]));
@@ -263,7 +293,7 @@ async function scriviFile(conf, file, busta, sha) {
     body: JSON.stringify(corpo),
   });
   if (r.status === 409 || r.status === 422) throw new Conflitto(`${file} è cambiato nel frattempo`);
-  if (!r.ok) throw erroreDiGitHub(r.status, `salvando ${file}`);
+  if (!r.ok) throw erroreDiGitHub(r, `salvando ${file}`);
   return (await r.json()).content?.sha;
 }
 
@@ -562,7 +592,7 @@ export async function giro(applica) {
       if (cambiato) await applica?.();
     } catch (e) {
       const ora = await leggiConf();
-      if (ora) await scriviConf({ ...ora, errore: e?.message || String(e) });
+      if (ora) await scriviConf({ ...ora, errore: inParole(e) });
     } finally {
       giroInCorso = null;
       avvisa("giro");
