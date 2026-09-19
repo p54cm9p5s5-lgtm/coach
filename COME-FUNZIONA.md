@@ -700,6 +700,15 @@ max 60; **sigarette esattamente al limite → max 70; oltre il limite → max 50
 Un **giorno di riposo non è un vuoto da punire**: la voce allenamento resta
 fuori dal conto, non vale zero.
 
+E un allenamento fatto **in un giorno che non lo prevedeva** — riposo, «Nuovo
+allenamento», un extra — **conta solo se alza il giorno**. È in più: farlo a
+metà non può valere meno di non farlo. Se la sua completezza tirerebbe giù il
+punteggio, la voce resta fuori e nel dettaglio c'è scritto «in più, non
+contato: abbassava il giorno». Nei giorni in programma no: lì la completezza
+misura quello che si doveva fare, e conta sempre. (Deciso dall'atleta il
+19/09/2026; sui dati di allora ha cambiato due giorni, 10 e 11 agosto, da 96 a
+98 e da 98 a 100.)
+
 **Tutte le voci si fermano al 100%, tranne una.** Raggiunto il bersaglio la voce
 vale pieno: fare più di quello che il programma chiede non alza il voto, è
 semplicemente averlo fatto. Il totale resta fra zero e cento.

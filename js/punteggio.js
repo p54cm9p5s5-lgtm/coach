@@ -457,19 +457,43 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
     });
   }
 
-  const pesati = voci.filter((v) => v.quota != null);
-  if (!pesati.length) return { totale: null, voci, limite: null, completo: false };
-  const pesoTotale = pesati.reduce((t, v) => t + v.peso, 0) || 1;
+  const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];
   // Il totale sta fra zero e cento: la voce Fumo sotto zero tira giù la media
   // come deve, ma un punteggio negativo non vuol dire niente e l'anello non lo
   // sa disegnare.
-  let totale = Math.max(
-    0,
-    Math.min(100, Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100))
-  );
+  const totaleDi = (elenco) => {
+    const pesati = elenco.filter((v) => v.quota != null);
+    if (!pesati.length) return null;
+    const pesoTotale = pesati.reduce((t, v) => t + v.peso, 0) || 1;
+    const t = Math.max(
+      0,
+      Math.min(100, Math.round((pesati.reduce((t, v) => t + v.quota * v.peso, 0) / pesoTotale) * 100))
+    );
+    return limite && t > limite.tetto ? limite.tetto : t;
+  };
 
-  const limite = tetti.sort((a, b) => a.tetto - b.tetto)[0];
-  if (limite && totale > limite.tetto) totale = limite.tetto;
+  // Un allenamento in un giorno che non lo prevedeva conta solo se ALZA il
+  // giorno. È in più: farlo a metà non può valere meno di non farlo, se no il
+  // punteggio insegna a restare sul divano. Decisione dell'atleta, 19/09/2026
+  // (Controllo 3, C.3). Nei giorni previsti resta com'è: lì la completezza è
+  // la misura di quello che si doveva fare.
+  if (!previsto && allenamento != null) {
+    const i = voci.findIndex((v) => v.nome === "Allenamento");
+    const senza = voci.map((v, j) => (j === i ? { ...v, quota: null } : v));
+    const conSenza = totaleDi(senza);
+    const conAllenamento = totaleDi(voci);
+    if (conSenza != null && conAllenamento < conSenza) {
+      voci[i] = {
+        ...voci[i],
+        quota: null,
+        dettaglio: `completezza ${Math.round(allenamento)} · in più, non contato: abbassava il giorno`,
+      };
+    }
+  }
+
+  const pesati = voci.filter((v) => v.quota != null);
+  if (!pesati.length) return { totale: null, voci, limite: null, completo: false };
+  const totale = totaleDi(voci);
 
   return {
     totale,

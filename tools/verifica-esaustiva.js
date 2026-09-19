@@ -20,7 +20,7 @@ import {
   combinazioneManubrio, carichiManubrio,
 } from "../js/plates.js";
 import { isoDate, parseIso, weekdayOf, dataLunga, dataBreve, giorniTra, durataUmana, mmss, num, oraDi } from "../js/ui.js";
-import { punteggioEsercizio, punteggioAllenamento } from "../js/punteggio.js";
+import { punteggioEsercizio, punteggioAllenamento, punteggioSalute } from "../js/punteggio.js";
 import * as store from "../js/store.js";
 
 const arrotonda = (n) => Math.round(n * 100) / 100;
@@ -259,7 +259,8 @@ export function verificaNumeri() {
 export async function tutto() {
   const regole = await store.regole();
   const prove = [verificaDischi(), verificaManubri(), verificaDate(), verificaDateImpossibili(), verificaDurate(), verificaNumeri(),
-                 verificaInvariantiEsercizio(regole), verificaInvariantiAllenamento(regole)];
+                 verificaInvariantiEsercizio(regole), verificaInvariantiAllenamento(regole),
+                 verificaInvariantiGiorno(regole)];
   const casiTotali = prove.reduce((a, p) => a + (parseInt(p.casi, 10) || 0), 0);
   const erroriTotali = prove.reduce((a, p) => a + p.errori, 0);
   return {
@@ -364,4 +365,46 @@ export function verificaInvariantiAllenamento(regole) {
     }
   }
   return esito("invarianti del punteggio di una seduta", `${casi} combinazioni`, errori);
+}
+
+/**
+ * Gli invarianti del punteggio della giornata (Salute) sull'allenamento.
+ *
+ * In un giorno che NON prevedeva allenamento, farne uno non può mai abbassare
+ * il giorno rispetto a non farlo: è in più (decisione dell'atleta, 19/09/2026,
+ * Controllo 3, C.3). E più completezza non può mai valere meno di meno
+ * completezza, previsto o no. Si percorre ogni completezza da 0 a 100 contro
+ * giornate che vanno dalla perfetta alla pessima.
+ */
+export function verificaInvariantiGiorno(regole) {
+  const errori = [];
+  let casi = 0;
+  const notti = [null, { durataMin: 480, inizio: "2026-09-18T23:00" }, { durataMin: 300, inizio: "2026-09-19T02:00" }];
+  const giorni = [
+    null,
+    { kcalAttive: 600, obiettivoKcal: 500, passi: 12000, minutiEsercizio: 60, minutiInPiedi: 200 },
+    { kcalAttive: 150, obiettivoKcal: 500, passi: 2000, minutiEsercizio: 5, minutiInPiedi: 40 },
+  ];
+  for (const notte of notti) {
+    for (const giorno of giorni) {
+      for (const sigarette of [null, 0, 5, 10, 20]) {
+        for (const previsto of [false, true]) {
+          const valuta = (allenamento) =>
+            punteggioSalute({ notte, giorno, sigarette, allenamento, previsto, regole }).totale;
+          const senza = valuta(null);
+          let prima = null;
+          for (let c = 0; c <= 100; c++) {
+            casi++;
+            const t = valuta(c);
+            const dove = `notte ${notte?.durataMin ?? "-"} giorno ${giorno?.passi ?? "-"} sigarette ${sigarette} previsto ${previsto} completezza ${c}`;
+            if (!Number.isFinite(t) || t < 0 || t > 100) { errori.push(`${dove}: totale ${t}`); continue; }
+            if (!previsto && senza != null && t < senza) errori.push(`${dove}: ${t} < ${senza} senza allenamento`);
+            if (prima != null && t < prima) errori.push(`${dove}: ${t} < ${prima} con completezza ${c - 1}`);
+            prima = t;
+          }
+        }
+      }
+    }
+  }
+  return esito("invarianti del punteggio di una giornata", `${casi} combinazioni`, errori);
 }
