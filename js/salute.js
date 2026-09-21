@@ -434,6 +434,15 @@ export function analizza(testo) {
     const perNotte = new Map();
     const sonnellini = [];
     const p2 = (n) => String(n).padStart(2, "0");
+
+    // Prima si mettono le fasi in fila e si spezzano in DORMITE, poi si decide
+    // quali sono notti. L'ordine conta: prima si decideva fase per fase, e
+    // ogni pezzo che cominciava dopo le 11 diventava «sonnellino» anche se era
+    // la stessa dormita senza interruzioni. Chi si sveglia a mezzogiorno
+    // perdeva l'ultima ora e mezza di sonno: la notte del 21/09/2026 valeva
+    // 9h20 invece di 10h44, e con lei altre quattro notti su quaranta. La
+    // notte finisce quando ti alzi, non quando l'orologio segna le undici.
+    const pulite = [];
     for (const f of risultato.fasi) {
       const inizio = new Date(f.inizio);
       const fine = new Date(f.fine);
@@ -446,22 +455,46 @@ export function analizza(testo) {
       // darebbe minuti negativi: si assume il giorno dopo.
       if (minuti < 0) minuti += 24 * 60;
       if (minuti <= 0 || minuti > 12 * 60) continue;
+      const nome = f.fase.toLowerCase();
+      const sveglio = /awake|sveglio|veglia/.test(nome);
+      const aLetto = /inbed|a letto/.test(nome);
+      pulite.push({ f, inizio, fine, minuti, nome, sveglio, aLetto, dorme: !sveglio && !aLetto });
+    }
+    // Le fasi possono arrivare in qualunque ordine: senza ordinarle, «la
+    // dormita di prima» non vorrebbe dire niente.
+    pulite.sort((a, b) => a.inizio - b.inizio);
 
-      // Una fase che comincia di sera finisce il giorno dopo: la notte è quella
-      // del risveglio. Una che comincia dopo mezzanotte finisce nello stesso
-      // giorno in cui è cominciata.
-      //
-      // Il taglio era a mezzogiorno, e cosi un sonnellino delle 15 diventava
-      // «la notte di domani», cominciata alle 15: si mangiava la notte vera e
-      // il punteggio del sonno del giorno dopo. Le ore centrali della giornata
-      // non sono nessuna delle due notti: quel sonno c'è stato, ma non è la
-      // notte, e viene detto invece di essere impastato con lei.
-      const ora = inizio.getHours();
+    // Una dormita si chiude dopo più di un'ora senza dormire: i risvegli di
+    // pochi minuti restano dentro, alzarsi per davvero la chiude.
+    const PAUSA_CHE_CHIUDE_MIN = 60;
+    const dormite = [];
+    let ultimoSonno = null;
+    for (const p of pulite) {
+      const stacco = ultimoSonno ? (p.inizio - ultimoSonno) / 60000 : Infinity;
+      if (!dormite.length || stacco > PAUSA_CHE_CHIUDE_MIN) dormite.push([]);
+      dormite[dormite.length - 1].push(p);
+      if (p.dorme) ultimoSonno = p.fine;
+    }
+
+    for (const dormita of dormite) {
+      const sonno = dormita.filter((p) => p.dorme);
+      // Solo veglia, o solo «a letto»: non è una dormita, non fa una notte.
+      if (!sonno.length) continue;
+      // Quando comincia la dormita, non la singola fase: è questo che dice se
+      // è la notte o un sonnellino del pomeriggio.
+      const comincia = sonno[0].inizio;
+      const ora = comincia.getHours();
+      // Le ore centrali della giornata non sono nessuna delle due notti: quel
+      // sonno c'è stato, ma non è la notte, e viene detto invece di essere
+      // impastato con lei.
       if (ora >= 11 && ora < 18) {
-        sonnellini.push({ quando: `${p2(inizio.getDate())}/${p2(inizio.getMonth() + 1)} alle ${p2(ora)}:${p2(inizio.getMinutes())}`, minuti });
+        const minuti = sonno.reduce((t, p) => t + p.minuti, 0);
+        sonnellini.push({ quando: `${p2(comincia.getDate())}/${p2(comincia.getMonth() + 1)} alle ${p2(ora)}:${p2(comincia.getMinutes())}`, minuti });
         continue;
       }
-      const notte = new Date(inizio);
+      // Una dormita che comincia di sera è la notte del giorno dopo: la notte
+      // porta la data del risveglio.
+      const notte = new Date(comincia);
       if (ora >= 18) notte.setDate(notte.getDate() + 1);
       const p = (n) => String(n).padStart(2, "0");
       const chiave = `${notte.getFullYear()}-${p(notte.getMonth() + 1)}-${p(notte.getDate())}`;
@@ -470,22 +503,22 @@ export function analizza(testo) {
         perNotte.set(chiave, { data: chiave, presente: true, durataMin: 0, profondoMin: 0, remMin: 0, vegliaMin: 0, risvegli: 0, inizio: null });
       }
       const n = perNotte.get(chiave);
-      // L'ora in cui la notte comincia: non è un dettaglio di contorno, entra
-      // nel punteggio. Si tiene la fase più antica della notte, non la prima
-      // che capita nel pacchetto, che non è detto sia in ordine.
-      if (!n.inizio || f.inizio < n.inizio) n.inizio = f.inizio;
-      const nome = f.fase.toLowerCase();
-      if (/awake|sveglio|veglia/.test(nome)) {
-        n.vegliaMin += minuti;
-        // Un risveglio è un tratto sveglio di almeno cinque minuti: i micro
-        // risvegli di pochi secondi li ha chiunque e non dicono niente.
-        if (minuti >= 5) n.risvegli += 1;
-      } else if (/inbed|a letto/.test(nome)) {
-        // «A letto» non è sonno: non entra nella durata.
-      } else {
-        n.durataMin += minuti;
-        if (/deep|profondo/.test(nome)) n.profondoMin += minuti;
-        else if (/rem/.test(nome)) n.remMin += minuti;
+      for (const p of dormita) {
+        // L'ora in cui la notte comincia: non è un dettaglio di contorno, entra
+        // nel punteggio. Si tiene la fase più antica della notte.
+        if (!n.inizio || p.f.inizio < n.inizio) n.inizio = p.f.inizio;
+        if (p.sveglio) {
+          n.vegliaMin += p.minuti;
+          // Un risveglio è un tratto sveglio di almeno cinque minuti: i micro
+          // risvegli di pochi secondi li ha chiunque e non dicono niente.
+          if (p.minuti >= 5) n.risvegli += 1;
+        } else if (p.aLetto) {
+          // «A letto» non è sonno: non entra nella durata.
+        } else {
+          n.durataMin += p.minuti;
+          if (/deep|profondo/.test(p.nome)) n.profondoMin += p.minuti;
+          else if (/rem/.test(p.nome)) n.remMin += p.minuti;
+        }
       }
     }
     // Le notti scritte a mano (righe NOTTE) hanno la precedenza: se ci sono

@@ -685,6 +685,78 @@ export function verificaLettorePacchetto({ lettore = analizza } = {}) {
     if ((r.notti[0]?.durataMin ?? null) !== atteso) errori.push(`una notte di ${min} minuti si legge ${r.notti[0]?.durataMin}, atteso ${atteso}`);
   }
 
+  // LA NOTTE FINISCE QUANDO TI ALZI, NON ALLE UNDICI.
+  //
+  // Le fasi si raggruppano in dormite (più di un'ora senza dormire le separa)
+  // e la dormita intera dice se è notte o sonnellino. Prima si decideva fase
+  // per fase e tutto quello che cominciava dopo le 11 usciva dalla notte:
+  // svegliandosi a mezzogiorno si perdevano ore di sonno vero (21/09/2026:
+  // 9h20 invece di 10h44, 5 notti su 40 in archivio).
+  {
+    const fasi = (righe) => lettore(["COACH-DATI v1", "FINESTRA 2026-09-01 2026-09-30", ...righe].join("\n"));
+
+    // a) una dormita che finisce a mezzogiorno è UNA notte, tutta
+    casi++;
+    const tardi = fasi([
+      "FASE 2026-09-21 01:00 2026-09-21 06:00 Principale",
+      "FASE 2026-09-21 06:00 2026-09-21 06:10 Veglia",
+      "FASE 2026-09-21 06:10 2026-09-21 11:10 Principale",
+      "FASE 2026-09-21 11:10 2026-09-21 12:40 REM",
+    ]);
+    const n = tardi.notti.find((x) => x.data === "2026-09-21");
+    if (!n) errori.push("una dormita finita a mezzogiorno non produce nessuna notte");
+    else {
+      if (n.durataMin !== 690) errori.push(`la notte finita alle 12:40 dura ${n.durataMin} invece di 690 minuti`);
+      // Questa è la fase che cominciava dopo le 11 e usciva dalla notte.
+      if (n.remMin !== 90) errori.push(`il REM cominciato alle 11:10 si perde: ${n.remMin} invece di 90`);
+      if (n.vegliaMin !== 10) errori.push(`la veglia dentro la notte si perde: ${n.vegliaMin} invece di 10`);
+      if (n.risvegli !== 1) errori.push(`i risvegli della notte sono ${n.risvegli} invece di 1`);
+    }
+    if (tardi.avvisi.some((a) => /sonnellin/i.test(a))) errori.push("il sonno del mattino viene chiamato sonnellino");
+    if (tardi.notti.length !== 1) errori.push(`una dormita sola dà ${tardi.notti.length} notti`);
+
+    // b) un sonnellino vero (dormita che COMINCIA nel pomeriggio) resta fuori
+    casi++;
+    const conRiposino = fasi([
+      "FASE 2026-09-21 01:00 2026-09-21 09:00 Principale",
+      "FASE 2026-09-21 15:00 2026-09-21 16:00 Principale",
+    ]);
+    const notte = conRiposino.notti.find((x) => x.data === "2026-09-21");
+    if (notte?.durataMin !== 480) errori.push(`il sonnellino del pomeriggio entra nella notte: ${notte?.durataMin} invece di 480`);
+    if (!conRiposino.avvisi.some((a) => /sonnellin/i.test(a))) errori.push("un sonnellino del pomeriggio non viene detto");
+
+    // c) le fasi possono arrivare in disordine: il risultato non cambia
+    casi++;
+    const disordine = fasi([
+      "FASE 2026-09-21 06:10 2026-09-21 11:10 Principale",
+      "FASE 2026-09-21 01:00 2026-09-21 06:00 Principale",
+      "FASE 2026-09-21 11:10 2026-09-21 12:40 REM",
+      "FASE 2026-09-21 06:00 2026-09-21 06:10 Veglia",
+    ]);
+    const nd = disordine.notti.find((x) => x.data === "2026-09-21");
+    if (nd?.durataMin !== 690) errori.push(`in disordine la notte dura ${nd?.durataMin} invece di 690`);
+    if (nd?.inizio !== "2026-09-21T01:00") errori.push(`in disordine la notte comincia alle ${nd?.inizio}`);
+
+    // d) i secondi, che il file di Salute porta, non si perdono per strada
+    casi++;
+    const secondi = fasi(["FASE 2026-09-21 01:00:30 2026-09-21 02:00:30 Principale"]);
+    const ns = secondi.notti.find((x) => x.data === "2026-09-21");
+    if (ns?.durataMin !== 60) errori.push(`una fase scritta al secondo dura ${ns?.durataMin} invece di 60`);
+    if (secondi.avvisi.length) errori.push(`una fase con i secondi dà avvisi: ${secondi.avvisi[0]}`);
+
+    // e) sveglio due ore e poi di nuovo a dormire, sempre di mattina: sono due
+    //    dormite, ma tutte e due appartengono a quella notte e si sommano —
+    //    come fa Salute, che conta il sonno della giornata.
+    casi++;
+    const staccate = fasi([
+      "FASE 2026-09-21 01:00 2026-09-21 06:00 Principale",
+      "FASE 2026-09-21 08:30 2026-09-21 09:30 Principale",
+    ]);
+    const nst = staccate.notti.find((x) => x.data === "2026-09-21");
+    if (nst?.durataMin !== 360) errori.push(`due dormite della stessa mattina danno ${nst?.durataMin} invece di 360 minuti`);
+    if (nst?.inizio !== "2026-09-21T01:00") errori.push(`la notte con due dormite comincia alle ${nst?.inizio}`);
+  }
+
   // Un valore che non è un numero va detto, come i negativi e i fuori scala
   // (Controllo 3, F.3): «kcal=abc» spariva senza una parola. E un pacchetto
   // giusto non deve far scattare niente.

@@ -280,9 +280,11 @@ def righe(dal, al, giorni, giorni_watch, fc, fasi, allenamenti, battiti=None, sf
         if campi:
             out.append(f"GIORNO {g} " + " ".join(campi))
 
+    # Con i secondi: al minuto, il totale di una notte perde qualche minuto di
+    # arrotondamento (45 fasi a notte). Il lettore accetta HH:MM e HH:MM:SS.
     for inizio, fine, fase in sorted(fasi):
         out.append(
-            f"FASE {inizio:%Y-%m-%d %H:%M} {fine:%Y-%m-%d %H:%M} {fase}"
+            f"FASE {inizio:%Y-%m-%d %H:%M:%S} {fine:%Y-%m-%d %H:%M:%S} {fase}"
         )
 
     battiti = battiti or {}

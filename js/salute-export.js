@@ -85,6 +85,11 @@ function istante(testo) {
   return {
     giorno: `${m[1]}-${m[2]}-${m[3]}`,
     ora: `${m[4]}:${m[5]}`,
+    // Anche i secondi, per le fasi del sonno: scritte al minuto, un totale di
+    // notte perde qualche minuto per strada (45 fasi × mezzo minuto di
+    // arrotondamento). Sulla notte del 21/09/2026 erano 4 minuti rispetto a
+    // quello che dice Salute. Il lettore del pacchetto accetta HH:MM:SS.
+    oraSec: `${m[4]}:${m[5]}:${m[6]}`,
     ordine: `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}`,
     sec: Number(m[4]) * 3600 + Number(m[5]) * 60 + Number(m[6]),
   };
@@ -342,7 +347,7 @@ export async function pacchettoDaExport(file, { giorni = 30, dal: daQuando = nul
 
   fasi.sort((a, b) => (a.da.ordine < b.da.ordine ? -1 : a.da.ordine > b.da.ordine ? 1 : 0));
   for (const f of fasi) {
-    out.push(`FASE ${f.da.giorno} ${f.da.ora} ${f.a.giorno} ${f.a.ora} ${f.fase}`);
+    out.push(`FASE ${f.da.giorno} ${f.da.oraSec || f.da.ora} ${f.a.giorno} ${f.a.oraSec || f.a.ora} ${f.fase}`);
   }
 
   /* Le caselle di battito che cadono dentro un allenamento, ridotte a una

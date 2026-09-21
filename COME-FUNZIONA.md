@@ -908,10 +908,20 @@ giorno in cui ci si sveglia**: chi va a letto all'una di notte del 4 agosto ha
 dormito la notte del 4, non quella del 3. «Veglia» non entra nella durata; un
 risveglio è un tratto sveglio di almeno cinque minuti.
 
-Le righe `FASE` portano solo ore e minuti: i secondi vengono troncati dal comando
-rapido prima che l'app li veda, e il totale può risultare **1-5 minuti sotto**
-quello di Salute — sempre in difetto, proporzionale al numero di fasi, mai oltre
-l'1%.
+**Una notte finisce quando ti alzi, non a un'ora fissa.** Le fasi vengono prima
+rimesse in fila e divise in **dormite**: una dormita si chiude solo dopo più di
+un'ora senza dormire, quindi i risvegli brevi restano dentro e il sonno del
+mattino inoltrato resta parte della notte anche se ti svegli a mezzogiorno. È
+la dormita intera, non la singola fase, a dire se è una notte o un sonnellino:
+una dormita che **comincia** fra le 11 e le 18 è un sonnellino, e viene detta a
+parte invece di essere impastata con la notte. Prima la decisione era presa
+fase per fase: chi si svegliava tardi perdeva tutto il sonno dopo le 11 —
+sull'archivio del 21/09/2026, 5 notti su 40, fino a due ore su una notte sola.
+
+Le righe `FASE` scritte **dal file di Salute** portano anche i secondi. Quelle
+del **comando rapido** si fermano al minuto, e lì il totale può risultare
+**1-5 minuti sotto** quello di Salute — sempre in difetto, proporzionale al
+numero di fasi, mai oltre l'1%.
 
 **Quello che non può essere vero non entra.** Sopra 5000 kcal, 100.000 passi,
 1440 minuti in una giornata, 200 km, 500 piani, o una frequenza a riposo fuori
