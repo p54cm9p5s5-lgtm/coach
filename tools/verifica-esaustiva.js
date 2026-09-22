@@ -356,6 +356,19 @@ export function verificaInvariantiAllenamento(regole) {
             if (Number.isFinite(peggio.totale) && peggio.totale > r.totale)
               errori.push(`previsti ${previsti} fatti ${fatti} voto ${voto}: con ${saltati + 1} saltati ${peggio.totale} > con ${saltati} che dà ${r.totale}`);
           }
+          // LA MOBILITÀ È FACOLTATIVA (22/09/2026, decisione del coach):
+          // saltarla deve dare lo stesso punteggio che si avrebbe se quel
+          // giorno la mobilità non fosse prevista, e farla non può abbassarlo.
+          // Prima valeva zero e costava un quinto del punteggio.
+          const senzaBlocco = chiama({ previsti, punteggi, saltati, mobilita: null });
+          const saltata = chiama({ previsti, punteggi, saltati, mobilita: { fatto: false } });
+          const fatta = chiama({ previsti, punteggi, saltati, mobilita: { fatto: true } });
+          if (saltata.totale !== senzaBlocco.totale) {
+            errori.push(`previsti ${previsti} fatti ${fatti} voto ${voto}: mobilità saltata ${saltata.totale}, senza mobilità ${senzaBlocco.totale}`);
+          }
+          if (fatta.totale < saltata.totale) {
+            errori.push(`previsti ${previsti} fatti ${fatti} voto ${voto}: fare la mobilità abbassa (${fatta.totale} < ${saltata.totale})`);
+          }
           // saltare il cardio non può MAI far salire il punteggio
           const senzaCardio = chiama({ previsti, punteggi, saltati, cardio: { ...cardio, eseguito: false, durataMin: null } });
           if (Number.isFinite(senzaCardio.totale) && senzaCardio.totale > r.totale)

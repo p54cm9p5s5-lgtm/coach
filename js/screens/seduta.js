@@ -140,7 +140,9 @@ async function vistaProgramma(vaiA, ridisegna) {
               (() => {
                 if (store.giornoDiSolaMobilita(previsto.id)) {
                   const quanti = (store.riscaldamento(previsto.id)?.mobilitaFinale || []).length;
-                  return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità`;
+                  // Facoltativa dal 22/09/2026: detto qui, perché è la riga che
+                  // si legge decidendo se farla.
+                  return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità · facoltativa`;
                 }
                 return `${previsto.esercizi.length} ${previsto.esercizi.length === 1 ? "esercizio" : "esercizi"}${previsto.cardio ? " + cardio" : ""}`;
               })() + (fatteOggi.some((s) => s.tipoId === previsto.id) ? " · già completato oggi" : "")
@@ -4192,7 +4194,7 @@ async function vistaMobilita(corpo, piede) {
                 h("h3", "Perché adesso"),
                 h(
                   "p",
-                  `${(S.sed.previstiElenco?.length ?? 0) > 0 ? "Subito dopo i pesi, a muscoli caldi: tenere a lungo un allungamento prima di spingere abbassa la forza, per questo il blocco sta qui e non all'inizio." : "Il blocco di oggi."} Full body tutti i giorni, sabato e domenica inclusi: caviglia, anca, colonna, spalle, polso. Prima i movimenti che sciolgono, poi le posizioni da tenere ferme 45 secondi. Dose fissa, non si progredisce.`
+                  `${(S.sed.previstiElenco?.length ?? 0) > 0 ? "Subito dopo i pesi, a muscoli caldi: tenere a lungo un allungamento prima di spingere abbassa la forza, per questo il blocco sta qui e non all'inizio." : "Il blocco di oggi."} Full body tutti i giorni, sabato e domenica inclusi: caviglia, anca, colonna, spalle, polso. Prima i movimenti che sciolgono, poi le posizioni da tenere ferme 45 secondi. Dose fissa, non si progredisce. È facoltativa: farla alza il punteggio, saltarla non lo abbassa.`
                 )
               )
             ),
@@ -4208,7 +4210,9 @@ async function vistaMobilita(corpo, piede) {
             await disegna();
           }),
         },
-        "Salta"
+        // Facoltativa dal 22/09/2026: il tasto lo dice, se no «Salta» sembra
+        // una rinuncia che costa qualcosa.
+        "Salta · è facoltativa"
       ),
     ],
     onFine: async () => {

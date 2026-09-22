@@ -338,6 +338,9 @@ async function componi(stato) {
       // leggeva «Oggi» su sei righe diverse.
       if (data === isoDate()) return previsto ? `Oggi (previsto ${previsto.nome})` : "Oggi";
       if (data > isoDate()) return previsto ? `In programma: ${previsto.nome}` : "Giorno futuro";
+      // La mobilità è facoltativa dal 22/09/2026: non farla non è un
+      // allenamento saltato, e scriverlo così al coach direbbe il falso.
+      if (previsto && !store.allenamentoDovuto(data)) return `Mobilità facoltativa, non fatta`;
       if (previsto) return `Non fatto (era previsto ${previsto.nome})`;
       const org = store.origineGiorno(data);
       // Un evento in calendario che non è un allenamento — un promemoria per la

@@ -49,7 +49,9 @@ export function calendario(ctx) {
     const classi = ["cal-giorno"];
     if (data === oggi) classi.push("oggi");
     if (fatto?.completato) classi.push("fatto");
-    else if (previsto && passato) classi.push("saltato");
+    // Saltato solo se era dovuto: un giorno di sola mobilità è facoltativo e
+    // non si tinge di rosso per non essere stato fatto (22/09/2026).
+    else if (passato && (ctx.dovuto ? ctx.dovuto(data) : previsto)) classi.push("saltato");
     else if (previsto) classi.push("previsto");
 
     const punti = h("div.cal-punti");

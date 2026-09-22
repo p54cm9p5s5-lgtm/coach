@@ -644,18 +644,17 @@ export function punteggioAllenamento({
 
   // Il blocco di mobilità, dove il giorno ne ha uno.
   //
-  // È una dose fissa come il riscaldamento: entra per il fatto di essere stata
-  // fatta o saltata, non per quanto bene. Su un giorno di sola mobilità —
-  // sabato e domenica, che di esercizi non ne hanno — questa diventa l'unica
-  // voce con un valore, cioè tutto il punteggio: senza, quei giorni davano
-  // zero sia facendoli sia saltandoli, e non c'era modo di evitare la
-  // penalità di averli saltati.
+  // FACOLTATIVA dal 22/09/2026, per decisione del coach: farla alza il
+  // punteggio, saltarla non lo abbassa. Prima valeva zero come una cosa
+  // dovuta, e un allenamento fatto bene scendeva di un quinto per una routine
+  // che ora è un'aggiunta, non un obbligo. Le sedute già chiuse tengono il
+  // punteggio che avevano: quello è congelato e non si ricalcola.
   if (mobilita) {
     voci.push({
       nome: "Mobilità",
-      quota: mobilita.fatto ? 1 : 0,
+      quota: mobilita.fatto ? 1 : null,
       peso: 20,
-      dettaglio: mobilita.fatto ? "fatta" : "saltata",
+      dettaglio: mobilita.fatto ? "fatta" : "saltata · facoltativa, non toglie punti",
     });
   }
 

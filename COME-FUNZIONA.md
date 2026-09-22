@@ -21,6 +21,9 @@ l'app usa davvero.
 > - **Dati di Salute** (§9). Quando un numero arriva diverso da quello già
 >   registrato, decide l'atleta, una volta sola, e la scelta resta. I numeri
 >   che leggi nel pacchetto sono quindi quelli che ha confermato lui.
+> - **Mobilità facoltativa** (§6.2, §12). Dal 22/09/2026 farla alza il
+>   punteggio, saltarla non lo abbassa; un sabato o una domenica di sola
+>   mobilità non fatta vale come un riposo, non come un allenamento saltato.
 > - **Elenchi completi** (§14). Un brief con molti errori li mostra tutti,
 >   non i primi sei: puoi sistemarli in un giro solo.
 > - **iPhone e Mac** (§2, §5). L'app gira anche sul Mac, sincronizzata con
@@ -674,7 +677,7 @@ quello.
 | Esercizi (media dei loro punteggi, sul numero previsto) | 60 |
 | Cardio | 20 |
 | Riscaldamento | 20 |
-| Mobilità di fine seduta | 20 |
+| Mobilità di fine seduta (**facoltativa**) | 20 |
 
 **Nel conto entra solo quello che quel giorno prevede davvero.** Una voce che
 non c'entra viene esclusa e il suo peso si ridistribuisce sulle altre, invece di
@@ -684,9 +687,16 @@ contare zero:
   non toglie punti: prima ci si fermava su una pagina vuota che chiedeva «fatto
   o saltato?» di niente, e rispondere «saltato» toglieva un quinto del punteggio
   per una cosa che il programma non chiede.
+- **La mobilità è facoltativa** (dal 22/09/2026, per decisione del coach).
+  Farla alza il punteggio, saltarla non lo abbassa: la voce esce dal conto
+  esattamente come se quel giorno la mobilità non fosse prevista. Prima valeva
+  zero come una cosa dovuta e un allenamento fatto bene scendeva di un quinto.
 - I giorni di **sola mobilità** (sabato e domenica, che di esercizi non ne hanno)
   escludono gli esercizi e il riscaldamento — non c'è niente da scaldare: lì la
-  mobilità è tutto il punteggio, 100 se fatta e 0 se saltata.
+  mobilità fatta vale 100. Saltarla, o non aprire nemmeno l'allenamento, **non
+  è un allenamento mancato**: quel giorno vale come un riposo, senza il tetto
+  del 60, non si tinge di rosso sul calendario e nel pacchetto per il coach si
+  legge «Mobilità facoltativa, non fatta».
 - **Le sedute già chiuse non cambiano.** Quello che il programma prevedeva viene
   congelato quando l'allenamento nasce: una seduta che aveva lo stretching come
   passaggio separato continua a mostrarlo, con il suo esito di allora.
@@ -1277,6 +1287,10 @@ tocca Salute e infatti funziona.
 ---
 
 ### Il blocco di mobilità
+
+**È facoltativo** (22/09/2026): se lo fai, lo spunti e alza il punteggio; se lo
+salti non succede niente — né sul punteggio dell'allenamento, né su quello del
+giorno, né sul calendario.
 
 Dopo i pesi e **prima del cardio**, ogni giorno ha un blocco di mobilità a **dose
 fissa**: nessun carico, nessuna soglia tecnica, nessuna progressione. Dal

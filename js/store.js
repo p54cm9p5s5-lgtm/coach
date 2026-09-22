@@ -529,6 +529,18 @@ export async function inizioProgramma() {
   return [primaSeduta, p.aggiornatoIl].filter(Boolean).sort()[0] || null;
 }
 
+/**
+ * L'allenamento DOVUTO quel giorno: quello previsto, tranne i giorni di sola
+ * mobilità, che dal 22/09/2026 sono facoltativi (decisione del coach). Serve
+ * dove non farlo avrebbe una conseguenza — il punteggio del giorno, il rosso
+ * sul calendario, la riga «non fatto» nel pacchetto. Per sapere cosa c'è in
+ * programma resta `giornoPrevisto`.
+ */
+export function allenamentoDovuto(iso = isoDate()) {
+  const g = giornoPrevisto(iso);
+  return g && !giornoDiSolaMobilita(g.id) ? g : null;
+}
+
 export function giornoPrevisto(iso = isoDate()) {
   if (!PROGRAMMA) return null;
   const ev = AGENDA?.get(iso);
@@ -3393,7 +3405,10 @@ export async function punteggiSalute(dal, al = isoDate()) {
     // Prima che il programma esistesse non era previsto niente: segnare quei
     // giorni come «allenamento saltato» dipingerebbe di rosso un passato che
     // non c'era.
-    const previsto = inizio && data >= inizio ? Boolean(giornoPrevisto(data)) : false;
+    // Un giorno di sola mobilità non è un allenamento mancato se non lo fai:
+    // la mobilità è facoltativa (22/09/2026, decisione del coach). Farla alza
+    // il punteggio del giorno; saltarla lo lascia com'è, come un riposo.
+    const previsto = inizio && data >= inizio ? Boolean(allenamentoDovuto(data)) : false;
     // Chi ha dichiarato di non contare le sigarette non deve trovarsi la voce
     // nel punteggio nemmeno se in archivio è rimasta qualche riga vecchia.
     const sigarette =

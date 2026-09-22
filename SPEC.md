@@ -320,6 +320,11 @@ Sequenza rigida, un passo per volta.
    giorno. Si fa anche sabato e domenica. Nel programma del coach le due metà si
    chiamano Blocco A e Blocco B; nell'app no, è una cosa sola. Il cardio resta
    in fondo ed è slegato: può essere fatto ore dopo.
+   **Dal 22/09/2026 il blocco è facoltativo** (decisione del coach): fatto alza
+   il punteggio, saltato esce dal conto (`quota: null`, non zero). Un giorno di
+   sola mobilità non fatto non è un allenamento mancato — `allenamentoDovuto()`
+   in store.js lo esclude da punteggio Salute, rosso sul calendario, grafico
+   della Home e riga «non fatto» nel pacchetto.
    Dal 28/08/2026 esiste anche un **blocco facoltativo dopo la camminata** (il
    «Blocco C» del coach): quattro delle stesse posizioni, segnabili dalla scheda
    di un allenamento del Watch. **Non è prescritto e non entra in nessun

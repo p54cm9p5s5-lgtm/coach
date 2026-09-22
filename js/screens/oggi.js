@@ -112,7 +112,9 @@ async function bloccoGrafico(ridisegna) {
       futuro: data > oggi,
       // Prima che il programma esistesse non era previsto niente: segnarlo
       // dipingerebbe di «allenamento previsto» un passato che non c'era.
-      previsto: data >= inizioProgramma && Boolean(store.giornoPrevisto(data)),
+      // «Previsto ma non fatto» sul grafico vale per quello che era dovuto: la
+      // mobilità è facoltativa e non lascia un buco (22/09/2026).
+      previsto: data >= inizioProgramma && Boolean(store.allenamentoDovuto(data)),
       origine: store.origineGiorno(data),
       presente: Boolean(g?.presente),
       kcal: g?.presente ? g.kcalAttive : null,
@@ -617,6 +619,7 @@ async function bloccoCalendario(vaiA, ridisegna) {
     dal,
     mese: meseMostrato,
     giornoPrevisto: (data) => store.giornoPrevisto(data),
+    dovuto: (data) => store.allenamentoDovuto(data),
     allenamenti,
     attese,
     onMese: async (delta) => {
