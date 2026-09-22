@@ -284,7 +284,7 @@ export function punteggioSalute({ notte, allenamento, previsto, giorno, sigarett
   // Il limite può essere quello del giorno — scende man mano che si raggiungono
   // nuovi minimi — e in quel caso vince su quello dichiarato nel brief.
   const tollerate = sigaretteTollerate ?? R.sigaretteTollerate ?? 10;
-  const passiBersaglio = R.passiBersaglio ?? 10000;
+  const passiBersaglio = R.passiBersaglio ?? 8000;
   const esercizioBersaglio = R.minutiEsercizioBersaglio ?? 60;
   const inPiediBersaglio = R.minutiInPiediBersaglio ?? 180;
   // Quanto può scendere sotto zero la voce Fumo: fumare oltre il tollerato non

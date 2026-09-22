@@ -292,8 +292,9 @@ fumoContatoDal · fumoTettoDichiarato · agenda · videoRiscaldamento
 - Seduta prevista oggi secondo lo split, con tasto **[Inizia]**. Quale
   allenamento tocca lo decide il brief (o il calendario del coach): l'app lo
   esegue e non offre di cambiarlo, perché non è una scelta che le spetta.
-- Solo quando per oggi **non c'è niente in programma** (riposo, calendario
-  vuoto) compare il riquadro **«Nuovo allenamento»**: si sceglie uno dei giorni
+- Quando per oggi **non c'è niente in programma** (riposo, calendario vuoto) —
+  e dal 22/09/2026 anche nei **giorni di sola mobilità**, che sono facoltativi —
+  compare il riquadro **«Nuovo allenamento»**: si sceglie uno dei giorni
   dello split e si parte. La seduta porta `fuoriProgramma: true` e nel
   pacchetto per il coach la riga «Nota: fuori programma». Con un allenamento
   in programma il riquadro non c'è.

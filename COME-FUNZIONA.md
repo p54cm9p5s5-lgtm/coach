@@ -21,6 +21,9 @@ l'app usa davvero.
 > - **Dati di Salute** (§9). Quando un numero arriva diverso da quello già
 >   registrato, decide l'atleta, una volta sola, e la scelta resta. I numeri
 >   che leggi nel pacchetto sono quindi quelli che ha confermato lui.
+> - **Bersaglio dei passi a 8.000** (§4, §6.3), deciso dall'atleta il
+>   22/09/2026; prima erano 10.000. Il brief lo può sovrascrivere con
+>   `salute.passiBersaglio`.
 > - **Mobilità facoltativa** (§6.2, §12). Dal 22/09/2026 farla alza il
 >   punteggio, saltarla non lo abbassa; un sabato o una domenica di sola
 >   mobilità non fatta vale come un riposo, non come un allenamento saltato.
@@ -260,7 +263,7 @@ un'aggiunta.
 acqua 12, passi 10, minuti di esercizio 8, tempo in piedi 6. Fumo e acqua ci
 sono solo per chi li dichiara nel brief, e il peso delle voci assenti si
 ridistribuisce sulle altre (il dettaglio è al §6.3). Bersagli: sonno **8 h**
-(minimo **6 h**), movimento **1000 kcal**, passi **10.000**, esercizio **60 min**,
+(minimo **6 h**), movimento **1000 kcal**, passi **8.000**, esercizio **60 min**,
 tempo in piedi **180 min**, sigarette tollerate **10 al giorno**.
 
 **Orario del sonno**: a letto entro **mezzanotte** nessuna penalità; ogni ora di
@@ -696,7 +699,10 @@ contare zero:
   mobilità fatta vale 100. Saltarla, o non aprire nemmeno l'allenamento, **non
   è un allenamento mancato**: quel giorno vale come un riposo, senza il tetto
   del 60, non si tinge di rosso sul calendario e nel pacchetto per il coach si
-  legge «Mobilità facoltativa, non fatta».
+  legge «Mobilità facoltativa, non fatta». In quei giorni la schermata Oggi
+  mostra anche il riquadro **«Nuovo allenamento»**, come in un giorno vuoto:
+  la mobilità resta lì da fare se la vuoi, ma al suo posto puoi scegliere un
+  altro giorno dello split.
 - **Le sedute già chiuse non cambiano.** Quello che il programma prevedeva viene
   congelato quando l'allenamento nasce: una seduta che aveva lo stretching come
   passaggio separato continua a mostrarlo, con il suo esito di allora.
@@ -718,7 +724,7 @@ Sette voci di base, nessuna capace di decidere da sola:
 | Allenamento | 22 | completezza della seduta chiusa, o 100 se hai risposto il talk-test su un allenamento dell'orologio |
 | Fumo | 20 | 0 sigarette = pieno, 10 = zero |
 | Movimento | 12 | 1000 kcal attive |
-| Passi | 10 | 10.000 |
+| Passi | 10 | 8.000 |
 | Minuti di esercizio | 8 | 60 min |
 | Tempo in piedi | 6 | 180 min |
 

@@ -666,7 +666,9 @@ const REGOLE_BASE = {
     // impostato in Salute (serve al coach per leggere le percentuali vere),
     // questo è l'asticella che ti dai.
     movimentoBersaglio: 1000,
-    passiBersaglio: 10000,
+    // 8.000 dal 22/09/2026, per sua decisione (prima 10.000). Resta
+    // sovrascrivibile dal brief con `salute.passiBersaglio`.
+    passiBersaglio: 8000,
     minutiEsercizioBersaglio: 60,
     minutiInPiediBersaglio: 180,
     // Sopra questa soglia la giornata è comunque compromessa, per quanto bene

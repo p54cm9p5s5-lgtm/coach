@@ -139,7 +139,7 @@ async function vistaProgramma(vaiA, ridisegna) {
               // e sembrava una giornata vuota o un programma rotto.
               (() => {
                 if (store.giornoDiSolaMobilita(previsto.id)) {
-                  const quanti = (store.riscaldamento(previsto.id)?.mobilitaFinale || []).length;
+                  const quanti = quantiPassaggiDiMobilita(previsto.id);
                   // Facoltativa dal 22/09/2026: detto qui, perché è la riga che
                   // si legge decidendo se farla.
                   return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità · facoltativa`;
@@ -192,9 +192,13 @@ async function vistaProgramma(vaiA, ridisegna) {
       ),
       // Un giorno senza niente in programma non è un giorno in cui non si può
       // fare niente: «vorrei un altro riquadro sotto, nuovo allenamento, solo
-      // quando non c'è niente in giornata» (19/09). Solo qui: quando il
-      // calendario ha già un allenamento, il riquadro sopra è quello.
-      previsto ? null : riquadroNuovoAllenamento(oggi, ridisegna)
+      // quando non c'è niente in giornata» (19/09). Dal 22/09 vale anche nei
+      // giorni di sola mobilità: la mobilità è facoltativa, quindi quel giorno
+      // è libero come un riposo e ci si può mettere un'altra scheda. Quando il
+      // calendario ha un allenamento vero, il riquadro sopra è quello.
+      previsto && !store.giornoDiSolaMobilita(previsto.id)
+        ? null
+        : riquadroNuovoAllenamento(oggi, ridisegna)
     )
   );
 
@@ -334,6 +338,17 @@ function riquadroNuovoAllenamento(oggi, ridisegna) {
   );
 }
 
+/**
+ * Quanti passaggi ha il blocco di mobilità di quel giorno: i movimenti
+ * dinamici PIÙ le tenute. Contando solo i primi, la schermata Oggi prometteva
+ * «8 passaggi» e l'allenamento poi ne chiedeva 26. (Il nome `passaggiDiMobilita`
+ * è già preso da quello che conta i passi di una seduta aperta.)
+ */
+function quantiPassaggiDiMobilita(giornoId) {
+  const prot = store.riscaldamento(giornoId);
+  return (prot?.mobilitaFinale || []).length + (prot?.tenuteStatiche?.passi || []).length;
+}
+
 /** L'elenco dei giorni dello split. Torna l'id scelto, o null. */
 async function scegliGiorno() {
   // Due giorni con lo stesso nome — la mobilità del sabato e quella della
@@ -347,7 +362,7 @@ async function scegliGiorno() {
   });
   const descrivi = (g) => {
     if (store.giornoDiSolaMobilita(g.id)) {
-      const quanti = (store.riscaldamento(g.id)?.mobilitaFinale || []).length;
+      const quanti = quantiPassaggiDiMobilita(g.id);
       return `${quanti} ${quanti === 1 ? "passaggio" : "passaggi"} di mobilità`;
     }
     const n = (g.esercizi || []).length;
